@@ -1,0 +1,99 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/*
+  INKMADE — фирменные токены (паспорт §2).
+  Палитра в двух контекстах (§2.2): тёмный (бордо-фон + кремовый текст) и
+  светлый (кремовый/белый фон + чёрный текст). Бордо — акцент/CTA, не заливка
+  рабочих экранов. Холст кастомайзера всегда нейтральный.
+*/
+
+@theme static {
+  /* ── Шрифты (§2.3) ───────────────────────────────────────────── */
+  /* Дисплейный — ТОЛЬКО латиница и крупные заголовки. Кириллицу не набирать. */
+  --font-display: "Permanent Marker", "Bebas Neue", cursive;
+  /* Основной текст и весь UI. Полная кириллица. */
+  --font-sans: "Manrope", "Inter", system-ui, sans-serif;
+  /* Лейблы/табы/бейджи — разреженный uppercase. */
+  --font-mono: "Space Mono", "JetBrains Mono", monospace;
+
+  /* ── Базовая палитра бренда (точные HEX из логотипа, §2.1) ────── */
+  --color-ink-burgundy: #7a1f28;
+  --color-ink-burgundy-dark: #5e1820;
+  --color-ink-burgundy-light: #9a3540;
+  --color-ink-black: #111111;
+  --color-ink-black-soft: #1e1e1e;
+  --color-ink-cream: #efe0c1;
+  --color-ink-cream-dark: #d7c9a6;
+
+  /* Нейтральные (UI-каркас, §2.1) */
+  --color-ink-gray-900: #1a1a1a;
+  --color-ink-gray-600: #555555;
+  --color-ink-gray-400: #9a9a9a;
+  --color-ink-gray-200: #e5e0d8;
+  --color-ink-white: #fbf8f2;
+
+  /* Семантические (§2.1) */
+  --color-ink-success: #3e7c5a;
+  --color-ink-warning: #c8922a;
+  --color-ink-error: #b23a3a;
+
+  /* ── Шкала бордо для Nuxt UI primary (50–950 вокруг #7A1F28) ──── */
+  --color-burgundy-50: #fbf1f2;
+  --color-burgundy-100: #f6dee0;
+  --color-burgundy-200: #ebbcc0;
+  --color-burgundy-300: #dd929a;
+  --color-burgundy-400: #c5616c;
+  --color-burgundy-500: #9a3540;
+  --color-burgundy-600: #7a1f28;
+  --color-burgundy-700: #5e1820;
+  --color-burgundy-800: #4a1219;
+  --color-burgundy-900: #3a0e13;
+  --color-burgundy-950: #24080b;
+
+  /* ── Радиусы (§2.4) ──────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* ── Тени (§2.4) ─────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 3px rgba(17, 17, 17, 0.08);
+  --shadow-md: 0 4px 16px rgba(17, 17, 17, 0.12);
+  --shadow-lg: 0 12px 40px rgba(17, 17, 17, 0.18);
+
+  /* ── Контейнер ───────────────────────────────────────────────── */
+  --container-max: 1280px;
+
+  /* ── Типошкала (§2.3, база 16px) → утилиты text-h1 … text-label.
+       Дисплейный шрифт применять дозированно (H1/H2/hero). ──────── */
+  --text-h1: clamp(3.5rem, 2rem + 5vw, 4.5rem); /* hero, font-display */
+  --text-h2: 2.25rem; /* font-display */
+  --text-h3: 1.5rem; /* font-sans 700 */
+  --text-body-lg: 1.125rem;
+  --text-body: 1rem;
+  --text-caption: 0.875rem;
+  --text-label: 0.75rem; /* font-mono uppercase 0.15em */
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-ink-white);
+    color: var(--color-ink-black);
+  }
+
+  /* Лейблы/табы/бейджи — приём из сабтекста лого «MERCH STUDIO / EST.2025» */
+  .ink-label {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: var(--text-label);
+  }
+
+  /* Дисплейный граффити-заголовок — латиница, крупный кегль */
+  .ink-display {
+    font-family: var(--font-display);
+    line-height: 1.05;
+  }
+}

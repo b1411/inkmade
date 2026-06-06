@@ -1,0 +1,29 @@
+{
+  "name": "inkmade",
+  "private": true,
+  "type": "module",
+  "description": "INKMADE — B2C платформа кастомизации одежды с печатью по требованию",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/fonts": "^0.14.0",
+    "@nuxt/ui": "^4.8.2",
+    "@nuxtjs/supabase": "^2.0.9",
+    "@supabase/supabase-js": "^2.107.0",
+    "konva": "^10.3.0",
+    "nuxt": "^4.4.7",
+    "tailwindcss": "^4.3.0",
+    "vue": "^3.5.35",
+    "vue-konva": "^3.4.0",
+    "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.111"
+  }
+}

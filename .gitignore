@@ -1,0 +1,34 @@
+# Nuxt
+.nuxt
+.output
+.data
+dist
+.nitro
+.cache
+
+# Зависимости
+node_modules
+
+# Логи
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Окружение и секреты (§3.8) — НЕ коммитить
+.env
+.env.*
+!.env.example
+
+# Редакторы / ОС
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# Supabase локально
+supabase/.branches
+supabase/.temp
+
+.vercel
