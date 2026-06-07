@@ -17,6 +17,15 @@ const design = useDesign()
 const { material, materialId, placements, selectedId, productColorHex, removePlacement, toSpec } = design
 const { breakdown } = usePricing()
 const cart = useCart()
+const supabase = useSupabaseClient()
+
+// скриншот композиции в Storage (§13.2, артефакт «для глаз»)
+async function uploadComposition(blob: Blob): Promise<string> {
+  const path = `composition/${Date.now()}-${Math.round(Math.random() * 1e9)}.png`
+  const { error } = await supabase.storage.from('design-uploads').upload(path, blob, { contentType: 'image/png' })
+  if (error) throw error
+  return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
+}
 
 // инициализация состояния на клиенте (canvas + Image — клиент)
 onMounted(() => { if (product.value) design.init(product.value) })
@@ -41,33 +50,50 @@ const selectedVariant = computed(() =>
 )
 
 const toast = useToast()
-function onAddToCart() {
+const submitting = ref(false)
+async function onAddToCart() {
+  if (submitting.value) return
   if (!placements.value.length) {
     toast.add({ title: 'Добавьте принт или текст', color: 'warning' })
+    return
+  }
+  if (!design.zone.value) {
+    toast.add({ title: 'Зона печати не выбрана', color: 'warning' })
     return
   }
   if (!selectedVariant.value) {
     toast.add({ title: 'Выберите размер', color: 'warning' })
     return
   }
-  const v = selectedVariant.value
-  cart.add({
-    productId: product.value!.id,
-    slug: product.value!.slug,
-    alias: product.value!.alias,
-    title: product.value!.title,
-    variantId: v.id,
-    colorName: v.color_name,
-    colorHex: v.color_hex,
-    size: v.size,
-    printMethod: material.value?.print_method ?? null,
-    spec: toSpec() as unknown as import('~/types/database.types').Json,
-    unitPrice: breakdown.value.unitPrice,
-    quantity: 1,
-  })
-  useAnalytics().addToCart(breakdown.value.unitPrice)
-  toast.add({ title: 'Добавлено в корзину', color: 'success' })
-  navigateTo('/cart')
+  submitting.value = true
+  try {
+    // скриншот композиции → Storage, ссылка попадёт в spec (§13.2)
+    const blob = await design.captureComposition()
+    if (blob) {
+      try { design.setCompositionUrl(await uploadComposition(blob)) }
+      catch { /* скриншот не критичен для печати — оригинал уже в Storage */ }
+    }
+    const v = selectedVariant.value
+    cart.add({
+      productId: product.value!.id,
+      slug: product.value!.slug,
+      alias: product.value!.alias,
+      title: product.value!.title,
+      variantId: v.id,
+      colorName: v.color_name,
+      colorHex: v.color_hex,
+      size: v.size,
+      printMethod: material.value?.print_method ?? null,
+      spec: toSpec() as unknown as import('~/types/database.types').Json,
+      unitPrice: breakdown.value.unitPrice,
+      quantity: 1,
+    })
+    useAnalytics().addToCart(breakdown.value.unitPrice)
+    toast.add({ title: 'Добавлено в корзину', color: 'success' })
+    await navigateTo('/cart')
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

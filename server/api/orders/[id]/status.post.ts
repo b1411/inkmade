@@ -35,44 +35,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Нужны трек-номер и перевозчик' })
   }
 
-  // обновление заказа
-  const patch: Database['public']['Tables']['orders']['Update'] = { status: to }
-  if (to === 'shipped') {
-    patch.tracking_no = body.trackingNo
-    patch.carrier = body.carrier
-    patch.shipped_at = new Date().toISOString()
-  }
-  await svc.from('orders').update(patch).eq('id', orderId)
-
-  // лог перехода (актор = оператор)
-  await svc.from('order_status_log').insert({
-    order_id: orderId, from_status: from, to_status: to, actor_id: user.id, note: body.note ?? null,
+  // атомарная запись статуса + лога + складских эффектов (аудит C6/H4):
+  // одна транзакция + advisory lock; возврат заготовки только если заказ не доходил до printing.
+  const { error: rpcErr } = await svc.rpc('change_order_status', {
+    p_order_id: orderId,
+    p_to: to,
+    p_actor: user.id,
+    p_note: body.note ?? '',
+    p_tracking: body.trackingNo ?? '',
+    p_carrier: body.carrier ?? '',
   })
-
-  // складские эффекты
-  const { data: items } = await svc.from('order_items').select('variant_id, quantity').eq('order_id', orderId)
-  if (to === 'reprint') {
-    // брак: заготовка испорчена (§8.3, §8.4 процесс 3)
-    for (const it of items ?? []) {
-      if (!it.variant_id) continue
-      await svc.from('stock_movements').insert({
-        variant_id: it.variant_id, delta: -it.quantity, reason: 'defect', order_id: orderId, actor_id: user.id,
-      })
-      const { data: v } = await svc.from('variants').select('stock').eq('id', it.variant_id).single()
-      if (v) await svc.from('variants').update({ stock: Math.max(0, v.stock - it.quantity) }).eq('id', it.variant_id)
-    }
-  }
-  if (to === 'cancelled' && order.paid_at && (from === 'paid' || from === 'queued')) {
-    // возврат заготовки при отмене до печати (§8.4 процесс 5)
-    for (const it of items ?? []) {
-      if (!it.variant_id) continue
-      await svc.from('stock_movements').insert({
-        variant_id: it.variant_id, delta: it.quantity, reason: 'correction', order_id: orderId, actor_id: user.id,
-      })
-      const { data: v } = await svc.from('variants').select('stock').eq('id', it.variant_id).single()
-      if (v) await svc.from('variants').update({ stock: v.stock + it.quantity }).eq('id', it.variant_id)
-    }
-  }
+  if (rpcErr) throw createError({ statusCode: 500, statusMessage: rpcErr.message })
 
   return { ok: true, from, to }
 })

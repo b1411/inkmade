@@ -23,10 +23,10 @@ async function onPay() {
   paying.value = true
   try {
     useAnalytics().initiateCheckout(cart.total.value)
-    const order = await createFromCart(cart.items.value, { ...form })
+    const { orderId } = await createFromCart(cart.items.value, { ...form })
     const { payUrl } = await $fetch<{ payUrl: string }>('/api/payment/create', {
       method: 'POST',
-      body: { orderId: order.id },
+      body: { orderId },
     })
     await navigateTo(payUrl)
   } catch (e) {

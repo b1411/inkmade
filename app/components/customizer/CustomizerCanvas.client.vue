@@ -5,7 +5,7 @@ import type { Placement } from '~/composables/useDesign'
 // Холст кастомайзера (§7.1, §7.4). Только клиент (vue-konva plugin .client).
 // Нейтральная подложка = цвет изделия (перекраска в реальном времени).
 // Принт ограничен границами зоны (§7.1 — нельзя вынести за зону).
-const { zoneRect, placements, selectedId, productColorHex, updatePlacement, zone } = useDesign()
+const { zoneRect, placements, selectedId, productColorHex, updatePlacement, zone, registerStage } = useDesign()
 
 const stageRef = ref<{ getNode: () => any } | null>(null)
 const transformerRef = ref<{ getNode: () => any } | null>(null)
@@ -68,17 +68,30 @@ function textConfig(p: Placement) {
   }
 }
 
-// ограничение перемещения границами зоны (приближённо, по bbox, §7.1)
-function makeDragBound(p: Placement) {
-  return (pos: { x: number; y: number }) => {
-    const r = zoneRect.value
-    const maxX = r.x + r.width - p.width
-    const maxY = r.y + r.height - p.height
-    return {
-      x: Math.max(r.x, Math.min(pos.x, Math.max(r.x, maxX))),
-      y: Math.max(r.y, Math.min(pos.y, Math.max(r.y, maxY))),
-    }
+// габариты повёрнутого прямоугольника относительно его origin (left-top, §7.1)
+function extentOf(width: number, height: number, rotation: number) {
+  const rad = (rotation || 0) * Math.PI / 180
+  const cos = Math.cos(rad), sin = Math.sin(rad)
+  const pts = [[0, 0], [width, 0], [width, height], [0, height]]
+  const xs = pts.map(([cx, cy]) => cx! * cos - cy! * sin)
+  const ys = pts.map(([cx, cy]) => cx! * sin + cy! * cos)
+  return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) }
+}
+
+// кламп позиции так, чтобы ПОВЁРНУТЫЙ bbox принта не вышел за зону (§7.1)
+function clampPos(x: number, y: number, width: number, height: number, rotation: number) {
+  const r = zoneRect.value
+  const e = extentOf(width, height, rotation)
+  const minX = r.x - e.minX, maxX = r.x + r.width - e.maxX
+  const minY = r.y - e.minY, maxY = r.y + r.height - e.maxY
+  return {
+    x: Math.max(minX, Math.min(x, Math.max(minX, maxX))),
+    y: Math.max(minY, Math.min(y, Math.max(minY, maxY))),
   }
+}
+
+function makeDragBound(p: Placement) {
+  return (pos: { x: number; y: number }) => clampPos(pos.x, pos.y, p.width, p.height, p.rotation)
 }
 
 // ── взаимодействие ────────────────────────────────────────────────
@@ -100,16 +113,19 @@ function onTransformEnd(p: Placement, e: any) {
   const sy = node.scaleY()
   node.scaleX(1); node.scaleY(1)
   if (p.kind === 'text') {
+    const width = Math.max(20, node.width() * sx)
+    const height = Math.max(8, (p.fontSize ?? 48) * sy) * 1.3
+    const pos = clampPos(node.x(), node.y(), width, height, node.rotation())
     updatePlacement(p.id, {
-      x: node.x(), y: node.y(), rotation: node.rotation(),
-      width: Math.max(20, node.width() * sx),
-      fontSize: Math.max(8, (p.fontSize ?? 48) * sy),
+      x: pos.x, y: pos.y, rotation: node.rotation(),
+      width, fontSize: Math.max(8, (p.fontSize ?? 48) * sy),
     })
   } else {
+    const width = Math.max(10, node.width() * sx)
+    const height = Math.max(10, node.height() * sy)
+    const pos = clampPos(node.x(), node.y(), width, height, node.rotation())
     updatePlacement(p.id, {
-      x: node.x(), y: node.y(), rotation: node.rotation(),
-      width: Math.max(10, node.width() * sx),
-      height: Math.max(10, node.height() * sy),
+      x: pos.x, y: pos.y, rotation: node.rotation(), width, height,
     })
   }
 }
@@ -128,7 +144,12 @@ function attachTransformer() {
 }
 watch(selectedId, attachTransformer)
 watch(() => placements.value.length, attachTransformer)
-onMounted(attachTransformer)
+onMounted(() => {
+  attachTransformer()
+  const stage = stageRef.value?.getNode?.()
+  if (stage) registerStage(stage)
+})
+onBeforeUnmount(() => registerStage(null))
 </script>
 
 <template>

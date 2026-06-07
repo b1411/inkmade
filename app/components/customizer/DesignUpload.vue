@@ -5,11 +5,24 @@ import { dpiAtMaxSize, DPI_MIN, DPI_TARGET } from '~~/shared/config/zones'
 // Порог считается от МАКСИМАЛЬНОГО размера изделия (products.max_print_mm).
 const { product, addImage } = useDesign()
 const toast = useToast()
+const supabase = useSupabaseClient()
 
 const MAX_FILE_MB = 25
 const ACCEPT = '.png,.jpg,.jpeg,.svg,.pdf'
 const busy = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+
+// Загрузка оригинала в Storage (§13.2): файл должен пережить сессию, иначе
+// оператор не получит исходник для печати. Возвращает постоянный public URL.
+async function uploadToStorage(file: File): Promise<string> {
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
+  const path = `uploads/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`
+  const { error } = await supabase.storage.from('design-uploads').upload(path, file, {
+    contentType: file.type || undefined, upsert: false,
+  })
+  if (error) throw error
+  return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
+}
 
 function readImageSize(url: string): Promise<{ w: number; h: number }> {
   return new Promise((resolve, reject) => {
@@ -39,7 +52,9 @@ async function onFile(e: Event) {
     if (isVector) {
       // для отрисовки на холсте берём условные размеры (svg рендерится как изображение)
       const size = ext === 'svg' ? await readImageSize(objectUrl).catch(() => ({ w: 1000, h: 1000 })) : { w: 1000, h: 1000 }
-      addImage(objectUrl, size.w, size.h, 'upload')
+      const url = await uploadToStorage(file)
+      URL.revokeObjectURL(objectUrl)
+      addImage(url, size.w, size.h, 'upload')
       toast.add({ title: 'Принт добавлен', color: 'success' })
       return
     }
@@ -65,7 +80,9 @@ async function onFile(e: Event) {
       return
     }
 
-    addImage(objectUrl, w, h, 'upload')
+    const url = await uploadToStorage(file)
+    URL.revokeObjectURL(objectUrl)
+    addImage(url, w, h, 'upload')
     if (dpi < DPI_TARGET) {
       toast.add({ title: `Принт добавлен · ${dpi} DPI`, description: `Для лучшего качества цель — ${DPI_TARGET} DPI.`, color: 'warning' })
     } else {

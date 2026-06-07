@@ -2,10 +2,13 @@ import type { ProductWithRelations, PrintZone, Material } from '~/types/models'
 import type { PrintMethod, PrintMode } from '~~/shared/config/print-methods'
 
 // Состояние дизайна + спецификация нанесения (§5.2, §7.4).
-// Холст работает в px; в мм пересчитываем по коэффициенту зоны (PX_PER_MM).
+// Холст работает в px; масштаб мм↔px вычисляется ДИНАМИЧЕСКИ — зона вписывается
+// в холст (раньше была магическая константа 1.1, из-за которой крупные/fullprint
+// зоны выходили за холст). spec в мм остаётся корректным: zoneRect и toMm
+// используют один и тот же масштаб.
 
 export const CANVAS = { width: 460, height: 540 }
-export const PX_PER_MM = 1.1 // масштаб отображения зоны на холсте
+const ZONE_PAD = 36 // отступ зоны от краёв холста, px
 
 export interface Placement {
   id: string
@@ -59,13 +62,24 @@ export const useDesign = () => {
     validZones.value.find(z => z.name === zoneName.value) ?? validZones.value[0],
   )
 
+  // масштаб px/мм: вписываем зону (max_width_mm × max_height_mm) в холст с отступами,
+  // сохраняя пропорции. Так зона всегда видна целиком, а мм-вывод корректен.
+  const pxPerMm = computed(() => {
+    const z = zone.value
+    const wmm = Number(z?.max_width_mm) || 200
+    const hmm = Number(z?.max_height_mm) || 250
+    const availW = CANVAS.width - ZONE_PAD * 2
+    const availH = CANVAS.height - ZONE_PAD * 2
+    return Math.min(availW / wmm, availH / hmm)
+  })
+
   // прямоугольник зоны на холсте (центрирован), px
   const zoneRect = computed(() => {
     const z = zone.value
-    const wmm = z?.max_width_mm ?? 200
-    const hmm = z?.max_height_mm ?? 250
-    const w = wmm * PX_PER_MM
-    const h = hmm * PX_PER_MM
+    const wmm = Number(z?.max_width_mm) || 200
+    const hmm = Number(z?.max_height_mm) || 250
+    const w = wmm * pxPerMm.value
+    const h = hmm * pxPerMm.value
     return {
       x: (CANVAS.width - w) / 2,
       y: (CANVAS.height - h) / 2,
@@ -92,19 +106,22 @@ export const useDesign = () => {
     const scale = targetW / naturalW
     const w = targetW
     const h = naturalH * scale
+    // если по высоте не влезает — пересчитываем от высоты, сохраняя пропорции
+    const fitScale = h > r.height ? r.height / (naturalH * scale) : 1
+    const fw = w * fitScale
+    const fh = h * fitScale
     const pl: Placement = {
       id: nextId(), kind: 'image', source, assetUrl, naturalW, naturalH,
-      x: r.x + (r.width - w) / 2,
-      y: r.y + (r.height - h) / 2,
-      width: w, height: Math.min(h, r.height), rotation: 0,
+      x: r.x + (r.width - fw) / 2,
+      y: r.y + (r.height - fh) / 2,
+      width: fw, height: fh, rotation: 0,
     }
     placements.value = [...placements.value, pl]
     selectedId.value = pl.id
   }
 
-  function addText(text: string, fontFamily: string, fill: string) {
+  function addText(text: string, fontFamily: string, fill: string, fontSize = 48) {
     const r = zoneRect.value
-    const fontSize = 48
     const pl: Placement = {
       id: nextId(), kind: 'text', text, fontFamily, fill, fontSize,
       x: r.x + r.width * 0.1,
@@ -127,7 +144,7 @@ export const useDesign = () => {
   const hasText = computed(() => placements.value.some(p => p.kind === 'text'))
 
   // ── px ↔ мм относительно зоны (§7.4) ──────────────────────────
-  function toMm(px: number) { return px / PX_PER_MM }
+  function toMm(px: number) { return px / pxPerMm.value }
 
   /** Спецификация нанесения для производства (§5.2). */
   function toSpec() {
@@ -143,19 +160,40 @@ export const useDesign = () => {
         rotation_deg: Math.round(p.rotation),
         layer: i + 1,
         source: p.kind === 'text' ? 'text' : p.source,
-        ...(p.kind === 'image' ? { asset_url: p.assetUrl } : { text: p.text, font: p.fontFamily, fill: p.fill }),
+        ...(p.kind === 'image'
+          ? { asset_url: p.assetUrl, preview_asset_url: p.assetUrl, natural_w: p.naturalW, natural_h: p.naturalH }
+          : { text: p.text, font: p.fontFamily, fill: p.fill }),
       })),
       product_color_hex: productColorHex.value,
       material: material.value?.fabric_type,
       print_mode: printMode.value,
       print_method: material.value?.print_method as PrintMethod,
-      px_per_mm: PX_PER_MM,
+      px_per_mm: +pxPerMm.value.toFixed(4),
+      composition_url: compositionUrl.value,
     }
+  }
+
+  // ── скриншот композиции (§13.2, артефакт «для глаз») ──────────
+  // CustomizerCanvas регистрирует Konva stage; здесь снимаем композицию в blob.
+  const stageNode = useState<unknown>('design_stage', () => null)
+  const compositionUrl = useState<string | null>('design_composition_url', () => null)
+  function registerStage(node: unknown) { stageNode.value = node }
+  function setCompositionUrl(url: string | null) { compositionUrl.value = url }
+
+  function captureComposition(): Promise<Blob | null> {
+    const st = stageNode.value as { toBlob?: (o: { pixelRatio?: number; mimeType?: string; callback: (b: Blob | null) => void }) => void } | null
+    if (!st?.toBlob) return Promise.resolve(null)
+    return new Promise((resolve) => {
+      try {
+        st.toBlob!({ pixelRatio: 2, mimeType: 'image/png', callback: b => resolve(b) })
+      } catch { resolve(null) }
+    })
   }
 
   return {
     product, materialId, zoneName, productColorHex, placements, selectedId,
-    material, printMode, validZones, zone, zoneRect, hasText,
+    material, printMode, validZones, zone, zoneRect, pxPerMm, hasText, compositionUrl,
     init, addImage, addText, updatePlacement, removePlacement, toMm, toSpec,
+    registerStage, captureComposition, setCompositionUrl,
   }
 }

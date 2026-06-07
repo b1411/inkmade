@@ -206,6 +206,7 @@ export type Database = {
           carrier: string | null
           created_at: string
           currency: string
+          fiscal_receipt: Json | null
           id: string
           paid_at: string | null
           payment_id: string | null
@@ -220,6 +221,7 @@ export type Database = {
           carrier?: string | null
           created_at?: string
           currency?: string
+          fiscal_receipt?: Json | null
           id?: string
           paid_at?: string | null
           payment_id?: string | null
@@ -234,6 +236,7 @@ export type Database = {
           carrier?: string | null
           created_at?: string
           currency?: string
+          fiscal_receipt?: Json | null
           id?: string
           paid_at?: string | null
           payment_id?: string | null
@@ -510,6 +513,44 @@ export type Database = {
           },
         ]
       }
+      user_consents: {
+        Row: {
+          accepted_at: string
+          consent_type: string
+          doc_version: string
+          id: string
+          ip: string | null
+          order_id: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          consent_type: string
+          doc_version: string
+          id?: string
+          ip?: string | null
+          order_id?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          consent_type?: string
+          doc_version?: string
+          id?: string
+          ip?: string | null
+          order_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_consents_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       variants: {
         Row: {
           color_hex: string
@@ -563,7 +604,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_paid: {
+        Args: { p_order_id: string; p_provider_txn: string; p_raw: Json }
+        Returns: Json
+      }
+      change_order_status: {
+        Args: {
+          p_actor: string
+          p_carrier: string
+          p_note: string
+          p_order_id: string
+          p_to: string
+          p_tracking: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
