@@ -3,6 +3,7 @@
 // Светлый рабочий контекст, бордо — только акценты.
 const nav = [
   { label: 'Очередь', to: '/studio', icon: 'i-lucide-layout-list' },
+  { label: 'Склад', to: '/studio/stock', icon: 'i-lucide-boxes' },
 ]
 </script>
 

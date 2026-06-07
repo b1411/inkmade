@@ -21,6 +21,24 @@ const { data: stats, pending } = await useAsyncData('admin-stats', async () => {
   return data as unknown as Stats
 })
 
+// «Требует внимания» + чистая прибыль (CRM §6.1)
+const { data: attention } = await useAsyncData('admin-attention', async () => {
+  const [fin, mod, payouts, problem, lowStock] = await Promise.all([
+    supabase.rpc('admin_finance_stats', {}),
+    supabase.from('print_library').select('id', { count: 'exact', head: true }).eq('moderation_status', 'pending'),
+    supabase.from('payouts').select('id', { count: 'exact', head: true }).eq('status', 'requested'),
+    supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['on_hold', 'reprint']),
+    supabase.from('variants').select('id', { count: 'exact', head: true }).lte('stock', 5),
+  ])
+  return {
+    profit: (fin.data as { profit?: number } | null)?.profit ?? 0,
+    moderation: mod.count ?? 0,
+    payouts: payouts.count ?? 0,
+    problem: problem.count ?? 0,
+    lowStock: lowStock.count ?? 0,
+  }
+})
+
 const STATUS_LABELS: Record<string, string> = {
   created: 'Создан', pending: 'Ожидает оплаты', paid: 'Оплачен', queued: 'В очереди',
   printing: 'Печать', quality_check: 'Контроль', packing: 'Упаковка',
@@ -46,8 +64,28 @@ const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(n)
     <div v-if="pending" class="py-10 text-center text-ink-gray-600">Загрузка аналитики…</div>
 
     <template v-else>
+      <!-- требует внимания -->
+      <div v-if="attention" class="flex flex-wrap gap-2">
+        <NuxtLink v-if="attention.moderation" to="/admin/designers" class="inline-flex items-center gap-1 bg-ink-warning/10 text-ink-warning rounded-full px-3 py-1 text-caption font-semibold">
+          <UIcon name="i-lucide-image" /> Модерация принтов: {{ attention.moderation }}
+        </NuxtLink>
+        <NuxtLink v-if="attention.payouts" to="/admin/designers" class="inline-flex items-center gap-1 bg-ink-burgundy/10 text-ink-burgundy rounded-full px-3 py-1 text-caption font-semibold">
+          <UIcon name="i-lucide-wallet" /> Заявки на выплату: {{ attention.payouts }}
+        </NuxtLink>
+        <NuxtLink v-if="attention.problem" to="/admin/returns" class="inline-flex items-center gap-1 bg-ink-error/10 text-ink-error rounded-full px-3 py-1 text-caption font-semibold">
+          <UIcon name="i-lucide-triangle-alert" /> Проблемные заказы: {{ attention.problem }}
+        </NuxtLink>
+        <NuxtLink v-if="attention.lowStock" to="/admin/stock" class="inline-flex items-center gap-1 bg-ink-gray-200 text-ink-gray-600 rounded-full px-3 py-1 text-caption font-semibold">
+          <UIcon name="i-lucide-boxes" /> Низкий сток: {{ attention.lowStock }}
+        </NuxtLink>
+      </div>
+
       <!-- ключевые метрики -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="border-2 border-ink-burgundy rounded-lg p-5 bg-ink-burgundy/5">
+          <p class="ink-label text-ink-burgundy">Чистая прибыль</p>
+          <p class="text-2xl font-bold text-ink-burgundy mt-1">{{ fmt(attention?.profit ?? 0) }} ₸</p>
+        </div>
         <div class="border border-ink-gray-200 rounded-lg p-5">
           <p class="ink-label text-ink-gray-400">Выручка (оплачено)</p>
           <p class="text-2xl font-bold text-ink-burgundy mt-1">{{ fmt(stats?.revenue ?? 0) }} ₸</p>

@@ -49,6 +49,23 @@ useHead({
 // первое звено воронки — просмотр товара (§3.5.1)
 onMounted(() => useAnalytics().viewContent(product.value!.id))
 
+// избранное (CRM §3.1)
+const { isProductFav, toggleProduct } = useFavorites()
+const { isAuthenticated } = useAuth()
+const favId = ref<string | null>(null)
+const favBusy = ref(false)
+onMounted(async () => {
+  if (isAuthenticated.value && product.value) favId.value = await isProductFav(product.value.id)
+})
+async function onToggleFav() {
+  if (!isAuthenticated.value) { await navigateTo(`/login?redirect=/product/${slug}`); return }
+  favBusy.value = true
+  try {
+    const added = await toggleProduct(product.value!.id)
+    favId.value = added ? 'x' : null
+  } finally { favBusy.value = false }
+}
+
 const selectedMaterialId = ref(product.value.materials[0]?.id ?? '')
 const selectedMaterial = computed(() =>
   product.value!.materials.find(m => m.id === selectedMaterialId.value),
@@ -168,16 +185,28 @@ const activeImage = ref(0)
         </div>
       </div>
 
-      <UButton
-        v-if="product.alias"
-        :to="`/customize/${product.alias}`"
-        color="primary"
-        size="xl"
-        icon="i-lucide-brush"
-        block
-      >
-        Создать свой принт
-      </UButton>
+      <div class="flex gap-2">
+        <UButton
+          v-if="product.alias"
+          :to="`/customize/${product.alias}`"
+          color="primary"
+          size="xl"
+          icon="i-lucide-brush"
+          class="flex-1"
+          block
+        >
+          Создать свой принт
+        </UButton>
+        <UButton
+          size="xl"
+          :color="favId ? 'primary' : 'neutral'"
+          :variant="favId ? 'subtle' : 'outline'"
+          :icon="favId ? 'i-lucide-heart' : 'i-lucide-heart'"
+          :loading="favBusy"
+          aria-label="В избранное"
+          @click="onToggleFav"
+        />
+      </div>
 
       <!-- дисклеймер расхождения цвета (§7.3, §10) -->
       <UAlert

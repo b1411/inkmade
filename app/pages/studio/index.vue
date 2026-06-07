@@ -45,9 +45,9 @@ const shortId = (id: string) => id.slice(0, 8)
           >
             <div class="flex justify-between items-center">
               <span class="ink-label">#{{ shortId(o.id) }}</span>
-              <span class="text-caption font-semibold">{{ o.total }} ₸</span>
+              <span class="text-caption text-ink-gray-400">{{ new Date(o.created_at).toLocaleDateString('ru') }}</span>
             </div>
-            <p class="text-caption text-ink-gray-600 mt-1">Позиций: {{ o.order_items?.length ?? 0 }}</p>
+            <p class="text-caption text-ink-gray-600 mt-1">Позиций: {{ o.item_count ?? 0 }}</p>
           </NuxtLink>
           <p v-if="!byStatus(col).length" class="text-caption text-ink-gray-400 px-1">—</p>
         </div>

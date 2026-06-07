@@ -5,11 +5,21 @@ import type { Database } from '~/types/database.types'
 export const useStock = () => {
   const supabase = useSupabaseClient<Database>()
 
-  /** Варианты с остатками (+ товар). */
+  /** Варианты с остатками (+ товар). БЕЗ себестоимости — для оператора (§5.2). */
   async function listStock() {
     const { data, error } = await supabase
       .from('variants')
       .select('id, sku, color_name, color_hex, size, stock, product_id, products(title, slug)')
+      .order('stock', { ascending: true })
+    if (error) throw error
+    return data
+  }
+
+  /** То же + себестоимость заготовки. Только для admin (склад/маржа §6.2/§6.6). */
+  async function listStockWithCost() {
+    const { data, error } = await supabase
+      .from('variants')
+      .select('id, sku, color_name, color_hex, size, stock, blank_cost, product_id, products(title, slug)')
       .order('stock', { ascending: true })
     if (error) throw error
     return data
@@ -36,5 +46,5 @@ export const useStock = () => {
     return data
   }
 
-  return { listStock, addMovement, listMovements }
+  return { listStock, listStockWithCost, addMovement, listMovements }
 }

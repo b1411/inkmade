@@ -1,12 +1,13 @@
 // Ручные доменные типы (§5). Полные типы БД сгенерируем позже:
 // `supabase gen types typescript` → app/types/database.types.ts (F0-9/после применения миграций).
 
-export type UserRole = 'customer' | 'operator' | 'admin'
+export type UserRole = 'customer' | 'designer' | 'operator' | 'admin'
 
 export interface Profile {
   id: string
   role: UserRole
   full_name: string | null
+  phone?: string | null
   created_at: string
 }
 

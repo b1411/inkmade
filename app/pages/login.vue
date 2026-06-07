@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Вход (§9.1). Логин требуется поздно — на checkout/шаринге, не на входе в каталог.
-const { signIn } = useAuth()
+const { signIn, homePath } = useAuth()
 const route = useRoute()
 const toast = useToast()
 
@@ -12,9 +12,10 @@ async function onSubmit() {
   loading.value = true
   try {
     await signIn(email.value, password.value)
-    // только внутренние пути: защита от open redirect на внешний домен
+    // только внутренние пути: защита от open redirect на внешний домен.
+    // Без явного redirect ведём в кабинет по роли (admin→/admin, operator→/studio, …).
     const raw = route.query.redirect as string | undefined
-    const redirect = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/account'
+    const redirect = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : homePath.value
     await navigateTo(redirect)
   } catch (e) {
     toast.add({ title: 'Не удалось войти', description: (e as Error).message, color: 'error' })

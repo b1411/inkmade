@@ -94,6 +94,15 @@ function specPlacements(item: { designs?: { spec?: unknown } | null }) {
             {{ it.variants?.materials?.name }} · {{ it.variants?.materials?.print_method }} / {{ it.variants?.materials?.print_mode }} · SKU {{ it.variants?.sku }}
           </p>
 
+          <!-- скриншот композиции для наглядности (§5.1) -->
+          <img
+            v-if="it.designs?.preview_url"
+            :src="it.designs.preview_url"
+            :alt="`Композиция ${it.variants?.products?.title ?? ''}`"
+            class="mt-3 w-40 rounded-md border border-ink-gray-200 bg-ink-gray-200/30"
+            loading="lazy"
+          >
+
           <!-- спецификация нанесения в мм (§5.2) -->
           <div class="mt-3 bg-ink-gray-200/40 rounded-md p-3">
             <p class="ink-label text-ink-gray-600 mb-1">Спецификация нанесения</p>

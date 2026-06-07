@@ -3,6 +3,8 @@
 import { LEGAL } from '~~/shared/config/legal'
 const cart = useCart()
 const cartCount = computed(() => cart.count.value)
+// «Кабинет» ведёт в кабинет по роли (CRM §2) — единый источник в useAuth
+const { homePath: cabinetTo } = useAuth()
 onMounted(() => cart.load())
 </script>
 
@@ -17,7 +19,7 @@ onMounted(() => cart.load())
             <UIcon name="i-lucide-shopping-cart" class="size-4" />
             <ClientOnly><span v-if="cartCount">{{ cartCount }}</span></ClientOnly>
           </NuxtLink>
-          <NuxtLink to="/account" class="inline-flex items-center gap-1 ink-label hover:opacity-80">
+          <NuxtLink :to="cabinetTo" class="inline-flex items-center gap-1 ink-label hover:opacity-80">
             <UIcon name="i-lucide-user" class="size-4" />
           </NuxtLink>
         </nav>

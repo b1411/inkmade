@@ -23,7 +23,7 @@ function pick(p: Tables<'print_library'>) {
   const img = new window.Image()
   img.crossOrigin = 'anonymous'
   img.onload = () => {
-    addImage(p.file_url, img.naturalWidth || 1000, img.naturalHeight || 1000, 'library')
+    addImage(p.file_url, img.naturalWidth || 1000, img.naturalHeight || 1000, 'library', p.id)
     open.value = false
     toast.add({ title: `Принт «${p.title}» добавлен`, color: 'success' })
   }

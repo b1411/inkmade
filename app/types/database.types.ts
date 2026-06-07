@@ -16,6 +16,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      addresses: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          full_name: string | null
+          id: string
+          is_default: boolean
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_default?: boolean
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_default?: boolean
+          phone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          note: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -43,6 +112,111 @@ export type Database = {
           slug?: string
           sort_order?: number
           title?: string
+        }
+        Relationships: []
+      }
+      designer_balances: {
+        Row: {
+          available: number
+          designer_id: string
+          total_earned: number
+          total_paid: number
+          updated_at: string
+        }
+        Insert: {
+          available?: number
+          designer_id: string
+          total_earned?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Update: {
+          available?: number
+          designer_id?: string
+          total_earned?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      designer_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          joined_at: string | null
+          note: string | null
+          royalty_pct: number
+          status: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          note?: string | null
+          royalty_pct?: number
+          status?: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          joined_at?: string | null
+          note?: string | null
+          royalty_pct?: number
+          status?: string
+          token?: string
+        }
+        Relationships: []
+      }
+      designer_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          invited_by: string | null
+          is_public: boolean
+          joined_at: string
+          payout_details: Json | null
+          royalty_pct: number
+          status: string
+          tax_status: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          invited_by?: string | null
+          is_public?: boolean
+          joined_at?: string
+          payout_details?: Json | null
+          royalty_pct?: number
+          status?: string
+          tax_status?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          invited_by?: string | null
+          is_public?: boolean
+          joined_at?: string
+          payout_details?: Json | null
+          royalty_pct?: number
+          status?: string
+          tax_status?: string
         }
         Relationships: []
       }
@@ -106,6 +280,86 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          print_id: string | null
+          product_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          print_id?: string | null
+          product_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          print_id?: string | null
+          product_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_print_id_fkey"
+            columns: ["print_id"]
+            isOneToOne: false
+            referencedRelation: "print_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          designer_id: string | null
+          entry_type: string
+          id: string
+          note: string | null
+          order_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          designer_id?: string | null
+          entry_type: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          designer_id?: string | null
+          entry_type?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_entries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       materials: {
         Row: {
           fabric_type: string
@@ -149,8 +403,11 @@ export type Database = {
           design_id: string | null
           id: string
           order_id: string
+          print_id: string | null
           print_method: string | null
+          print_owner_id: string | null
           quantity: number
+          unit_cost: number
           unit_price: number
           variant_id: string | null
         }
@@ -158,8 +415,11 @@ export type Database = {
           design_id?: string | null
           id?: string
           order_id: string
+          print_id?: string | null
           print_method?: string | null
+          print_owner_id?: string | null
           quantity?: number
+          unit_cost?: number
           unit_price?: number
           variant_id?: string | null
         }
@@ -167,8 +427,11 @@ export type Database = {
           design_id?: string | null
           id?: string
           order_id?: string
+          print_id?: string | null
           print_method?: string | null
+          print_owner_id?: string | null
           quantity?: number
+          unit_cost?: number
           unit_price?: number
           variant_id?: string | null
         }
@@ -185,6 +448,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_print_id_fkey"
+            columns: ["print_id"]
+            isOneToOne: false
+            referencedRelation: "print_library"
             referencedColumns: ["id"]
           },
           {
@@ -239,10 +509,12 @@ export type Database = {
           carrier: string | null
           created_at: string
           currency: string
+          discount: number
           fiscal_receipt: Json | null
           id: string
           paid_at: string | null
           payment_id: string | null
+          promo_code: string | null
           shipped_at: string | null
           shipping_addr: Json | null
           status: string
@@ -254,10 +526,12 @@ export type Database = {
           carrier?: string | null
           created_at?: string
           currency?: string
+          discount?: number
           fiscal_receipt?: Json | null
           id?: string
           paid_at?: string | null
           payment_id?: string | null
+          promo_code?: string | null
           shipped_at?: string | null
           shipping_addr?: Json | null
           status?: string
@@ -269,10 +543,12 @@ export type Database = {
           carrier?: string | null
           created_at?: string
           currency?: string
+          discount?: number
           fiscal_receipt?: Json | null
           id?: string
           paid_at?: string | null
           payment_id?: string | null
+          promo_code?: string | null
           shipped_at?: string | null
           shipping_addr?: Json | null
           status?: string
@@ -323,12 +599,69 @@ export type Database = {
           },
         ]
       }
+      payouts: {
+        Row: {
+          amount: number
+          designer_id: string
+          details: Json | null
+          id: string
+          method: string | null
+          paid_at: string | null
+          processed_by: string | null
+          requested_at: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          designer_id: string
+          details?: Json | null
+          id?: string
+          method?: string | null
+          paid_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          designer_id?: string
+          details?: Json | null
+          id?: string
+          method?: string | null
+          paid_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       print_library: {
         Row: {
           author: string | null
           file_url: string
           id: string
           is_active: boolean
+          moderation_note: string | null
+          moderation_status: string
+          owner_id: string | null
           royalty_pct: number
           tags: string[]
           thumbnail_url: string | null
@@ -339,6 +672,9 @@ export type Database = {
           file_url: string
           id?: string
           is_active?: boolean
+          moderation_note?: string | null
+          moderation_status?: string
+          owner_id?: string | null
           royalty_pct?: number
           tags?: string[]
           thumbnail_url?: string | null
@@ -349,6 +685,9 @@ export type Database = {
           file_url?: string
           id?: string
           is_active?: boolean
+          moderation_note?: string | null
+          moderation_status?: string
+          owner_id?: string | null
           royalty_pct?: number
           tags?: string[]
           thumbnail_url?: string | null
@@ -493,19 +832,159 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          phone: string | null
           role: string
         }
         Insert: {
           created_at?: string
           full_name?: string | null
           id: string
+          phone?: string | null
           role?: string
         }
         Update: {
           created_at?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           role?: string
+        }
+        Relationships: []
+      }
+      promo_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          min_order: number
+          used_count: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          discount_type: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order?: number
+          used_count?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order?: number
+          used_count?: number
+        }
+        Relationships: []
+      }
+      royalty_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          designer_id: string
+          id: string
+          order_id: string | null
+          order_item_id: string | null
+          payout_id: string | null
+          print_id: string | null
+          rate_pct: number
+          sale_base: number
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          designer_id: string
+          id?: string
+          order_id?: string | null
+          order_item_id?: string | null
+          payout_id?: string | null
+          print_id?: string | null
+          rate_pct: number
+          sale_base: number
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          designer_id?: string
+          id?: string
+          order_id?: string | null
+          order_item_id?: string | null
+          payout_id?: string | null
+          print_id?: string | null
+          rate_pct?: number
+          sale_base?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "royalty_earnings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalty_earnings_order_item_id_fkey"
+            columns: ["order_item_id"]
+            isOneToOne: false
+            referencedRelation: "order_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalty_earnings_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalty_earnings_print_id_fkey"
+            columns: ["print_id"]
+            isOneToOne: false
+            referencedRelation: "print_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      royalty_rate_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          designer_id: string
+          id: string
+          new_pct: number
+          old_pct: number | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          designer_id: string
+          id?: string
+          new_pct: number
+          old_pct?: number | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          designer_id?: string
+          id?: string
+          new_pct?: number
+          old_pct?: number | null
         }
         Relationships: []
       }
@@ -594,6 +1073,7 @@ export type Database = {
       }
       variants: {
         Row: {
+          blank_cost: number
           color_hex: string
           color_name: string
           id: string
@@ -604,6 +1084,7 @@ export type Database = {
           stock: number
         }
         Insert: {
+          blank_cost?: number
           color_hex: string
           color_name: string
           id?: string
@@ -614,6 +1095,7 @@ export type Database = {
           stock?: number
         }
         Update: {
+          blank_cost?: number
           color_hex?: string
           color_name?: string
           id?: string
@@ -649,6 +1131,14 @@ export type Database = {
         Args: { p_delta: number; p_reason: string; p_variant_id: string }
         Returns: number
       }
+      admin_finance_series: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: Json
+      }
+      admin_finance_stats: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: Json
+      }
       admin_list_users: {
         Args: never
         Returns: {
@@ -659,11 +1149,13 @@ export type Database = {
           role: string
         }[]
       }
+      admin_margin_breakdown: { Args: never; Returns: Json }
       admin_stats: { Args: never; Returns: Json }
       apply_paid: {
         Args: { p_order_id: string; p_provider_txn: string; p_raw: Json }
         Returns: Json
       }
+      bump_promo_use: { Args: { p_code: string }; Returns: boolean }
       change_order_status: {
         Args: {
           p_actor: string
@@ -674,6 +1166,32 @@ export type Database = {
           p_tracking: string
         }
         Returns: Json
+      }
+      claim_designer_invite: { Args: { p_token: string }; Returns: Json }
+      mark_payout_paid: { Args: { p_payout_id: string }; Returns: undefined }
+      refund_order: {
+        Args: { p_note?: string; p_order_id: string }
+        Returns: Json
+      }
+      request_payout: {
+        Args: { p_amount: number; p_details?: Json; p_method?: string }
+        Returns: string
+      }
+      set_royalty_rate: {
+        Args: { p_designer_id: string; p_new_pct: number }
+        Returns: undefined
+      }
+      studio_get_order: { Args: { p_id: string }; Returns: Json }
+      studio_list_queue: {
+        Args: never
+        Returns: {
+          carrier: string
+          created_at: string
+          id: string
+          item_count: number
+          status: string
+          tracking_no: string
+        }[]
       }
     }
     Enums: {

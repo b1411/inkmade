@@ -3,6 +3,8 @@
 const nav = [
   { label: 'Мои заказы', to: '/account/orders', icon: 'i-lucide-package' },
   { label: 'Мои дизайны', to: '/account/designs', icon: 'i-lucide-shapes' },
+  { label: 'Избранное', to: '/account/favorites', icon: 'i-lucide-heart' },
+  { label: 'Адреса', to: '/account/addresses', icon: 'i-lucide-map-pin' },
   { label: 'Профиль', to: '/account', icon: 'i-lucide-user' },
 ]
 </script>

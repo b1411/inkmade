@@ -18,7 +18,7 @@ export const useAuth = () => {
     }
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, role, full_name, created_at')
+      .select('id, role, full_name, phone, created_at')
       .eq('id', user.value.id)
       .single()
     if (error) {
@@ -33,6 +33,18 @@ export const useAuth = () => {
   const isAuthenticated = computed(() => !!user.value)
   const isStaff = computed(() => role.value === 'operator' || role.value === 'admin')
   const isAdmin = computed(() => role.value === 'admin')
+  const isDesigner = computed(() => role.value === 'designer')
+
+  // Домашний кабинет по роли (CRM §2). Единый источник для редиректа после входа
+  // и для ссылки «Кабинет» в шапке — чтобы admin/operator/designer не попадали в /account.
+  const homePath = computed<string>(() => {
+    switch (role.value) {
+      case 'admin': return '/admin'
+      case 'operator': return '/studio'
+      case 'designer': return '/studio-designer'
+      default: return '/account'
+    }
+  })
 
   async function signIn(email: string, password: string) {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -61,6 +73,8 @@ export const useAuth = () => {
     isAuthenticated,
     isStaff,
     isAdmin,
+    isDesigner,
+    homePath,
     fetchProfile,
     signIn,
     signUp,

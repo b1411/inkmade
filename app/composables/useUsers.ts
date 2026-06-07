@@ -16,6 +16,11 @@ export const useUsers = () => {
   async function setUserRole(userId: string, role: UserRole) {
     const { error } = await supabase.from('profiles').update({ role }).eq('id', userId)
     if (error) throw error
+    // при назначении дизайнера — заводим его профиль (если ещё нет), чтобы кабинет работал
+    if (role === 'designer') {
+      await supabase.from('designer_profiles')
+        .upsert({ id: userId }, { onConflict: 'id', ignoreDuplicates: true })
+    }
   }
 
   return { listUsers, setUserRole }

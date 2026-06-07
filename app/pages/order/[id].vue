@@ -9,16 +9,42 @@ const route = useRoute()
 const id = route.params.id as string
 const supabase = useSupabaseClient<Database>()
 
-const { data: order, error } = await useAsyncData(`order-${id}`, async () => {
+const { data: order, error, refresh } = await useAsyncData(`order-${id}`, async () => {
   const { data } = await supabase
     .from('orders')
-    .select('*, order_items(quantity, unit_price, variants(color_name, size, products(title)))')
+    .select('*, order_items(quantity, unit_price, designs(preview_url), variants(color_name, size, products(title)))')
     .eq('id', id)
     .single()
   return data
 })
 if (error.value || !order.value) throw createError({ statusCode: 404, statusMessage: 'Заказ не найден' })
 useHead({ title: `Заказ — INKMADE` })
+
+// Realtime: оператор меняет этап → клиент видит мгновенно (CRM синхронизация)
+onMounted(() => {
+  const channel = supabase
+    .channel(`order-track-${id}`)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${id}` }, () => refresh())
+    .subscribe()
+  onBeforeUnmount(() => { supabase.removeChannel(channel) })
+})
+
+// повтор заказа (CRM §3.2)
+const { reorder } = useOrder()
+const toast = useToast()
+const reordering = ref(false)
+async function onReorder() {
+  reordering.value = true
+  try {
+    const n = await reorder(id)
+    toast.add({ title: `Добавлено в корзину: ${n}`, color: 'success' })
+    await navigateTo('/cart')
+  } catch (e) {
+    toast.add({ title: 'Не удалось повторить', description: (e as Error).message, color: 'error' })
+  } finally {
+    reordering.value = false
+  }
+}
 
 // укрупнённый прогресс
 const STAGES = ['Оформление', 'В производстве', 'Упаковка', 'В пути', 'Доставлен']
@@ -33,6 +59,22 @@ const stageIndex = (s: OrderStatus): number => {
 const current = computed(() => stageIndex(order.value!.status as OrderStatus))
 const isSpecial = computed(() => current.value === -1)
 const shortId = (s: string) => s.slice(0, 8)
+
+// чек об оплате (§3.1). fiscal_receipt пишет apply_paid при подтверждении оплаты.
+interface FiscalReceipt {
+  status?: string
+  provider?: string
+  provider_txn?: string
+  amount?: number
+  currency?: string
+  issued_at?: string
+  note?: string
+}
+const receipt = computed(() => (order.value?.fiscal_receipt ?? null) as FiscalReceipt | null)
+const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(Math.round(n))
+function printReceipt() {
+  if (import.meta.client) window.print()
+}
 </script>
 
 <template>
@@ -75,6 +117,24 @@ const shortId = (s: string) => s.slice(0, 8)
       </div>
     </div>
 
-    <UButton to="/account/orders" color="neutral" variant="ghost" icon="i-lucide-arrow-left">Все заказы</UButton>
+    <!-- чек об оплате (§3.1) -->
+    <div v-if="order.paid_at" class="border border-ink-gray-200 rounded-lg p-4 space-y-1">
+      <div class="flex items-center justify-between">
+        <p class="ink-label text-ink-gray-600">Чек об оплате</p>
+        <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-printer" @click="printReceipt">Печать</UButton>
+      </div>
+      <p class="font-semibold">{{ fmt(order.total) }} {{ order.currency }}</p>
+      <p class="text-caption text-ink-gray-600">Оплачено: {{ new Date(order.paid_at).toLocaleString('ru') }}</p>
+      <p v-if="receipt?.provider_txn" class="text-caption text-ink-gray-600">Транзакция: {{ receipt.provider_txn }}</p>
+      <p v-if="receipt?.status === 'pending_fiscalization'" class="text-caption text-ink-gray-400">
+        Фискальный чек ОФД будет доступен после фискализации.
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+      <UButton to="/account/orders" color="neutral" variant="ghost" icon="i-lucide-arrow-left">Все заказы</UButton>
+      <UButton color="primary" variant="subtle" icon="i-lucide-repeat" :loading="reordering" @click="onReorder">Повторить заказ</UButton>
+      <UButton to="/catalog" color="neutral" variant="ghost" icon="i-lucide-shopping-bag">В каталог</UButton>
+    </div>
   </section>
 </template>

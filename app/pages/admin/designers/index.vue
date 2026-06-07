@@ -1,0 +1,169 @@
+<script setup lang="ts">
+// Дизайнеры CRM (§6.3): список, очередь модерации принтов, выплаты.
+definePageMeta({ layout: 'admin', middleware: 'admin-role' })
+const fin = useFinance()
+const toast = useToast()
+
+const { data, refresh, pending } = await useAsyncData('admin-designers', async () => {
+  const [designers, queue, payouts, invites] = await Promise.all([
+    fin.designers(), fin.moderationQueue(), fin.payouts('requested'), fin.invitations(),
+  ])
+  return { designers, queue, payouts, invites }
+})
+
+const money = (n: number) => `${Math.round(n).toLocaleString('ru')} ₸`
+
+// приглашения дизайнеров (§7.5)
+const invite = reactive({ email: '', royalty: 20, note: '' })
+const inviting = ref(false)
+const site = computed(() => import.meta.client ? window.location.origin : '')
+function inviteLink(token: string) { return `${site.value}/invite/${token}` }
+
+async function sendInvite() {
+  if (!invite.email.trim()) { toast.add({ title: 'Введите email', color: 'warning' }); return }
+  inviting.value = true
+  try {
+    await fin.createInvite(invite.email.trim(), invite.royalty, invite.note.trim() || undefined)
+    Object.assign(invite, { email: '', royalty: 20, note: '' })
+    await refresh()
+    toast.add({ title: 'Приглашение создано', color: 'success' })
+  } catch (e) {
+    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+  } finally { inviting.value = false }
+}
+async function copyLink(token: string) {
+  try {
+    await navigator.clipboard.writeText(inviteLink(token))
+    toast.add({ title: 'Ссылка скопирована', color: 'success' })
+  } catch {
+    toast.add({ title: inviteLink(token), color: 'info' })
+  }
+}
+async function revoke(id: string) {
+  try { await fin.revokeInvite(id); await refresh() }
+  catch (e) { toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' }) }
+}
+const inviteBadge = (s: string) => s === 'joined' ? 'success' : s === 'revoked' ? 'error' : 'warning'
+const inviteLabel: Record<string, string> = { invited: 'Ожидает', joined: 'Активирован', revoked: 'Отозван' }
+
+const busy = ref<string | null>(null)
+async function moderate(id: string, status: 'approved' | 'rejected') {
+  busy.value = id
+  try {
+    let note: string | undefined
+    if (status === 'rejected') { note = window.prompt('Причина отклонения:') ?? undefined }
+    await fin.moderatePrint(id, status, note)
+    await refresh()
+    toast.add({ title: status === 'approved' ? 'Принт одобрен' : 'Принт отклонён', color: status === 'approved' ? 'success' : 'warning' })
+  } catch (e) {
+    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+  } finally { busy.value = null }
+}
+async function payout(id: string) {
+  busy.value = id
+  try {
+    await fin.markPaid(id)
+    await refresh()
+    toast.add({ title: 'Выплата отмечена проведённой', color: 'success' })
+  } catch (e) {
+    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+  } finally { busy.value = null }
+}
+</script>
+
+<template>
+  <div class="space-y-8">
+    <div>
+      <UiSectionLabel accent>Опора №2</UiSectionLabel>
+      <h1 class="ink-display text-h2 mt-1">Дизайнеры</h1>
+    </div>
+
+    <div v-if="pending" class="py-6 text-ink-gray-600">Загрузка…</div>
+    <template v-else>
+      <!-- очередь модерации -->
+      <section v-if="data?.queue?.length">
+        <UiSectionLabel accent>На модерации ({{ data.queue.length }})</UiSectionLabel>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-3">
+          <div v-for="p in data.queue" :key="p.id" class="border border-ink-warning/40 rounded-lg overflow-hidden">
+            <div class="aspect-square bg-ink-gray-200"><img v-if="p.thumbnail_url" :src="p.thumbnail_url" :alt="p.title" class="w-full h-full object-contain"></div>
+            <div class="p-2 space-y-1">
+              <p class="text-caption font-semibold truncate">{{ p.title }}</p>
+              <div class="flex gap-1">
+                <UButton size="xs" color="success" variant="subtle" icon="i-lucide-check" :loading="busy === p.id" @click="moderate(p.id, 'approved')" />
+                <UButton size="xs" color="error" variant="ghost" icon="i-lucide-x" :loading="busy === p.id" @click="moderate(p.id, 'rejected')" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- заявки на выплату -->
+      <section v-if="data?.payouts?.length">
+        <UiSectionLabel accent>Заявки на выплату ({{ data.payouts.length }})</UiSectionLabel>
+        <div class="mt-3 border border-ink-gray-200 rounded-lg divide-y divide-ink-gray-200 text-caption">
+          <div v-for="p in data.payouts" :key="p.id" class="flex items-center justify-between p-3">
+            <span>{{ new Date(p.requested_at).toLocaleDateString('ru') }}</span>
+            <span class="font-semibold">{{ money(Number(p.amount)) }}</span>
+            <UButton size="xs" color="primary" variant="subtle" :loading="busy === p.id" @click="payout(p.id)">Отметить выплаченной</UButton>
+          </div>
+        </div>
+      </section>
+
+      <!-- приглашения дизайнеров (закрытый старт §7.5) -->
+      <section>
+        <UiSectionLabel accent>Приглашения</UiSectionLabel>
+        <div class="mt-3 grid lg:grid-cols-[1fr_320px] gap-6">
+          <div>
+            <div v-if="!data?.invites?.length" class="py-4 text-ink-gray-600 text-caption">Приглашений пока нет.</div>
+            <table v-else class="w-full text-caption">
+              <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
+                <th class="text-left py-2">Email</th><th class="text-right">Ставка</th><th class="text-left pl-3">Статус</th><th></th>
+              </tr></thead>
+              <tbody>
+                <tr v-for="inv in data.invites" :key="inv.id" class="border-b border-ink-gray-200/60">
+                  <td class="py-2">{{ inv.email }}<span v-if="inv.note" class="block text-ink-gray-500">{{ inv.note }}</span></td>
+                  <td class="text-right">{{ inv.royalty_pct }}%</td>
+                  <td class="pl-3"><UBadge :color="inviteBadge(inv.status)" variant="subtle" size="xs">{{ inviteLabel[inv.status] }}</UBadge></td>
+                  <td class="text-right whitespace-nowrap">
+                    <UButton v-if="inv.status === 'invited'" size="xs" color="neutral" variant="ghost" icon="i-lucide-link" @click="copyLink(inv.token)">Ссылка</UButton>
+                    <UButton v-if="inv.status === 'invited'" size="xs" color="error" variant="ghost" icon="i-lucide-x" @click="revoke(inv.id)" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <aside class="border border-ink-gray-200 rounded-lg p-4 h-fit space-y-3">
+            <UiSectionLabel>Пригласить дизайнера</UiSectionLabel>
+            <UFormField label="Email"><UInput v-model="invite.email" type="email" placeholder="designer@mail.kz" class="w-full" /></UFormField>
+            <UFormField label="Ставка роялти, %"><UInput v-model.number="invite.royalty" type="number" class="w-full" /></UFormField>
+            <UFormField label="Заметка (необязательно)"><UInput v-model="invite.note" placeholder="как договорились" class="w-full" /></UFormField>
+            <UButton color="primary" block icon="i-lucide-user-plus" :loading="inviting" @click="sendInvite">Создать приглашение</UButton>
+            <p class="text-caption text-ink-gray-500">Отправьте дизайнеру ссылку-приглашение. После входа он станет дизайнером с этой ставкой.</p>
+          </aside>
+        </div>
+      </section>
+
+      <!-- список дизайнеров -->
+      <section>
+        <UiSectionLabel accent>Все дизайнеры</UiSectionLabel>
+        <div v-if="!data?.designers?.length" class="py-4 text-ink-gray-600 text-caption">Дизайнеров пока нет. Назначьте роль через «Пользователи».</div>
+        <table v-else class="w-full text-caption mt-3">
+          <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
+            <th class="text-left py-2">Псевдоним</th><th class="text-left">Статус</th><th class="text-right">Ставка</th>
+            <th class="text-right">Заработано</th><th class="text-right">К выплате</th><th></th>
+          </tr></thead>
+          <tbody>
+            <tr v-for="d in data.designers" :key="d.id" class="border-b border-ink-gray-200/60">
+              <td class="py-2 font-semibold">{{ d.display_name || '—' }}</td>
+              <td><UBadge :color="d.status === 'active' ? 'success' : 'neutral'" variant="subtle" size="xs">{{ d.status }}</UBadge></td>
+              <td class="text-right">{{ d.royalty_pct }}%</td>
+              <td class="text-right">{{ money(d.total_earned) }}</td>
+              <td class="text-right font-semibold text-ink-burgundy">{{ money(d.available) }}</td>
+              <td class="text-right"><UButton :to="`/admin/designers/${d.id}`" size="xs" color="neutral" variant="ghost" icon="i-lucide-arrow-right" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </template>
+  </div>
+</template>

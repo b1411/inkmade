@@ -2,12 +2,20 @@
 // Админ-кабинет /admin (§8.2). Роль admin (middleware F0-13). Светлый контекст.
 const nav = [
   { label: 'Дашборд', to: '/admin', icon: 'i-lucide-layout-dashboard' },
+  { label: 'Финансы', to: '/admin/finance', icon: 'i-lucide-wallet' },
+  { label: 'Дизайнеры', to: '/admin/designers', icon: 'i-lucide-palette' },
+  { label: 'Заказы', to: '/admin/orders', icon: 'i-lucide-receipt' },
+  { label: 'Возвраты', to: '/admin/returns', icon: 'i-lucide-undo-2' },
   { label: 'Категории', to: '/admin/categories', icon: 'i-lucide-folder-tree' },
   { label: 'Товары', to: '/admin/products', icon: 'i-lucide-shirt' },
   { label: 'Принты', to: '/admin/prints', icon: 'i-lucide-image' },
-  { label: 'Заказы', to: '/admin/orders', icon: 'i-lucide-receipt' },
   { label: 'Склад', to: '/admin/stock', icon: 'i-lucide-boxes' },
+  { label: 'Ценообразование', to: '/admin/pricing', icon: 'i-lucide-tags' },
+  { label: 'Контент', to: '/admin/content', icon: 'i-lucide-newspaper' },
+  { label: 'Юр. документы', to: '/admin/legal', icon: 'i-lucide-scale' },
   { label: 'Пользователи', to: '/admin/users', icon: 'i-lucide-users' },
+  { label: 'Аудит', to: '/admin/audit', icon: 'i-lucide-history' },
+  { label: 'Настройки', to: '/admin/settings', icon: 'i-lucide-settings' },
 ]
 </script>
 

@@ -11,12 +11,52 @@ const toast = useToast()
 const form = reactive({ full_name: '', email: '', phone: '', city: 'Алматы', address: '' })
 const paying = ref(false)
 
-onMounted(() => {
+const { list: listAddresses } = useAddresses()
+onMounted(async () => {
   cart.load()
-  if (!cart.items.value.length) navigateTo('/cart')
+  if (!cart.items.value.length) return navigateTo('/cart')
   // предзаполняем email из аккаунта (можно изменить)
   if (user.value?.email) form.email = user.value.email
+  // подставляем дефолтный адрес доставки (CRM §3.1)
+  try {
+    const addrs = await listAddresses()
+    const def = addrs?.find(a => a.is_default) ?? addrs?.[0]
+    if (def) {
+      form.full_name = def.full_name ?? form.full_name
+      form.phone = def.phone ?? form.phone
+      form.city = def.city ?? form.city
+      form.address = def.address ?? form.address
+    }
+  } catch { /* адреса не критичны для оформления */ }
 })
+
+// промокод (§6.7): серверный предпросмотр скидки, авторитетный расчёт — при оформлении
+const promo = reactive({ code: '', discount: 0, applied: '', checking: false, error: '' })
+const finalTotal = computed(() => Math.max(0, cart.total.value - promo.discount))
+async function applyPromo() {
+  if (!promo.code.trim()) return
+  promo.checking = true
+  promo.error = ''
+  try {
+    const res = await $fetch<{ valid: boolean; discount?: number; code?: string }>('/api/promo/validate', {
+      method: 'POST',
+      body: { code: promo.code.trim(), subtotal: cart.total.value },
+    })
+    if (res.valid && res.discount) {
+      promo.discount = res.discount
+      promo.applied = res.code ?? promo.code.trim()
+      toast.add({ title: `Промокод применён: −${res.discount.toLocaleString('ru')} ₸`, color: 'success' })
+    } else {
+      promo.discount = 0
+      promo.applied = ''
+      promo.error = 'Промокод недействителен или не подходит к заказу'
+    }
+  } catch {
+    promo.error = 'Не удалось проверить промокод'
+  } finally {
+    promo.checking = false
+  }
+}
 
 // телефон: ≥10 цифр (KZ-формат +7 7xx ...); email: базовый паттерн
 const phoneDigits = computed(() => form.phone.replace(/\D/g, ''))
@@ -34,7 +74,7 @@ async function onPay() {
   paying.value = true
   try {
     useAnalytics().initiateCheckout(cart.total.value)
-    const { orderId } = await createFromCart(cart.items.value, { ...form })
+    const { orderId } = await createFromCart(cart.items.value, { ...form }, promo.applied || undefined)
     const { payUrl } = await $fetch<{ payUrl: string }>('/api/payment/create', {
       method: 'POST',
       body: { orderId },
@@ -83,8 +123,28 @@ async function onPay() {
         <span>{{ i.title }} ({{ i.size }}) ×{{ i.quantity }}</span>
         <span>{{ i.unitPrice * i.quantity }} ₸</span>
       </div>
+      <!-- промокод -->
+      <div class="border-t border-ink-gray-200 pt-3 space-y-2">
+        <div class="flex gap-2">
+          <UInput v-model="promo.code" placeholder="Промокод" size="sm" class="flex-1" :disabled="!!promo.applied" />
+          <UButton
+            v-if="!promo.applied" size="sm" color="neutral" variant="subtle"
+            :loading="promo.checking" @click="applyPromo"
+          >Применить</UButton>
+          <UButton
+            v-else size="sm" color="neutral" variant="ghost" icon="i-lucide-x"
+            @click="promo.code = ''; promo.discount = 0; promo.applied = ''"
+          />
+        </div>
+        <p v-if="promo.error" class="text-caption text-ink-error">{{ promo.error }}</p>
+        <p v-if="promo.applied" class="text-caption text-ink-success">Код «{{ promo.applied }}» применён</p>
+      </div>
+
+      <div v-if="promo.discount" class="flex justify-between text-caption text-ink-success">
+        <span>Скидка</span><span>−{{ promo.discount.toLocaleString('ru') }} ₸</span>
+      </div>
       <div class="flex justify-between border-t border-ink-gray-200 pt-3 font-semibold">
-        <span>Итого</span><span class="text-ink-burgundy">{{ cart.total.value }} ₸</span>
+        <span>Итого</span><span class="text-ink-burgundy">{{ finalTotal.toLocaleString('ru') }} ₸</span>
       </div>
       <UButton color="primary" size="lg" block icon="i-lucide-credit-card" :loading="paying" :disabled="!formValid" @click="onPay">
         Перейти к оплате

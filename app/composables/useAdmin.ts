@@ -113,6 +113,60 @@ export const useAdmin = () => {
     return product.id
   }
 
+  // ── Заказы (админ видит финансы: цена, себестоимость, маржа §6.4) ──
+  async function getOrderAdmin(id: string) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`*,
+        order_items(*,
+          designs(id, spec, preview_url, original_url, moderation_status),
+          variants(color_name, color_hex, size, sku, products(title))
+        ),
+        order_status_log(*)`)
+      .eq('id', id)
+      .single()
+    if (error) throw error
+    return data
+  }
+
+  /** Себестоимость заготовки варианта (для маржи и cogs, §6.2). */
+  async function setVariantCost(variantId: string, blankCost: number) {
+    const { error } = await supabase.from('variants').update({ blank_cost: blankCost }).eq('id', variantId)
+    if (error) throw error
+  }
+
+  // ── Промокоды (§6.7) ────────────────────────────────────────────
+  async function listPromos() {
+    const { data, error } = await supabase.from('promo_codes').select('*').order('created_at', { ascending: false })
+    if (error) throw error
+    return data
+  }
+
+  async function createPromo(payload: {
+    code: string; discount_type: 'percent' | 'fixed'; discount_value: number
+    min_order?: number; max_uses?: number | null; expires_at?: string | null
+  }) {
+    const { error } = await supabase.from('promo_codes').insert({
+      code: payload.code.trim().toUpperCase(),
+      discount_type: payload.discount_type,
+      discount_value: payload.discount_value,
+      min_order: payload.min_order ?? 0,
+      max_uses: payload.max_uses ?? null,
+      expires_at: payload.expires_at ?? null,
+    })
+    if (error) throw error
+  }
+
+  async function togglePromo(id: string, active: boolean) {
+    const { error } = await supabase.from('promo_codes').update({ active }).eq('id', id)
+    if (error) throw error
+  }
+
+  async function deletePromo(id: string) {
+    const { error } = await supabase.from('promo_codes').delete().eq('id', id)
+    if (error) throw error
+  }
+
   // ── Материалы (метод/режим выводятся из ткани, §5.2.1) ──────────
   async function addMaterial(productId: string, input: { name: string; fabric: FabricType; surcharge?: number; method?: string }) {
     const payload: TablesInsert<'materials'> = {
@@ -232,6 +286,12 @@ export const useAdmin = () => {
     updateProduct,
     deleteProduct,
     setPublished,
+    getOrderAdmin,
+    setVariantCost,
+    listPromos,
+    createPromo,
+    togglePromo,
+    deletePromo,
     createFromTemplate,
     addMaterial,
     deleteMaterial,

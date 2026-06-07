@@ -17,6 +17,23 @@ const { data: orders, pending } = await useAsyncData('account-orders', async () 
 
 const badge = (s: string) => s === 'delivered' ? 'success' : s === 'cancelled' || s === 'refunded' ? 'error' : 'neutral'
 const shortId = (s: string) => s.slice(0, 8)
+
+// повтор заказа в один клик из списка (CRM §3.2)
+const { reorder } = useOrder()
+const toast = useToast()
+const reordering = ref<string | null>(null)
+async function onReorder(orderId: string) {
+  reordering.value = orderId
+  try {
+    const n = await reorder(orderId)
+    toast.add({ title: `Добавлено в корзину: ${n}`, color: 'success' })
+    await navigateTo('/cart')
+  } catch (e) {
+    toast.add({ title: 'Не удалось повторить', description: (e as Error).message, color: 'error' })
+  } finally {
+    reordering.value = null
+  }
+}
 </script>
 
 <template>
@@ -40,9 +57,16 @@ const shortId = (s: string) => s.slice(0, 8)
           <p class="ink-label">#{{ shortId(o.id) }}</p>
           <p class="text-caption text-ink-gray-600">{{ new Date(o.created_at).toLocaleDateString('ru') }} · {{ o.order_items?.length ?? 0 }} поз.</p>
         </div>
-        <div class="text-right">
-          <UBadge :color="badge(o.status)" variant="subtle">{{ CUSTOMER_STATUS[o.status as OrderStatus] }}</UBadge>
-          <p class="font-semibold mt-1">{{ o.total }} {{ o.currency }}</p>
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <UBadge :color="badge(o.status)" variant="subtle">{{ CUSTOMER_STATUS[o.status as OrderStatus] }}</UBadge>
+            <p class="font-semibold mt-1">{{ o.total }} {{ o.currency }}</p>
+          </div>
+          <UButton
+            size="xs" color="primary" variant="subtle" icon="i-lucide-repeat"
+            :loading="reordering === o.id"
+            @click.prevent.stop="onReorder(o.id)"
+          >Повторить</UButton>
         </div>
       </NuxtLink>
     </div>

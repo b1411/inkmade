@@ -21,6 +21,7 @@ export interface Placement {
   // image
   source?: 'upload' | 'library'
   assetUrl?: string
+  printId?: string // id принта из библиотеки (для атрибуции роялти дизайнеру)
   naturalW?: number // пиксели исходника (для DPI/пропорций)
   naturalH?: number
   // text
@@ -99,7 +100,7 @@ export const useDesign = () => {
   let seq = 0
   function nextId() { return `pl_${Date.now()}_${seq++}` }
 
-  function addImage(assetUrl: string, naturalW: number, naturalH: number, source: 'upload' | 'library') {
+  function addImage(assetUrl: string, naturalW: number, naturalH: number, source: 'upload' | 'library', printId?: string) {
     const r = zoneRect.value
     // вписываем в зону, сохраняя пропорции, до 70% ширины зоны
     const targetW = r.width * 0.7
@@ -111,7 +112,7 @@ export const useDesign = () => {
     const fw = w * fitScale
     const fh = h * fitScale
     const pl: Placement = {
-      id: nextId(), kind: 'image', source, assetUrl, naturalW, naturalH,
+      id: nextId(), kind: 'image', source, assetUrl, printId, naturalW, naturalH,
       x: r.x + (r.width - fw) / 2,
       y: r.y + (r.height - fh) / 2,
       width: fw, height: fh, rotation: 0,
@@ -170,6 +171,8 @@ export const useDesign = () => {
       print_method: material.value?.print_method as PrintMethod,
       px_per_mm: +pxPerMm.value.toFixed(4),
       composition_url: compositionUrl.value,
+      // принт из библиотеки → атрибуция роялти дизайнеру (CRM §7.3)
+      print_id: placements.value.find(p => p.printId)?.printId ?? null,
     }
   }
 

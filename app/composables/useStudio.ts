@@ -1,35 +1,58 @@
 import type { Database } from '~/types/database.types'
 import type { OrderStatus } from '~~/shared/config/order-status'
 
+// Производственная карточка (§5.2) — только безопасные поля из RPC studio_get_order.
+export interface StudioOrderItem {
+  id: string
+  quantity: number
+  print_method: string | null
+  designs: {
+    id: string
+    spec: unknown
+    original_url: string | null
+    preview_url: string | null
+    moderation_status: string
+  } | null
+  variants: {
+    color_name: string
+    color_hex: string
+    size: string
+    sku: string
+    products: { title: string } | null
+    materials: { name: string; print_method: string; print_mode: string } | null
+  } | null
+}
+export interface StudioOrder {
+  id: string
+  status: OrderStatus
+  created_at: string
+  tracking_no: string | null
+  carrier: string | null
+  shipping_addr: Record<string, unknown> | null
+  order_items: StudioOrderItem[]
+  order_status_log: { id: string; from_status: string | null; to_status: string; note: string | null; created_at: string }[]
+}
+
 // Производственный кабинет (§8.3). Очередь оплаченных заказов + Realtime.
 export const useStudio = () => {
   const supabase = useSupabaseClient<Database>()
 
-  /** Очередь: оплаченные заказы (RLS staff отдаёт paid+). */
+  // Оператор НЕ видит финансы (§5.2). RLS построчный, не поколоночный, поэтому
+  // данные заказа отдаёт SECURITY DEFINER RPC только с производственными полями
+  // (без total/unit_price/unit_cost). Прямое чтение order_items закрыто до admin (0029).
+
+  /** Очередь: оплаченные заказы, безопасные колонки + счётчик позиций. */
   async function listQueue() {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('id, status, total, created_at, tracking_no, carrier, order_items(id)')
-      .not('paid_at', 'is', null)
-      .order('created_at', { ascending: true })
+    const { data, error } = await supabase.rpc('studio_list_queue')
     if (error) throw error
-    return data
+    return data ?? []
   }
 
-  /** Карточка заказа для цеха: позиции, спецификация в мм, заготовка, метод/режим. */
+  /** Карточка заказа для цеха: позиции, спецификация в мм, заготовка, метод/режим — без денег. */
   async function getOrder(id: string) {
-    const { data, error } = await supabase
-      .from('orders')
-      .select(`*,
-        order_items(*,
-          designs(id, spec, original_url, preview_url, moderation_status),
-          variants(color_name, color_hex, size, sku, products(title), materials(name, print_method, print_mode))
-        ),
-        order_status_log(*)`)
-      .eq('id', id)
-      .single()
+    const { data, error } = await supabase.rpc('studio_get_order', { p_id: id })
     if (error) throw error
-    return data
+    return data as unknown as StudioOrder
   }
 
   /** Модерация дизайна (P2.14) — серверный эндпоинт со staff-проверкой. */

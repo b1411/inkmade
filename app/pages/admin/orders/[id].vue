@@ -7,10 +7,21 @@ definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 
 const route = useRoute()
 const id = route.params.id as string
-const { getOrder, changeStatus } = useStudio()
+const { getOrderAdmin } = useAdmin()
+const { changeStatus } = useStudio()
+const { refundOrder } = useFinance()
 const toast = useToast()
 
-const { data: order, refresh } = await useAsyncData(`admin-order-${id}`, () => getOrder(id))
+const { data: order, refresh } = await useAsyncData(`admin-order-${id}`, () => getOrderAdmin(id))
+
+// маржа по заказу (§6.2): выручка позиций − себестоимость позиций
+const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(Math.round(n))
+const margin = computed(() => {
+  const items = order.value?.order_items ?? []
+  const revenue = items.reduce((s, it) => s + Number(it.unit_price) * it.quantity, 0)
+  const cost = items.reduce((s, it) => s + Number(it.unit_cost) * it.quantity, 0)
+  return { revenue, cost, profit: revenue - cost }
+})
 
 const nextStates = computed<OrderStatus[]>(() => TRANSITIONS[(order.value?.status as OrderStatus) ?? 'paid'] ?? [])
 const modal = reactive({ open: false, to: '' as OrderStatus, note: '', trackingNo: '', carrier: '' })
@@ -23,7 +34,9 @@ function start(to: OrderStatus) {
 async function perform(to: OrderStatus, opts?: { note?: string; trackingNo?: string; carrier?: string }) {
   busy.value = true
   try {
-    await changeStatus(id, to, opts)
+    // возврат идёт через refund_order: статус + реверс роялти + леджер (§7.3)
+    if (to === 'refunded') await refundOrder(id, opts?.note)
+    else await changeStatus(id, to, opts)
     toast.add({ title: `Статус: ${STATUS_LABELS[to]}`, color: 'success' })
     modal.open = false
     await refresh()
@@ -48,10 +61,32 @@ const shortId = (s: string) => s.slice(0, 8)
 
     <div class="grid lg:grid-cols-[1fr_300px] gap-8">
       <div class="space-y-4">
-        <!-- позиции -->
+        <!-- позиции с маржой (§6.4: admin видит цену, себестоимость, прибыль) -->
         <div v-for="it in order.order_items" :key="it.id" class="border border-ink-gray-200 rounded-lg p-4">
           <p class="font-semibold">{{ it.variants?.products?.title }} · {{ it.variants?.color_name }}/{{ it.variants?.size }} ×{{ it.quantity }}</p>
-          <p class="text-caption text-ink-gray-600">{{ it.unit_price }} ₸ · {{ it.print_method }}</p>
+          <p class="text-caption text-ink-gray-600 mt-1">
+            Цена {{ fmt(Number(it.unit_price)) }} ₸ · Себестоимость {{ fmt(Number(it.unit_cost)) }} ₸ ·
+            <span :class="Number(it.unit_price) - Number(it.unit_cost) > 0 ? 'text-ink-burgundy font-semibold' : 'text-ink-error font-semibold'">
+              маржа {{ fmt((Number(it.unit_price) - Number(it.unit_cost)) * it.quantity) }} ₸
+            </span>
+            · {{ it.print_method }}
+          </p>
+        </div>
+
+        <!-- сводка прибыли по заказу -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="border border-ink-gray-200 rounded-lg p-3">
+            <p class="ink-label text-ink-gray-400">Выручка</p>
+            <p class="font-bold mt-1">{{ fmt(margin.revenue) }} ₸</p>
+          </div>
+          <div class="border border-ink-gray-200 rounded-lg p-3">
+            <p class="ink-label text-ink-gray-400">Себестоимость</p>
+            <p class="font-bold mt-1">{{ fmt(margin.cost) }} ₸</p>
+          </div>
+          <div class="border-2 border-ink-burgundy rounded-lg p-3 bg-ink-burgundy/5">
+            <p class="ink-label text-ink-burgundy">Маржа</p>
+            <p class="font-bold text-ink-burgundy mt-1">{{ fmt(margin.profit) }} ₸</p>
+          </div>
         </div>
 
         <!-- адрес + оплата -->
