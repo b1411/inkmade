@@ -21,6 +21,9 @@ const form = reactive({
   description: props.product?.description ?? '',
 })
 
+// items для USelect: value как string, иначе USelect выводит literal-union и конфликтует с form.category: string
+const categoryItems = PRODUCT_CATEGORIES.map(c => ({ value: c.value as string, label: c.label }))
+
 // slug по умолчанию повторяет alias (URL товара ↔ alias конструктора, §7.1.1)
 watch(() => form.alias, (v) => {
   if (!props.product) form.slug = v
@@ -79,7 +82,7 @@ async function onSubmit() {
 
     <div class="grid grid-cols-2 gap-4">
       <UFormField label="Категория" required>
-        <USelect v-model="form.category" :items="PRODUCT_CATEGORIES" value-key="value" class="w-full" />
+        <USelect v-model="form.category" :items="categoryItems" value-key="value" class="w-full" />
       </UFormField>
       <UFormField label="Базовая цена, ₸" required>
         <UInput v-model.number="form.base_price" type="number" min="0" class="w-full" />

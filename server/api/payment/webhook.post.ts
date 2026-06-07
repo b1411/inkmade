@@ -10,7 +10,8 @@ export default defineEventHandler(async (event) => {
   const signature = getHeader(event, 'x-signature') || ''
 
   const config = useRuntimeConfig()
-  const secret = config.paymentWebhookSecret || 'dev-mock-secret'
+  const secret = config.paymentWebhookSecret
+  if (!secret) throw createError({ statusCode: 500, statusMessage: 'PAYMENT_WEBHOOK_SECRET не настроен' })
   const expected = createHmac('sha256', secret).update(raw).digest('hex')
 
   // защита от подделки: сравнение в постоянном времени

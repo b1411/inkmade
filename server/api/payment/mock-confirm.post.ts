@@ -6,6 +6,9 @@ import type { Database } from '~/types/database.types'
 // вызывает реальный webhook (§10) — так поток оплаты тестируется честно,
 // с проверкой подписи. В проде заменяется реальным провайдером.
 export default defineEventHandler(async (event) => {
+  // DEV-ONLY guard: эндпоинт даёт обходной путь к paid — в проде он недоступен (§10, инвариант 2).
+  if (!import.meta.dev) throw createError({ statusCode: 404, statusMessage: 'Not found' })
+
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Требуется вход' })
 
@@ -18,7 +21,8 @@ export default defineEventHandler(async (event) => {
   if (order.user_id !== user.id) throw createError({ statusCode: 403, statusMessage: 'Чужой заказ' })
 
   const config = useRuntimeConfig()
-  const secret = config.paymentWebhookSecret || 'dev-mock-secret'
+  const secret = config.paymentWebhookSecret
+  if (!secret) throw createError({ statusCode: 500, statusMessage: 'PAYMENT_WEBHOOK_SECRET не настроен' })
   const raw = JSON.stringify({ orderId, providerTxn: order.payment_id || `mock_${orderId}` })
   const signature = createHmac('sha256', secret).update(raw).digest('hex')
 

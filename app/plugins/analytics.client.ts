@@ -7,11 +7,11 @@ export default defineNuxtPlugin(() => {
   // ── Meta / Instagram Pixel ──────────────────────────────────────
   if (metaPixelId) {
     /* eslint-disable */
-    !function (f: any, b, e, v, n?: any, t?: any, s?: any) {
+    ;(function (f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) {
       if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments) }
       if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = []
       t = b.createElement(e); t.async = !0; t.src = v; s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s)
-    }(w, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js')
+    })(w, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js')
     /* eslint-enable */
     w.fbq('init', metaPixelId)
     w.fbq('track', 'PageView')
@@ -20,7 +20,7 @@ export default defineNuxtPlugin(() => {
   // ── TikTok Pixel ────────────────────────────────────────────────
   if (tiktokPixelId) {
     /* eslint-disable */
-    !function (w2: any, d, t) {
+    ;(function (w2: any, d: any, t: any) {
       w2.TiktokAnalyticsObject = t; const ttq = w2[t] = w2[t] || []
       ttq.methods = ['page', 'track', 'identify', 'instances', 'debug', 'on', 'off', 'once', 'ready', 'alias', 'group', 'enableCookie', 'disableCookie']
       ttq.setAndDefer = function (o: any, m: any) { o[m] = function () { o.push([m].concat(Array.prototype.slice.call(arguments, 0))) } }
@@ -32,7 +32,7 @@ export default defineNuxtPlugin(() => {
         const f = d.getElementsByTagName('script')[0]; f.parentNode!.insertBefore(s, f)
       }
       ttq.load(tiktokPixelId); ttq.page()
-    }(w, document, 'ttq')
+    })(w, document, 'ttq')
     /* eslint-enable */
   }
 })

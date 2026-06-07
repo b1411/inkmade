@@ -12,7 +12,9 @@ async function onSubmit() {
   loading.value = true
   try {
     await signIn(email.value, password.value)
-    const redirect = (route.query.redirect as string) || '/account'
+    // только внутренние пути: защита от open redirect на внешний домен
+    const raw = route.query.redirect as string | undefined
+    const redirect = raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/account'
     await navigateTo(redirect)
   } catch (e) {
     toast.add({ title: 'Не удалось войти', description: (e as Error).message, color: 'error' })

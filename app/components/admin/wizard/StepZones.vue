@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ProductWithRelations } from '~/types/models'
+import type { Json } from '~/types/database.types'
 import type { PrintMode } from '~~/shared/config/print-methods'
 import { DPI_MIN } from '~~/shared/config/zones'
 import { zonePresetsForMode } from '~~/shared/config/zones'
@@ -31,7 +32,7 @@ async function addFromPreset(presetName: string) {
       print_mode: preset.mode,
       name: preset.name,
       title: preset.title,
-      bounds_mm: preset.bounds_mm,
+      bounds_mm: preset.bounds_mm as unknown as Json,
       max_width_mm: preset.max_width_mm,
       max_height_mm: preset.max_height_mm,
       min_dpi: DPI_MIN,
