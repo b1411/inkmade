@@ -2,6 +2,7 @@
 // Админ-кабинет /admin (§8.2). Роль admin (middleware F0-13). Светлый контекст.
 const nav = [
   { label: 'Дашборд', to: '/admin', icon: 'i-lucide-layout-dashboard' },
+  { label: 'Категории', to: '/admin/categories', icon: 'i-lucide-folder-tree' },
   { label: 'Товары', to: '/admin/products', icon: 'i-lucide-shirt' },
   { label: 'Принты', to: '/admin/prints', icon: 'i-lucide-image' },
   { label: 'Заказы', to: '/admin/orders', icon: 'i-lucide-receipt' },

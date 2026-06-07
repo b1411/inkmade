@@ -25,11 +25,3 @@ export interface ProductWithRelations extends Product {
   variants: Variant[]
   product_images: ProductImage[]
 }
-
-export const PRODUCT_CATEGORIES = [
-  { value: 'trikotazh', label: 'Трикотаж' },
-  { value: 'sport', label: 'Спортивная' },
-  { value: 'verhnyaya', label: 'Верхняя' },
-  { value: 'golovnye', label: 'Головные уборы' },
-  { value: 'sumki', label: 'Сумки' },
-] as const

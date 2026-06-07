@@ -1,6 +1,8 @@
-import type { Database, TablesInsert } from '~/types/database.types'
+import type { Database, TablesInsert, Json } from '~/types/database.types'
 import type { FabricType } from '~~/shared/config/print-methods'
 import { defaultMethodForFabric, modeForFabric } from '~~/shared/config/print-methods'
+import { getTemplate } from '~~/shared/config/product-types'
+import { getZonePreset, DPI_MIN } from '~~/shared/config/zones'
 
 // CRUD каталога для админ-кабинета (§8.2). Пишет напрямую в Supabase под RLS:
 // admin-политики (миграция 0004/0005) разрешают запись только роли admin (§3.2, §5.4).
@@ -63,6 +65,52 @@ export const useAdmin = () => {
   /** Публикация/снятие (шаг 6, §8.2.1). */
   async function setPublished(id: string, isActive: boolean) {
     return updateProduct(id, { is_active: isActive })
+  }
+
+  /**
+   * Создать товар-черновик из шаблона типа изделия (каркас каталога, §6):
+   * сразу заводит материал, матрицу вариантов цвет×размер и зоны печати.
+   * Админу остаётся загрузить фото/мокапы, выставить остаток и опубликовать.
+   */
+  async function createFromTemplate(templateKey: string, title?: string) {
+    const t = getTemplate(templateKey)
+    if (!t) throw new Error('Шаблон типа изделия не найден')
+    const slug = `${t.key}-${Math.random().toString(36).slice(2, 7)}`
+    const product = await createProduct({
+      title: title?.trim() || t.title,
+      slug,
+      alias: slug,
+      category: t.categorySlug,
+      base_price: t.basePrice,
+      max_print_mm: t.maxPrintMm as unknown as Json,
+      max_size_label: t.sizes[t.sizes.length - 1],
+      description: t.description,
+      is_active: false,
+    })
+    const material = await addMaterial(product.id, {
+      name: t.fabric === 'cotton' ? 'Хлопок' : 'Синтетика',
+      fabric: t.fabric,
+    })
+    await generateVariants(
+      product.id, slug, material.id,
+      t.colors.map(c => ({ name: c.name, hex: c.hex })),
+      t.sizes, 0,
+    )
+    for (const zoneName of t.zonePresets) {
+      const preset = getZonePreset(zoneName)
+      if (!preset) continue
+      await addZone(product.id, {
+        print_mode: preset.mode,
+        name: preset.name,
+        title: preset.title,
+        bounds_mm: preset.bounds_mm as unknown as Json,
+        max_width_mm: preset.max_width_mm,
+        max_height_mm: preset.max_height_mm,
+        min_dpi: DPI_MIN,
+        placement_hint: preset.placement_hint ?? null,
+      })
+    }
+    return product.id
   }
 
   // ── Материалы (метод/режим выводятся из ткани, §5.2.1) ──────────
@@ -184,6 +232,7 @@ export const useAdmin = () => {
     updateProduct,
     deleteProduct,
     setPublished,
+    createFromTemplate,
     addMaterial,
     deleteMaterial,
     generateVariants,

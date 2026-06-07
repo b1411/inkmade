@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { PRODUCT_CATEGORIES } from '~/types/models'
-
-// Товары категории (§6). SSR для SEO.
+// Товары категории (§6). SSR для SEO. Категория проверяется по БД.
 const route = useRoute()
 const category = route.params.category as string
 const { listByCategory } = useCatalog()
+const { listActive } = useCategories()
 
-const known = PRODUCT_CATEGORIES.find(c => c.value === category)
-if (!known) throw createError({ statusCode: 404, statusMessage: 'Категория не найдена' })
-const label = known.label
+const { data: cat } = await useAsyncData(`cat-${category}`, async () => {
+  const cats = await listActive()
+  return cats.find(c => c.slug === category) ?? null
+})
+if (!cat.value) throw createError({ statusCode: 404, statusMessage: 'Категория не найдена' })
+const label = cat.value.title
 useSeoMeta({
   title: `${label} — INKMADE`,
   description: `${label} с печатью вашего принта по требованию. Кастомизируй в браузере и закажи от одной штуки — INKMADE.`,

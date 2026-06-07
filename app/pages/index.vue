@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { PRODUCT_CATEGORIES } from '~/types/models'
-
 // Лендинг (§6). Визуальный язык референса, бизнес-логика — B2C self-service.
 useHead({ title: 'INKMADE — печать своего принта на одежде' })
 
 const { listAll } = useCatalog()
 const { data: examples } = await useAsyncData('landing-examples', () => listAll())
 
-const categoryIcons: Record<string, string> = {
-  trikotazh: 'i-lucide-shirt', sport: 'i-lucide-activity', verhnyaya: 'i-lucide-layers',
-  golovnye: 'i-lucide-hard-hat', sumki: 'i-lucide-shopping-bag',
-}
+const { listActive } = useCategories()
+const { data: categories } = await useAsyncData('landing-categories', () => listActive())
+
 function primaryImage(p: { product_images?: { url: string; is_primary: boolean }[] }) {
   const imgs = p.product_images ?? []
   return imgs.find(i => i.is_primary)?.url ?? imgs[0]?.url
@@ -42,18 +39,18 @@ function primaryImage(p: { product_images?: { url: string; is_primary: boolean }
     </section>
 
     <!-- категории плитками -->
-    <section class="py-8">
+    <section v-if="categories?.length" class="py-8">
       <UiSectionLabel accent>Каталог</UiSectionLabel>
       <h2 class="ink-display text-h2 mt-2 mb-6">Категории</h2>
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <NuxtLink
-          v-for="c in PRODUCT_CATEGORIES"
-          :key="c.value"
-          :to="`/catalog/${c.value}`"
-          class="group border border-ink-gray-200 rounded-lg p-6 flex flex-col items-center gap-3 hover:border-ink-burgundy hover:shadow-md transition-all"
+          v-for="c in categories"
+          :key="c.id"
+          :to="`/catalog/${c.slug}`"
+          class="group border border-ink-gray-200 rounded-lg p-6 flex flex-col items-center gap-3 hover:border-ink-burgundy hover:shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-burgundy"
         >
-          <UIcon :name="categoryIcons[c.value] ?? 'i-lucide-package'" class="size-9 text-ink-burgundy" />
-          <span class="font-semibold text-center">{{ c.label }}</span>
+          <UIcon :name="c.icon ?? 'i-lucide-package'" class="size-9 text-ink-burgundy" />
+          <span class="font-semibold text-center">{{ c.title }}</span>
         </NuxtLink>
       </div>
     </section>

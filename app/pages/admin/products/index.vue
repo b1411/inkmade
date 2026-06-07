@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { PRODUCT_CATEGORIES } from '~/types/models'
-
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 
 const { listProducts, deleteProduct } = useAdmin()
+const { listAll: listCategories } = useCategories()
 const toast = useToast()
 
 const { data: products, refresh, pending } = await useAsyncData('admin-products', () => listProducts())
+const { data: categories } = await useAsyncData('admin-products-cats', () => listCategories())
 
 const categoryLabel = (v: string) =>
-  PRODUCT_CATEGORIES.find(c => c.value === v)?.label ?? v
+  categories.value?.find(c => c.slug === v)?.title ?? v
 
 async function onDelete(id: string, title: string) {
   if (!confirm(`Удалить товар «${title}»? Действие необратимо.`)) return

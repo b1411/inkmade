@@ -62,6 +62,17 @@ export const ZONAL_ZONE_PRESETS: ZonePreset[] = [
   },
 ]
 
+// Небольшая фронтальная зона для головных уборов (кепка).
+export const CAP_FRONT_PRESET: ZonePreset = {
+  name: 'cap_front',
+  title: 'Перёд кепки',
+  mode: 'zonal',
+  bounds_mm: { x: 0, y: 0, width: 120, height: 80 },
+  max_width_mm: 120,
+  max_height_mm: 80,
+  placement_hint: 'Небольшой лого или надпись по центру передней панели.',
+}
+
 // Единственная зона для fullprint-материалов (синтетика).
 export const FULLPRINT_ZONE_PRESET: ZonePreset = {
   name: 'fullprint',
@@ -76,6 +87,18 @@ export const FULLPRINT_ZONE_PRESET: ZonePreset = {
 /** Пресеты зон по режиму печати (для мастера товара). */
 export function zonePresetsForMode(mode: PrintMode): ZonePreset[] {
   return mode === 'fullprint' ? [FULLPRINT_ZONE_PRESET] : ZONAL_ZONE_PRESETS
+}
+
+// Все известные пресеты (для создания товара из шаблона по имени зоны).
+export const ALL_ZONE_PRESETS: ZonePreset[] = [
+  ...ZONAL_ZONE_PRESETS,
+  CAP_FRONT_PRESET,
+  FULLPRINT_ZONE_PRESET,
+]
+
+/** Найти пресет зоны по машинному имени. */
+export function getZonePreset(name: string): ZonePreset | undefined {
+  return ALL_ZONE_PRESETS.find(z => z.name === name)
 }
 
 /**
