@@ -10,8 +10,10 @@
 
 @theme static {
   /* ── Шрифты (§2.3) ───────────────────────────────────────────── */
-  /* Дисплейный — ТОЛЬКО латиница и крупные заголовки. Кириллицу не набирать. */
-  --font-display: "Permanent Marker", "Bebas Neue", cursive;
+  /* Дисплейный граффити-шрифт. Permanent Marker/Bebas Neue не имеют кириллицы —
+     браузер подбирает шрифт по глифам, поэтому Oswald в цепочке закрывает кириллицу
+     (условный «уличный» постерный вид). Латиница (логотип) → Permanent Marker. */
+  --font-display: "Permanent Marker", "Bebas Neue", "Oswald", "Manrope", sans-serif;
   /* Основной текст и весь UI. Полная кириллица. */
   --font-sans: "Manrope", "Inter", system-ui, sans-serif;
   /* Лейблы/табы/бейджи — разреженный uppercase. */

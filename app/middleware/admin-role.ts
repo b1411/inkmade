@@ -5,7 +5,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
   }
   const { fetchProfile, isAdmin } = useAuth()
-  await fetchProfile()
+  await fetchProfile(true) // принудительно из БД: роль могла измениться (аудит H16)
   if (!isAdmin.value) {
     return navigateTo('/')
   }

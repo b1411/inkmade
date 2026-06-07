@@ -1,5 +1,18 @@
 <script setup lang="ts">
-// Hero (§6): тёмный бордо-фон, граффити H1, CTA ведёт В КОНСТРУКТОР/каталог (не в форму заявки).
+// Hero (§6): тёмный бордо-фон, граффити H1, CTA ведёт В КОНСТРУКТОР (не в форму заявки).
+// «Создать принт» — сразу в конструктор первого доступного товара; иначе в каталог.
+const supabase = useSupabaseClient()
+const { data: featured } = await useAsyncData('hero-featured', async () => {
+  const { data } = await supabase
+    .from('products')
+    .select('alias')
+    .eq('is_active', true)
+    .not('alias', 'is', null)
+    .limit(1)
+    .maybeSingle()
+  return data
+})
+const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.value.alias}` : '/catalog'))
 </script>
 
 <template>
@@ -18,7 +31,7 @@
         Печать по требованию — тираж от одной штуки.
       </p>
       <div class="flex flex-wrap gap-3 mt-8">
-        <UButton to="/catalog" size="xl" color="neutral" class="bg-ink-cream text-ink-black hover:bg-ink-cream-dark">
+        <UButton :to="createTo" size="xl" color="neutral" class="bg-ink-cream text-ink-black hover:bg-ink-cream-dark">
           Создать свой принт
         </UButton>
         <UButton to="/catalog" size="xl" color="neutral" variant="outline" class="text-ink-cream ring-ink-cream/40">

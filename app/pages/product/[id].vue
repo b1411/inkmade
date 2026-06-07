@@ -22,6 +22,9 @@ useSeoMeta({
   ogImage,
 })
 
+// первое звено воронки — просмотр товара (§3.5.1)
+onMounted(() => useAnalytics().viewContent(product.value!.id))
+
 const selectedMaterialId = ref(product.value.materials[0]?.id ?? '')
 const selectedMaterial = computed(() =>
   product.value!.materials.find(m => m.id === selectedMaterialId.value),

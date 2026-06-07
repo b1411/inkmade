@@ -28,7 +28,12 @@ async function uploadComposition(blob: Blob): Promise<string> {
 }
 
 // инициализация состояния на клиенте (canvas + Image — клиент)
-onMounted(() => { if (product.value) design.init(product.value) })
+onMounted(() => {
+  if (product.value) {
+    design.init(product.value)
+    useAnalytics().viewContent(product.value.id) // первое звено воронки (§3.5.1)
+  }
+})
 
 const materialItems = computed(() =>
   (product.value?.materials ?? []).map(m => ({ label: m.name, value: m.id })),
