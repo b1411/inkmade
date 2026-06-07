@@ -6,8 +6,15 @@ const route = useRoute()
 const category = route.params.category as string
 const { listByCategory } = useCatalog()
 
-const label = PRODUCT_CATEGORIES.find(c => c.value === category)?.label ?? category
-useHead({ title: `${label} — INKMADE` })
+const known = PRODUCT_CATEGORIES.find(c => c.value === category)
+if (!known) throw createError({ statusCode: 404, statusMessage: 'Категория не найдена' })
+const label = known.label
+useSeoMeta({
+  title: `${label} — INKMADE`,
+  description: `${label} с печатью вашего принта по требованию. Кастомизируй в браузере и закажи от одной штуки — INKMADE.`,
+  ogTitle: `${label} — INKMADE`,
+  ogDescription: `${label}: создай свой принт и закажи от одной штуки.`,
+})
 
 const { data: products, pending } = await useAsyncData(
   `catalog-${category}`,

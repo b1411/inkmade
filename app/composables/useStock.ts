@@ -15,25 +15,15 @@ export const useStock = () => {
     return data
   }
 
-  /** Приход/коррекция/брак: пишет движение и обновляет денормализованный остаток. */
-  async function addMovement(variantId: string, delta: number, reason: 'purchase' | 'correction' | 'defect', orderId?: string) {
-    const user = useSupabaseUser()
-    const { error: mErr } = await supabase.from('stock_movements').insert({
-      variant_id: variantId,
-      delta,
-      reason,
-      order_id: orderId ?? null,
-      actor_id: user.value?.id ?? null,
+  /** Приход/коррекция/брак: движение + остаток атомарно через RPC (аудит H5). */
+  async function addMovement(variantId: string, delta: number, reason: 'purchase' | 'correction' | 'defect') {
+    const { data, error } = await supabase.rpc('adjust_stock', {
+      p_variant_id: variantId,
+      p_delta: delta,
+      p_reason: reason,
     })
-    if (mErr) throw mErr
-
-    // обновляем денормализованный остаток (для MVP — read-modify-write)
-    const { data: v, error: rErr } = await supabase.from('variants').select('stock').eq('id', variantId).single()
-    if (rErr) throw rErr
-    const next = Math.max(0, (v?.stock ?? 0) + delta)
-    const { error: uErr } = await supabase.from('variants').update({ stock: next }).eq('id', variantId)
-    if (uErr) throw uErr
-    return next
+    if (error) throw error
+    return data as number
   }
 
   async function listMovements(variantId: string) {

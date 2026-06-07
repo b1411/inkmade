@@ -604,6 +604,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_stock: {
+        Args: { p_delta: number; p_reason: string; p_variant_id: string }
+        Returns: number
+      }
+      admin_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       apply_paid: {
         Args: { p_order_id: string; p_provider_txn: string; p_raw: Json }
         Returns: Json

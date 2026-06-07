@@ -13,7 +13,14 @@ if (error.value || !product.value) {
   throw createError({ statusCode: 404, statusMessage: 'Товар не найден' })
 }
 
-useHead({ title: `${product.value.title} — INKMADE` })
+const ogImage = product.value.product_images?.find(i => i.is_primary)?.url ?? product.value.product_images?.[0]?.url
+useSeoMeta({
+  title: `${product.value.title} — INKMADE`,
+  description: product.value.description || `${product.value.title}: кастомизируй принт в браузере и закажи от одной штуки — INKMADE.`,
+  ogTitle: `${product.value.title} — INKMADE`,
+  ogDescription: product.value.description || `${product.value.title} с печатью вашего принта.`,
+  ogImage,
+})
 
 const selectedMaterialId = ref(product.value.materials[0]?.id ?? '')
 const selectedMaterial = computed(() =>

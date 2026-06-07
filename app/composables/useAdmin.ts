@@ -8,6 +8,17 @@ import { defaultMethodForFabric, modeForFabric } from '~~/shared/config/print-me
 export const useAdmin = () => {
   const supabase = useSupabaseClient<Database>()
 
+  // путь объекта внутри публичного бакета catalog из его public URL (для очистки, H11)
+  function catalogPath(url: string): string | null {
+    const marker = '/catalog/'
+    const i = url.indexOf(marker)
+    return i >= 0 ? url.slice(i + marker.length) : null
+  }
+  async function removeCatalogObjects(urls: (string | null | undefined)[]) {
+    const paths = urls.map(u => (u ? catalogPath(u) : null)).filter((p): p is string => !!p)
+    if (paths.length) await supabase.storage.from('catalog').remove(paths) // best-effort
+  }
+
   // ── Товары ──────────────────────────────────────────────────────
   async function listProducts() {
     const { data, error } = await supabase
@@ -41,8 +52,12 @@ export const useAdmin = () => {
   }
 
   async function deleteProduct(id: string) {
+    // соберём файлы до удаления (строки уйдут каскадом), затем очистим Storage (H11)
+    const { data: imgs } = await supabase.from('product_images').select('url').eq('product_id', id)
+    const { data: zones } = await supabase.from('print_zones').select('mockup_url').eq('product_id', id)
     const { error } = await supabase.from('products').delete().eq('id', id)
     if (error) throw error
+    await removeCatalogObjects([...(imgs ?? []).map(i => i.url), ...(zones ?? []).map(z => z.mockup_url)])
   }
 
   /** Публикация/снятие (шаг 6, §8.2.1). */
@@ -115,9 +130,17 @@ export const useAdmin = () => {
     return data
   }
 
+  async function updateZone(id: string, patch: Partial<TablesInsert<'print_zones'>>) {
+    const { data, error } = await supabase.from('print_zones').update(patch).eq('id', id).select().single()
+    if (error) throw error
+    return data
+  }
+
   async function deleteZone(id: string) {
+    const { data: zone } = await supabase.from('print_zones').select('mockup_url').eq('id', id).single()
     const { error } = await supabase.from('print_zones').delete().eq('id', id)
     if (error) throw error
+    await removeCatalogObjects([zone?.mockup_url])
   }
 
   // ── Фото товара (шаг 5, §8.2.1) → публичный бакет catalog ───────
@@ -142,8 +165,10 @@ export const useAdmin = () => {
   }
 
   async function deleteImage(id: string) {
+    const { data: img } = await supabase.from('product_images').select('url').eq('id', id).single()
     const { error } = await supabase.from('product_images').delete().eq('id', id)
     if (error) throw error
+    await removeCatalogObjects([img?.url])
   }
 
   async function setPrimaryImage(productId: string, imageId: string) {
@@ -164,6 +189,7 @@ export const useAdmin = () => {
     generateVariants,
     deleteVariant,
     addZone,
+    updateZone,
     deleteZone,
     uploadCatalogImage,
     addImage,

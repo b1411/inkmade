@@ -9,8 +9,37 @@ import { zonePresetsForMode } from '~~/shared/config/zones'
 const props = defineProps<{ product: ProductWithRelations }>()
 const emit = defineEmits<{ changed: [] }>()
 
-const { addZone, deleteZone, uploadCatalogImage } = useAdmin()
+const { addZone, updateZone, deleteZone, uploadCatalogImage } = useAdmin()
 const toast = useToast()
+
+// инлайн-редактирование зоны (H10): границы, DPI, подсказка
+const editingId = ref<string | null>(null)
+const editForm = reactive({ max_width_mm: 0, max_height_mm: 0, min_dpi: DPI_MIN, placement_hint: '' })
+function startEdit(z: ProductWithRelations['print_zones'][number]) {
+  editingId.value = z.id
+  editForm.max_width_mm = Number(z.max_width_mm) || 0
+  editForm.max_height_mm = Number(z.max_height_mm) || 0
+  editForm.min_dpi = z.min_dpi
+  editForm.placement_hint = z.placement_hint ?? ''
+}
+async function saveEdit(id: string) {
+  if (editForm.max_width_mm <= 0 || editForm.max_height_mm <= 0) {
+    toast.add({ title: 'Размеры зоны должны быть больше нуля', color: 'warning' })
+    return
+  }
+  try {
+    await updateZone(id, {
+      max_width_mm: editForm.max_width_mm,
+      max_height_mm: editForm.max_height_mm,
+      min_dpi: editForm.min_dpi,
+      placement_hint: editForm.placement_hint || null,
+    })
+    editingId.value = null
+    emit('changed')
+  } catch (e) {
+    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+  }
+}
 
 // режимы, реально присутствующие у товара (из материалов)
 const availableModes = computed<PrintMode[]>(() => {
@@ -59,25 +88,12 @@ async function onMockup(zoneId: string, e: Event) {
   uploadingFor.value = zoneId
   try {
     const url = await uploadCatalogImage(props.product.id, file)
-    // обновим зону напрямую
-    const { updateZoneMockup } = useZonePatch()
-    await updateZoneMockup(zoneId, url)
+    await updateZone(zoneId, { mockup_url: url })
     emit('changed')
   } catch (err) {
     toast.add({ title: 'Ошибка загрузки мокапа', description: (err as Error).message, color: 'error' })
   } finally {
     uploadingFor.value = null
-  }
-}
-
-// маленький локальный хелпер для патча мокапа зоны
-function useZonePatch() {
-  const supabase = useSupabaseClient()
-  return {
-    async updateZoneMockup(zoneId: string, url: string) {
-      const { error } = await supabase.from('print_zones').update({ mockup_url: url }).eq('id', zoneId)
-      if (error) throw error
-    },
   }
 }
 </script>
@@ -109,12 +125,32 @@ function useZonePatch() {
               <p v-if="z.placement_hint" class="text-caption text-ink-gray-400 mt-1">{{ z.placement_hint }}</p>
             </div>
             <div class="flex items-center gap-2">
+              <UButton color="neutral" variant="ghost" icon="i-lucide-pencil" @click="editingId === z.id ? (editingId = null) : startEdit(z)" />
               <label class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-caption bg-ink-gray-200 hover:bg-ink-cream-dark transition-colors">
                 <UIcon :name="uploadingFor === z.id ? 'i-lucide-loader' : 'i-lucide-image-plus'" class="size-4" :class="uploadingFor === z.id && 'animate-spin'" />
                 Мокап
                 <input type="file" accept="image/*" class="hidden" @change="(e) => onMockup(z.id, e)">
               </label>
               <UButton color="error" variant="ghost" icon="i-lucide-trash-2" @click="onDelete(z.id)" />
+            </div>
+          </div>
+
+          <div v-if="editingId === z.id" class="mt-3 pt-3 border-t border-ink-gray-200 grid grid-cols-2 gap-3">
+            <UFormField label="Ширина зоны, мм">
+              <UInput v-model.number="editForm.max_width_mm" type="number" min="1" class="w-full" />
+            </UFormField>
+            <UFormField label="Высота зоны, мм">
+              <UInput v-model.number="editForm.max_height_mm" type="number" min="1" class="w-full" />
+            </UFormField>
+            <UFormField label="Минимальный DPI">
+              <UInput v-model.number="editForm.min_dpi" type="number" min="72" class="w-full" />
+            </UFormField>
+            <UFormField label="Подсказка по размещению" class="col-span-2">
+              <UInput v-model="editForm.placement_hint" class="w-full" />
+            </UFormField>
+            <div class="col-span-2 flex gap-2">
+              <UButton color="primary" icon="i-lucide-check" @click="saveEdit(z.id)">Сохранить</UButton>
+              <UButton color="neutral" variant="ghost" @click="editingId = null">Отмена</UButton>
             </div>
           </div>
         </div>

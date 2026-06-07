@@ -11,6 +11,14 @@ const colors = computed(() => {
   }
   return [...map.values()]
 })
+
+// если текущий цвет стал недоступен (сменили материал / закончился остаток) —
+// переключаемся на первый доступный, чтобы не остаться без вариантов размера (H9)
+watch(colors, (list) => {
+  if (list.length && !list.find(c => c.hex === productColorHex.value)) {
+    productColorHex.value = list[0]!.hex
+  }
+}, { immediate: true })
 </script>
 
 <template>
