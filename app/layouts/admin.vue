@@ -6,6 +6,7 @@ const nav = [
   { label: 'Принты', to: '/admin/prints', icon: 'i-lucide-image' },
   { label: 'Заказы', to: '/admin/orders', icon: 'i-lucide-receipt' },
   { label: 'Склад', to: '/admin/stock', icon: 'i-lucide-boxes' },
+  { label: 'Пользователи', to: '/admin/users', icon: 'i-lucide-users' },
 ]
 </script>
 

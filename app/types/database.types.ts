@@ -608,6 +608,16 @@ export type Database = {
         Args: { p_delta: number; p_reason: string; p_variant_id: string }
         Returns: number
       }
+      admin_list_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          email: string
+          role: string
+          full_name: string | null
+          created_at: string
+        }[]
+      }
       admin_stats: {
         Args: Record<PropertyKey, never>
         Returns: Json
