@@ -1,12 +1,16 @@
 <script setup lang="ts">
 // Пользовательское соглашение (§10): перенос ответственности за авторские права на пользователя.
+import { LEGAL } from '~~/shared/config/legal'
 useHead({ title: 'Условия использования — INKMADE' })
 </script>
 
 <template>
   <article class="max-w-2xl mx-auto py-8 space-y-5">
     <h1 class="ink-display text-h2">Условия использования</h1>
-    <p class="text-ink-gray-600">Используя INKMADE, вы соглашаетесь с условиями ниже.</p>
+    <p class="text-caption text-ink-gray-400 font-mono uppercase tracking-wider">
+      Редакция {{ LEGAL.tosVersion }} · в силе с {{ LEGAL.effectiveDate }} · юрисдикция: {{ LEGAL.jurisdiction }}
+    </p>
+    <p class="text-ink-gray-600">Используя INKMADE, вы соглашаетесь с условиями ниже. Применимое право — {{ LEGAL.jurisdiction }}.</p>
 
     <section class="space-y-2">
       <h2 class="text-h3 font-bold">1. Авторские права на загружаемые материалы</h2>
