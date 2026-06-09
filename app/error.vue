@@ -1,0 +1,38 @@
+<script setup lang="ts">
+// Брендовая страница ошибки (§4.4): спокойный текст + выход, без технических деталей.
+import type { NuxtError } from '#app'
+
+const props = defineProps<{ error: NuxtError }>()
+
+const is404 = computed(() => props.error?.statusCode === 404)
+const title = computed(() => (is404.value ? 'Страница не нашлась' : 'Что-то пошло не так'))
+const text = computed(() =>
+  is404.value
+    ? 'Возможно, ссылка устарела или мы что-то переименовали. Вернись на главную или загляни в каталог.'
+    : 'Мы уже разбираемся. Попробуй обновить страницу или вернуться на главную.',
+)
+
+useHead({ title: `${title.value} — INKMADE` })
+
+function goHome() {
+  clearError({ redirect: '/' })
+}
+function goCatalog() {
+  clearError({ redirect: '/catalog' })
+}
+</script>
+
+<template>
+  <div class="ink-grain min-h-screen flex flex-col items-center justify-center text-center px-4 bg-ink-black text-ink-cream">
+    <p class="ink-logo text-3xl">INKMADE</p>
+    <p class="ink-display text-[8rem] leading-none mt-6 text-ink-burgundy-light">
+      {{ error?.statusCode || '!' }}
+    </p>
+    <h1 class="ink-display text-h2 mt-2">{{ title }}</h1>
+    <p class="text-lead text-ink-cream/75 mt-4 max-w-md">{{ text }}</p>
+    <div class="flex flex-wrap gap-3 mt-8 justify-center">
+      <UiAppButton variant="primary" size="lg" on-dark @click="goHome">На главную</UiAppButton>
+      <UiAppButton variant="secondary" size="lg" on-dark @click="goCatalog">В каталог</UiAppButton>
+    </div>
+  </div>
+</template>

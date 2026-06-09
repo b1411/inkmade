@@ -14,7 +14,7 @@ export default defineNuxtConfig({
     '@formkit/auto-animate/nuxt',
   ],
 
-  css: ['~/assets/css/main.css', 'vue-sonner/style.css'],
+  css: ['~/assets/css/main.css'],
 
   // @nuxt/image (§3.3): оптимизация WebP/lazy/responsive. Фото товаров лежат в
   // Supabase Storage — разрешаем домен для внешней оптимизации.

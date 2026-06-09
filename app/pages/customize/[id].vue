@@ -107,26 +107,32 @@ async function onSaveDesign() {
   }
 }
 
+const notify = useNotify()
+const { fly } = useFlyToCart()
+const canvasWrap = ref<HTMLElement | null>(null)
+
 const submitting = ref(false)
 async function onAddToCart() {
   if (submitting.value) return
   if (!placements.value.length) {
-    toast.add({ title: 'Добавьте принт или текст', color: 'warning' })
+    notify.warn('Добавьте принт или текст')
     return
   }
   if (!design.zone.value) {
-    toast.add({ title: 'Зона печати не выбрана', color: 'warning' })
+    notify.warn('Зона печати не выбрана')
     return
   }
   if (!selectedVariant.value) {
-    toast.add({ title: 'Выберите размер', color: 'warning' })
+    notify.warn('Выберите размер')
     return
   }
   submitting.value = true
   try {
     // скриншот композиции → Storage, ссылка попадёт в spec (§13.2)
     const blob = await design.captureComposition()
+    let previewObjUrl: string | undefined
     if (blob) {
+      previewObjUrl = URL.createObjectURL(blob)
       try { design.setCompositionUrl(await uploadComposition(blob)) }
       catch { /* скриншот не критичен для печати — оригинал уже в Storage */ }
     }
@@ -146,8 +152,10 @@ async function onAddToCart() {
       quantity: 1,
     })
     useAnalytics().addToCart(breakdown.value.unitPrice)
-    toast.add({ title: 'Добавлено в корзину', color: 'success' })
-    await navigateTo('/cart')
+    // «улёт в корзину» + toast (§6.3, §7.2). Остаёмся в конструкторе — собрать ещё или оформить.
+    fly(canvasWrap.value, previewObjUrl)
+    if (previewObjUrl) setTimeout(() => URL.revokeObjectURL(previewObjUrl!), 1200)
+    notify.addedToCart()
   } finally {
     submitting.value = false
   }
@@ -167,12 +175,14 @@ async function onAddToCart() {
     <div class="grid lg:grid-cols-[auto_1fr] gap-8 items-start">
       <!-- холст -->
       <div class="space-y-3">
-        <ClientOnly>
-          <CustomizerCanvas />
-          <template #fallback>
-            <div class="rounded-lg bg-ink-gray-200 animate-pulse" style="width:460px;height:540px" />
-          </template>
-        </ClientOnly>
+        <div ref="canvasWrap">
+          <ClientOnly>
+            <CustomizerCanvas />
+            <template #fallback>
+              <div class="rounded-lg bg-ink-gray-200 animate-pulse" style="width:460px;height:540px" />
+            </template>
+          </ClientOnly>
+        </div>
 
         <div v-if="selectedId" class="flex gap-2">
           <UButton color="error" variant="subtle" size="sm" icon="i-lucide-trash-2" @click="removePlacement(selectedId!)">

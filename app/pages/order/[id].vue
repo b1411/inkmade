@@ -31,23 +31,23 @@ onMounted(() => {
 
 // повтор заказа (CRM §3.2)
 const { reorder } = useOrder()
-const toast = useToast()
+const notify = useNotify()
 const reordering = ref(false)
 async function onReorder() {
   reordering.value = true
   try {
     const n = await reorder(id)
-    toast.add({ title: `Добавлено в корзину: ${n}`, color: 'success' })
+    notify.success(`Добавлено в корзину: ${n}`)
     await navigateTo('/cart')
   } catch (e) {
-    toast.add({ title: 'Не удалось повторить', description: (e as Error).message, color: 'error' })
+    notify.error('Не удалось повторить', (e as Error).message)
   } finally {
     reordering.value = false
   }
 }
 
-// укрупнённый прогресс
-const STAGES = ['Оформление', 'В производстве', 'Упаковка', 'В пути', 'Доставлен']
+// укрупнённый прогресс — статусы для клиента (§6.6)
+const STAGES = ['Оформлен', 'Печатаем', 'Упаковываем', 'В пути', 'Доставлен']
 const stageIndex = (s: OrderStatus): number => {
   if (['created', 'pending'].includes(s)) return 0
   if (['paid', 'queued', 'printing', 'quality_check', 'reprint'].includes(s)) return 1
@@ -84,19 +84,8 @@ function printReceipt() {
       <h1 class="ink-display text-h2 mt-2">{{ CUSTOMER_STATUS[order.status as OrderStatus] }}</h1>
     </div>
 
-    <!-- прогресс -->
-    <div v-if="!isSpecial" class="flex items-center">
-      <template v-for="(st, i) in STAGES" :key="st">
-        <div class="flex flex-col items-center text-center shrink-0">
-          <div
-            class="size-8 rounded-full flex items-center justify-center text-caption font-bold"
-            :class="i <= current ? 'bg-ink-burgundy text-ink-cream' : 'bg-ink-gray-200 text-ink-gray-400'"
-          >{{ i + 1 }}</div>
-          <span class="text-caption mt-1 w-20" :class="i <= current ? 'text-ink-black' : 'text-ink-gray-400'">{{ st }}</span>
-        </div>
-        <div v-if="i < STAGES.length - 1" class="flex-1 h-0.5 mx-1" :class="i < current ? 'bg-ink-burgundy' : 'bg-ink-gray-200'" />
-      </template>
-    </div>
+    <!-- прогресс (§6.6) -->
+    <OrderStatusTracker v-if="!isSpecial" :stages="STAGES" :current="current" />
     <UAlert v-else color="warning" variant="subtle" :title="CUSTOMER_STATUS[order.status as OrderStatus]" />
 
     <!-- трек -->

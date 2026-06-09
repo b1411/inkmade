@@ -88,7 +88,7 @@ onMounted(() => {
 
       <!-- Иконки справа -->
       <div class="flex items-center gap-4">
-        <NuxtLink to="/cart" class="relative inline-flex items-center" aria-label="Корзина">
+        <NuxtLink to="/cart" data-cart-icon class="relative inline-flex items-center" aria-label="Корзина">
           <UIcon name="i-lucide-shopping-cart" class="size-5" />
           <ClientOnly>
             <span
