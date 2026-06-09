@@ -10,12 +10,10 @@ withDefaults(defineProps<Props>(), { hover: true })
 </script>
 
 <template>
-  <component
-    :is="to ? 'NuxtLink' : 'div'"
-    :to="to || undefined"
-    class="app-card block"
-    :class="hover ? 'app-card--hover' : ''"
-  >
+  <NuxtLink v-if="to" :to="to" class="app-card block" :class="hover ? 'app-card--hover' : ''">
     <slot />
-  </component>
+  </NuxtLink>
+  <div v-else class="app-card block" :class="hover ? 'app-card--hover' : ''">
+    <slot />
+  </div>
 </template>

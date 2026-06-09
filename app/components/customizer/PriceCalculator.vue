@@ -18,8 +18,8 @@ const { breakdown } = usePricing()
       <span class="font-semibold">Итого</span>
       <span class="text-h3 font-bold text-ink-burgundy">{{ breakdown.unitPrice }} ₸</span>
     </div>
-    <AppButton variant="primary" size="lg" block icon="i-lucide-shopping-cart" @click="emit('addToCart')">
+    <UiAppButton variant="primary" size="lg" block icon="i-lucide-shopping-cart" @click="emit('addToCart')">
       В корзину
-    </AppButton>
+    </UiAppButton>
   </div>
 </template>

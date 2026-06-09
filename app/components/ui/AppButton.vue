@@ -88,18 +88,27 @@ onBeforeUnmount(() => teardown?.())
 
 <template>
   <span ref="wrap" class="inline-flex" :class="block ? 'w-full' : ''">
-    <component
-      :is="to ? 'NuxtLink' : 'button'"
-      :to="to || undefined"
-      :type="to ? undefined : type"
-      :disabled="!to && (disabled || loading) ? true : undefined"
-      :aria-disabled="to && disabled ? 'true' : undefined"
+    <NuxtLink
+      v-if="to"
+      :to="to"
+      :class="btnClass"
+      :aria-disabled="disabled ? 'true' : undefined"
+    >
+      <UIcon v-if="loading" name="i-lucide-loader-2" class="size-5 animate-spin" />
+      <UIcon v-else-if="icon" :name="icon" class="size-5" />
+      <span v-if="$slots.default"><slot /></span>
+      <UIcon v-if="trailingIcon && !loading" :name="trailingIcon" class="size-5" />
+    </NuxtLink>
+    <button
+      v-else
+      :type="type"
+      :disabled="disabled || loading"
       :class="btnClass"
     >
       <UIcon v-if="loading" name="i-lucide-loader-2" class="size-5 animate-spin" />
       <UIcon v-else-if="icon" :name="icon" class="size-5" />
       <span v-if="$slots.default"><slot /></span>
       <UIcon v-if="trailingIcon && !loading" :name="trailingIcon" class="size-5" />
-    </component>
+    </button>
   </span>
 </template>

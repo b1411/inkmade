@@ -31,12 +31,12 @@ const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.
         Печать по требованию — тираж от одной штуки.
       </p>
       <div class="flex flex-wrap gap-3 mt-8">
-        <AppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>
+        <UiAppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>
           Создать свой принт
-        </AppButton>
-        <AppButton to="/catalog" variant="secondary" size="xl" on-dark>
+        </UiAppButton>
+        <UiAppButton to="/catalog" variant="secondary" size="xl" on-dark>
           Смотреть каталог
-        </AppButton>
+        </UiAppButton>
       </div>
     </div>
   </section>

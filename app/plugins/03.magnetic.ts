@@ -1,19 +1,16 @@
+import { gsap } from 'gsap'
 import type { Directive } from 'vue'
-import type { gsap as GsapType } from 'gsap'
 
 /**
  * Директива v-magnetic (§4.1, §4.2 ТЗ) — элемент слегка тянется к курсору, пока
  * под ним. Локальный mousemove на самом элементе (срабатывает только при наведении),
  * поэтому дёшев и масштабируется на много пунктов навигации.
  *
- * Гейт: не активируется при prefers-reduced-motion и на тач-устройствах (pointer:coarse).
- * Значение биндинга — сила притяжения (0..1, по умолчанию 0.4).
+ * Универсальный плагин (не .client): директива должна резолвиться и на SSR, иначе
+ * Vue падает на getSSRProps. Вся работа — только в mounted (выполняется на клиенте);
+ * доступ к window/gsap там безопасен. Значение биндинга — сила притяжения (0..1).
  */
 export default defineNuxtPlugin((nuxtApp) => {
-  const gsap = nuxtApp.$gsap as typeof GsapType | undefined
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const fine = window.matchMedia('(pointer: fine)').matches
-
   interface MagHandlers {
     move: (e: MouseEvent) => void
     leave: () => void
@@ -21,7 +18,10 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   const magnetic: Directive<HTMLElement & { __mag?: MagHandlers }, number | undefined> = {
     mounted(el, binding) {
-      if (reduced || !fine || !gsap) return
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const fine = window.matchMedia('(pointer: fine)').matches
+      if (reduced || !fine) return
+
       const strength = binding.value ?? 0.4
 
       const move = (e: MouseEvent) => {
