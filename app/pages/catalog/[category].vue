@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Товары категории (§6). SSR для SEO. Категория проверяется по БД.
+// Товары категории (§6.1). SSR для SEO. Категория проверяется по БД.
+// Единая карточка CatalogProductCard, скелетоны при загрузке, auto-animate сетки.
 const route = useRoute()
 const category = route.params.category as string
 const { listByCategory } = useCatalog()
@@ -22,51 +23,48 @@ const { data: products, pending } = await useAsyncData(
   `catalog-${category}`,
   () => listByCategory(category),
 )
-
-function primaryImage(p: { product_images?: { url: string; is_primary: boolean }[] }) {
-  const imgs = p.product_images ?? []
-  return imgs.find(i => i.is_primary)?.url ?? imgs[0]?.url
-}
+const count = computed(() => products.value?.length ?? 0)
 </script>
 
 <template>
   <section class="space-y-8">
-    <div class="flex items-center justify-between">
+    <div class="flex items-end justify-between gap-4">
       <div>
-        <UiSectionLabel accent>{{ label }}</UiSectionLabel>
-        <h1 class="ink-display text-h2 mt-2">{{ label }}</h1>
+        <UiSectionLabel accent>Каталог</UiSectionLabel>
+        <h1 class="ink-display text-h1 mt-2">{{ label }}</h1>
+        <p v-if="!pending" class="ink-label text-ink-gray-600 mt-2">
+          {{ count }} {{ count === 1 ? 'изделие' : 'изделий' }} · печать от одной штуки
+        </p>
       </div>
       <UButton to="/catalog" color="neutral" variant="ghost" icon="i-lucide-arrow-left">Категории</UButton>
     </div>
 
-    <div v-if="pending" class="py-10 text-center text-ink-gray-600">Загрузка…</div>
-    <div v-else-if="!products?.length" class="py-10 text-center text-ink-gray-600">
-      В этой категории пока нет товаров.
+    <!-- Скелетоны загрузки -->
+    <div v-if="pending" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div v-for="n in 8" :key="n" class="rounded-lg overflow-hidden">
+        <UiSkeleton rounded="rounded-lg" class="aspect-4/5" />
+        <div class="p-4 space-y-2">
+          <UiSkeleton class="h-4 w-3/4" />
+          <UiSkeleton class="h-3 w-1/3" />
+        </div>
+      </div>
     </div>
 
-    <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      <NuxtLink
-        v-for="p in products"
-        :key="p.id"
-        :to="`/product/${p.slug}`"
-        class="group rounded-lg overflow-hidden border border-ink-gray-200 hover:shadow-md transition-all"
-      >
-        <div class="aspect-square bg-ink-gray-200 overflow-hidden">
-          <img
-            v-if="primaryImage(p)"
-            :src="primaryImage(p)"
-            :alt="p.title"
-            class="w-full h-full object-cover group-hover:scale-105 transition-transform"
-          >
-          <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-400">
-            <UIcon name="i-lucide-image" class="size-10" />
-          </div>
-        </div>
-        <div class="p-4">
-          <p class="font-semibold group-hover:text-ink-burgundy">{{ p.title }}</p>
-          <p class="text-ink-gray-600 mt-1">от {{ p.base_price }} ₸</p>
-        </div>
-      </NuxtLink>
+    <!-- Пустой результат -->
+    <UiEmptyState
+      v-else-if="!products?.length"
+      icon="i-lucide-package-search"
+      title="Здесь пока пусто"
+      text="В этой категории ещё нет изделий. Загляни в другие — там есть из чего собрать своё."
+    >
+      <UiAppButton to="/catalog" variant="primary" size="md">В каталог</UiAppButton>
+    </UiEmptyState>
+
+    <!-- Сетка товаров -->
+    <div v-else v-auto-animate class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <UiReveal v-for="(p, i) in products" :key="p.id" :delay="Math.min(i * 50, 400)">
+        <CatalogProductCard :product="p" />
+      </UiReveal>
     </div>
   </section>
 </template>

@@ -10,23 +10,26 @@ const { data: categories } = await useAsyncData('catalog-categories', () => list
   <section class="space-y-8">
     <div>
       <UiSectionLabel accent>Каталог</UiSectionLabel>
-      <h1 class="ink-display text-h2 mt-2">Выбери изделие</h1>
+      <h1 class="ink-display text-h1 mt-2">Выбери основу</h1>
+      <p class="text-lead text-ink-gray-600 mt-3">Начни с изделия — принт добавишь в конструкторе.</p>
     </div>
 
-    <div v-if="!categories?.length" class="py-10 text-center text-ink-gray-600">
-      Категории появятся совсем скоро.
-    </div>
+    <UiEmptyState
+      v-if="!categories?.length"
+      icon="i-lucide-layout-grid"
+      title="Категории на подходе"
+      text="Совсем скоро здесь появятся изделия для кастомизации."
+    />
 
     <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-      <NuxtLink
-        v-for="c in categories"
-        :key="c.id"
-        :to="`/catalog/${c.slug}`"
-        class="group border border-ink-gray-200 rounded-lg p-6 flex flex-col items-center gap-3 hover:border-ink-burgundy hover:shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-burgundy"
-      >
-        <UIcon :name="c.icon ?? 'i-lucide-package'" class="size-10 text-ink-burgundy" />
-        <span class="font-semibold text-center">{{ c.title }}</span>
-      </NuxtLink>
+      <UiReveal v-for="(c, i) in categories" :key="c.id" :delay="i * 60">
+        <UiAppCard :to="`/catalog/${c.slug}`" hover class="h-full">
+          <div class="p-6 flex flex-col items-center gap-3 text-center">
+            <UIcon :name="c.icon ?? 'i-lucide-package'" class="size-10 text-ink-burgundy" />
+            <span class="font-semibold">{{ c.title }}</span>
+          </div>
+        </UiAppCard>
+      </UiReveal>
     </div>
   </section>
 </template>
