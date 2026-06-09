@@ -8,6 +8,20 @@ export type GarmentKind = 'tee' | 'hoodie' | 'cap'
 // размеры под холст кастомайзера (CANVAS 460×540)
 export const GARMENT_VIEWBOX = { width: 460, height: 540 }
 
+// Печатный кадр изделия для визуального редактора зон (§8.2.1):
+// bodyPx — область силуэта (в координатах viewBox), где физически возможна печать;
+// frameMm — её физический размер в мм. Связка задаёт масштаб мм↔px по каждой оси,
+// согласованный с пресетами зон (chest/back живут в кадре ~360×480 мм).
+export interface GarmentPrintFrame {
+  bodyPx: { x: number; y: number; width: number; height: number }
+  frameMm: { width: number; height: number }
+}
+export const GARMENT_PRINT_FRAME: Record<GarmentKind, GarmentPrintFrame> = {
+  tee: { bodyPx: { x: 120, y: 150, width: 220, height: 330 }, frameMm: { width: 360, height: 480 } },
+  hoodie: { bodyPx: { x: 120, y: 165, width: 220, height: 320 }, frameMm: { width: 360, height: 480 } },
+  cap: { bodyPx: { x: 135, y: 215, width: 195, height: 85 }, frameMm: { width: 200, height: 130 } },
+}
+
 /** Тип силуэта по слагу/алиасу товара (шаблоны: tshirt/hoodie/cap…). */
 export function garmentKindForSlug(slug?: string | null): GarmentKind {
   const s = (slug ?? '').toLowerCase()

@@ -3,7 +3,8 @@ import type { ProductWithRelations } from '~/types/models'
 import type { Json } from '~/types/database.types'
 import type { PrintMode } from '~~/shared/config/print-methods'
 import { DPI_MIN } from '~~/shared/config/zones'
-import { zonePresetsForMode } from '~~/shared/config/zones'
+import { zonePresetsForMode, type BoundsMm } from '~~/shared/config/zones'
+import { garmentKindForSlug } from '~~/shared/config/garment'
 
 // Шаг 4 — Зоны печати (§8.2.1). Зона валидна только для своего режима (§5.2.1).
 const props = defineProps<{ product: ProductWithRelations }>()
@@ -81,6 +82,36 @@ async function onDelete(id: string) {
   }
 }
 
+// визуальный редактор зоны (§8.2.1)
+const garmentKind = computed(() => garmentKindForSlug(props.product.slug ?? props.product.alias))
+const garmentColor = computed(() => props.product.variants?.[0]?.color_hex ?? '#cccccc')
+const visual = reactive({ open: false, zoneId: '', title: '', bounds: null as BoundsMm | null, maxW: 0, maxH: 0 })
+function openVisual(z: ProductWithRelations['print_zones'][number]) {
+  visual.zoneId = z.id
+  visual.title = z.title
+  visual.bounds = (z.bounds_mm ?? null) as BoundsMm | null
+  visual.maxW = Number(z.max_width_mm) || 0
+  visual.maxH = Number(z.max_height_mm) || 0
+  visual.open = true
+}
+async function onVisualSave(payload: { bounds_mm: BoundsMm; max_width_mm: number; max_height_mm: number }) {
+  if (payload.max_width_mm <= 0 || payload.max_height_mm <= 0) {
+    toast.add({ title: 'Зона слишком мала', color: 'warning' }); return
+  }
+  try {
+    await updateZone(visual.zoneId, {
+      bounds_mm: payload.bounds_mm as unknown as Json,
+      max_width_mm: payload.max_width_mm,
+      max_height_mm: payload.max_height_mm,
+    })
+    visual.open = false
+    emit('changed')
+    toast.add({ title: 'Зона сохранена', color: 'success' })
+  } catch (e) {
+    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+  }
+}
+
 const uploadingFor = ref<string | null>(null)
 async function onMockup(zoneId: string, e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
@@ -125,6 +156,7 @@ async function onMockup(zoneId: string, e: Event) {
               <p v-if="z.placement_hint" class="text-caption text-ink-gray-400 mt-1">{{ z.placement_hint }}</p>
             </div>
             <div class="flex items-center gap-2">
+              <UButton color="neutral" variant="ghost" icon="i-lucide-frame" title="Визуальный редактор" @click="openVisual(z)" />
               <UButton color="neutral" variant="ghost" icon="i-lucide-pencil" @click="editingId === z.id ? (editingId = null) : startEdit(z)" />
               <label class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-caption bg-ink-gray-200 hover:bg-ink-cream-dark transition-colors">
                 <UIcon :name="uploadingFor === z.id ? 'i-lucide-loader' : 'i-lucide-image-plus'" class="size-4" :class="uploadingFor === z.id && 'animate-spin'" />
@@ -177,5 +209,19 @@ async function onMockup(zoneId: string, e: Event) {
         </p>
       </div>
     </template>
+
+    <!-- визуальный редактор зоны -->
+    <UModal v-model:open="visual.open" :title="`Размещение зоны: ${visual.title}`" :ui="{ content: 'max-w-2xl' }">
+      <template #body>
+        <AdminWizardZoneEditor
+          :kind="garmentKind"
+          :color-hex="garmentColor"
+          :bounds="visual.bounds"
+          :max-w="visual.maxW"
+          :max-h="visual.maxH"
+          @save="onVisualSave"
+        />
+      </template>
+    </UModal>
   </div>
 </template>
