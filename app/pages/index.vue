@@ -1,5 +1,6 @@
 <script setup lang="ts">
-// Лендинг (§6). Визуальный язык референса, бизнес-логика — B2C self-service.
+// Лендинг (§5). Премиальный стрит-минимализм: ритм тёмных/светлых секций,
+// крупный воздух, появление при скролле (UiReveal). Бизнес-логика — B2C self-service.
 const { public: { siteUrl } } = useRuntimeConfig()
 const site = (siteUrl as string) || 'https://inkmade-pi.vercel.app'
 
@@ -32,57 +33,64 @@ const { data: examples } = await useAsyncData('landing-examples', () => listAll(
 
 const { listActive } = useCategories()
 const { data: categories } = await useAsyncData('landing-categories', () => listActive())
-
-function primaryImage(p: { product_images?: { url: string; is_primary: boolean }[] }) {
-  const imgs = p.product_images ?? []
-  return imgs.find(i => i.is_primary)?.url ?? imgs[0]?.url
-}
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div>
     <LandingHero />
+    <LandingTrustBar />
 
     <!-- лента примеров -->
-    <section v-if="examples?.length" class="py-16">
-      <UiSectionLabel accent>Примеры</UiSectionLabel>
-      <h2 class="ink-display text-h2 mt-2 mb-6">Что создают на INKMADE</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <NuxtLink
-          v-for="p in examples.slice(0, 8)"
-          :key="p.id"
-          :to="`/product/${p.slug}`"
-          class="group rounded-lg overflow-hidden border border-ink-gray-200 hover:shadow-md transition-all"
-        >
-          <div class="aspect-square bg-ink-gray-200 overflow-hidden">
-            <img v-if="primaryImage(p)" :src="primaryImage(p)" :alt="p.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
-            <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-400"><UIcon name="i-lucide-image" class="size-8" /></div>
-          </div>
-          <p class="p-3 text-caption font-semibold group-hover:text-ink-burgundy">{{ p.title }}</p>
-        </NuxtLink>
-      </div>
-    </section>
+    <UiReveal v-if="examples?.length">
+      <section style="padding-block: var(--section-pad)">
+        <LandingExamplesMarquee :items="examples" />
+      </section>
+    </UiReveal>
 
-    <!-- категории плитками -->
-    <section v-if="categories?.length" class="py-8">
-      <UiSectionLabel accent>Каталог</UiSectionLabel>
-      <h2 class="ink-display text-h2 mt-2 mb-6">Категории</h2>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <NuxtLink
-          v-for="c in categories"
-          :key="c.id"
-          :to="`/catalog/${c.slug}`"
-          class="group border border-ink-gray-200 rounded-lg p-6 flex flex-col items-center gap-3 hover:border-ink-burgundy hover:shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-burgundy"
-        >
-          <UIcon :name="c.icon ?? 'i-lucide-package'" class="size-9 text-ink-burgundy" />
-          <span class="font-semibold text-center">{{ c.title }}</span>
-        </NuxtLink>
-      </div>
-    </section>
+    <!-- каталог-превью «Выбери основу» (§5.4) -->
+    <UiReveal v-if="categories?.length">
+      <section style="padding-block: var(--section-pad)" aria-labelledby="cat-heading">
+        <UiSectionLabel accent>Каталог</UiSectionLabel>
+        <h2 id="cat-heading" class="ink-display text-h2 mt-2">Выбери основу</h2>
+        <p class="text-lead text-ink-gray-600 mt-3 mb-8">
+          Начни с изделия — принт добавишь в конструкторе.
+        </p>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <UiReveal v-for="(c, i) in categories" :key="c.id" :delay="i * 60">
+            <UiAppCard :to="`/catalog/${c.slug}`" hover class="h-full">
+              <div class="p-6 flex flex-col items-center gap-3 text-center">
+                <UIcon :name="c.icon ?? 'i-lucide-package'" class="size-9 text-ink-burgundy" />
+                <span class="font-semibold">{{ c.title }}</span>
+              </div>
+            </UiAppCard>
+          </UiReveal>
+        </div>
+        <div class="mt-8">
+          <UiAppButton to="/catalog" variant="ghost" trailing-icon="i-lucide-arrow-right">
+            Весь каталог
+          </UiAppButton>
+        </div>
+      </section>
+    </UiReveal>
 
     <LandingMethods />
-    <LandingHowItWorks />
-    <LandingTrust />
-    <LandingFaq />
+
+    <section style="padding-block: var(--section-pad)">
+      <LandingHowItWorks />
+    </section>
+
+    <section style="padding-block: var(--section-pad)">
+      <LandingTrust />
+    </section>
+
+    <LandingDesignersTeaser />
+
+    <UiReveal>
+      <section style="padding-block: var(--section-pad)">
+        <LandingFaq />
+      </section>
+    </UiReveal>
+
+    <LandingFinalCta />
   </div>
 </template>

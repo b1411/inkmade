@@ -16,6 +16,13 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css', 'vue-sonner/style.css'],
 
+  // @nuxt/image (§3.3): оптимизация WebP/lazy/responsive. Фото товаров лежат в
+  // Supabase Storage — разрешаем домен для внешней оптимизации.
+  image: {
+    domains: ['jpxiuyinqhokzzcqbggf.supabase.co'],
+    format: ['webp'],
+  },
+
   // Supabase (§3.2). redirect:false — гостевой поток без принудительного логина (§9.1).
   // Доступ к кабинетам закрываем собственными middleware (F0-13), а не глобальным редиректом.
   supabase: {

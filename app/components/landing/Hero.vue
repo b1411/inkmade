@@ -1,11 +1,13 @@
 <script setup lang="ts">
-// Hero (§6): тёмный бордо-фон, граффити H1, CTA ведёт В КОНСТРУКТОР (не в форму заявки).
-// «Создать принт» — сразу в конструктор первого доступного товара; иначе в каталог.
+// Hero (§5.1): тёмный бордо-фон + grain, двухколоночно — слева заголовок и CTA,
+// справа крупное медиа (фото featured-товара на нейтральном фоне; место под
+// реальное фото/видео-петлю). CTA ведёт В КОНСТРУКТОР первого доступного товара.
+// GSAP timeline входа — этап 3 (§8).
 const supabase = useSupabaseClient()
 const { data: featured } = await useAsyncData('hero-featured', async () => {
   const { data } = await supabase
     .from('products')
-    .select('alias')
+    .select('alias, title, product_images(url, is_primary)')
     .eq('is_active', true)
     .not('alias', 'is', null)
     .limit(1)
@@ -13,30 +15,66 @@ const { data: featured } = await useAsyncData('hero-featured', async () => {
   return data
 })
 const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.value.alias}` : '/catalog'))
+const heroImage = computed(() => {
+  const imgs = (featured.value?.product_images ?? []) as { url: string; is_primary: boolean }[]
+  return imgs.find(i => i.is_primary)?.url ?? imgs[0]?.url
+})
 </script>
 
 <template>
-  <section class="w-screen ml-[calc(50%-50vw)] bg-ink-burgundy text-ink-cream relative overflow-hidden">
-    <!-- декор: брызги/потёки бренда -->
+  <section
+    class="ink-grain w-screen ml-[calc(50%-50vw)] bg-ink-burgundy text-ink-cream relative overflow-hidden"
+  >
+    <!-- мягкий градиент глубины -->
+    <div class="absolute inset-0 bg-linear-to-br from-ink-burgundy via-ink-burgundy to-ink-burgundy-dark opacity-80" />
     <div class="absolute -top-24 -right-24 size-96 rounded-full bg-ink-burgundy-light/30 blur-3xl" />
     <div class="absolute -bottom-32 -left-20 size-80 rounded-full bg-ink-black/30 blur-3xl" />
 
-    <div class="relative mx-auto max-w-(--container-max) px-4 py-24 md:py-32">
-      <p class="ink-label text-ink-cream/70">Merch Studio · EST. 2025</p>
-      <h1 class="ink-hero text-hero mt-4 max-w-4xl">
-        ТВОЙ ПРИНТ.<br>ТВОЯ ВЕЩЬ.
-      </h1>
-      <p class="text-body-lg mt-6 max-w-xl text-ink-cream/85">
-        Выбери изделие, нанеси принт прямо в браузере, увидь цену сразу и оплати онлайн.
-        Печать по требованию — тираж от одной штуки.
-      </p>
-      <div class="flex flex-wrap gap-3 mt-8">
-        <UiAppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>
-          Создать свой принт
-        </UiAppButton>
-        <UiAppButton to="/catalog" variant="secondary" size="xl" on-dark>
-          Смотреть каталог
-        </UiAppButton>
+    <div
+      class="relative mx-auto max-w-(--container-max) px-4 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center"
+      style="padding-block: clamp(96px, 14vw, 160px)"
+    >
+      <!-- Левая колонка: текст + CTA -->
+      <div>
+        <p class="ink-label text-ink-cream/70">MERCH STUDIO · ALMATY · EST. 2025</p>
+        <h1 class="ink-hero text-hero mt-4">
+          ТВОЙ ПРИНТ.<br>ТВОЯ ВЕЩЬ.
+        </h1>
+        <p class="text-lead mt-6 max-w-xl text-ink-cream/85">
+          Собери в браузере, увидь цену сразу, получи через пару дней.
+          Печатаем от одной штуки — без партий и переплат.
+        </p>
+        <div class="flex flex-wrap gap-3 mt-8">
+          <UiAppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>
+            Создать свой принт
+          </UiAppButton>
+          <UiAppButton to="/catalog" variant="secondary" size="xl" on-dark>
+            Смотреть каталог
+          </UiAppButton>
+        </div>
+        <p class="ink-label text-ink-cream/55 mt-6">
+          Доставка по Казахстану · Оплата онлайн · Тираж от 1
+        </p>
+      </div>
+
+      <!-- Правая колонка: медиа -->
+      <div class="relative">
+        <div
+          class="ink-grain aspect-4/5 rounded-xl overflow-hidden bg-ink-gray-50 shadow-[0_24px_80px_rgba(0,0,0,0.4)] ring-1 ring-white/10"
+        >
+          <NuxtImg
+            v-if="heroImage"
+            :src="heroImage"
+            :alt="featured?.title ?? 'Изделие с принтом INKMADE'"
+            class="w-full h-full object-cover"
+            sizes="(max-width: 1024px) 90vw, 560px"
+            loading="eager"
+            fetchpriority="high"
+          />
+          <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-400">
+            <UIcon name="i-lucide-shirt" class="size-20" />
+          </div>
+        </div>
       </div>
     </div>
   </section>

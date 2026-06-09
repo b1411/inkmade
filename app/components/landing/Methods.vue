@@ -1,18 +1,18 @@
 <script setup lang="ts">
-// Методы нанесения (§6, аккордеон). Только то, что делает цех на старте.
-// Шелкография/вышивка НЕ анонсируются до готовности (§1.2, §6).
+// Методы нанесения (§5.5, аккордеон). Только то, что делает цех на старте.
+// Шелкография/вышивка НЕ анонсируются до готовности.
 const items = [
-  { label: 'DTG — прямая цифровая печать', icon: 'i-lucide-printer', content: 'Прямая печать по хлопку. Фотографичная детализация, мягкое на ощупь нанесение. Подходит для сложных цветных принтов на трикотаже.' },
-  { label: 'DTF — термоперенос', icon: 'i-lucide-layers', content: 'Перенос плёнки под давлением и температурой. Яркие плотные цвета, стойкость к стирке, работает по разным тканям.' },
-  { label: 'Сублимация — full-print', icon: 'i-lucide-shirt', content: 'Краситель проникает в волокно синтетики — запечатка всей поверхности без границ и фактуры поверх ткани. Для спортивных и full-print изделий.' },
+  { label: 'DTG — прямая цифровая', icon: 'i-lucide-printer', content: 'Краска проникает в ткань. Полноцвет, фотопринт, мягко на ощупь. Идеально для хлопка.' },
+  { label: 'DTF — термоперенос', icon: 'i-lucide-layers', content: 'Яркий насыщенный принт на любой ткани. Держит цвет и стирку.' },
+  { label: 'Сублимация — full-print', icon: 'i-lucide-shirt', content: 'Принт по всей поверхности без границ. Только для светлой синтетики.' },
 ]
 </script>
 
 <template>
-  <section class="w-screen ml-[calc(50%-50vw)] bg-ink-black text-ink-cream">
-    <div class="mx-auto max-w-(--container-max) px-4 py-20">
-      <UiSectionLabel class="text-ink-cream/60">Технологии печати</UiSectionLabel>
-      <h2 class="ink-display text-h2 mt-2 mb-8">Методы нанесения</h2>
+  <section class="ink-grain w-screen ml-[calc(50%-50vw)] bg-ink-black text-ink-cream">
+    <div class="mx-auto max-w-(--container-max) px-4" style="padding-block: var(--section-pad)">
+      <UiSectionLabel class="text-ink-cream/60">Технологии</UiSectionLabel>
+      <h2 class="ink-display text-h2 mt-2 mb-8">Как мы печатаем</h2>
       <UAccordion :items="items" />
     </div>
   </section>
