@@ -8,9 +8,32 @@ definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const route = useRoute()
 const id = route.params.id as string
 const { getOrderAdmin } = useAdmin()
-const { changeStatus } = useStudio()
+const { changeStatus, addEvidence, listEvidence } = useStudio()
 const { refundOrder } = useFinance()
 const toast = useToast()
+
+// доказательная база (§6.8)
+const evidence = ref<{ id: string; kind: string; note: string | null; url: string | null }[]>([])
+const evUploading = ref(false)
+const evInput = ref<HTMLInputElement | null>(null)
+const KIND_LABELS: Record<string, string> = { qc: 'Контроль качества', defect: 'Брак', other: 'Прочее' }
+async function loadEvidence() {
+  try { evidence.value = await listEvidence(id) } catch { /* не критично */ }
+}
+onMounted(loadEvidence)
+async function onEvidencePick(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  evUploading.value = true
+  try {
+    await addEvidence(id, file, 'defect')
+    if (evInput.value) evInput.value.value = ''
+    await loadEvidence()
+    toast.add({ title: 'Фото добавлено', color: 'success' })
+  } catch (err) {
+    toast.add({ title: 'Ошибка загрузки', description: (err as Error).message, color: 'error' })
+  } finally { evUploading.value = false }
+}
 
 const { data: order, refresh } = await useAsyncData(`admin-order-${id}`, () => getOrderAdmin(id))
 
@@ -115,6 +138,22 @@ const shortId = (s: string) => s.slice(0, 8)
               <span v-if="l.note" class="text-ink-gray-600">— {{ l.note }}</span>
             </li>
           </ul>
+        </div>
+
+        <!-- доказательная база (§6.8) -->
+        <div class="border border-ink-gray-200 rounded-lg p-4">
+          <div class="flex items-center justify-between mb-2">
+            <p class="ink-label text-ink-gray-600">Фото-доказательства</p>
+            <input ref="evInput" type="file" accept="image/*" class="hidden" @change="onEvidencePick">
+            <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="evUploading" @click="evInput?.click()">Добавить</UButton>
+          </div>
+          <div v-if="evidence.length" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            <a v-for="e in evidence" :key="e.id" :href="e.url ?? '#'" target="_blank">
+              <img v-if="e.url" :src="e.url" :alt="KIND_LABELS[e.kind]" class="aspect-square w-full object-cover rounded-md border border-ink-gray-200">
+              <span class="text-[10px] text-ink-gray-500 block truncate">{{ KIND_LABELS[e.kind] }}</span>
+            </a>
+          </div>
+          <p v-else class="text-caption text-ink-gray-400">Фото пока нет.</p>
         </div>
       </div>
 

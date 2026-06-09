@@ -66,6 +66,38 @@ function confirmModal() {
 }
 
 const shortId = (s: string) => s.slice(0, 8)
+
+// доказательная база (§6.8): фото QC/брака
+const { addEvidence, listEvidence } = useStudio()
+const evidence = ref<{ id: string; kind: string; note: string | null; url: string | null; created_at: string }[]>([])
+const evKind = ref<'qc' | 'defect' | 'other'>('qc')
+const evNote = ref('')
+const evUploading = ref(false)
+const evInput = ref<HTMLInputElement | null>(null)
+const KIND_LABELS: Record<string, string> = { qc: 'Контроль качества', defect: 'Брак', other: 'Прочее' }
+
+async function loadEvidence() {
+  try { evidence.value = await listEvidence(id) } catch { /* не критично */ }
+}
+onMounted(loadEvidence)
+
+async function onEvidencePick(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  evUploading.value = true
+  try {
+    await addEvidence(id, file, evKind.value, evNote.value.trim() || undefined)
+    evNote.value = ''
+    if (evInput.value) evInput.value.value = ''
+    await loadEvidence()
+    toast.add({ title: 'Фото добавлено', color: 'success' })
+  } catch (err) {
+    toast.add({ title: 'Ошибка загрузки', description: (err as Error).message, color: 'error' })
+  } finally {
+    evUploading.value = false
+  }
+}
+
 function specPlacements(item: { designs?: { spec?: unknown } | null }) {
   const spec = item.designs?.spec as { placements?: Record<string, unknown>[] } | undefined
   return spec?.placements ?? []
@@ -159,6 +191,22 @@ function specPlacements(item: { designs?: { spec?: unknown } | null }) {
               <span v-if="l.note" class="text-ink-gray-600">— {{ l.note }}</span>
             </li>
           </ul>
+        </div>
+        <!-- доказательная база: фото QC/брака (§6.8) -->
+        <div class="border border-ink-gray-200 rounded-lg p-4">
+          <p class="ink-label text-ink-gray-600 mb-2">Фото-доказательства</p>
+          <div v-if="evidence.length" class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+            <a v-for="e in evidence" :key="e.id" :href="e.url ?? '#'" target="_blank" class="block group">
+              <img v-if="e.url" :src="e.url" :alt="KIND_LABELS[e.kind]" class="aspect-square w-full object-cover rounded-md border border-ink-gray-200">
+              <span class="text-[10px] text-ink-gray-500 block truncate">{{ KIND_LABELS[e.kind] }}<template v-if="e.note"> · {{ e.note }}</template></span>
+            </a>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <USelect v-model="evKind" :items="[{ label: 'Контроль качества', value: 'qc' }, { label: 'Брак', value: 'defect' }, { label: 'Прочее', value: 'other' }]" value-key="value" size="xs" class="w-44" />
+            <UInput v-model="evNote" size="xs" placeholder="Комментарий" class="flex-1 min-w-32" />
+            <input ref="evInput" type="file" accept="image/*" capture="environment" class="hidden" @change="onEvidencePick">
+            <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="evUploading" @click="evInput?.click()">Добавить фото</UButton>
+          </div>
         </div>
       </div>
 

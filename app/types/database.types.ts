@@ -398,6 +398,44 @@ export type Database = {
           },
         ]
       }
+      order_evidence: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          note: string | null
+          order_id: string
+          path: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          order_id: string
+          path: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          order_id?: string
+          path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_evidence_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           design_id: string | null

@@ -78,5 +78,34 @@ export const useStudio = () => {
     return () => { supabase.removeChannel(channel) }
   }
 
-  return { listQueue, getOrder, changeStatus, moderateDesign, subscribe }
+  // ── Доказательная база возвратов (§6.8): фото QC/брака в приватном бакете ──
+  /** Загрузить фото-доказательство к заказу. Файл уходит в приватный бакет evidence. */
+  async function addEvidence(orderId: string, file: File, kind: 'qc' | 'defect' | 'other', note?: string) {
+    const ext = file.name.split('.').pop() || 'jpg'
+    const path = `${orderId}/${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext}`
+    const { error: upErr } = await supabase.storage.from('evidence').upload(path, file, { upsert: false })
+    if (upErr) throw upErr
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await supabase.from('order_evidence')
+      .insert({ order_id: orderId, path, kind, note: note ?? null, actor_id: user?.id ?? null })
+    if (error) throw error
+  }
+
+  /** Список доказательств заказа со временными подписанными ссылками (приватный бакет). */
+  async function listEvidence(orderId: string) {
+    const { data, error } = await supabase
+      .from('order_evidence')
+      .select('id, path, kind, note, created_at')
+      .eq('order_id', orderId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    const rows = data ?? []
+    const signed = await Promise.all(rows.map(async (r) => {
+      const { data: s } = await supabase.storage.from('evidence').createSignedUrl(r.path, 3600)
+      return { ...r, url: s?.signedUrl ?? null }
+    }))
+    return signed
+  }
+
+  return { listQueue, getOrder, changeStatus, moderateDesign, subscribe, addEvidence, listEvidence }
 }
