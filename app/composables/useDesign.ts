@@ -133,6 +133,60 @@ export const useDesign = () => {
     selectedId.value = pl.id
   }
 
+  // ── загрузка существующего дизайна для «доработать» (§3.1) ─────
+  // Реконструирует состояние из spec (мм→px по текущей зоне). Приблизительно:
+  // fontSize выводим из высоты, привязку принта восстанавливаем по spec.print_id.
+  interface SpecPlacementIn {
+    zone?: string; x_mm?: number; y_mm?: number; width_mm?: number; height_mm?: number
+    rotation_deg?: number; source?: string; text?: string; font?: string; fill?: string
+    asset_url?: string; natural_w?: number; natural_h?: number
+  }
+  interface SpecIn {
+    placements?: SpecPlacementIn[]; product_color_hex?: string
+    material?: string; print_method?: string; print_id?: string | null
+  }
+  function loadSpec(raw: unknown) {
+    const spec = raw as SpecIn | null
+    if (!product.value || !spec) return
+    // материал: по методу печати → по ткани → первый
+    const mat = product.value.materials.find(m => m.print_method === spec.print_method)
+      ?? product.value.materials.find(m => m.fabric_type === spec.material)
+      ?? product.value.materials[0]
+    if (mat) materialId.value = mat.id
+    // зона из первой плейсменты (если валидна для режима)
+    const firstZone = spec.placements?.[0]?.zone
+    if (firstZone && validZones.value.find(z => z.name === firstZone)) zoneName.value = firstZone
+    if (spec.product_color_hex) productColorHex.value = spec.product_color_hex
+
+    const r = zoneRect.value
+    const ppm = pxPerMm.value
+    const next: Placement[] = []
+    for (const p of spec.placements ?? []) {
+      const width = (Number(p.width_mm) || 0) * ppm
+      const height = (Number(p.height_mm) || 0) * ppm
+      const x = r.x + (Number(p.x_mm) || 0) * ppm
+      const y = r.y + (Number(p.y_mm) || 0) * ppm
+      const rotation = Number(p.rotation_deg) || 0
+      if (p.source === 'text') {
+        next.push({
+          id: nextId(), kind: 'text', x, y, width, height, rotation,
+          text: p.text ?? '', fontFamily: p.font ?? 'Inter', fill: p.fill ?? '#111111',
+          fontSize: Math.max(8, Math.round(height / 1.3)),
+        })
+      } else if (p.asset_url) {
+        next.push({
+          id: nextId(), kind: 'image', x, y, width, height, rotation,
+          source: p.source === 'library' ? 'library' : 'upload',
+          assetUrl: p.asset_url,
+          printId: p.source === 'library' ? (spec.print_id ?? undefined) : undefined,
+          naturalW: p.natural_w, naturalH: p.natural_h,
+        })
+      }
+    }
+    placements.value = next
+    selectedId.value = null
+  }
+
   function updatePlacement(id: string, patch: Partial<Placement>) {
     placements.value = placements.value.map(p => (p.id === id ? { ...p, ...patch } : p))
   }
@@ -196,7 +250,7 @@ export const useDesign = () => {
   return {
     product, materialId, zoneName, productColorHex, placements, selectedId,
     material, printMode, validZones, zone, zoneRect, pxPerMm, hasText, compositionUrl,
-    init, addImage, addText, updatePlacement, removePlacement, toMm, toSpec,
+    init, loadSpec, addImage, addText, updatePlacement, removePlacement, toMm, toSpec,
     registerStage, captureComposition, setCompositionUrl,
   }
 }

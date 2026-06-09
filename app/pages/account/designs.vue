@@ -53,7 +53,7 @@ async function share(id: string) {
         <div class="p-3 space-y-2">
           <p class="text-caption font-semibold truncate">{{ d.products?.title }}</p>
           <div class="flex items-center justify-between gap-2">
-            <NuxtLink v-if="d.products?.alias" :to="`/customize/${d.products.alias}`" class="text-caption text-ink-burgundy">Открыть</NuxtLink>
+            <NuxtLink v-if="d.products?.alias" :to="`/customize/${d.products.alias}?from=${d.id}`" class="text-caption text-ink-burgundy">Доработать</NuxtLink>
             <UButton
               size="xs" color="neutral" variant="ghost" icon="i-lucide-share-2"
               :loading="sharingId === d.id" @click="share(d.id)"

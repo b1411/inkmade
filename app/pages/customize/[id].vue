@@ -29,11 +29,24 @@ async function uploadComposition(blob: Blob): Promise<string> {
   return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
 }
 
+// «доработать» (§3.1): ?from=<designId> загружает сохранённый дизайн как основу версии
+const fromId = computed(() => (route.query.from as string) || null)
+const parentId = ref<string | null>(null)
+
 // инициализация состояния на клиенте (canvas + Image — клиент)
-onMounted(() => {
-  if (product.value) {
-    design.init(product.value)
-    useAnalytics().viewContent(product.value.id) // первое звено воронки (§3.5.1)
+onMounted(async () => {
+  if (!product.value) return
+  design.init(product.value)
+  useAnalytics().viewContent(product.value.id) // первое звено воронки (§3.5.1)
+  if (fromId.value) {
+    try {
+      const { data } = await supabase.from('designs').select('spec').eq('id', fromId.value).single()
+      if (data?.spec) {
+        design.loadSpec(data.spec)
+        parentId.value = fromId.value
+        toast.add({ title: 'Дизайн загружен для доработки', color: 'success' })
+      }
+    } catch { /* если дизайн недоступен — начинаем с чистого листа */ }
   }
 })
 
@@ -77,7 +90,7 @@ async function onSaveDesign() {
     if (user.value) {
       await $fetch('/api/designs/import', {
         method: 'POST',
-        body: { designs: [{ productId: product.value!.id, spec, previewUrl }] },
+        body: { designs: [{ productId: product.value!.id, spec, previewUrl, parentId: parentId.value }] },
       })
       toast.add({ title: 'Дизайн сохранён в кабинете', color: 'success' })
       await navigateTo('/account/designs')

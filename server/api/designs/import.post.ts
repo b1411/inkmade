@@ -7,6 +7,7 @@ interface IncomingDesign {
   productId?: string
   spec?: Json
   previewUrl?: string | null
+  parentId?: string | null
 }
 
 const MAX = 20
@@ -34,6 +35,7 @@ export default defineEventHandler(async (event) => {
       product_id: d.productId!,
       spec: d.spec as Json,
       preview_url: d.previewUrl ?? null,
+      parent_design_id: d.parentId ?? null,
       is_saved: true,
     }))
   if (!rows.length) return { imported: 0 }

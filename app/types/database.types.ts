@@ -227,6 +227,7 @@ export type Database = {
           is_saved: boolean
           moderation_status: string
           original_url: string | null
+          parent_design_id: string | null
           preview_url: string | null
           print_file_url: string | null
           product_id: string
@@ -241,6 +242,7 @@ export type Database = {
           is_saved?: boolean
           moderation_status?: string
           original_url?: string | null
+          parent_design_id?: string | null
           preview_url?: string | null
           print_file_url?: string | null
           product_id: string
@@ -255,6 +257,7 @@ export type Database = {
           is_saved?: boolean
           moderation_status?: string
           original_url?: string | null
+          parent_design_id?: string | null
           preview_url?: string | null
           print_file_url?: string | null
           product_id?: string
@@ -264,6 +267,13 @@ export type Database = {
           variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "designs_parent_design_id_fkey"
+            columns: ["parent_design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "designs_product_id_fkey"
             columns: ["product_id"]
