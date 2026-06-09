@@ -23,7 +23,7 @@ const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.
 
     <div class="relative mx-auto max-w-(--container-max) px-4 py-24 md:py-32">
       <p class="ink-label text-ink-cream/70">Merch Studio · EST. 2025</p>
-      <h1 class="ink-display text-h1 mt-4 max-w-4xl">
+      <h1 class="ink-hero text-hero mt-4 max-w-4xl">
         ТВОЙ ПРИНТ.<br>ТВОЯ ВЕЩЬ.
       </h1>
       <p class="text-body-lg mt-6 max-w-xl text-ink-cream/85">
@@ -31,12 +31,12 @@ const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.
         Печать по требованию — тираж от одной штуки.
       </p>
       <div class="flex flex-wrap gap-3 mt-8">
-        <UButton :to="createTo" size="xl" color="neutral" class="bg-ink-cream text-ink-black hover:bg-ink-cream-dark">
+        <AppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>
           Создать свой принт
-        </UButton>
-        <UButton to="/catalog" size="xl" color="neutral" variant="outline" class="text-ink-cream ring-ink-cream/40">
+        </AppButton>
+        <AppButton to="/catalog" variant="secondary" size="xl" on-dark>
           Смотреть каталог
-        </UButton>
+        </AppButton>
       </div>
     </div>
   </section>

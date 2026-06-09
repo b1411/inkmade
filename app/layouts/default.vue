@@ -12,7 +12,7 @@ onMounted(() => cart.load())
   <div class="min-h-screen flex flex-col bg-ink-white text-ink-black">
     <header class="bg-ink-burgundy text-ink-cream">
       <div class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between">
-        <NuxtLink to="/" class="ink-display text-2xl tracking-wide">INKMADE</NuxtLink>
+        <NuxtLink to="/" class="ink-logo text-2xl tracking-wide">INKMADE</NuxtLink>
         <nav class="flex items-center gap-4" aria-label="Основная навигация">
           <NuxtLink to="/catalog" class="ink-label hover:opacity-80">Каталог</NuxtLink>
           <NuxtLink to="/cart" class="inline-flex items-center gap-1 ink-label hover:opacity-80">
@@ -33,7 +33,7 @@ onMounted(() => cart.load())
     <footer class="bg-ink-black text-ink-cream/70 mt-12">
       <div class="mx-auto max-w-(--container-max) px-4 py-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
         <div>
-          <p class="ink-display text-xl text-ink-cream">INKMADE</p>
+          <p class="ink-logo text-xl text-ink-cream">INKMADE</p>
           <p class="ink-label mt-2 text-ink-cream/50">Merch Studio · EST. 2025</p>
           <p class="text-caption mt-3">Печать своего принта на одежде. Тираж от одной штуки. Казахстан.</p>
         </div>

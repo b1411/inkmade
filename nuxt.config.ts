@@ -5,9 +5,16 @@ export default defineNuxtConfig({
   future: { compatibilityVersion: 4 },
   devtools: { enabled: true },
 
-  modules: ['@nuxt/ui', '@nuxt/fonts', '@nuxtjs/supabase'],
+  modules: [
+    '@nuxt/ui',
+    '@nuxt/fonts',
+    '@nuxtjs/supabase',
+    '@nuxt/image',
+    '@vueuse/motion/nuxt',
+    '@formkit/auto-animate/nuxt',
+  ],
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/main.css', 'vue-sonner/style.css'],
 
   // Supabase (§3.2). redirect:false — гостевой поток без принудительного логина (§9.1).
   // Доступ к кабинетам закрываем собственными middleware (F0-13), а не глобальным редиректом.
@@ -32,7 +39,8 @@ export default defineNuxtConfig({
     },
   },
 
-  // §2.3 фирменные шрифты. Permanent Marker — только латиница/заголовки.
+  // §2.3 фирменные шрифты. Дисплейный заголовочный шрифт — Unbounded (характерный
+  // гротеск с полной кириллицей, §1.2 ТЗ). Permanent Marker — только логотип (латиница).
   fonts: {
     // только каркас UI/бренда. ~200 шрифтов принта грузятся по требованию
     // (app/composables/useFontLoader.ts) — предзагрузка всех убила бы страницу.
@@ -40,13 +48,17 @@ export default defineNuxtConfig({
     families: [
       { name: 'Manrope', provider: 'google' },
       { name: 'Space Mono', provider: 'google' },
+      // дисплейный заголовочный гротеск — латиница + кириллица, веса 500–800
+      { name: 'Unbounded', provider: 'google', weights: [500, 600, 700, 800] },
+      // граффити-акцент бренда — только логотип (латиница)
       { name: 'Permanent Marker', provider: 'google' },
-      // кириллический дисплейный шрифт (H12): латиница → Permanent Marker, кириллица → Oswald
-      { name: 'Oswald', provider: 'google' },
     ],
   },
 
   app: {
+    // Переходы между страницами (§4.5 ТЗ): fade + лёгкий slide-up. Ощущение единого
+    // приложения, не перезагрузки. Под prefers-reduced-motion CSS гасит transform/opacity.
+    pageTransition: { name: 'page', mode: 'out-in' },
     head: {
       htmlAttrs: { lang: 'ru' },
       title: 'INKMADE — Merch Studio',
