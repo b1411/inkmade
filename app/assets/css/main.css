@@ -275,6 +275,18 @@
     background-size: 100% 1.5px;
   }
 
+  /* Hero — начальное скрытие анимируемых элементов до GSAP-timeline (§5.1, §8).
+     Класс ставится только при включённом движении (см. Hero.vue), поэтому при
+     reduced-motion/без-JS контент остаётся видимым. */
+  .hero-anim [data-hero] {
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-anim [data-hero] {
+      opacity: 1;
+    }
+  }
+
   /* ── Навигация (§4.1) — пункт с раскрывающимся подчёркиванием ─── */
   .nav-link {
     position: relative;

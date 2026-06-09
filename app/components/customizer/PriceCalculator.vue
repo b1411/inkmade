@@ -1,7 +1,33 @@
 <script setup lang="ts">
-// Калькулятор цены в реальном времени (§7.1, §5.5) — главное отличие от B2B-референса.
+// Калькулятор цены в реальном времени (§5.5, §9.1) — главное отличие от B2B-референса.
+// Итог «накручивается» (count-up) при каждом изменении — цена осязаема и честна.
 const emit = defineEmits<{ addToCart: [] }>()
 const { breakdown } = usePricing()
+
+// Count-up итоговой цены (§9.1). Под reduced-motion — мгновенно.
+const display = ref(breakdown.value.unitPrice)
+const prefersReduced = useReducedMotion()
+watch(
+  () => breakdown.value.unitPrice,
+  (to) => {
+    if (prefersReduced.value) {
+      display.value = to
+      return
+    }
+    const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
+    if (!gsap) {
+      display.value = to
+      return
+    }
+    const obj = { v: display.value }
+    gsap.to(obj, {
+      v: to,
+      duration: 0.5,
+      ease: 'power2.out',
+      onUpdate: () => (display.value = Math.round(obj.v)),
+    })
+  },
+)
 </script>
 
 <template>
@@ -16,7 +42,7 @@ const { breakdown } = usePricing()
     </dl>
     <div class="flex justify-between items-baseline border-t border-ink-gray-200 pt-3">
       <span class="font-semibold">Итого</span>
-      <span class="text-h3 font-bold text-ink-burgundy">{{ breakdown.unitPrice }} ₸</span>
+      <span class="text-h3 font-bold text-ink-burgundy tabular-nums">{{ display }} ₸</span>
     </div>
     <UiAppButton variant="primary" size="lg" block icon="i-lucide-shopping-cart" @click="emit('addToCart')">
       В корзину
