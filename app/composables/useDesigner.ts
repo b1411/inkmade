@@ -60,6 +60,23 @@ export const useDesigner = () => {
     return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
   }
 
+  /** Загрузить сгенерированную превью принта (webp) в Storage. */
+  async function uploadThumbnail(blob: Blob): Promise<string> {
+    const path = `library-thumbs/${user.value!.id}/${Date.now()}-${Math.round(Math.random() * 1e6)}.webp`
+    const { error } = await supabase.storage.from('design-uploads').upload(path, blob, { upsert: false, contentType: 'image/webp' })
+    if (error) throw error
+    return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
+  }
+
+  /** Загрузить аватар дизайнера. */
+  async function uploadAvatar(file: File): Promise<string> {
+    const ext = file.name.split('.').pop() || 'png'
+    const path = `avatars/${user.value!.id}/${Date.now()}.${ext}`
+    const { error } = await supabase.storage.from('design-uploads').upload(path, file, { upsert: true })
+    if (error) throw error
+    return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
+  }
+
   async function createPrint(payload: { title: string; file_url: string; thumbnail_url?: string | null; tags?: string[] }) {
     const row: TablesInsert<'print_library'> = {
       title: payload.title,
@@ -120,7 +137,7 @@ export const useDesigner = () => {
   }
 
   return {
-    profile, balance, earnings, myPrints, printStats, uploadPrintFile, createPrint, updatePrint, removePrint,
+    profile, balance, earnings, myPrints, printStats, uploadPrintFile, uploadThumbnail, uploadAvatar, createPrint, updatePrint, removePrint,
     payouts, requestPayout, updateProfile, rateHistory, subscribeSales,
   }
 }

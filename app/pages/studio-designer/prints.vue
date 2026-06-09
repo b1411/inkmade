@@ -67,9 +67,16 @@ async function onUpload() {
   uploading.value = true
   try {
     const url = await d.uploadPrintFile(pickedFile)
+    // лёгкая превью для каталога/модерации (растр → webp); для вектора остаётся оригинал
+    let thumbnailUrl: string | null = null
+    try {
+      const thumb = await makeThumbnail(pickedFile, 400)
+      if (thumb) thumbnailUrl = await d.uploadThumbnail(thumb)
+    } catch { /* превью не критична — будет оригинал */ }
     await d.createPrint({
       title: form.title.trim(),
       file_url: url,
+      thumbnail_url: thumbnailUrl,
       tags: form.tags.split(',').map(s => s.trim()).filter(Boolean),
     })
     Object.assign(form, { title: '', tags: '', agree: false })

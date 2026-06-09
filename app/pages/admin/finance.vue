@@ -38,17 +38,41 @@ const chartMax = computed(() => {
 })
 const dayShort = (iso: string) => iso.slice(5) // MM-DD
 
+function downloadCsv(csv: string, name: string) {
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = name
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
+
 function exportCsv() {
   const rows = data.value?.entries ?? []
   const head = 'date,type,amount,currency,note,order_id'
   const body = rows.map(e => [e.created_at, e.entry_type, e.amount, e.currency, (e.note ?? '').replace(/,/g, ' '), e.order_id ?? ''].join(','))
-  const csv = [head, ...body].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = 'inkmade-finance.csv'
-  a.click()
-  URL.revokeObjectURL(a.href)
+  downloadCsv([head, ...body].join('\n'), 'inkmade-finance.csv')
+}
+
+// налоговый экспорт для бухгалтера (§6.2): сводка оборота и P&L за период.
+// Оценочный налог по упрощёнке РК (~3% от оборота, ф.910) — справочно, не замена расчёту бухгалтера.
+function exportTaxCsv() {
+  const s = data.value?.stats
+  if (!s) return
+  const periodLabel = periods.find(p => p.value === period.value)?.label ?? ''
+  const turnover = (Number(s.revenue) || 0) - (Number(s.refund) || 0)
+  const tax = Math.round(turnover * 0.03)
+  const rows: [string, string | number][] = [
+    ['Период', periodLabel],
+    ['Выручка', Math.round(Number(s.revenue) || 0)],
+    ['Возвраты', Math.round(Number(s.refund) || 0)],
+    ['Чистый оборот', Math.round(turnover)],
+    ['Себестоимость', Math.round(Number(s.cogs) || 0)],
+    ['Роялти дизайнерам', Math.round(Number(s.royalty) || 0)],
+    ['Чистая прибыль', Math.round(Number(s.profit) || 0)],
+    ['Оценочный налог (упрощёнка ~3% от оборота)', tax],
+  ]
+  downloadCsv(rows.map(r => `${r[0]},${r[1]}`).join('\n'), 'inkmade-tax.csv')
 }
 </script>
 
@@ -62,6 +86,7 @@ function exportCsv() {
       <div class="flex items-center gap-2">
         <USelect v-model="period" :items="periods" value-key="value" class="w-36" />
         <UButton color="neutral" variant="subtle" icon="i-lucide-download" @click="exportCsv">CSV</UButton>
+        <UButton color="neutral" variant="subtle" icon="i-lucide-receipt" @click="exportTaxCsv">Налоговый</UButton>
       </div>
     </div>
 
