@@ -17,6 +17,8 @@ const design = useDesign()
 const { material, materialId, placements, selectedId, productColorHex, removePlacement, toSpec } = design
 const { breakdown } = usePricing()
 const cart = useCart()
+const guestDesigns = useGuestDesigns()
+const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 
 // скриншот композиции в Storage (§13.2, артефакт «для глаз»)
@@ -55,6 +57,43 @@ const selectedVariant = computed(() =>
 )
 
 const toast = useToast()
+
+// сохранить дизайн «на потом» (CRM §3.1/§3.2): вошедшему — сразу в кабинет,
+// гостю — локально, перенос в аккаунт при входе (плагин guest-import).
+const saving = ref(false)
+async function onSaveDesign() {
+  if (saving.value) return
+  if (!placements.value.length) { toast.add({ title: 'Добавьте принт или текст', color: 'warning' }); return }
+  if (!design.zone.value) { toast.add({ title: 'Зона печати не выбрана', color: 'warning' }); return }
+  saving.value = true
+  try {
+    let previewUrl: string | null = null
+    const blob = await design.captureComposition()
+    if (blob) {
+      try { previewUrl = await uploadComposition(blob); design.setCompositionUrl(previewUrl) }
+      catch { /* скриншот не критичен */ }
+    }
+    const spec = toSpec() as unknown as import('~/types/database.types').Json
+    if (user.value) {
+      await $fetch('/api/designs/import', {
+        method: 'POST',
+        body: { designs: [{ productId: product.value!.id, spec, previewUrl }] },
+      })
+      toast.add({ title: 'Дизайн сохранён в кабинете', color: 'success' })
+      await navigateTo('/account/designs')
+    } else {
+      guestDesigns.add({
+        productId: product.value!.id, alias: product.value!.alias, title: product.value!.title, spec, previewUrl,
+      })
+      toast.add({ title: 'Дизайн сохранён', description: 'Войдите — он появится в вашем кабинете.', color: 'success' })
+    }
+  } catch (e) {
+    toast.add({ title: 'Не удалось сохранить', description: (e as Error).message, color: 'error' })
+  } finally {
+    saving.value = false
+  }
+}
+
 const submitting = ref(false)
 async function onAddToCart() {
   if (submitting.value) return
@@ -128,6 +167,9 @@ async function onAddToCart() {
           </UButton>
         </div>
         <p class="text-caption text-ink-gray-400">Перетаскивай, меняй размер и поворот в пределах зоны.</p>
+        <UButton color="neutral" variant="subtle" size="sm" icon="i-lucide-bookmark" :loading="saving" block @click="onSaveDesign">
+          Сохранить дизайн
+        </UButton>
       </div>
 
       <!-- панель управления -->
