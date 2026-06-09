@@ -275,6 +275,39 @@
     background-size: 100% 1.5px;
   }
 
+  /* ── Навигация (§4.1) — пункт с раскрывающимся подчёркиванием ─── */
+  .nav-link {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 2px;
+  }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 1.5px;
+    width: 100%;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+  .nav-link:hover::after,
+  .nav-link.router-link-active::after {
+    transform: scaleX(1);
+  }
+
+  /* Бейдж корзины — лёгкий «отскок» при добавлении (§4.1) */
+  @keyframes badge-pop {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.5); }
+    100% { transform: scale(1); }
+  }
+  .badge-pop {
+    animation: badge-pop var(--dur-slow) var(--ease-spring);
+  }
+
   /* ── Карточки (§4.3) — единый компонент ui/AppCard ───────────── */
   .app-card {
     border-radius: var(--radius-lg);
