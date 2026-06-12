@@ -14,6 +14,7 @@ const LIMITS: { prefix: string; max: number }[] = [
   { prefix: '/api/payment/', max: 20 },
   { prefix: '/api/orders/create', max: 20 },
   { prefix: '/api/orders/', max: 40 }, // смена статуса и пр.
+  { prefix: '/api/designs/', max: 40 }, // шаринг/импорт/модерация — от перебора токенов
 ]
 
 const buckets = new Map<string, Hit>()
@@ -50,6 +51,7 @@ export default defineEventHandler((event) => {
   hit.count += 1
   if (hit.count > limit.max) {
     const retryAfter = Math.ceil((hit.resetAt - now) / 1000)
+    // H3 типизирует Retry-After как number и сам сериализует его в строку при отдаче.
     setResponseHeader(event, 'Retry-After', retryAfter)
     throw createError({ statusCode: 429, statusMessage: 'Слишком много запросов, попробуйте позже' })
   }

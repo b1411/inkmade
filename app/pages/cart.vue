@@ -35,14 +35,14 @@ onMounted(() => cart.load())
             <span class="w-6 text-center">{{ i.quantity }}</span>
             <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-plus" @click="cart.updateQty(i.id, i.quantity + 1)" />
           </div>
-          <div class="w-24 text-right font-semibold">{{ i.unitPrice * i.quantity }} ₸</div>
+          <div class="w-24 text-right font-semibold">{{ formatPrice(i.unitPrice * i.quantity) }}</div>
           <UButton color="error" variant="ghost" icon="i-lucide-trash-2" :aria-label="`Удалить ${i.title}`" @click="cart.remove(i.id)" />
         </div>
       </div>
 
       <div class="flex items-center justify-between border-t border-ink-gray-200 pt-4">
         <span class="text-ink-gray-600">Итого</span>
-        <span class="text-h3 font-bold text-ink-burgundy">{{ cart.total.value }} ₸</span>
+        <span class="text-h3 font-bold text-ink-burgundy">{{ formatPrice(cart.total.value) }}</span>
       </div>
 
       <UiAppButton to="/checkout" variant="primary" size="xl" block trailing-icon="i-lucide-arrow-right">

@@ -3,6 +3,7 @@ import type { Database } from '~/types/database.types'
 import type { OrderStatus } from '~~/shared/config/order-status'
 import { isValidTransition, REASON_REQUIRED } from '~~/shared/config/order-status'
 import { notifyOrder } from '~~/server/utils/email'
+import { requireUuid } from '~~/server/utils/validation'
 
 // Серверная смена статуса (§8.5): проверка роли, валидация перехода по автомату (§5.3),
 // запись orders.status + order_status_log. Недопустимые переходы невозможны.
@@ -10,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Требуется вход' })
 
-  const orderId = getRouterParam(event, 'id')!
+  const orderId = requireUuid(getRouterParam(event, 'id'), 'идентификатор заказа')
   const body = await readBody<{ to: OrderStatus; note?: string; trackingNo?: string; carrier?: string }>(event)
   const to = body.to
 
@@ -61,7 +62,10 @@ export default defineEventHandler(async (event) => {
     p_tracking: body.trackingNo ?? '',
     p_carrier: body.carrier ?? '',
   })
-  if (rpcErr) throw createError({ statusCode: 500, statusMessage: rpcErr.message })
+  if (rpcErr) {
+    console.error('[order-status] change_order_status failed:', rpcErr.message)
+    throw createError({ statusCode: 500, statusMessage: 'Не удалось сменить статус заказа' })
+  }
 
   // уведомления клиенту на ключевых статусах (P1.7), best-effort
   if (to === 'shipped') await notifyOrder(svc, orderId, 'shipped', { trackingNo: body.trackingNo, carrier: body.carrier })

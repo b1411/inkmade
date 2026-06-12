@@ -45,7 +45,7 @@ async function applyPromo() {
     if (res.valid && res.discount) {
       promo.discount = res.discount
       promo.applied = res.code ?? promo.code.trim()
-      toast.add({ title: `Промокод применён: −${res.discount.toLocaleString('ru')} ₸`, color: 'success' })
+      toast.add({ title: `Промокод применён: −${formatPrice(res.discount)}`, color: 'success' })
     } else {
       promo.discount = 0
       promo.applied = ''
@@ -101,7 +101,7 @@ async function onPay() {
       </UFormField>
       <UFormField label="Email" required help="На него придёт подтверждение заказа">
         <UInput
-          v-model="form.email" type="email" autocomplete="email" placeholder="you@example.com"
+          v-model="form.email" type="email" autocomplete="email" placeholder="example@mail.kz"
           :color="form.email && !emailValid ? 'error' : undefined" class="w-full"
         />
       </UFormField>
@@ -139,7 +139,7 @@ async function onPay() {
       <UiSectionLabel accent>Заказ</UiSectionLabel>
       <div v-for="i in cart.items.value" :key="i.id" class="flex justify-between text-caption">
         <span>{{ i.title }} ({{ i.size }}) ×{{ i.quantity }}</span>
-        <span>{{ i.unitPrice * i.quantity }} ₸</span>
+        <span>{{ formatPrice(i.unitPrice * i.quantity) }}</span>
       </div>
       <!-- промокод -->
       <div class="border-t border-ink-gray-200 pt-3 space-y-2">
@@ -159,10 +159,10 @@ async function onPay() {
       </div>
 
       <div v-if="promo.discount" class="flex justify-between text-caption text-ink-success">
-        <span>Скидка</span><span>−{{ promo.discount.toLocaleString('ru') }} ₸</span>
+        <span>Скидка</span><span>−{{ formatPrice(promo.discount) }}</span>
       </div>
       <div class="flex justify-between border-t border-ink-gray-200 pt-3 font-semibold">
-        <span>Итого</span><span class="text-ink-burgundy">{{ finalTotal.toLocaleString('ru') }} ₸</span>
+        <span>Итого</span><span class="text-ink-burgundy">{{ formatPrice(finalTotal) }}</span>
       </div>
       <UButton color="primary" size="lg" block icon="i-lucide-credit-card" :loading="paying" :disabled="!formValid" @click="onPay">
         Перейти к оплате

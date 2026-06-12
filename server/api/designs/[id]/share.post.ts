@@ -1,6 +1,7 @@
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import { randomBytes } from 'node:crypto'
 import type { Database } from '~/types/database.types'
+import { requireUuid } from '~~/server/utils/validation'
 
 // Генерация публичной ссылки на дизайн (P4.22, §11 — шаринг ради охвата).
 // Токен создаётся на сервере (crypto), только владельцем дизайна. Идемпотентно:
@@ -9,8 +10,7 @@ export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Требуется вход' })
 
-  const id = getRouterParam(event, 'id')
-  if (!id) throw createError({ statusCode: 400, statusMessage: 'Нет идентификатора дизайна' })
+  const id = requireUuid(getRouterParam(event, 'id'), 'идентификатор дизайна')
 
   const svc = serverSupabaseServiceRole<Database>(event)
   const { data: design } = await svc

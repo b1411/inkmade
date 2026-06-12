@@ -139,7 +139,7 @@ const activeImage = ref(0)
       <div>
         <UiSectionLabel accent>{{ product.category }}</UiSectionLabel>
         <h1 class="ink-display text-h1 mt-2">{{ product.title }}</h1>
-        <p class="text-h3 mt-2 text-ink-burgundy font-bold">от {{ priceFrom }} ₸</p>
+        <p class="text-h3 mt-2 text-ink-burgundy font-bold">от {{ formatPrice(priceFrom) }}</p>
       </div>
 
       <p v-if="product.description" class="text-ink-gray-600">{{ product.description }}</p>

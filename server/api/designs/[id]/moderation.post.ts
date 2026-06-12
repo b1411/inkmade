@@ -1,5 +1,6 @@
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
+import { requireUuid } from '~~/server/utils/validation'
 
 // Модерация дизайна сотрудником (P2.14, §24). Только operator/admin.
 // Service role обходит RLS; триггер guard_design_moderation пропускает service role
@@ -8,8 +9,7 @@ export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Требуется вход' })
 
-  const id = getRouterParam(event, 'id')
-  if (!id) throw createError({ statusCode: 400, statusMessage: 'Нет идентификатора дизайна' })
+  const id = requireUuid(getRouterParam(event, 'id'), 'идентификатор дизайна')
 
   const body = await readBody<{ status: 'approved' | 'rejected' }>(event)
   if (body.status !== 'approved' && body.status !== 'rejected') {
@@ -24,7 +24,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const { error } = await svc.from('designs').update({ moderation_status: body.status }).eq('id', id)
-  if (error) throw createError({ statusCode: 500, statusMessage: error.message })
+  if (error) {
+    console.error('[design-moderation] update failed:', error.message)
+    throw createError({ statusCode: 500, statusMessage: 'Не удалось обновить статус дизайна' })
+  }
 
   return { ok: true, status: body.status }
 })

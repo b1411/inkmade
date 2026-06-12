@@ -55,7 +55,7 @@ const secondary = computed(() => images.value.map(i => i.url).find(u => u !== pr
     </div>
     <div class="p-4">
       <p class="font-semibold group-hover:text-ink-burgundy transition-colors">{{ product.title }}</p>
-      <p class="text-ink-gray-600 mt-1">от {{ product.base_price }} ₸</p>
+      <p class="text-ink-gray-600 mt-1">от {{ formatPrice(product.base_price) }}</p>
     </div>
   </UiAppCard>
 </template>
