@@ -35,6 +35,15 @@ const { data: order, refresh } = await useAsyncData(`studio-order-${id}`, () => 
 
 const nextStates = computed<OrderStatus[]>(() => TRANSITIONS[(order.value?.status as OrderStatus) ?? 'paid'] ?? [])
 
+// Гейт модерации (P2.14, §24) — дублируем серверную проверку в UI, чтобы оператор
+// не упирался в ошибку: в печать нельзя, пока хоть один дизайн не одобрен.
+const hasUnapproved = computed(() =>
+  (order.value?.order_items ?? []).some(
+    (it: { designs?: { moderation_status?: string } | null }) =>
+      it.designs && it.designs.moderation_status !== 'approved',
+  ),
+)
+
 // модал действия (причина / трек)
 const modal = reactive({ open: false, to: '' as OrderStatus, note: '', trackingNo: '', carrier: '' })
 const busy = ref(false)
@@ -223,10 +232,15 @@ function specPlacements(item: { designs?: { spec?: unknown } | null }) {
           variant="subtle"
           block
           :loading="busy"
+          :disabled="to === 'printing' && hasUnapproved"
           @click="startTransition(to)"
         >
           {{ STATUS_LABELS[to] }}
         </UButton>
+        <p v-if="hasUnapproved && nextStates.includes('printing')" class="text-caption text-ink-warning flex items-start gap-1.5">
+          <UIcon name="i-lucide-alert-triangle" class="shrink-0 mt-0.5" />
+          Одобрите все дизайны, чтобы отправить заказ в печать.
+        </p>
         <p v-if="!nextStates.length" class="text-caption text-ink-gray-400">Конечный статус.</p>
       </aside>
     </div>

@@ -40,6 +40,7 @@ async function onSubmit() {
   } finally { adding.value = false }
 }
 async function onRemove(id: string) {
+  if (!confirm('Удалить этот адрес?')) return
   await remove(id)
   if (editingId.value === id) resetForm()
   await refresh()

@@ -31,7 +31,10 @@ async function addPromo() {
   } finally { saving.value = false }
 }
 async function onToggle(id: string, active: boolean) { await togglePromo(id, active); await refresh() }
-async function onDelete(id: string) { await deletePromo(id); await refresh() }
+async function onDelete(id: string) {
+  if (!confirm('Удалить промокод? Действие необратимо.')) return
+  await deletePromo(id); await refresh()
+}
 const fmtVal = (p: { discount_type: string; discount_value: number }) =>
   p.discount_type === 'percent' ? `${p.discount_value}%` : `${p.discount_value} ₸`
 </script>
