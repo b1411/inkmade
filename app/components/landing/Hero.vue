@@ -4,16 +4,27 @@
 // подзаголовок → кнопки (overshoot) → медиа (scale 1.06→1). Параллакс медиа при
 // скролле. Всё под гейтом reduced-motion; начальное скрытие — класс .hero-anim.
 const supabase = useSupabaseClient()
-const { data: featured } = await useAsyncData('hero-featured', async () => {
-  const { data } = await supabase
-    .from('products')
-    .select('alias, title, product_images(url, is_primary)')
-    .eq('is_active', true)
-    .not('alias', 'is', null)
-    .limit(1)
-    .maybeSingle()
-  return data
-})
+const { get } = useSettings()
+
+const [{ data: featured }, { data: content }] = await Promise.all([
+  useAsyncData('hero-featured', async () => {
+    const { data } = await supabase
+      .from('products')
+      .select('alias, title, product_images(url, is_primary)')
+      .eq('is_active', true)
+      .not('alias', 'is', null)
+      .limit(1)
+      .maybeSingle()
+    return data
+  }),
+  useAsyncData('hero-content', async () => ({
+    title: (await get<string>('landing.hero_title')) ?? 'ТВОЙ ПРИНТ. ТВОЯ ВЕЩЬ.',
+    subtitle: (await get<string>('landing.hero_subtitle')) ?? 'Собери в браузере, увидь цену сразу, получи через пару дней. Печатаем от одной штуки — без партий и переплат.',
+  })),
+])
+
+const heroTitle = computed(() => content.value?.title ?? 'ТВОЙ ПРИНТ. ТВОЯ ВЕЩЬ.')
+const heroSubtitle = computed(() => content.value?.subtitle ?? 'Собери в браузере, увидь цену сразу, получи через пару дней. Печатаем от одной штуки — без партий и переплат.')
 const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.value.alias}` : '/catalog'))
 const heroImage = computed(() => {
   const imgs = (featured.value?.product_images ?? []) as { url: string; is_primary: boolean }[]
@@ -79,13 +90,11 @@ onBeforeUnmount(() => ctx?.revert())
         <p data-hero="label" data-hero-y class="ink-label text-ink-cream/70">
           MERCH STUDIO · ALMATY · EST. 2025
         </p>
-        <h1 class="ink-hero text-hero mt-4">
-          <span data-hero="line" data-hero-y class="block">ТВОЙ ПРИНТ.</span>
-          <span data-hero="line" data-hero-y class="block">ТВОЯ ВЕЩЬ.</span>
+        <h1 data-hero="line" data-hero-y class="ink-hero text-hero mt-4">
+          {{ heroTitle }}
         </h1>
         <p data-hero="sub" data-hero-y class="text-lead mt-6 max-w-xl text-ink-cream/85">
-          Собери в браузере, увидь цену сразу, получи через пару дней.
-          Печатаем от одной штуки — без партий и переплат.
+          {{ heroSubtitle }}
         </p>
         <div data-hero="cta" data-hero-y class="flex flex-wrap gap-3 mt-8">
           <UiAppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>

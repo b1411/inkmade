@@ -109,6 +109,37 @@
   --text-label: 0.75rem; /* font-mono uppercase 0.18em */
 }
 
+/*
+  Nuxt UI v4 генерирует тёмные переменные в классе .dark.
+  Переопределяем ВСЕ --ui-* токены в обоих контекстах, чтобы
+  инпуты/селекты/меню всегда были светлыми независимо от системной темы.
+*/
+:root,
+.dark {
+  color-scheme: light;
+
+  /* Фоны */
+  --ui-bg:          var(--color-ink-white);       /* #fbf8f2 тёплый белый */
+  --ui-bg-muted:    var(--color-ink-gray-50);     /* #f4f1ea чуть теплее */
+  --ui-bg-elevated: #ffffff;
+  --ui-bg-accented: var(--color-ink-gray-200);    /* #e5e0d8 */
+  --ui-bg-inverted: var(--color-ink-black);
+
+  /* Текст */
+  --ui-text:             var(--color-ink-black);       /* #111111 */
+  --ui-text-muted:       var(--color-ink-gray-600);    /* #555555 */
+  --ui-text-toned:       var(--color-ink-gray-400);    /* #9a9a9a */
+  --ui-text-highlighted: var(--color-ink-black);
+  --ui-text-dimmed:      var(--color-ink-gray-400);
+  --ui-text-inverted:    var(--color-ink-cream);
+
+  /* Рамки */
+  --ui-border:          var(--color-ink-gray-200);     /* #e5e0d8 */
+  --ui-border-muted:    var(--color-ink-gray-200);
+  --ui-border-accented: var(--color-ink-gray-400);     /* #9a9a9a */
+  --ui-border-inverted: var(--color-ink-black);
+}
+
 @layer base {
   body {
     font-family: var(--font-sans);
@@ -369,6 +400,28 @@
     100% {
       transform: translateX(100%);
     }
+  }
+
+  /* ── Поля ввода ──────────────────────────────────────────────
+     Nuxt UI (UInput/USelect/UTextarea) стилизуется через app.config.ts
+     (белая заливка, тёплая рамка, бордо-фокус) — НЕ переопределяем тут,
+     иначе ломаем контекст (на бордо-секциях текст должен быть кремовым).
+     Здесь только мягкий фолбэк для «голых» нативных полей вне Nuxt UI:
+     :where() = нулевая специфичность, любая утилита/компонент перебьёт. */
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([class*="bg-"]),
+  select:not([class*="bg-"]),
+  textarea:not([class*="bg-"])) {
+    background-color: #ffffff;
+    color: var(--color-ink-black);
+    border-color: var(--color-ink-gray-200);
+  }
+  :where(input, textarea)::placeholder {
+    color: var(--color-ink-gray-400);
+  }
+
+  /* Фокус нативных элементов — бордо-акцент бренда (Nuxt UI ставит свой ring). */
+  :where(input, select, textarea, button, a):focus-visible {
+    outline-color: var(--color-ink-burgundy);
   }
 
   /* Доступность (P3.19): уважаем системную настройку «меньше движения» —

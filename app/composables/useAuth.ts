@@ -9,17 +9,20 @@ export const useAuth = () => {
   const profile = useState<Profile | null>('auth_profile', () => null)
 
   async function fetchProfile(force = false): Promise<Profile | null> {
-    if (!user.value) {
+    // Используем getUser() напрямую: user.value из useSupabaseUser() обновляется
+    // асинхронно через onAuthStateChange и может быть null сразу после signIn.
+    const { data: { user: currentUser } } = await supabase.auth.getUser()
+    if (!currentUser) {
       profile.value = null
       return null
     }
-    if (profile.value && profile.value.id === user.value.id && !force) {
+    if (profile.value && profile.value.id === currentUser.id && !force) {
       return profile.value
     }
     const { data, error } = await supabase
       .from('profiles')
       .select('id, role, full_name, phone, created_at')
-      .eq('id', user.value.id)
+      .eq('id', currentUser.id)
       .single()
     if (error) {
       profile.value = null
@@ -46,10 +49,22 @@ export const useAuth = () => {
     }
   })
 
-  async function signIn(email: string, password: string) {
+  function roleToPath(r: UserRole | null | undefined): string {
+    switch (r) {
+      case 'admin': return '/admin'
+      case 'operator': return '/studio'
+      case 'designer': return '/studio-designer'
+      default: return '/account'
+    }
+  }
+
+  // Возвращает путь кабинета по роли — минуя реактивный computed,
+  // чтобы навигация не зависела от тайминга обновления Vue-состояния.
+  async function signIn(email: string, password: string): Promise<string> {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
-    await fetchProfile(true)
+    const p = await fetchProfile(true)
+    return roleToPath(p?.role)
   }
 
   async function signUp(

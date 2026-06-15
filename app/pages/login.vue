@@ -4,7 +4,7 @@
 definePageMeta({ layout: 'auth' })
 useHead({ title: 'Вход — INKMADE' })
 
-const { signIn, homePath } = useAuth()
+const { signIn } = useAuth()
 const route = useRoute()
 const toast = useToast()
 
@@ -12,18 +12,16 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 
-const CABINET_PREFIXES = ['/admin', '/studio', '/studio-designer', '/account']
-
+// signIn теперь возвращает путь кабинета напрямую из профиля (не через reactive computed)
 async function onSubmit() {
   loading.value = true
   try {
-    await signIn(email.value, password.value)
+    const homePath = await signIn(email.value, password.value)
     const raw = route.query.redirect as string | undefined
-    // redirect используем только если это не кабинет чужой роли
-    const isValidRedirect = raw && raw.startsWith('/') && !raw.startsWith('//')
-    const isCabinetMismatch = isValidRedirect && CABINET_PREFIXES.some(p => raw!.startsWith(p)) && !raw!.startsWith(homePath.value)
-    const redirect = isValidRedirect && !isCabinetMismatch ? raw! : homePath.value
-    await navigateTo(redirect)
+    // Используем ?redirect только если это НЕ кабинет (чтобы не застрять в чужом кабинете)
+    const cabinets = ['/admin', '/studio', '/studio-designer', '/account']
+    const isSafeRedirect = raw && raw.startsWith('/') && !raw.startsWith('//') && !cabinets.some(c => raw.startsWith(c))
+    await navigateTo(isSafeRedirect ? raw : homePath)
   } catch (e) {
     toast.add({ title: 'Не удалось войти', description: (e as Error).message, color: 'error' })
   } finally {
