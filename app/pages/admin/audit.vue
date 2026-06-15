@@ -31,19 +31,28 @@ function describe(e: { action: string; entity: string; before: unknown; after: u
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div>
-      <UiSectionLabel accent>Безопасность</UiSectionLabel>
-      <h1 class="ink-display text-h2 mt-1">Аудит действий</h1>
+  <div>
+    <UiPageHeader label="Безопасность" title="Аудит действий" />
+
+    <div v-if="pending" class="space-y-3">
+      <UiSkeleton v-for="n in 6" :key="n" rounded="rounded-lg" class="h-12" />
     </div>
-    <div v-if="pending" class="py-6 text-ink-gray-600">Загрузка…</div>
-    <div v-else-if="!log?.length" class="py-6 text-ink-gray-600 text-caption">Записей пока нет.</div>
-    <div v-else class="border border-ink-gray-200 rounded-lg divide-y divide-ink-gray-200 text-caption">
-      <div v-for="e in log" :key="e.id" class="flex items-center justify-between p-3">
-        <span class="text-ink-gray-500 w-32">{{ new Date(e.created_at).toLocaleString('ru') }}</span>
-        <span class="w-40 font-semibold">{{ eventTitle(e) }}</span>
-        <span class="flex-1 text-ink-gray-600">{{ describe(e) }}</span>
+
+    <UiEmptyState
+      v-else-if="!log?.length"
+      icon="i-lucide-shield-check"
+      title="Записей пока нет"
+      text="Действия администратора будут появляться здесь."
+    />
+
+    <UiPanel v-else :padded="false">
+      <div class="divide-y divide-ink-gray-200 text-caption">
+        <div v-for="e in log" :key="e.id" class="flex items-center justify-between px-6 py-3">
+          <span class="text-ink-gray-500 w-32">{{ new Date(e.created_at).toLocaleString('ru') }}</span>
+          <span class="w-40 font-semibold">{{ eventTitle(e) }}</span>
+          <span class="flex-1 text-ink-gray-600">{{ describe(e) }}</span>
+        </div>
       </div>
-    </div>
+    </UiPanel>
   </div>
 </template>

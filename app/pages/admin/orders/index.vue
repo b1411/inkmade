@@ -33,38 +33,43 @@ const shortId = (s: string) => s.slice(0, 8)
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <UiSectionLabel accent>Заказы</UiSectionLabel>
-        <h1 class="ink-display text-2xl mt-1">Все заказы</h1>
-      </div>
-      <USelect v-model="filter" :items="statusItems" value-key="value" class="w-56" />
+    <UiPageHeader label="Заказы" title="Все заказы" description="Все заказы магазина с фильтром по статусу.">
+      <template #actions>
+        <USelect v-model="filter" :items="statusItems" value-key="value" class="w-56" />
+      </template>
+    </UiPageHeader>
+
+    <div v-if="pending" class="space-y-3">
+      <UiSkeleton v-for="n in 6" :key="n" rounded="rounded-lg" class="h-12" />
     </div>
 
-    <div v-if="pending" class="py-10 text-center text-ink-gray-600">Загрузка…</div>
-    <div v-else-if="!filtered.length" class="py-10 text-center text-ink-gray-600">Заказов нет.</div>
+    <UiEmptyState v-else-if="!filtered.length" icon="i-lucide-package" title="Заказов нет" text="По выбранному фильтру заказы не найдены." />
 
-    <table v-else class="w-full text-left border-collapse">
-      <thead>
-        <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
-          <th class="py-2 pr-4">#</th>
-          <th class="py-2 pr-4">Дата</th>
-          <th class="py-2 pr-4">Позиций</th>
-          <th class="py-2 pr-4">Сумма</th>
-          <th class="py-2 pr-4">Статус</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="o in filtered" :key="o.id" class="border-b border-ink-gray-200 hover:bg-ink-gray-200/30">
-          <td class="py-3 pr-4">
-            <NuxtLink :to="`/admin/orders/${o.id}`" class="ink-label hover:text-ink-burgundy">#{{ shortId(o.id) }}</NuxtLink>
-          </td>
-          <td class="py-3 pr-4 text-caption">{{ new Date(o.created_at).toLocaleDateString('ru') }}</td>
-          <td class="py-3 pr-4">{{ o.order_items?.length ?? 0 }}</td>
-          <td class="py-3 pr-4">{{ o.total }} {{ o.currency }}</td>
-          <td class="py-3 pr-4"><UBadge :color="badgeColor(o.status)" variant="subtle">{{ STATUS_LABELS[o.status as OrderStatus] }}</UBadge></td>
-        </tr>
-      </tbody>
-    </table>
+    <UiPanel v-else :padded="false">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
+              <th class="px-6 py-3">#</th>
+              <th class="px-6 py-3">Дата</th>
+              <th class="px-6 py-3">Позиций</th>
+              <th class="px-6 py-3">Сумма</th>
+              <th class="px-6 py-3">Статус</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="o in filtered" :key="o.id" class="border-b border-ink-gray-200 hover:bg-ink-gray-200/30">
+              <td class="px-6 py-3">
+                <NuxtLink :to="`/admin/orders/${o.id}`" class="ink-label hover:text-ink-burgundy">#{{ shortId(o.id) }}</NuxtLink>
+              </td>
+              <td class="px-6 py-3 text-caption">{{ new Date(o.created_at).toLocaleDateString('ru') }}</td>
+              <td class="px-6 py-3">{{ o.order_items?.length ?? 0 }}</td>
+              <td class="px-6 py-3">{{ o.total }} {{ o.currency }}</td>
+              <td class="px-6 py-3"><UBadge :color="badgeColor(o.status)" variant="subtle">{{ STATUS_LABELS[o.status as OrderStatus] }}</UBadge></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </UiPanel>
   </div>
 </template>

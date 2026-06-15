@@ -78,79 +78,90 @@ async function openHistory(variantId: string, label: string) {
 
 <template>
   <div>
-    <UiSectionLabel accent>Склад</UiSectionLabel>
-    <h1 class="ink-display text-2xl mt-2 mb-6">Заготовки</h1>
+    <UiPageHeader label="Склад" title="Заготовки" description="Остатки вариантов, себестоимость и движения склада." />
 
     <div class="grid lg:grid-cols-[1fr_320px] gap-8">
       <div>
-        <div v-if="pending" class="py-10 text-center text-ink-gray-600">Загрузка…</div>
-        <div v-else-if="!rows?.length" class="py-10 text-center text-ink-gray-600">
-          Вариантов нет. Создайте товар с вариантами.
+        <div v-if="pending" class="space-y-2">
+          <UiSkeleton v-for="n in 6" :key="n" rounded="rounded-lg" class="h-12" />
         </div>
-        <table v-else class="w-full text-left border-collapse">
-          <thead>
-            <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
-              <th class="py-2 pr-4">Товар</th>
-              <th class="py-2 pr-4">Вариант</th>
-              <th class="py-2 pr-4">SKU</th>
-              <th class="py-2 pr-4">Себестоимость, ₸</th>
-              <th class="py-2 text-right">Остаток</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="r in rows" :key="r.id" class="border-b border-ink-gray-200">
-              <td class="py-3 pr-4">{{ r.products?.title }}</td>
-              <td class="py-3 pr-4">
-                <span class="inline-flex items-center gap-2">
-                  <span class="size-3 rounded-full border" :style="{ backgroundColor: r.color_hex }" />
-                  {{ r.color_name }} / {{ r.size }}
-                </span>
-              </td>
-              <td class="py-3 pr-4 ink-label text-ink-gray-400">{{ r.sku }}</td>
-              <td class="py-3 pr-4">
-                <div class="flex items-center gap-1">
-                  <UInput
-                    v-model.number="costEdit[r.id]"
-                    type="number" size="xs" class="w-24"
-                    :placeholder="String(r.blank_cost ?? 0)"
-                  />
-                  <UButton
-                    size="xs" color="neutral" variant="subtle" icon="i-lucide-check"
-                    :loading="costSaving === r.id"
-                    :disabled="costEdit[r.id] == null"
-                    @click="saveCost(r.id)"
-                  />
-                </div>
-              </td>
-              <td class="py-3 text-right whitespace-nowrap">
-                <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-history" class="mr-1" @click="openHistory(r.id, `${r.products?.title} · ${r.color_name}/${r.size}`)" />
-                <UBadge :color="r.stock <= LOW_THRESHOLD ? 'warning' : 'neutral'" variant="subtle">{{ r.stock }}</UBadge>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <UiEmptyState
+          v-else-if="!rows?.length"
+          icon="i-lucide-package"
+          title="Вариантов нет"
+          text="Создайте товар с вариантами, чтобы вести учёт остатков."
+        />
+        <UiPanel v-else :padded="false">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
+                  <th class="px-6 py-3">Товар</th>
+                  <th class="px-6 py-3">Вариант</th>
+                  <th class="px-6 py-3">SKU</th>
+                  <th class="px-6 py-3">Себестоимость, ₸</th>
+                  <th class="px-6 py-3 text-right">Остаток</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="r in rows" :key="r.id" class="border-b border-ink-gray-200">
+                  <td class="px-6 py-3">{{ r.products?.title }}</td>
+                  <td class="px-6 py-3">
+                    <span class="inline-flex items-center gap-2">
+                      <span class="size-3 rounded-full border" :style="{ backgroundColor: r.color_hex }" />
+                      {{ r.color_name }} / {{ r.size }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-3 ink-label text-ink-gray-400">{{ r.sku }}</td>
+                  <td class="px-6 py-3">
+                    <div class="flex items-center gap-1">
+                      <UInput
+                        v-model.number="costEdit[r.id]"
+                        type="number" size="xs" class="w-24"
+                        :placeholder="String(r.blank_cost ?? 0)"
+                      />
+                      <UButton
+                        size="xs" color="neutral" variant="subtle" icon="i-lucide-check"
+                        :loading="costSaving === r.id"
+                        :disabled="costEdit[r.id] == null"
+                        @click="saveCost(r.id)"
+                      />
+                    </div>
+                  </td>
+                  <td class="px-6 py-3 text-right whitespace-nowrap">
+                    <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-history" class="mr-1" @click="openHistory(r.id, `${r.products?.title} · ${r.color_name}/${r.size}`)" />
+                    <UBadge :color="r.stock <= LOW_THRESHOLD ? 'warning' : 'neutral'" variant="subtle">{{ r.stock }}</UBadge>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </UiPanel>
       </div>
 
-      <aside class="border border-ink-gray-200 rounded-lg p-5 h-fit space-y-4">
-        <UiSectionLabel accent>Движение склада</UiSectionLabel>
-        <UFormField label="Вариант">
-          <USelect v-model="form.variantId" :items="variantItems" value-key="value" class="w-full" />
-        </UFormField>
-        <UFormField label="Причина">
-          <USelect v-model="form.reason" :items="reasonItems" value-key="value" class="w-full" />
-        </UFormField>
-        <UFormField label="Δ (приход +, расход −)">
-          <UInput v-model.number="form.delta" type="number" class="w-full" />
-        </UFormField>
-        <UButton color="primary" block :loading="saving" @click="onSubmit">Записать</UButton>
-      </aside>
+      <UiPanel title="Движение склада" class="h-fit">
+        <div class="space-y-4">
+          <UFormField label="Вариант">
+            <USelect v-model="form.variantId" :items="variantItems" value-key="value" class="w-full" />
+          </UFormField>
+          <UFormField label="Причина">
+            <USelect v-model="form.reason" :items="reasonItems" value-key="value" class="w-full" />
+          </UFormField>
+          <UFormField label="Δ (приход +, расход −)">
+            <UInput v-model.number="form.delta" type="number" class="w-full" />
+          </UFormField>
+          <UButton color="primary" block :loading="saving" @click="onSubmit">Записать</UButton>
+        </div>
+      </UiPanel>
     </div>
 
     <!-- история движений склада -->
     <UModal v-model:open="history.open" :title="`История: ${history.title}`">
       <template #body>
-        <div v-if="history.loading" class="py-6 text-center text-ink-gray-600">Загрузка…</div>
-        <div v-else-if="!history.rows.length" class="py-6 text-center text-ink-gray-600 text-caption">Движений нет.</div>
+        <div v-if="history.loading" class="space-y-2">
+          <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-8" />
+        </div>
+        <UiEmptyState v-else-if="!history.rows.length" icon="i-lucide-history" title="Движений нет" />
         <table v-else class="w-full text-caption">
           <tbody>
             <tr v-for="m in history.rows" :key="m.id" class="border-b border-ink-gray-200/60">

@@ -55,86 +55,70 @@ const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(n)
 </script>
 
 <template>
-  <div class="space-y-8">
-    <div>
-      <UiSectionLabel accent>Дашборд</UiSectionLabel>
-      <h1 class="ink-display text-2xl mt-2">Админ-кабинет</h1>
+  <div>
+    <UiPageHeader label="Дашборд" title="Админ-кабинет" />
+
+    <div v-if="pending" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-24" />
     </div>
 
-    <div v-if="pending" class="py-10 text-center text-ink-gray-600">Загрузка аналитики…</div>
-
     <template v-else>
-      <!-- требует внимания -->
-      <div v-if="attention" class="flex flex-wrap gap-2">
-        <NuxtLink v-if="attention.moderation" to="/admin/designers" class="inline-flex items-center gap-1 bg-ink-warning/10 text-ink-warning rounded-full px-3 py-1 text-caption font-semibold">
-          <UIcon name="i-lucide-image" /> Модерация принтов: {{ attention.moderation }}
-        </NuxtLink>
-        <NuxtLink v-if="attention.payouts" to="/admin/designers" class="inline-flex items-center gap-1 bg-ink-burgundy/10 text-ink-burgundy rounded-full px-3 py-1 text-caption font-semibold">
-          <UIcon name="i-lucide-wallet" /> Заявки на выплату: {{ attention.payouts }}
-        </NuxtLink>
-        <NuxtLink v-if="attention.problem" to="/admin/returns" class="inline-flex items-center gap-1 bg-ink-error/10 text-ink-error rounded-full px-3 py-1 text-caption font-semibold">
-          <UIcon name="i-lucide-triangle-alert" /> Проблемные заказы: {{ attention.problem }}
-        </NuxtLink>
-        <NuxtLink v-if="attention.lowStock" to="/admin/stock" class="inline-flex items-center gap-1 bg-ink-gray-200 text-ink-gray-600 rounded-full px-3 py-1 text-caption font-semibold">
-          <UIcon name="i-lucide-boxes" /> Низкий сток: {{ attention.lowStock }}
-        </NuxtLink>
-      </div>
+      <div class="space-y-8">
+        <!-- требует внимания -->
+        <div v-if="attention" class="flex flex-wrap gap-2">
+          <NuxtLink v-if="attention.moderation" to="/admin/designers" class="inline-flex items-center gap-1 bg-ink-warning/10 text-ink-warning rounded-full px-3 py-1 text-caption font-semibold">
+            <UIcon name="i-lucide-image" /> Модерация принтов: {{ attention.moderation }}
+          </NuxtLink>
+          <NuxtLink v-if="attention.payouts" to="/admin/designers" class="inline-flex items-center gap-1 bg-ink-burgundy/10 text-ink-burgundy rounded-full px-3 py-1 text-caption font-semibold">
+            <UIcon name="i-lucide-wallet" /> Заявки на выплату: {{ attention.payouts }}
+          </NuxtLink>
+          <NuxtLink v-if="attention.problem" to="/admin/returns" class="inline-flex items-center gap-1 bg-ink-error/10 text-ink-error rounded-full px-3 py-1 text-caption font-semibold">
+            <UIcon name="i-lucide-triangle-alert" /> Проблемные заказы: {{ attention.problem }}
+          </NuxtLink>
+          <NuxtLink v-if="attention.lowStock" to="/admin/stock" class="inline-flex items-center gap-1 bg-ink-gray-200 text-ink-gray-600 rounded-full px-3 py-1 text-caption font-semibold">
+            <UIcon name="i-lucide-boxes" /> Низкий сток: {{ attention.lowStock }}
+          </NuxtLink>
+        </div>
 
-      <!-- ключевые метрики -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="border-2 border-ink-burgundy rounded-lg p-5 bg-ink-burgundy/5">
-          <p class="ink-label text-ink-burgundy">Чистая прибыль</p>
-          <p class="text-2xl font-bold text-ink-burgundy mt-1">{{ fmt(attention?.profit ?? 0) }} ₸</p>
+        <!-- ключевые метрики -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <UiStatCard label="Чистая прибыль" :value="`${fmt(attention?.profit ?? 0)} ₸`" icon="i-lucide-wallet" accent />
+          <UiStatCard label="Выручка (оплачено)" :value="`${fmt(stats?.revenue ?? 0)} ₸`" icon="i-lucide-trending-up" />
+          <UiStatCard label="Оплаченных заказов" :value="stats?.paid_orders ?? 0" icon="i-lucide-shopping-bag" />
+          <UiStatCard label="Всего заказов" :value="stats?.orders_total ?? 0" icon="i-lucide-clipboard-list" />
+          <UiStatCard label="Доля брака" :value="`${defectRate}%`" icon="i-lucide-triangle-alert" />
         </div>
-        <div class="border border-ink-gray-200 rounded-lg p-5">
-          <p class="ink-label text-ink-gray-400">Выручка (оплачено)</p>
-          <p class="text-2xl font-bold text-ink-burgundy mt-1">{{ fmt(stats?.revenue ?? 0) }} ₸</p>
-        </div>
-        <div class="border border-ink-gray-200 rounded-lg p-5">
-          <p class="ink-label text-ink-gray-400">Оплаченных заказов</p>
-          <p class="text-2xl font-bold mt-1">{{ stats?.paid_orders ?? 0 }}</p>
-        </div>
-        <div class="border border-ink-gray-200 rounded-lg p-5">
-          <p class="ink-label text-ink-gray-400">Всего заказов</p>
-          <p class="text-2xl font-bold mt-1">{{ stats?.orders_total ?? 0 }}</p>
-        </div>
-        <div class="border border-ink-gray-200 rounded-lg p-5">
-          <p class="ink-label text-ink-gray-400">Доля брака</p>
-          <p class="text-2xl font-bold mt-1" :class="defectRate > 5 ? 'text-ink-error' : ''">{{ defectRate }}%</p>
-        </div>
-      </div>
 
-      <div class="grid md:grid-cols-2 gap-6">
-        <!-- заказы по статусам -->
-        <div class="border border-ink-gray-200 rounded-lg p-5">
-          <UiSectionLabel>Заказы по статусам</UiSectionLabel>
-          <div v-if="byStatus.length" class="mt-3 space-y-2">
-            <div v-for="[status, count] in byStatus" :key="status" class="flex justify-between text-caption">
-              <span>{{ STATUS_LABELS[status] ?? status }}</span>
-              <span class="font-semibold">{{ count }}</span>
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- заказы по статусам -->
+          <UiPanel title="Заказы по статусам" icon="i-lucide-list-checks" :padded="false">
+            <div v-if="byStatus.length" class="divide-y divide-ink-gray-200">
+              <div v-for="[status, count] in byStatus" :key="status" class="flex justify-between px-6 py-3 text-caption">
+                <span>{{ STATUS_LABELS[status] ?? status }}</span>
+                <span class="font-semibold">{{ count }}</span>
+              </div>
             </div>
-          </div>
-          <p v-else class="text-ink-gray-600 mt-3">Заказов пока нет.</p>
-        </div>
+            <UiEmptyState v-else icon="i-lucide-clipboard-list" title="Заказов пока нет" />
+          </UiPanel>
 
-        <!-- топ товаров -->
-        <div class="border border-ink-gray-200 rounded-lg p-5">
-          <UiSectionLabel>Топ товаров</UiSectionLabel>
-          <div v-if="stats?.top_products?.length" class="mt-3 space-y-2">
-            <div v-for="(p, i) in stats.top_products" :key="i" class="flex justify-between text-caption">
-              <span>{{ p.title }}</span>
-              <span class="font-semibold">{{ p.qty }} шт</span>
+          <!-- топ товаров -->
+          <UiPanel title="Топ товаров" icon="i-lucide-trophy" :padded="false">
+            <div v-if="stats?.top_products?.length" class="divide-y divide-ink-gray-200">
+              <div v-for="(p, i) in stats.top_products" :key="i" class="flex justify-between px-6 py-3 text-caption">
+                <span>{{ p.title }}</span>
+                <span class="font-semibold">{{ p.qty }} шт</span>
+              </div>
             </div>
-          </div>
-          <p v-else class="text-ink-gray-600 mt-3">Продаж пока нет.</p>
+            <UiEmptyState v-else icon="i-lucide-package" title="Продаж пока нет" />
+          </UiPanel>
         </div>
-      </div>
 
-      <div class="flex flex-wrap gap-3">
-        <UButton to="/admin/products" color="primary" variant="subtle" icon="i-lucide-package">Товары</UButton>
-        <UButton to="/admin/orders" color="primary" variant="subtle" icon="i-lucide-clipboard-list">Заказы</UButton>
-        <UButton to="/admin/stock" color="primary" variant="subtle" icon="i-lucide-boxes">Склад</UButton>
-        <UButton to="/admin/prints" color="primary" variant="subtle" icon="i-lucide-image">Библиотека принтов</UButton>
+        <div class="flex flex-wrap gap-3">
+          <UButton to="/admin/products" color="primary" variant="subtle" icon="i-lucide-package">Товары</UButton>
+          <UButton to="/admin/orders" color="primary" variant="subtle" icon="i-lucide-clipboard-list">Заказы</UButton>
+          <UButton to="/admin/stock" color="primary" variant="subtle" icon="i-lucide-boxes">Склад</UButton>
+          <UButton to="/admin/prints" color="primary" variant="subtle" icon="i-lucide-image">Библиотека принтов</UButton>
+        </div>
       </div>
     </template>
   </div>

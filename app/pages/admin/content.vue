@@ -32,28 +32,28 @@ const { public: pub } = useRuntimeConfig()
 </script>
 
 <template>
-  <div class="space-y-8 max-w-2xl">
-    <div>
-      <UiSectionLabel accent>Маркетинг</UiSectionLabel>
-      <h1 class="ink-display text-h2 mt-1">Контент и промо</h1>
-    </div>
+  <div class="max-w-2xl">
+    <UiPageHeader label="Маркетинг" title="Контент и промо" />
 
-    <div class="space-y-4">
-      <UFormField label="Заголовок Hero (лендинг)"><UInput v-model="form.hero_title" class="w-full" /></UFormField>
-      <UFormField label="Подзаголовок Hero"><UTextarea v-model="form.hero_subtitle" :rows="2" class="w-full" /></UFormField>
-      <UFormField label="Промо-баннер (дроп/акция)"><UInput v-model="form.promo" class="w-full" placeholder="Напр.: −20% на первую вещь до 30 июня" /></UFormField>
-      <UButton color="primary" :loading="saving" @click="save">Сохранить</UButton>
-      <p class="text-caption text-ink-gray-500">Настройки хранятся в <code>platform_settings</code>. Тексты применяются на лендинге при чтении ключей.</p>
-    </div>
+    <div class="space-y-6">
+      <UiPanel title="Тексты лендинга">
+        <div class="space-y-4">
+          <UFormField label="Заголовок Hero (лендинг)"><UInput v-model="form.hero_title" class="w-full" /></UFormField>
+          <UFormField label="Подзаголовок Hero"><UTextarea v-model="form.hero_subtitle" :rows="2" class="w-full" /></UFormField>
+          <UFormField label="Промо-баннер (дроп/акция)"><UInput v-model="form.promo" class="w-full" placeholder="Напр.: −20% на первую вещь до 30 июня" /></UFormField>
+          <UButton color="primary" :loading="saving" @click="save">Сохранить</UButton>
+          <p class="text-caption text-ink-gray-500">Настройки хранятся в <code>platform_settings</code>. Тексты применяются на лендинге при чтении ключей.</p>
+        </div>
+      </UiPanel>
 
-    <section>
-      <UiSectionLabel accent>Пиксели и аналитика</UiSectionLabel>
-      <div class="mt-3 text-caption text-ink-gray-600 space-y-1">
-        <p>Meta Pixel: <span class="font-mono">{{ pub.metaPixelId || 'не задан' }}</span></p>
-        <p>TikTok Pixel: <span class="font-mono">{{ pub.tiktokPixelId || 'не задан' }}</span></p>
-        <p>Google Analytics: <span class="font-mono">{{ pub.analyticsId || 'не задан' }}</span></p>
-        <p class="text-ink-gray-400">ID задаются env-переменными на Vercel (NUXT_PUBLIC_*_PIXEL_ID) и применяются с 1-го дня.</p>
-      </div>
-    </section>
+      <UiPanel title="Пиксели и аналитика">
+        <div class="text-caption text-ink-gray-600 space-y-1">
+          <p>Meta Pixel: <span class="font-mono">{{ pub.metaPixelId || 'не задан' }}</span></p>
+          <p>TikTok Pixel: <span class="font-mono">{{ pub.tiktokPixelId || 'не задан' }}</span></p>
+          <p>Google Analytics: <span class="font-mono">{{ pub.analyticsId || 'не задан' }}</span></p>
+          <p class="text-ink-gray-400">ID задаются env-переменными на Vercel (NUXT_PUBLIC_*_PIXEL_ID) и применяются с 1-го дня.</p>
+        </div>
+      </UiPanel>
+    </div>
   </div>
 </template>

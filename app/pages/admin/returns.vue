@@ -40,27 +40,29 @@ const badge = (s: string) => s === 'refunded' || s === 'cancelled' ? 'error' : '
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div>
-      <UiSectionLabel accent>Сервис</UiSectionLabel>
-      <h1 class="ink-display text-h2 mt-1">Возвраты и рекламации</h1>
-      <p class="text-caption text-ink-gray-600 mt-1">Персонализация снимает возврат «по капризу», но не снимает ответственность за брак.</p>
+  <div>
+    <UiPageHeader label="Сервис" title="Возвраты и рекламации" description="Персонализация снимает возврат «по капризу», но не снимает ответственность за брак." />
+
+    <div v-if="pending" class="space-y-3">
+      <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-20" />
     </div>
 
-    <div v-if="pending" class="py-6 text-ink-gray-600">Загрузка…</div>
-    <div v-else-if="!orders?.length" class="py-6 text-ink-gray-600 text-caption">Проблемных заказов нет.</div>
-    <div v-else class="space-y-3">
-      <div v-for="o in orders" :key="o.id" class="flex items-center justify-between border border-ink-gray-200 rounded-lg p-4">
-        <div>
-          <NuxtLink :to="`/admin/orders/${o.id}`" class="ink-label text-ink-burgundy">#{{ shortId(o.id) }}</NuxtLink>
-          <p class="text-caption text-ink-gray-600">{{ new Date(o.created_at).toLocaleDateString('ru') }} · {{ o.total }} {{ o.currency }}</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <UBadge :color="badge(o.status)" variant="subtle">{{ STATUS_LABELS[o.status as OrderStatus] }}</UBadge>
-          <UButton v-if="o.status === 'on_hold'" size="xs" color="warning" variant="subtle" :loading="busy === o.id" @click="act(o.id, 'reprint')">Переделать</UButton>
-          <UButton v-if="['on_hold', 'reprint'].includes(o.status)" size="xs" color="error" variant="ghost" :loading="busy === o.id" @click="act(o.id, 'refunded')">Возврат</UButton>
+    <UiEmptyState v-else-if="!orders?.length" icon="i-lucide-shield-check" title="Проблемных заказов нет" text="Все заказы в штатном статусе — рекламаций сейчас нет." />
+
+    <UiPanel v-else :padded="false">
+      <div class="divide-y divide-ink-gray-200">
+        <div v-for="o in orders" :key="o.id" class="flex items-center justify-between px-6 py-3">
+          <div>
+            <NuxtLink :to="`/admin/orders/${o.id}`" class="ink-label text-ink-burgundy">#{{ shortId(o.id) }}</NuxtLink>
+            <p class="text-caption text-ink-gray-600">{{ new Date(o.created_at).toLocaleDateString('ru') }} · {{ o.total }} {{ o.currency }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <UBadge :color="badge(o.status)" variant="subtle">{{ STATUS_LABELS[o.status as OrderStatus] }}</UBadge>
+            <UButton v-if="o.status === 'on_hold'" size="xs" color="warning" variant="subtle" :loading="busy === o.id" @click="act(o.id, 'reprint')">Переделать</UButton>
+            <UButton v-if="['on_hold', 'reprint'].includes(o.status)" size="xs" color="error" variant="ghost" :loading="busy === o.id" @click="act(o.id, 'refunded')">Возврат</UButton>
+          </div>
         </div>
       </div>
-    </div>
+    </UiPanel>
   </div>
 </template>

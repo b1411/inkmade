@@ -34,24 +34,21 @@ async function saveRate() {
 
 <template>
   <div v-if="data?.profile" class="space-y-8">
-    <div class="flex items-center justify-between">
-      <div>
-        <UiSectionLabel accent>Дизайнер</UiSectionLabel>
-        <h1 class="ink-display text-h2 mt-1">{{ data.profile.display_name || 'без имени' }}</h1>
-      </div>
-      <UButton to="/admin/designers" color="neutral" variant="ghost" icon="i-lucide-arrow-left">К списку</UButton>
-    </div>
+    <UiPageHeader label="Дизайнер" :title="data.profile.display_name || 'без имени'">
+      <template #actions>
+        <UButton to="/admin/designers" color="neutral" variant="ghost" icon="i-lucide-arrow-left">К списку</UButton>
+      </template>
+    </UiPageHeader>
 
     <div class="grid sm:grid-cols-3 gap-4">
-      <div class="border border-ink-gray-200 rounded-lg p-4"><p class="ink-label text-ink-gray-600">Заработано</p><p class="text-h3 font-bold mt-1">{{ money(data.balance?.total_earned) }}</p></div>
-      <div class="border border-ink-gray-200 rounded-lg p-4"><p class="ink-label text-ink-gray-600">Выплачено</p><p class="text-h3 font-bold mt-1">{{ money(data.balance?.total_paid) }}</p></div>
-      <div class="border-2 border-ink-burgundy rounded-lg p-4 bg-ink-burgundy/5"><p class="ink-label text-ink-burgundy">К выплате</p><p class="text-h3 font-bold text-ink-burgundy mt-1">{{ money(data.balance?.available) }}</p></div>
+      <UiStatCard label="Заработано" :value="money(data.balance?.total_earned)" icon="i-lucide-wallet" />
+      <UiStatCard label="Выплачено" :value="money(data.balance?.total_paid)" icon="i-lucide-check-check" />
+      <UiStatCard label="К выплате" :value="money(data.balance?.available)" icon="i-lucide-banknote" accent />
     </div>
 
     <!-- ставка роялти -->
-    <div class="border border-ink-gray-200 rounded-lg p-5 max-w-md">
-      <UiSectionLabel>Ставка роялти</UiSectionLabel>
-      <div class="flex items-end gap-2 mt-2">
+    <UiPanel title="Ставка роялти" class="max-w-md">
+      <div class="flex items-end gap-2">
         <UFormField label="%" class="flex-1"><UInput v-model.number="newRate" type="number" min="0" max="100" class="w-full" /></UFormField>
         <UButton color="primary" :loading="savingRate" @click="saveRate">Сохранить</UButton>
       </div>
@@ -59,31 +56,30 @@ async function saveRate() {
       <div v-if="data.rates?.length" class="mt-2 text-caption text-ink-gray-500 space-y-0.5">
         <p v-for="r in data.rates" :key="r.id">{{ new Date(r.changed_at).toLocaleDateString('ru') }}: {{ r.old_pct ?? '—' }}% → {{ r.new_pct }}%</p>
       </div>
-    </div>
+    </UiPanel>
 
     <!-- принты -->
-    <section>
-      <UiSectionLabel accent>Принты ({{ data.prints?.length ?? 0 }})</UiSectionLabel>
-      <div class="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-3">
+    <UiPanel :title="`Принты (${data.prints?.length ?? 0})`">
+      <UiEmptyState v-if="!data.prints?.length" icon="i-lucide-image" title="Принтов нет" />
+      <div v-else class="grid grid-cols-3 sm:grid-cols-5 gap-3">
         <div v-for="p in data.prints" :key="p.id" class="border border-ink-gray-200 rounded-lg overflow-hidden">
           <div class="aspect-square bg-ink-gray-200"><img v-if="p.thumbnail_url" :src="p.thumbnail_url" :alt="p.title" class="w-full h-full object-contain"></div>
           <p class="p-1.5 text-caption truncate">{{ p.title }}</p>
         </div>
       </div>
-    </section>
+    </UiPanel>
 
     <!-- начисления -->
-    <section>
-      <UiSectionLabel accent>Начисления</UiSectionLabel>
-      <div v-if="!data.earnings?.length" class="py-3 text-ink-gray-600 text-caption">Пока нет.</div>
-      <div v-else class="mt-3 border border-ink-gray-200 rounded-lg divide-y divide-ink-gray-200 text-caption">
-        <div v-for="e in data.earnings" :key="e.id" class="flex items-center justify-between p-3">
+    <UiPanel title="Начисления" :padded="false">
+      <UiEmptyState v-if="!data.earnings?.length" icon="i-lucide-coins" title="Начислений пока нет" />
+      <div v-else class="divide-y divide-ink-gray-200 text-caption">
+        <div v-for="e in data.earnings" :key="e.id" class="flex items-center justify-between px-6 py-3">
           <span>{{ e.print_library?.title ?? 'принт' }}</span>
           <span class="text-ink-gray-500">{{ e.rate_pct }}% · {{ e.status }}</span>
           <span class="font-semibold text-ink-success">+{{ money(e.amount) }}</span>
         </div>
       </div>
-    </section>
+    </UiPanel>
   </div>
-  <div v-else class="py-10 text-center text-ink-gray-600">Дизайнер не найден.</div>
+  <UiEmptyState v-else icon="i-lucide-user-x" title="Дизайнер не найден" />
 </template>

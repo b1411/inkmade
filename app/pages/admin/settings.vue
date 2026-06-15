@@ -39,26 +39,29 @@ const { public: pub } = useRuntimeConfig()
 </script>
 
 <template>
-  <div class="space-y-6 max-w-2xl">
-    <div>
-      <UiSectionLabel accent>Платформа</UiSectionLabel>
-      <h1 class="ink-display text-h2 mt-1">Настройки</h1>
-    </div>
+  <div class="max-w-2xl">
+    <UiPageHeader label="Платформа" title="Настройки" />
 
-    <div class="space-y-4">
-      <UFormField label="Контактный email"><UInput v-model="form.support_email" type="email" class="w-full" /></UFormField>
-      <UFormField label="Сроки доставки (текст)"><UInput v-model="form.delivery_eta" class="w-full" /></UFormField>
-      <UFormField label="Порог выплаты дизайнерам, ₸"><UInput v-model.number="form.payout_threshold" type="number" class="w-40" /></UFormField>
-      <UFormField label="Налоговый режим">
-        <USelect v-model="form.tax_mode" :items="taxItems" value-key="value" class="w-full max-w-xs" />
-      </UFormField>
-      <UFormField label="Реквизиты компании"><UTextarea v-model="form.company_details" :rows="3" class="w-full" /></UFormField>
-      <UButton color="primary" :loading="saving" @click="save">Сохранить</UButton>
-    </div>
+    <div class="space-y-6">
+      <UiPanel title="Глобальные параметры">
+        <div class="space-y-4">
+          <UFormField label="Контактный email"><UInput v-model="form.support_email" type="email" class="w-full" /></UFormField>
+          <UFormField label="Сроки доставки (текст)"><UInput v-model="form.delivery_eta" class="w-full" /></UFormField>
+          <UFormField label="Порог выплаты дизайнерам, ₸"><UInput v-model.number="form.payout_threshold" type="number" class="w-40" /></UFormField>
+          <UFormField label="Налоговый режим">
+            <USelect v-model="form.tax_mode" :items="taxItems" value-key="value" class="w-full max-w-xs" />
+          </UFormField>
+          <UFormField label="Реквизиты компании"><UTextarea v-model="form.company_details" :rows="3" class="w-full" /></UFormField>
+          <UButton color="primary" :loading="saving" @click="save">Сохранить</UButton>
+        </div>
+      </UiPanel>
 
-    <section class="border-t border-ink-gray-200 pt-4 text-caption text-ink-gray-500 space-y-1">
-      <p>Валюта: <span class="font-semibold">KZT</span> · Сайт: <span class="font-mono">{{ pub.siteUrl }}</span></p>
-      <p>Платёжный провайдер и фискализация (ОФД РК) подключаются на запуске продаж.</p>
-    </section>
+      <UiPanel title="Платежи и валюта">
+        <div class="text-caption text-ink-gray-500 space-y-1">
+          <p>Валюта: <span class="font-semibold">KZT</span> · Сайт: <span class="font-mono">{{ pub.siteUrl }}</span></p>
+          <p>Платёжный провайдер и фискализация (ОФД РК) подключаются на запуске продаж.</p>
+        </div>
+      </UiPanel>
+    </div>
   </div>
 </template>

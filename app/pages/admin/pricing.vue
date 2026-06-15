@@ -41,36 +41,28 @@ const fmtVal = (p: { discount_type: string; discount_value: number }) =>
 
 <template>
   <div class="space-y-8 max-w-2xl">
-    <div>
-      <UiSectionLabel accent>Цены</UiSectionLabel>
-      <h1 class="ink-display text-h2 mt-1">Ценообразование</h1>
-      <p class="text-caption text-ink-gray-600 mt-1">Базовые ставки в <code>shared/config/pricing.ts</code>; изменение — правкой конфига и редеплоем. Промокоды управляются ниже.</p>
-    </div>
+    <UiPageHeader label="Цены" title="Ценообразование" description="Базовые ставки в shared/config/pricing.ts; изменение — правкой конфига и редеплоем. Промокоды управляются ниже." />
 
-    <section>
-      <UiSectionLabel>Базовые ставки</UiSectionLabel>
-      <div class="mt-3 border border-ink-gray-200 rounded-lg divide-y divide-ink-gray-200 text-caption">
-        <div class="flex justify-between p-3"><span>Зональная печать (ставка/зона)</span><span class="font-semibold">{{ PRICING.zonalRatePerZone }} ₸</span></div>
-        <div class="flex justify-between p-3"><span>Full-print</span><span class="font-semibold">{{ PRICING.fullprintRate }} ₸</span></div>
-        <div class="flex justify-between p-3"><span>Текстовый элемент</span><span class="font-semibold">{{ PRICING.textCost }} ₸</span></div>
-        <div class="flex justify-between p-3"><span>Мин. коэффициент площади</span><span class="font-semibold">{{ PRICING.minAreaCoef }}</span></div>
+    <UiPanel title="Базовые ставки" :padded="false">
+      <div class="divide-y divide-ink-gray-200 text-caption">
+        <div class="flex justify-between px-6 py-3"><span>Зональная печать (ставка/зона)</span><span class="font-semibold">{{ PRICING.zonalRatePerZone }} ₸</span></div>
+        <div class="flex justify-between px-6 py-3"><span>Full-print</span><span class="font-semibold">{{ PRICING.fullprintRate }} ₸</span></div>
+        <div class="flex justify-between px-6 py-3"><span>Текстовый элемент</span><span class="font-semibold">{{ PRICING.textCost }} ₸</span></div>
+        <div class="flex justify-between px-6 py-3"><span>Мин. коэффициент площади</span><span class="font-semibold">{{ PRICING.minAreaCoef }}</span></div>
       </div>
-    </section>
+    </UiPanel>
 
-    <section>
-      <UiSectionLabel>Надбавка за метод нанесения</UiSectionLabel>
-      <div class="mt-3 border border-ink-gray-200 rounded-lg divide-y divide-ink-gray-200 text-caption">
-        <div v-for="m in methods" :key="m" class="flex justify-between p-3">
+    <UiPanel title="Надбавка за метод нанесения" :padded="false">
+      <div class="divide-y divide-ink-gray-200 text-caption">
+        <div v-for="m in methods" :key="m" class="flex justify-between px-6 py-3">
           <span>{{ PRINT_METHOD_LABELS[m] }}</span><span class="font-semibold">+{{ METHOD_SURCHARGE[m] }} ₸</span>
         </div>
       </div>
-    </section>
+    </UiPanel>
 
-    <section>
-      <UiSectionLabel>Промокоды</UiSectionLabel>
-
+    <UiPanel title="Промокоды">
       <!-- создание -->
-      <div class="mt-3 border border-ink-gray-200 rounded-lg p-4 grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
         <UFormField label="Код"><UInput v-model="form.code" placeholder="SALE10" class="w-full" /></UFormField>
         <UFormField label="Тип"><USelect v-model="form.discount_type" :items="typeItems" value-key="value" class="w-full" /></UFormField>
         <UFormField label="Скидка"><UInput v-model.number="form.discount_value" type="number" class="w-full" /></UFormField>
@@ -80,7 +72,7 @@ const fmtVal = (p: { discount_type: string; discount_value: number }) =>
       </div>
 
       <!-- список -->
-      <table v-if="promos?.length" class="w-full text-caption mt-4">
+      <table v-if="promos?.length" class="w-full text-caption mt-6">
         <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
           <th class="text-left py-2">Код</th><th class="text-right">Скидка</th><th class="text-right">Мин.</th>
           <th class="text-right">Исп./лимит</th><th class="text-center pl-3">Активен</th><th></th>
@@ -98,7 +90,7 @@ const fmtVal = (p: { discount_type: string; discount_value: number }) =>
           </tr>
         </tbody>
       </table>
-      <p v-else class="text-caption text-ink-gray-500 mt-3">Промокодов пока нет.</p>
-    </section>
+      <UiEmptyState v-else icon="i-lucide-ticket" title="Промокодов пока нет" text="Создайте первый промокод через форму выше." class="mt-4" />
+    </UiPanel>
   </div>
 </template>

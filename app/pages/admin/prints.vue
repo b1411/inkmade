@@ -76,20 +76,20 @@ async function onDelete(id: string, title: string) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <UiSectionLabel accent>Принты</UiSectionLabel>
-        <h1 class="ink-display text-2xl mt-2">Библиотека принтов</h1>
-      </div>
-    </div>
+    <UiPageHeader label="Принты" title="Библиотека принтов" description="Курируемые принты второго потока — без кода." />
 
     <div class="grid lg:grid-cols-[1fr_340px] gap-8">
       <!-- список -->
       <div>
-        <div v-if="pending" class="py-10 text-center text-ink-gray-600">Загрузка…</div>
-        <div v-else-if="!prints?.length" class="py-10 text-center text-ink-gray-600">
-          Принтов пока нет. Добавьте первый справа.
+        <div v-if="pending" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <UiSkeleton v-for="n in 6" :key="n" rounded="rounded-lg" class="aspect-square" />
         </div>
+        <UiEmptyState
+          v-else-if="!prints?.length"
+          icon="i-lucide-image"
+          title="Принтов пока нет"
+          text="Добавьте первый принт через форму справа."
+        />
         <div v-else class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div v-for="p in prints" :key="p.id" class="border border-ink-gray-200 rounded-lg overflow-hidden">
             <div class="aspect-square bg-ink-gray-200">
@@ -115,34 +115,35 @@ async function onDelete(id: string, title: string) {
       </div>
 
       <!-- форма добавления/редактирования -->
-      <aside class="border border-ink-gray-200 rounded-lg p-5 h-fit space-y-4">
-        <div class="flex items-center justify-between">
-          <UiSectionLabel accent>{{ editing ? 'Редактировать' : 'Добавить принт' }}</UiSectionLabel>
-          <UButton v-if="editing" size="xs" color="neutral" variant="ghost" @click="resetForm">Новый</UButton>
+      <UiPanel :title="editing ? 'Редактировать' : 'Добавить принт'" class="h-fit">
+        <template v-if="editing" #actions>
+          <UButton size="xs" color="neutral" variant="ghost" @click="resetForm">Новый</UButton>
+        </template>
+        <div class="space-y-4">
+          <UFormField label="Название" required>
+            <UInput v-model="form.title" class="w-full" />
+          </UFormField>
+          <UFormField label="Автор">
+            <UInput v-model="form.author" placeholder="Бренд или художник" class="w-full" />
+          </UFormField>
+          <UFormField :label="editing ? 'Файл принта (заменить)' : 'Файл принта'" :required="!editing">
+            <input type="file" accept="image/png,image/jpeg,image/svg+xml" class="block w-full text-caption" @change="(e:any) => file = e.target.files?.[0] ?? null">
+          </UFormField>
+          <UFormField label="Миниатюра (необязательно)">
+            <input type="file" accept="image/png,image/jpeg" class="block w-full text-caption" @change="(e:any) => thumb = e.target.files?.[0] ?? null">
+          </UFormField>
+          <UFormField label="Теги (через запятую)">
+            <UInput v-model="form.tags" placeholder="граффити, череп, минимал" class="w-full" />
+          </UFormField>
+          <UFormField label="Роялти, %">
+            <UInput v-model.number="form.royalty_pct" type="number" min="0" max="100" class="w-full" />
+          </UFormField>
+          <UCheckbox v-model="form.is_active" label="Опубликован" />
+          <UButton color="primary" block :loading="saving" @click="onSubmit">
+            {{ editing ? 'Сохранить' : 'Добавить' }}
+          </UButton>
         </div>
-        <UFormField label="Название" required>
-          <UInput v-model="form.title" class="w-full" />
-        </UFormField>
-        <UFormField label="Автор">
-          <UInput v-model="form.author" placeholder="Бренд или художник" class="w-full" />
-        </UFormField>
-        <UFormField :label="editing ? 'Файл принта (заменить)' : 'Файл принта'" :required="!editing">
-          <input type="file" accept="image/png,image/jpeg,image/svg+xml" class="block w-full text-caption" @change="(e:any) => file = e.target.files?.[0] ?? null">
-        </UFormField>
-        <UFormField label="Миниатюра (необязательно)">
-          <input type="file" accept="image/png,image/jpeg" class="block w-full text-caption" @change="(e:any) => thumb = e.target.files?.[0] ?? null">
-        </UFormField>
-        <UFormField label="Теги (через запятую)">
-          <UInput v-model="form.tags" placeholder="граффити, череп, минимал" class="w-full" />
-        </UFormField>
-        <UFormField label="Роялти, %">
-          <UInput v-model.number="form.royalty_pct" type="number" min="0" max="100" class="w-full" />
-        </UFormField>
-        <UCheckbox v-model="form.is_active" label="Опубликован" />
-        <UButton color="primary" block :loading="saving" @click="onSubmit">
-          {{ editing ? 'Сохранить' : 'Добавить' }}
-        </UButton>
-      </aside>
+      </UiPanel>
     </div>
   </div>
 </template>

@@ -73,17 +73,15 @@ async function payout(id: string) {
 
 <template>
   <div class="space-y-8">
-    <div>
-      <UiSectionLabel accent>Опора №2</UiSectionLabel>
-      <h1 class="ink-display text-h2 mt-1">Дизайнеры</h1>
-    </div>
+    <UiPageHeader label="Опора №2" title="Дизайнеры" description="Модерация принтов, выплаты, приглашения и список дизайнеров." />
 
-    <div v-if="pending" class="py-6 text-ink-gray-600">Загрузка…</div>
+    <div v-if="pending" class="space-y-2">
+      <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-20" />
+    </div>
     <template v-else>
       <!-- очередь модерации -->
-      <section v-if="data?.queue?.length">
-        <UiSectionLabel accent>На модерации ({{ data.queue.length }})</UiSectionLabel>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-3">
+      <UiPanel v-if="data?.queue?.length" :title="`На модерации (${data.queue.length})`">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <div v-for="p in data.queue" :key="p.id" class="border border-ink-warning/40 rounded-lg overflow-hidden">
             <div class="aspect-square bg-ink-gray-200"><img v-if="p.thumbnail_url" :src="p.thumbnail_url" :alt="p.title" class="w-full h-full object-contain"></div>
             <div class="p-2 space-y-1">
@@ -95,26 +93,24 @@ async function payout(id: string) {
             </div>
           </div>
         </div>
-      </section>
+      </UiPanel>
 
       <!-- заявки на выплату -->
-      <section v-if="data?.payouts?.length">
-        <UiSectionLabel accent>Заявки на выплату ({{ data.payouts.length }})</UiSectionLabel>
-        <div class="mt-3 border border-ink-gray-200 rounded-lg divide-y divide-ink-gray-200 text-caption">
-          <div v-for="p in data.payouts" :key="p.id" class="flex items-center justify-between p-3">
+      <UiPanel v-if="data?.payouts?.length" :title="`Заявки на выплату (${data.payouts.length})`" :padded="false">
+        <div class="divide-y divide-ink-gray-200 text-caption">
+          <div v-for="p in data.payouts" :key="p.id" class="flex items-center justify-between px-6 py-3">
             <span>{{ new Date(p.requested_at).toLocaleDateString('ru') }}</span>
             <span class="font-semibold">{{ money(Number(p.amount)) }}</span>
             <UButton size="xs" color="primary" variant="subtle" :loading="busy === p.id" @click="payout(p.id)">Отметить выплаченной</UButton>
           </div>
         </div>
-      </section>
+      </UiPanel>
 
       <!-- приглашения дизайнеров (закрытый старт §7.5) -->
-      <section>
-        <UiSectionLabel accent>Приглашения</UiSectionLabel>
-        <div class="mt-3 grid lg:grid-cols-[1fr_320px] gap-6">
+      <UiPanel title="Приглашения">
+        <div class="grid lg:grid-cols-[1fr_320px] gap-6">
           <div>
-            <div v-if="!data?.invites?.length" class="py-4 text-ink-gray-600 text-caption">Приглашений пока нет.</div>
+            <UiEmptyState v-if="!data?.invites?.length" icon="i-lucide-mail" title="Приглашений пока нет" text="Пригласите первого дизайнера через форму справа." />
             <table v-else class="w-full text-caption">
               <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
                 <th class="text-left py-2">Email</th><th class="text-right">Ставка</th><th class="text-left pl-3">Статус</th><th></th>
@@ -132,38 +128,39 @@ async function payout(id: string) {
               </tbody>
             </table>
           </div>
-          <aside class="border border-ink-gray-200 rounded-lg p-4 h-fit space-y-3">
+          <div class="border border-ink-gray-200 rounded-lg p-4 h-fit space-y-3">
             <UiSectionLabel>Пригласить дизайнера</UiSectionLabel>
             <UFormField label="Email"><UInput v-model="invite.email" type="email" placeholder="designer@mail.kz" class="w-full" /></UFormField>
             <UFormField label="Ставка роялти, %"><UInput v-model.number="invite.royalty" type="number" class="w-full" /></UFormField>
             <UFormField label="Заметка (необязательно)"><UInput v-model="invite.note" placeholder="как договорились" class="w-full" /></UFormField>
             <UButton color="primary" block icon="i-lucide-user-plus" :loading="inviting" @click="sendInvite">Создать приглашение</UButton>
             <p class="text-caption text-ink-gray-500">Отправьте дизайнеру ссылку-приглашение. После входа он станет дизайнером с этой ставкой.</p>
-          </aside>
+          </div>
         </div>
-      </section>
+      </UiPanel>
 
       <!-- список дизайнеров -->
-      <section>
-        <UiSectionLabel accent>Все дизайнеры</UiSectionLabel>
-        <div v-if="!data?.designers?.length" class="py-4 text-ink-gray-600 text-caption">Дизайнеров пока нет. Назначьте роль через «Пользователи».</div>
-        <table v-else class="w-full text-caption mt-3">
-          <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
-            <th class="text-left py-2">Псевдоним</th><th class="text-left">Статус</th><th class="text-right">Ставка</th>
-            <th class="text-right">Заработано</th><th class="text-right">К выплате</th><th></th>
-          </tr></thead>
-          <tbody>
-            <tr v-for="d in data.designers" :key="d.id" class="border-b border-ink-gray-200/60">
-              <td class="py-2 font-semibold">{{ d.display_name || '—' }}</td>
-              <td><UBadge :color="d.status === 'active' ? 'success' : 'neutral'" variant="subtle" size="xs">{{ d.status }}</UBadge></td>
-              <td class="text-right">{{ d.royalty_pct }}%</td>
-              <td class="text-right">{{ money(d.total_earned) }}</td>
-              <td class="text-right font-semibold text-ink-burgundy">{{ money(d.available) }}</td>
-              <td class="text-right"><UButton :to="`/admin/designers/${d.id}`" size="xs" color="neutral" variant="ghost" icon="i-lucide-arrow-right" /></td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
+      <UiPanel title="Все дизайнеры" :padded="false">
+        <UiEmptyState v-if="!data?.designers?.length" icon="i-lucide-users" title="Дизайнеров пока нет" text="Назначьте роль через «Пользователи»." />
+        <div v-else class="overflow-x-auto">
+          <table class="w-full text-caption">
+            <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
+              <th class="text-left px-6 py-3">Псевдоним</th><th class="text-left px-6 py-3">Статус</th><th class="text-right px-6 py-3">Ставка</th>
+              <th class="text-right px-6 py-3">Заработано</th><th class="text-right px-6 py-3">К выплате</th><th class="px-6 py-3"></th>
+            </tr></thead>
+            <tbody>
+              <tr v-for="d in data.designers" :key="d.id" class="border-b border-ink-gray-200/60">
+                <td class="px-6 py-3 font-semibold">{{ d.display_name || '—' }}</td>
+                <td class="px-6 py-3"><UBadge :color="d.status === 'active' ? 'success' : 'neutral'" variant="subtle" size="xs">{{ d.status }}</UBadge></td>
+                <td class="text-right px-6 py-3">{{ d.royalty_pct }}%</td>
+                <td class="text-right px-6 py-3">{{ money(d.total_earned) }}</td>
+                <td class="text-right px-6 py-3 font-semibold text-ink-burgundy">{{ money(d.available) }}</td>
+                <td class="text-right px-6 py-3"><UButton :to="`/admin/designers/${d.id}`" size="xs" color="neutral" variant="ghost" icon="i-lucide-arrow-right" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </UiPanel>
     </template>
   </div>
 </template>

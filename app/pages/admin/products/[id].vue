@@ -6,13 +6,11 @@ const id = route.params.id as string
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <UiSectionLabel accent>Редактирование</UiSectionLabel>
-        <h1 class="ink-display text-2xl mt-2">Товар</h1>
-      </div>
-      <UButton to="/admin/products" color="neutral" variant="ghost" icon="i-lucide-arrow-left">К списку</UButton>
-    </div>
+    <UiPageHeader label="Редактирование" title="Товар">
+      <template #actions>
+        <UButton to="/admin/products" color="neutral" variant="ghost" icon="i-lucide-arrow-left">К списку</UButton>
+      </template>
+    </UiPageHeader>
     <AdminProductWizard :initial-id="id" />
   </div>
 </template>

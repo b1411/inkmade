@@ -61,18 +61,11 @@ function exportCsv() {
 
 <template>
   <div>
-    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <UiSectionLabel accent>CRM</UiSectionLabel>
-        <h1 class="ink-display text-2xl mt-2">Лиды</h1>
-        <p class="text-caption text-ink-gray-600 mt-1">
-          Контакты клиентов для связи в WhatsApp и по телефону. Всего: {{ leads.length }}.
-        </p>
-      </div>
-      <UButton icon="i-lucide-download" color="neutral" variant="subtle" @click="exportCsv">
-        Экспорт CSV
-      </UButton>
-    </div>
+    <UiPageHeader label="CRM" title="Лиды" :description="`Контакты клиентов для связи в WhatsApp и по телефону. Всего: ${leads.length}.`">
+      <template #actions>
+        <UButton icon="i-lucide-download" color="neutral" variant="subtle" @click="exportCsv">Экспорт CSV</UButton>
+      </template>
+    </UiPageHeader>
 
     <div class="flex flex-wrap items-center gap-3 mb-4">
       <UInput v-model="search" icon="i-lucide-search" placeholder="Поиск по имени, телефону, email" class="w-72" />

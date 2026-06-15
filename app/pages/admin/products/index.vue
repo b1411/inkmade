@@ -25,49 +25,58 @@ async function onDelete(id: string, title: string) {
 
 <template>
   <div>
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <UiSectionLabel accent>Каталог</UiSectionLabel>
-        <h1 class="ink-display text-2xl mt-2">Товары</h1>
-      </div>
+    <UiPageHeader label="Каталог" title="Товары" description="Управление товарами магазина — публикация, цены и категории.">
+      <template #actions>
+        <UButton to="/admin/products/new" color="primary" icon="i-lucide-plus">Новый товар</UButton>
+      </template>
+    </UiPageHeader>
+
+    <div v-if="pending" class="space-y-3">
+      <UiSkeleton v-for="n in 5" :key="n" rounded="rounded-lg" class="h-14" />
+    </div>
+
+    <UiEmptyState
+      v-else-if="!products?.length"
+      icon="i-lucide-package"
+      title="Товаров пока нет"
+      text="Создайте первый товар, чтобы он появился в каталоге."
+    >
       <UButton to="/admin/products/new" color="primary" icon="i-lucide-plus">Новый товар</UButton>
-    </div>
+    </UiEmptyState>
 
-    <div v-if="pending" class="py-10 text-center text-ink-gray-600">Загрузка…</div>
-
-    <div v-else-if="!products?.length" class="py-10 text-center text-ink-gray-600">
-      Товаров пока нет. Создайте первый.
-    </div>
-
-    <table v-else class="w-full text-left border-collapse">
-      <thead>
-        <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
-          <th class="py-2 pr-4">Название</th>
-          <th class="py-2 pr-4">Категория</th>
-          <th class="py-2 pr-4">Цена</th>
-          <th class="py-2 pr-4">Статус</th>
-          <th class="py-2" />
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="p in products" :key="p.id" class="border-b border-ink-gray-200">
-          <td class="py-3 pr-4">
-            <NuxtLink :to="`/admin/products/${p.id}`" class="font-semibold hover:text-ink-burgundy">{{ p.title }}</NuxtLink>
-            <span class="ink-label text-ink-gray-400 ml-2">{{ p.alias }}</span>
-          </td>
-          <td class="py-3 pr-4">{{ categoryLabel(p.category) }}</td>
-          <td class="py-3 pr-4">{{ p.base_price }} ₸</td>
-          <td class="py-3 pr-4">
-            <UBadge :color="p.is_active ? 'success' : 'neutral'" variant="subtle">
-              {{ p.is_active ? 'Опубликован' : 'Черновик' }}
-            </UBadge>
-          </td>
-          <td class="py-3 text-right">
-            <UButton :to="`/admin/products/${p.id}`" color="neutral" variant="ghost" size="sm" icon="i-lucide-pencil" />
-            <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash-2" @click="onDelete(p.id, p.title)" />
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <UiPanel v-else :padded="false">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
+              <th class="px-6 py-3">Название</th>
+              <th class="px-6 py-3">Категория</th>
+              <th class="px-6 py-3">Цена</th>
+              <th class="px-6 py-3">Статус</th>
+              <th class="px-6 py-3" />
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in products" :key="p.id" class="border-b border-ink-gray-200 last:border-0">
+              <td class="px-6 py-3">
+                <NuxtLink :to="`/admin/products/${p.id}`" class="font-semibold hover:text-ink-burgundy">{{ p.title }}</NuxtLink>
+                <span class="ink-label text-ink-gray-400 ml-2">{{ p.alias }}</span>
+              </td>
+              <td class="px-6 py-3">{{ categoryLabel(p.category) }}</td>
+              <td class="px-6 py-3">{{ p.base_price }} ₸</td>
+              <td class="px-6 py-3">
+                <UBadge :color="p.is_active ? 'success' : 'neutral'" variant="subtle">
+                  {{ p.is_active ? 'Опубликован' : 'Черновик' }}
+                </UBadge>
+              </td>
+              <td class="px-6 py-3 text-right">
+                <UButton :to="`/admin/products/${p.id}`" color="neutral" variant="ghost" size="sm" icon="i-lucide-pencil" />
+                <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash-2" @click="onDelete(p.id, p.title)" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </UiPanel>
   </div>
 </template>

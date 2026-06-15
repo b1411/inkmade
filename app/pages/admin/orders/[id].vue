@@ -74,18 +74,16 @@ const shortId = (s: string) => s.slice(0, 8)
 
 <template>
   <div v-if="order">
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <UiSectionLabel accent>Заказ #{{ shortId(order.id) }}</UiSectionLabel>
-        <h1 class="ink-display text-2xl mt-1">{{ STATUS_LABELS[order.status as OrderStatus] }}</h1>
-      </div>
-      <UButton to="/admin/orders" color="neutral" variant="ghost" icon="i-lucide-arrow-left">К списку</UButton>
-    </div>
+    <UiPageHeader :label="`Заказ #${shortId(order.id)}`" :title="STATUS_LABELS[order.status as OrderStatus]">
+      <template #actions>
+        <UButton to="/admin/orders" color="neutral" variant="ghost" icon="i-lucide-arrow-left">К списку</UButton>
+      </template>
+    </UiPageHeader>
 
     <div class="grid lg:grid-cols-[1fr_300px] gap-8">
       <div class="space-y-4">
         <!-- позиции с маржой (§6.4: admin видит цену, себестоимость, прибыль) -->
-        <div v-for="it in order.order_items" :key="it.id" class="border border-ink-gray-200 rounded-lg p-4">
+        <UiPanel v-for="it in order.order_items" :key="it.id">
           <p class="font-semibold">{{ it.variants?.products?.title }} · {{ it.variants?.color_name }}/{{ it.variants?.size }} ×{{ it.quantity }}</p>
           <p class="text-caption text-ink-gray-600 mt-1">
             Цена {{ fmt(Number(it.unit_price)) }} ₸ · Себестоимость {{ fmt(Number(it.unit_cost)) }} ₸ ·
@@ -94,7 +92,7 @@ const shortId = (s: string) => s.slice(0, 8)
             </span>
             · {{ it.print_method }}
           </p>
-        </div>
+        </UiPanel>
 
         <!-- сводка прибыли по заказу -->
         <div class="grid grid-cols-3 gap-2 text-center">
@@ -121,16 +119,16 @@ const shortId = (s: string) => s.slice(0, 8)
         </div>
 
         <!-- адрес + оплата -->
-        <div class="border border-ink-gray-200 rounded-lg p-4 text-caption space-y-1">
-          <p class="ink-label text-ink-gray-600">Доставка</p>
-          <p v-if="addr">{{ addr.full_name }}, {{ addr.phone }} — {{ addr.city }}, {{ addr.address }}</p>
-          <p v-if="order.tracking_no">Трек: {{ order.tracking_no }} ({{ order.carrier }})</p>
-          <p>Оплата: {{ order.paid_at ? new Date(order.paid_at).toLocaleString('ru') : 'не оплачен' }}</p>
-        </div>
+        <UiPanel title="Доставка" icon="i-lucide-truck">
+          <div class="text-caption space-y-1">
+            <p v-if="addr">{{ addr.full_name }}, {{ addr.phone }} — {{ addr.city }}, {{ addr.address }}</p>
+            <p v-if="order.tracking_no">Трек: {{ order.tracking_no }} ({{ order.carrier }})</p>
+            <p>Оплата: {{ order.paid_at ? new Date(order.paid_at).toLocaleString('ru') : 'не оплачен' }}</p>
+          </div>
+        </UiPanel>
 
         <!-- лог -->
-        <div class="border border-ink-gray-200 rounded-lg p-4">
-          <p class="ink-label text-ink-gray-600 mb-2">Лог статусов</p>
+        <UiPanel title="Лог статусов" icon="i-lucide-history">
           <ul class="space-y-1 text-caption">
             <li v-for="l in (order.order_status_log ?? []).slice().reverse()" :key="l.id" class="flex gap-2">
               <span class="text-ink-gray-400">{{ new Date(l.created_at).toLocaleString('ru') }}</span>
@@ -138,15 +136,14 @@ const shortId = (s: string) => s.slice(0, 8)
               <span v-if="l.note" class="text-ink-gray-600">— {{ l.note }}</span>
             </li>
           </ul>
-        </div>
+        </UiPanel>
 
         <!-- доказательная база (§6.8) -->
-        <div class="border border-ink-gray-200 rounded-lg p-4">
-          <div class="flex items-center justify-between mb-2">
-            <p class="ink-label text-ink-gray-600">Фото-доказательства</p>
+        <UiPanel title="Фото-доказательства" icon="i-lucide-camera">
+          <template #actions>
             <input ref="evInput" type="file" accept="image/*" class="hidden" @change="onEvidencePick">
             <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="evUploading" @click="evInput?.click()">Добавить</UButton>
-          </div>
+          </template>
           <div v-if="evidence.length" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
             <a v-for="e in evidence" :key="e.id" :href="e.url ?? '#'" target="_blank">
               <img v-if="e.url" :src="e.url" :alt="KIND_LABELS[e.kind]" class="aspect-square w-full object-cover rounded-md border border-ink-gray-200">
@@ -154,20 +151,21 @@ const shortId = (s: string) => s.slice(0, 8)
             </a>
           </div>
           <p v-else class="text-caption text-ink-gray-400">Фото пока нет.</p>
-        </div>
+        </UiPanel>
       </div>
 
-      <aside class="border border-ink-gray-200 rounded-lg p-4 h-fit space-y-3">
-        <UiSectionLabel accent>Управление</UiSectionLabel>
-        <UButton
-          v-for="to in nextStates"
-          :key="to"
-          :color="['reprint','cancelled','refunded'].includes(to) ? 'error' : to === 'on_hold' ? 'warning' : 'primary'"
-          variant="subtle" block :loading="busy"
-          @click="start(to)"
-        >{{ STATUS_LABELS[to] }}</UButton>
-        <p v-if="!nextStates.length" class="text-caption text-ink-gray-400">Конечный статус.</p>
-      </aside>
+      <UiPanel title="Управление" icon="i-lucide-settings-2" class="h-fit">
+        <div class="space-y-3">
+          <UButton
+            v-for="to in nextStates"
+            :key="to"
+            :color="['reprint','cancelled','refunded'].includes(to) ? 'error' : to === 'on_hold' ? 'warning' : 'primary'"
+            variant="subtle" block :loading="busy"
+            @click="start(to)"
+          >{{ STATUS_LABELS[to] }}</UButton>
+          <p v-if="!nextStates.length" class="text-caption text-ink-gray-400">Конечный статус.</p>
+        </div>
+      </UiPanel>
     </div>
 
     <UModal v-model:open="modal.open" :title="STATUS_LABELS[modal.to]">
