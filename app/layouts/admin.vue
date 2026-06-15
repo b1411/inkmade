@@ -14,6 +14,7 @@ const nav = [
   { label: 'Контент', to: '/admin/content', icon: 'i-lucide-newspaper' },
   { label: 'Юр. документы', to: '/admin/legal', icon: 'i-lucide-scale' },
   { label: 'Пользователи', to: '/admin/users', icon: 'i-lucide-users' },
+  { label: 'Лиды', to: '/admin/leads', icon: 'i-lucide-contact' },
   { label: 'Аудит', to: '/admin/audit', icon: 'i-lucide-history' },
   { label: 'Настройки', to: '/admin/settings', icon: 'i-lucide-settings' },
 ]

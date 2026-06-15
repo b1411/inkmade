@@ -52,11 +52,24 @@ export const useAuth = () => {
     await fetchProfile(true)
   }
 
-  async function signUp(email: string, password: string, fullName?: string) {
+  async function signUp(
+    email: string,
+    password: string,
+    fullName?: string,
+    extra?: { phone?: string | null; marketingConsent?: boolean },
+  ) {
+    // phone + marketing_consent кладём в user_metadata → триггер handle_new_user
+    // переносит их в profiles (сбор лида).
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName ?? null } },
+      options: {
+        data: {
+          full_name: fullName ?? null,
+          phone: extra?.phone ?? null,
+          marketing_consent: extra?.marketingConsent ?? false,
+        },
+      },
     })
     if (error) throw error
   }

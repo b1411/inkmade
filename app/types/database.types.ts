@@ -892,6 +892,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          marketing_consent: boolean
           phone: string | null
           role: string
         }
@@ -899,6 +900,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          marketing_consent?: boolean
           phone?: string | null
           role?: string
         }
@@ -906,6 +908,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          marketing_consent?: boolean
           phone?: string | null
           role?: string
         }
@@ -1206,6 +1209,8 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          marketing_consent: boolean
+          phone: string
           role: string
         }[]
       }
