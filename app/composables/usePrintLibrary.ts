@@ -1,4 +1,5 @@
 import type { Database, TablesInsert } from '~/types/database.types'
+import { assertSafeUpload } from '~/utils/upload-guard'
 
 // Библиотека готовых принтов (§11.1) — отдельный канал: принты бренда и отобранных художников.
 // Запись доступна только admin (RLS print_library_write_admin). Файлы — в бакет catalog.
@@ -24,9 +25,10 @@ export const usePrintLibrary = () => {
   }
 
   async function uploadFile(file: File): Promise<string> {
+    const { contentType } = await assertSafeUpload(file)
     const ext = file.name.split('.').pop() || 'png'
     const path = `library/${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext}`
-    const { error } = await supabase.storage.from('catalog').upload(path, file, { upsert: false })
+    const { error } = await supabase.storage.from('catalog').upload(path, file, { upsert: false, contentType })
     if (error) throw error
     return supabase.storage.from('catalog').getPublicUrl(path).data.publicUrl
   }

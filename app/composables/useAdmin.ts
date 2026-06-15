@@ -2,6 +2,7 @@ import type { Database, TablesInsert, Json } from '~/types/database.types'
 import type { FabricType } from '~~/shared/config/print-methods'
 import { defaultMethodForFabric, modeForFabric } from '~~/shared/config/print-methods'
 import { getTemplate } from '~~/shared/config/product-types'
+import { assertSafeUpload } from '~/utils/upload-guard'
 import { getZonePreset, DPI_MIN } from '~~/shared/config/zones'
 
 // CRUD каталога для админ-кабинета (§8.2). Пишет напрямую в Supabase под RLS:
@@ -247,10 +248,11 @@ export const useAdmin = () => {
 
   // ── Фото товара (шаг 5, §8.2.1) → публичный бакет catalog ───────
   async function uploadCatalogImage(productId: string, file: File): Promise<string> {
+    const { contentType } = await assertSafeUpload(file, { allow: ['png', 'jpeg', 'webp', 'gif', 'avif'] })
     const ext = file.name.split('.').pop() || 'png'
     const safeName = `${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext}`
     const path = `${productId}/${safeName}`
-    const { error } = await supabase.storage.from('catalog').upload(path, file, { upsert: false })
+    const { error } = await supabase.storage.from('catalog').upload(path, file, { upsert: false, contentType })
     if (error) throw error
     const { data } = supabase.storage.from('catalog').getPublicUrl(path)
     return data.publicUrl

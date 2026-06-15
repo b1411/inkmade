@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { dpiAtMaxSize, DPI_MIN, DPI_TARGET } from '~~/shared/config/zones'
+import { assertSafeUpload } from '~/utils/upload-guard'
 
 // Загрузка принта + DPI-валидация на входе (§10, инвариант 1; §5.6).
 // Порог считается от МАКСИМАЛЬНОГО размера изделия (products.max_print_mm).
@@ -8,18 +9,19 @@ const toast = useToast()
 const supabase = useSupabaseClient()
 
 const MAX_FILE_MB = 25
-// принимаем любое изображение (PNG/JPG/WEBP/GIF/AVIF/BMP/TIFF и т.д.) + вектор SVG/PDF
-const ACCEPT = 'image/*,.svg,.pdf'
+// растровые форматы + PDF-вектор. SVG исключён (XSS в публичном бакете).
+const ACCEPT = 'image/png,image/jpeg,image/webp,image/gif,image/avif,.pdf'
 const busy = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 // Загрузка оригинала в Storage (§13.2): файл должен пережить сессию, иначе
 // оператор не получит исходник для печати. Возвращает постоянный public URL.
-async function uploadToStorage(file: File): Promise<string> {
+// contentType берётся из проверенной сигнатуры, НЕ из file.type (подделываем).
+async function uploadToStorage(file: File, contentType: string): Promise<string> {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
   const path = `uploads/${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`
   const { error } = await supabase.storage.from('design-uploads').upload(path, file, {
-    contentType: file.type || undefined, upsert: false,
+    contentType, upsert: false,
   })
   if (error) throw error
   return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
@@ -39,27 +41,24 @@ async function onFile(e: Event) {
   if (!file) return
   busy.value = true
   try {
-    // preflight: размер
-    if (file.size > MAX_FILE_MB * 1024 * 1024) {
-      toast.add({ title: 'Файл слишком большой', description: `Лимит ${MAX_FILE_MB} МБ.`, color: 'error' })
+    // проверка сигнатуры + размера (magic-bytes, не доверяем расширению/MIME)
+    let guard: Awaited<ReturnType<typeof assertSafeUpload>>
+    try {
+      guard = await assertSafeUpload(file, { maxMb: MAX_FILE_MB })
+    } catch (err) {
+      toast.add({ title: 'Файл отклонён', description: err instanceof Error ? err.message : '', color: 'error' })
       return
     }
 
-    const ext = file.name.split('.').pop()?.toLowerCase() ?? ''
-    const isVector = ext === 'svg' || ext === 'pdf'
-    const objectUrl = URL.createObjectURL(file)
-
-    // вектор (SVG/PDF) не теряет качество — DPI не проверяем (§5.6)
-    if (isVector) {
-      // для отрисовки на холсте берём условные размеры (svg рендерится как изображение)
-      const size = ext === 'svg' ? await readImageSize(objectUrl).catch(() => ({ w: 1000, h: 1000 })) : { w: 1000, h: 1000 }
-      const url = await uploadToStorage(file)
-      URL.revokeObjectURL(objectUrl)
-      addImage(url, size.w, size.h, 'upload')
+    // PDF-вектор не теряет качество — DPI не проверяем (§5.6), условные размеры
+    if (guard.kind === 'pdf') {
+      const url = await uploadToStorage(file, guard.contentType)
+      addImage(url, 1000, 1000, 'upload')
       toast.add({ title: 'Принт добавлен', color: 'success' })
       return
     }
 
+    const objectUrl = URL.createObjectURL(file)
     // растр: считаем DPI на МАКСИМАЛЬНОМ размере изделия (§10)
     const { w, h } = await readImageSize(objectUrl)
     const maxPrint = product.value?.max_print_mm as { width: number; height: number } | null
@@ -81,7 +80,7 @@ async function onFile(e: Event) {
       return
     }
 
-    const url = await uploadToStorage(file)
+    const url = await uploadToStorage(file, guard.contentType)
     URL.revokeObjectURL(objectUrl)
     addImage(url, w, h, 'upload')
     if (dpi < DPI_TARGET) {
@@ -103,7 +102,7 @@ async function onFile(e: Event) {
     <UButton color="primary" icon="i-lucide-upload" :loading="busy" block @click="fileInput?.click()">Загрузить принт</UButton>
     <input ref="fileInput" type="file" :accept="ACCEPT" class="hidden" @change="onFile">
     <p class="text-caption text-ink-gray-400 mt-2">
-      Любое изображение (PNG, JPG, WEBP, GIF…), SVG или PDF · до {{ MAX_FILE_MB }} МБ. Минимум {{ DPI_MIN }} DPI на макс. размере, цель {{ DPI_TARGET }}.
+      PNG, JPG, WEBP, GIF, AVIF или PDF · до {{ MAX_FILE_MB }} МБ. Минимум {{ DPI_MIN }} DPI на макс. размере, цель {{ DPI_TARGET }}.
     </p>
   </div>
 </template>

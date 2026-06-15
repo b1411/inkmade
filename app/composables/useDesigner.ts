@@ -1,4 +1,5 @@
 import type { Database, TablesInsert } from '~/types/database.types'
+import { assertSafeUpload } from '~/utils/upload-guard'
 
 // Кабинет дизайнера (CRM §4): профиль, баланс, начисления, мои принты, выплаты.
 export const useDesigner = () => {
@@ -53,9 +54,10 @@ export const useDesigner = () => {
   }
 
   async function uploadPrintFile(file: File): Promise<string> {
+    const { contentType } = await assertSafeUpload(file)
     const ext = file.name.split('.').pop() || 'png'
     const path = `library/${user.value!.id}/${Date.now()}-${Math.round(Math.random() * 1e6)}.${ext}`
-    const { error } = await supabase.storage.from('design-uploads').upload(path, file, { upsert: false })
+    const { error } = await supabase.storage.from('design-uploads').upload(path, file, { upsert: false, contentType })
     if (error) throw error
     return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
   }
@@ -68,11 +70,12 @@ export const useDesigner = () => {
     return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
   }
 
-  /** Загрузить аватар дизайнера. */
+  /** Загрузить аватар дизайнера (только растр, без PDF). */
   async function uploadAvatar(file: File): Promise<string> {
+    const { contentType } = await assertSafeUpload(file, { maxMb: 8, allow: ['png', 'jpeg', 'webp', 'gif', 'avif'] })
     const ext = file.name.split('.').pop() || 'png'
     const path = `avatars/${user.value!.id}/${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('design-uploads').upload(path, file, { upsert: true })
+    const { error } = await supabase.storage.from('design-uploads').upload(path, file, { upsert: true, contentType })
     if (error) throw error
     return supabase.storage.from('design-uploads').getPublicUrl(path).data.publicUrl
   }
