@@ -5,6 +5,8 @@ const nav = [
   { label: 'Очередь', to: '/studio', icon: 'i-lucide-layout-list' },
   { label: 'Склад', to: '/studio/stock', icon: 'i-lucide-boxes' },
 ]
+const { signOut } = useAuth()
+async function onSignOut() { await signOut(); await navigateTo('/') }
 </script>
 
 <template>
@@ -25,6 +27,12 @@ const nav = [
           >
             {{ item.label }}
           </NuxtLink>
+          <button
+            class="ink-label px-3 py-1.5 rounded-sm hover:bg-white/10 transition-colors inline-flex items-center gap-1"
+            @click="onSignOut"
+          >
+            <UIcon name="i-lucide-log-out" class="size-4" /> Выйти
+          </button>
         </nav>
       </div>
     </header>

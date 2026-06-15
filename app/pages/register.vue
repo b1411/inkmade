@@ -4,6 +4,9 @@
 import { LEGAL } from '~~/shared/config/legal'
 import { normalizeKzPhone, isValidKzPhone } from '~~/shared/config/phone'
 
+definePageMeta({ layout: 'auth' })
+useHead({ title: 'Регистрация — INKMADE' })
+
 const { signUp } = useAuth()
 const supabase = useSupabaseClient()
 const toast = useToast()
@@ -53,30 +56,31 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="max-w-md mx-auto py-8">
+  <div>
     <UiSectionLabel accent>Регистрация</UiSectionLabel>
-    <h1 class="ink-display text-3xl mt-2 mb-6">Создать аккаунт</h1>
+    <h1 class="ink-display text-3xl mt-2">Создать аккаунт</h1>
+    <p class="text-ink-gray-600 mt-2 mb-8">Пара минут — и можно собирать свой мерч.</p>
 
     <UAlert
       v-if="done"
       color="success"
+      icon="i-lucide-mail-check"
       title="Почти готово"
       description="Подтвердите email по ссылке из письма, затем войдите."
     />
 
-    <UiPanel v-else>
-      <form class="space-y-4" @submit.prevent="onSubmit">
+    <form v-else class="space-y-4" @submit.prevent="onSubmit">
       <UFormField label="Имя">
-        <UInput v-model="fullName" autocomplete="name" class="w-full" />
+        <UInput v-model="fullName" size="lg" autocomplete="name" icon="i-lucide-user" class="w-full" />
       </UFormField>
       <UFormField label="Email">
-        <UInput v-model="email" type="email" autocomplete="email" required class="w-full" />
+        <UInput v-model="email" type="email" size="lg" autocomplete="email" icon="i-lucide-mail" required class="w-full" />
       </UFormField>
       <UFormField label="Телефон" :error="phone && !phoneValid ? 'Формат: +7 700 123 45 67' : undefined">
-        <UInput v-model="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 700 123 45 67" required class="w-full" />
+        <UInput v-model="phone" type="tel" size="lg" autocomplete="tel" inputmode="tel" icon="i-lucide-phone" placeholder="+7 700 123 45 67" required class="w-full" />
       </UFormField>
       <UFormField label="Пароль">
-        <UInput v-model="password" type="password" autocomplete="new-password" required class="w-full" />
+        <UInput v-model="password" type="password" size="lg" autocomplete="new-password" icon="i-lucide-lock" required class="w-full" />
       </UFormField>
       <UCheckbox v-model="agree" required>
         <template #label>
@@ -91,11 +95,10 @@ async function onSubmit() {
           Согласен(на) получать сообщения о заказе и предложения в WhatsApp и по телефону
         </template>
       </UCheckbox>
-      <UButton type="submit" color="primary" size="lg" block :loading="loading" :disabled="!agree || !phoneValid">Зарегистрироваться</UButton>
-      </form>
-    </UiPanel>
+      <UButton type="submit" color="primary" size="lg" block :loading="loading" :disabled="!agree || !phoneValid" trailing-icon="i-lucide-arrow-right">Зарегистрироваться</UButton>
+    </form>
 
-    <p class="text-caption text-ink-gray-600 mt-6">
+    <p class="text-caption text-ink-gray-600 mt-8 text-center">
       Уже есть аккаунт?
       <NuxtLink to="/login" class="text-ink-burgundy font-semibold">Войти</NuxtLink>
     </p>

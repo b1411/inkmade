@@ -3,12 +3,18 @@
 // стекло + backdrop-blur, уменьшение высоты. Магнитная навигация (десктоп),
 // бейдж корзины с «отскоком», полноэкранное мобильное меню со stagger.
 import { useWindowScroll } from '@vueuse/core'
+import type { DropdownMenuItem } from '@nuxt/ui'
 import { LEGAL } from '~~/shared/config/legal'
 
 const route = useRoute()
 const cart = useCart()
 const cartCount = computed(() => cart.count.value)
-const { homePath: cabinetTo } = useAuth()
+const { homePath: cabinetTo, isAuthenticated, signOut } = useAuth()
+async function onSignOut() { await signOut(); await navigateTo('/') }
+const userMenu = computed<DropdownMenuItem[][]>(() => [
+  [{ label: 'Мой кабинет', icon: 'i-lucide-layout-dashboard', to: cabinetTo.value }],
+  [{ label: 'Выйти', icon: 'i-lucide-log-out', onSelect: onSignOut }],
+])
 
 const { y } = useWindowScroll()
 const scrolled = computed(() => y.value > 40)
@@ -100,9 +106,21 @@ onMounted(() => {
             </span>
           </ClientOnly>
         </NuxtLink>
-        <NuxtLink :to="cabinetTo" class="hidden md:inline-flex items-center" aria-label="Личный кабинет">
-          <UIcon name="i-lucide-user" class="size-5" />
-        </NuxtLink>
+        <ClientOnly>
+          <UDropdownMenu v-if="isAuthenticated" :items="userMenu" :content="{ align: 'end' }">
+            <button class="hidden md:inline-flex items-center" aria-label="Аккаунт">
+              <UIcon name="i-lucide-user" class="size-5" />
+            </button>
+          </UDropdownMenu>
+          <NuxtLink v-else to="/login" class="hidden md:inline-flex items-center" aria-label="Войти">
+            <UIcon name="i-lucide-user" class="size-5" />
+          </NuxtLink>
+          <template #fallback>
+            <NuxtLink to="/login" class="hidden md:inline-flex items-center" aria-label="Войти">
+              <UIcon name="i-lucide-user" class="size-5" />
+            </NuxtLink>
+          </template>
+        </ClientOnly>
         <!-- Бургер (мобайл) -->
         <button
           class="md:hidden inline-flex items-center"
@@ -151,6 +169,15 @@ onMounted(() => {
             >
               Кабинет
             </NuxtLink>
+            <ClientOnly>
+              <button
+                v-if="isAuthenticated"
+                class="ink-display text-4xl py-2 text-left text-ink-cream/80"
+                @click="closeMenu(); onSignOut()"
+              >
+                Выйти
+              </button>
+            </ClientOnly>
           </nav>
           <div class="px-6 py-8 ink-label text-ink-cream/60">
             {{ LEGAL.supportEmail }}

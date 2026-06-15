@@ -7,6 +7,8 @@ const nav = [
   { label: 'Адреса', to: '/account/addresses', icon: 'i-lucide-map-pin' },
   { label: 'Профиль', to: '/account', icon: 'i-lucide-user' },
 ]
+const { signOut } = useAuth()
+async function onSignOut() { await signOut(); await navigateTo('/') }
 </script>
 
 <template>
@@ -14,7 +16,10 @@ const nav = [
     <header class="border-b border-ink-gray-200">
       <div class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between">
         <UiAppLogo :subtitle="false" />
-        <UiSectionLabel>Личный кабинет</UiSectionLabel>
+        <div class="flex items-center gap-4">
+          <UiSectionLabel>Личный кабинет</UiSectionLabel>
+          <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-log-out" @click="onSignOut">Выйти</UButton>
+        </div>
       </div>
     </header>
 

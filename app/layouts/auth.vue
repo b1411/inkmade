@@ -1,0 +1,47 @@
+<script setup lang="ts">
+// Экран авторизации (§9.1): сильный брендовый split — слева бордовая панель с
+// лого/слоганом/преимуществами (десктоп), справа форма на светлом. Без шапки/футера.
+const benefits = [
+  { icon: 'i-lucide-wand-2', text: 'Конструктор принтов прямо в браузере' },
+  { icon: 'i-lucide-package', text: 'Печать по требованию — от одной штуки' },
+  { icon: 'i-lucide-truck', text: 'Доставка по всему Казахстану' },
+]
+</script>
+
+<template>
+  <div class="min-h-screen grid lg:grid-cols-2 bg-ink-white text-ink-black">
+    <!-- брендовая панель (десктоп) -->
+    <aside class="hidden lg:flex flex-col justify-between bg-ink-burgundy text-ink-cream p-12 ink-grain relative overflow-hidden">
+      <!-- декоративные круги -->
+      <div class="absolute -top-24 -right-24 size-96 rounded-full bg-ink-burgundy-light/30 blur-3xl" />
+      <div class="absolute -bottom-32 -left-16 size-80 rounded-full bg-ink-black/20 blur-3xl" />
+
+      <NuxtLink to="/" class="ink-logo text-3xl tracking-wide relative z-10">INKMADE</NuxtLink>
+
+      <div class="relative z-10">
+        <h2 class="ink-display text-5xl leading-[1.05]">Создай<br>свой мерч.</h2>
+        <p class="text-ink-cream/75 mt-5 text-lead max-w-sm">
+          Кастомные футболки, худи и кепки с печатью твоего дизайна.
+        </p>
+        <ul class="mt-10 space-y-4">
+          <li v-for="b in benefits" :key="b.text" class="flex items-center gap-3 text-ink-cream/85">
+            <span class="size-9 rounded-full bg-ink-cream/10 flex items-center justify-center shrink-0">
+              <UIcon :name="b.icon" class="size-4.5" />
+            </span>
+            {{ b.text }}
+          </li>
+        </ul>
+      </div>
+
+      <p class="ink-label text-ink-cream/50 relative z-10">MERCH STUDIO · EST. 2025</p>
+    </aside>
+
+    <!-- форма -->
+    <main class="flex flex-col justify-center items-center px-6 py-10 sm:px-12">
+      <div class="w-full max-w-sm">
+        <NuxtLink to="/" class="lg:hidden ink-logo text-2xl block mb-10 text-ink-burgundy">INKMADE</NuxtLink>
+        <slot />
+      </div>
+    </main>
+  </div>
+</template>

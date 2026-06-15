@@ -19,6 +19,8 @@ const nav = [
   { label: 'Аудит', to: '/admin/audit', icon: 'i-lucide-history' },
   { label: 'Настройки', to: '/admin/settings', icon: 'i-lucide-settings' },
 ]
+const { signOut } = useAuth()
+async function onSignOut() { await signOut(); await navigateTo('/') }
 </script>
 
 <template>
@@ -39,6 +41,14 @@ const nav = [
           <UIcon :name="item.icon" class="size-4" />
           {{ item.label }}
         </NuxtLink>
+
+        <button
+          class="w-full mt-2 flex items-center gap-2 px-3 py-2 rounded-md text-ink-cream/70 hover:bg-white/10 hover:text-ink-cream transition-colors"
+          @click="onSignOut"
+        >
+          <UIcon name="i-lucide-log-out" class="size-4" />
+          Выйти
+        </button>
       </nav>
     </aside>
 
