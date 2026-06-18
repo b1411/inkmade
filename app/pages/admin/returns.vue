@@ -4,7 +4,7 @@
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 import type { Database } from '~/types/database.types'
 import type { OrderStatus } from '~~/shared/config/order-status'
-import { STATUS_LABELS } from '~~/shared/config/order-status'
+const { t } = useI18n()
 const supabase = useSupabaseClient<Database>()
 const { changeStatus } = useStudio()
 const { refundOrder } = useFinance()
@@ -22,7 +22,7 @@ const { data: orders, refresh, pending } = await useAsyncData('admin-returns', a
 
 const busy = ref<string | null>(null)
 async function act(orderId: string, to: OrderStatus) {
-  const note = window.prompt(`Причина перехода в «${STATUS_LABELS[to]}»:`) ?? ''
+  const note = window.prompt(t('admin.returns.reasonPrompt', { status: t(`domain.orderStatus.${to}`) })) ?? ''
   if (!note) return
   busy.value = orderId
   try {
@@ -30,9 +30,9 @@ async function act(orderId: string, to: OrderStatus) {
     if (to === 'refunded') await refundOrder(orderId, note)
     else await changeStatus(orderId, to, { note })
     await refresh()
-    toast.add({ title: `Статус: ${STATUS_LABELS[to]}`, color: 'success' })
+    toast.add({ title: t('admin.returns.statusChanged', { status: t(`domain.orderStatus.${to}`) }), color: 'success' })
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.returns.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
   } finally { busy.value = null }
 }
 const shortId = (s: string) => s.slice(0, 8)
@@ -41,13 +41,13 @@ const badge = (s: string) => s === 'refunded' || s === 'cancelled' ? 'error' : '
 
 <template>
   <div>
-    <UiPageHeader label="Сервис" title="Возвраты и рекламации" description="Персонализация снимает возврат «по капризу», но не снимает ответственность за брак." />
+    <UiPageHeader :label="$t('admin.returns.label')" :title="$t('admin.returns.title')" :description="$t('admin.returns.description')" />
 
     <div v-if="pending" class="space-y-3">
       <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-20" />
     </div>
 
-    <UiEmptyState v-else-if="!orders?.length" icon="i-lucide-shield-check" title="Проблемных заказов нет" text="Все заказы в штатном статусе — рекламаций сейчас нет." />
+    <UiEmptyState v-else-if="!orders?.length" icon="i-lucide-shield-check" :title="$t('admin.returns.empty.title')" :text="$t('admin.returns.empty.text')" />
 
     <UiPanel v-else :padded="false">
       <div class="divide-y divide-ink-gray-200">
@@ -57,9 +57,9 @@ const badge = (s: string) => s === 'refunded' || s === 'cancelled' ? 'error' : '
             <p class="text-caption text-ink-gray-600">{{ new Date(o.created_at).toLocaleDateString('ru') }} · {{ o.total }} {{ o.currency }}</p>
           </div>
           <div class="flex items-center gap-2">
-            <UBadge :color="badge(o.status)" variant="subtle">{{ STATUS_LABELS[o.status as OrderStatus] }}</UBadge>
-            <UButton v-if="o.status === 'on_hold'" size="xs" color="warning" variant="subtle" :loading="busy === o.id" @click="act(o.id, 'reprint')">Переделать</UButton>
-            <UButton v-if="['on_hold', 'reprint'].includes(o.status)" size="xs" color="error" variant="ghost" :loading="busy === o.id" @click="act(o.id, 'refunded')">Возврат</UButton>
+            <UBadge :color="badge(o.status)" variant="subtle">{{ $t(`domain.orderStatus.${o.status}`) }}</UBadge>
+            <UButton v-if="o.status === 'on_hold'" size="xs" color="warning" variant="subtle" :loading="busy === o.id" @click="act(o.id, 'reprint')">{{ $t('admin.returns.reprint') }}</UButton>
+            <UButton v-if="['on_hold', 'reprint'].includes(o.status)" size="xs" color="error" variant="ghost" :loading="busy === o.id" @click="act(o.id, 'refunded')">{{ $t('admin.returns.refund') }}</UButton>
           </div>
         </div>
       </div>

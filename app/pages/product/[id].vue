@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { PrintMethod, PrintMode } from '~~/shared/config/print-methods'
-import { PRINT_METHOD_LABELS, PRINT_MODE_LABELS } from '~~/shared/config/print-methods'
 
 // Страница товара (§6, §7.1). Выбор материала определяет метод/зоны (§5.2.1, F1-11).
+const { t } = useI18n()
 const route = useRoute()
 const slug = route.params.id as string
 const { getBySlug } = useCatalog()
@@ -10,15 +9,15 @@ const { getBySlug } = useCatalog()
 const { data: product, error } = await useAsyncData(`product-${slug}`, () => getBySlug(slug))
 
 if (error.value || !product.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Товар не найден' })
+  throw createError({ statusCode: 404, statusMessage: t('product.notFound') })
 }
 
 const ogImage = product.value.product_images?.find(i => i.is_primary)?.url ?? product.value.product_images?.[0]?.url
 useSeoMeta({
-  title: `${product.value.title} — INKMADE`,
-  description: product.value.description || `${product.value.title}: кастомизируй принт в браузере и закажи от одной штуки — INKMADE.`,
-  ogTitle: `${product.value.title} — INKMADE`,
-  ogDescription: product.value.description || `${product.value.title} с печатью вашего принта.`,
+  title: t('product.metaTitle', { title: product.value.title }),
+  description: product.value.description || t('product.metaDescription', { title: product.value.title }),
+  ogTitle: t('product.metaTitle', { title: product.value.title }),
+  ogDescription: product.value.description || t('product.ogDescriptionFallback', { title: product.value.title }),
   ogImage,
 })
 
@@ -33,7 +32,7 @@ useHead({
       '@context': 'https://schema.org',
       '@type': 'Product',
       name: product.value!.title,
-      description: product.value!.description || `${product.value!.title} с печатью вашего принта.`,
+      description: product.value!.description || t('product.ogDescriptionFallback', { title: product.value!.title }),
       image: ogImage ? [ogImage] : undefined,
       brand: { '@type': 'Brand', name: 'INKMADE' },
       offers: {
@@ -153,7 +152,7 @@ watch([selectedColor, allImages], () => { activeImage.value = 0 })
           :key="img.id"
           class="size-16 rounded-md overflow-hidden border-2 transition-colors"
           :class="i === activeImage ? 'border-ink-burgundy' : 'border-ink-gray-200 hover:border-ink-gray-400'"
-          :aria-label="img.label || `Фото ${i + 1}`"
+          :aria-label="img.label || $t('product.photoNumber', { n: i + 1 })"
           @click="activeImage = i"
         >
           <NuxtImg :src="img.url" alt="" class="w-full h-full object-cover" sizes="64px" loading="lazy" />
@@ -162,14 +161,14 @@ watch([selectedColor, allImages], () => { activeImage.value = 0 })
 
       <!-- миниатюры: на людях -->
       <div v-if="lifestyleImages.length">
-        <p class="ink-label text-ink-gray-600 mb-2">На людях</p>
+        <p class="ink-label text-ink-gray-600 mb-2">{{ $t('product.lifestyle') }}</p>
         <div class="flex gap-2 flex-wrap">
           <button
             v-for="(img, i) in lifestyleImages"
             :key="img.id"
             class="size-16 rounded-md overflow-hidden border-2 transition-colors"
             :class="mockupImages.length + i === activeImage ? 'border-ink-burgundy' : 'border-ink-gray-200 hover:border-ink-gray-400'"
-            :aria-label="`На людях ${i + 1}`"
+            :aria-label="$t('product.lifestyleNumber', { n: i + 1 })"
             @click="activeImage = mockupImages.length + i"
           >
             <NuxtImg :src="img.url" alt="" class="w-full h-full object-cover" sizes="64px" loading="lazy" />
@@ -183,14 +182,14 @@ watch([selectedColor, allImages], () => { activeImage.value = 0 })
       <div>
         <UiSectionLabel accent>{{ product.category }}</UiSectionLabel>
         <h1 class="ink-display text-h1 mt-2">{{ product.title }}</h1>
-        <p class="text-h3 mt-2 text-ink-burgundy font-bold">от {{ formatPrice(priceFrom) }}</p>
+        <p class="text-h3 mt-2 text-ink-burgundy font-bold">{{ $t('product.priceFrom', { price: formatPrice(priceFrom) }) }}</p>
       </div>
 
       <p v-if="product.description" class="text-ink-gray-600">{{ product.description }}</p>
 
       <!-- материал определяет метод/зоны (§5.2.1) -->
       <div v-if="product.materials.length">
-        <UiSectionLabel>Материал</UiSectionLabel>
+        <UiSectionLabel>{{ $t('product.material') }}</UiSectionLabel>
         <div class="flex flex-wrap gap-2 mt-2">
           <button
             v-for="m in product.materials"
@@ -203,14 +202,14 @@ watch([selectedColor, allImages], () => { activeImage.value = 0 })
           </button>
         </div>
         <p v-if="selectedMaterial" class="text-caption text-ink-gray-600 mt-2">
-          {{ PRINT_METHOD_LABELS[selectedMaterial.print_method as PrintMethod] }} ·
-          {{ PRINT_MODE_LABELS[selectedMaterial.print_mode as PrintMode] }}
+          {{ $t(`domain.printMethod.${selectedMaterial.print_method}`) }} ·
+          {{ $t(`domain.printMode.${selectedMaterial.print_mode}`) }}
         </p>
       </div>
 
       <!-- цвет -->
       <div v-if="colors.length">
-        <UiSectionLabel>Цвет</UiSectionLabel>
+        <UiSectionLabel>{{ $t('product.color') }}</UiSectionLabel>
         <div class="flex gap-2 mt-2">
           <button
             v-for="c in colors"
@@ -226,7 +225,7 @@ watch([selectedColor, allImages], () => { activeImage.value = 0 })
 
       <!-- размер -->
       <div v-if="sizes.length">
-        <UiSectionLabel>Размер</UiSectionLabel>
+        <UiSectionLabel>{{ $t('product.size') }}</UiSectionLabel>
         <div class="flex flex-wrap gap-2 mt-2">
           <button
             v-for="s in sizes"
@@ -250,7 +249,7 @@ watch([selectedColor, allImages], () => { activeImage.value = 0 })
             magnetic
             block
           >
-            Перейти в конструктор
+            {{ $t('product.goToConstructor') }}
           </UiAppButton>
         </div>
         <UButton
@@ -259,7 +258,7 @@ watch([selectedColor, allImages], () => { activeImage.value = 0 })
           :variant="favId ? 'subtle' : 'outline'"
           icon="i-lucide-heart"
           :loading="favBusy"
-          aria-label="В избранное"
+          :aria-label="$t('product.addToFav')"
           @click="onToggleFav"
         />
       </div>
@@ -269,8 +268,8 @@ watch([selectedColor, allImages], () => { activeImage.value = 0 })
         color="neutral"
         variant="subtle"
         icon="i-lucide-info"
-        title="О цвете"
-        description="Цвет на экране может отличаться от напечатанного. Финальный цвет согласует оператор перед печатью."
+        :title="$t('product.colorNote.title')"
+        :description="$t('product.colorNote.description')"
       />
     </div>
   </section>

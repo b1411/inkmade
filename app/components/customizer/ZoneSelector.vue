@@ -1,19 +1,21 @@
 <script setup lang="ts">
 // Выбор зоны (§7.1). Показываем только зоны, валидные для режима материала (§5.2.1).
-const { validZones, zoneName, zone } = useDesign()
+// Точка-индикатор — в зоне уже что-то расставлено (мультизона §7.1).
+const { validZones, zoneName, zone, zonesWithPlacements } = useDesign()
 </script>
 
 <template>
   <div>
-    <UiSectionLabel>Зона нанесения</UiSectionLabel>
+    <UiSectionLabel>{{ $t('customize.zones.label') }}</UiSectionLabel>
     <div class="flex flex-wrap gap-2 mt-2">
       <button
         v-for="z in validZones"
         :key="z.id"
-        class="px-3 py-2 rounded-md border text-caption transition-colors"
+        class="px-3 py-2 rounded-md border text-caption transition-colors flex items-center gap-1.5"
         :class="z.name === zoneName ? 'border-ink-burgundy bg-ink-burgundy/5' : 'border-ink-gray-200'"
         @click="zoneName = z.name"
       >
+        <span v-if="zonesWithPlacements.has(z.name)" class="size-1.5 rounded-full bg-ink-burgundy" />
         {{ z.title }}
       </button>
     </div>

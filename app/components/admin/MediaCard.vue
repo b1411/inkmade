@@ -25,6 +25,8 @@ const emit = defineEmits<{
   setKind: [kind: 'mockup' | 'lifestyle']
 }>()
 
+const { t } = useI18n()
+
 function onImageClick() {
   if (props.selectionMode) emit('toggleSelect')
   else emit('preview')
@@ -33,13 +35,13 @@ function onImageClick() {
 const menu = computed<DropdownMenuItem[][]>(() => {
   const groups: DropdownMenuItem[][] = [[
     {
-      label: props.image.is_primary ? 'Основное фото' : 'Сделать основным',
+      label: props.image.is_primary ? t('admin.media.primaryPhoto') : t('admin.media.makePrimary'),
       icon: 'i-lucide-star',
       disabled: props.image.is_primary || props.image.kind !== 'mockup',
       onSelect: () => emit('primary'),
     },
     {
-      label: props.image.is_hidden ? 'Показать покупателю' : 'Скрыть от покупателя',
+      label: props.image.is_hidden ? t('admin.media.showToCustomer') : t('admin.media.hideFromCustomer'),
       icon: props.image.is_hidden ? 'i-lucide-eye' : 'i-lucide-eye-off',
       onSelect: () => emit('toggleHide'),
     },
@@ -47,7 +49,7 @@ const menu = computed<DropdownMenuItem[][]>(() => {
 
   const colorChildren: DropdownMenuItem[] = [
     {
-      label: 'Общее (без цвета)',
+      label: t('admin.media.common'),
       icon: 'i-lucide-circle-dashed',
       disabled: !props.image.color_hex,
       onSelect: () => emit('moveColor', null),
@@ -60,17 +62,17 @@ const menu = computed<DropdownMenuItem[][]>(() => {
     })),
   ]
   groups.push([
-    { label: 'Привязать к цвету', icon: 'i-lucide-palette', children: colorChildren },
+    { label: t('admin.media.linkToColor'), icon: 'i-lucide-palette', children: colorChildren },
     {
-      label: props.image.kind === 'lifestyle' ? 'Сделать фото изделия' : 'Сделать «на людях»',
+      label: props.image.kind === 'lifestyle' ? t('admin.media.makeProductPhoto') : t('admin.media.makeLifestyle'),
       icon: props.image.kind === 'lifestyle' ? 'i-lucide-shirt' : 'i-lucide-users',
       onSelect: () => emit('setKind', props.image.kind === 'lifestyle' ? 'mockup' : 'lifestyle'),
     },
-    { label: 'Заменить файл', icon: 'i-lucide-replace', onSelect: () => emit('replace') },
+    { label: t('admin.media.replaceFile'), icon: 'i-lucide-replace', onSelect: () => emit('replace') },
   ])
 
   groups.push([
-    { label: 'Удалить', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => emit('delete') },
+    { label: t('admin.media.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => emit('delete') },
   ])
   return groups
 })
@@ -109,8 +111,8 @@ const menu = computed<DropdownMenuItem[][]>(() => {
 
       <!-- статусы -->
       <div v-if="!selectionMode" class="absolute top-1 left-1 flex flex-col gap-1">
-        <UBadge v-if="image.is_primary" color="primary" size="xs">осн.</UBadge>
-        <UBadge v-if="image.is_hidden" color="neutral" variant="solid" size="xs" icon="i-lucide-eye-off">скрыто</UBadge>
+        <UBadge v-if="image.is_primary" color="primary" size="xs">{{ $t('admin.media.primaryBadge') }}</UBadge>
+        <UBadge v-if="image.is_hidden" color="neutral" variant="solid" size="xs" icon="i-lucide-eye-off">{{ $t('admin.media.hiddenBadge') }}</UBadge>
       </div>
 
       <span
@@ -127,7 +129,7 @@ const menu = computed<DropdownMenuItem[][]>(() => {
           variant="solid"
           size="xs"
           class="absolute top-1 right-1 bg-black/50 hover:bg-black/70"
-          aria-label="Действия с фото"
+          :aria-label="$t('admin.media.photoActions')"
           @click.stop
         />
       </UDropdownMenu>
@@ -135,12 +137,12 @@ const menu = computed<DropdownMenuItem[][]>(() => {
 
     <UInput
       :model-value="image.label ?? ''"
-      size="xs" placeholder="Ракурс (Перёд…)" class="w-full"
+      size="xs" :placeholder="$t('admin.media.anglePlaceholder')" class="w-full"
       @blur="(e: FocusEvent) => emit('updateLabel', (e.target as HTMLInputElement).value)"
     />
     <UInput
       :model-value="image.alt ?? ''"
-      size="xs" placeholder="Alt-текст (SEO)" variant="soft"
+      size="xs" :placeholder="$t('admin.media.altPlaceholder')" variant="soft"
       class="w-full" :ui="{ base: 'text-[11px] text-ink-gray-500' }"
       @blur="(e: FocusEvent) => emit('updateAlt', (e.target as HTMLInputElement).value)"
     />

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 // Производственный кабинет /studio (§8.3). Роль operator/admin (middleware F0-13).
 // Светлый рабочий контекст, бордо — только акценты.
-const nav = [
-  { label: 'Очередь', to: '/studio', icon: 'i-lucide-layout-list' },
-  { label: 'Склад', to: '/studio/stock', icon: 'i-lucide-boxes' },
-]
+const { t } = useI18n()
+const nav = computed(() => [
+  { label: t('studio.nav.queue'), to: '/studio', icon: 'i-lucide-layout-list' },
+  { label: t('studio.nav.stock'), to: '/studio/stock', icon: 'i-lucide-boxes' },
+])
 const { signOut } = useAuth()
 async function onSignOut() { await signOut(); await navigateTo('/') }
 </script>
@@ -15,7 +16,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
       <div class="mx-auto max-w-(--container-max) px-4 h-14 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <UiAppLogo :subtitle="false" />
-          <UBadge color="primary" variant="solid" size="sm">STUDIO</UBadge>
+          <UBadge color="primary" variant="solid" size="sm">{{ $t('studio.nav.badge') }}</UBadge>
         </div>
         <nav class="flex gap-1">
           <NuxtLink
@@ -31,7 +32,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
             class="ink-label px-3 py-1.5 rounded-sm hover:bg-white/10 transition-colors inline-flex items-center gap-1"
             @click="onSignOut"
           >
-            <UIcon name="i-lucide-log-out" class="size-4" /> Выйти
+            <UIcon name="i-lucide-log-out" class="size-4" /> {{ $t('studio.nav.signOut') }}
           </button>
         </nav>
       </div>

@@ -8,5 +8,5 @@ withDefaults(defineProps<Props>(), { rounded: 'rounded-md' })
 </script>
 
 <template>
-  <div class="ink-skeleton" :class="rounded" role="status" aria-busy="true" aria-label="Загрузка" />
+  <div class="ink-skeleton" :class="rounded" role="status" aria-busy="true" :aria-label="$t('a11y.loading')" />
 </template>

@@ -1,0 +1,446 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "Дашборд",
+      "finance": "Финансы",
+      "designers": "Дизайнеры",
+      "orders": "Заказы",
+      "returns": "Возвраты",
+      "categories": "Категории",
+      "products": "Товары",
+      "prints": "Принты",
+      "stock": "Склад",
+      "pricing": "Ценообразование",
+      "content": "Контент",
+      "legal": "Юр. документы",
+      "customers": "Клиенты",
+      "users": "Пользователи",
+      "leads": "Лиды",
+      "audit": "Аудит",
+      "settings": "Настройки",
+      "signOut": "Выйти",
+      "badge": "ADMIN"
+    },
+    "dashboard": {
+      "headTitle": "Дашборд — INKMADE",
+      "label": "Дашборд",
+      "title": "Админ-кабинет",
+      "attention": {
+        "moderation": "Модерация принтов: {n}",
+        "payouts": "Заявки на выплату: {n}",
+        "problem": "Проблемные заказы: {n}",
+        "lowStock": "Низкий сток: {n}"
+      },
+      "kpi": {
+        "profit": "Чистая прибыль",
+        "revenuePaid": "Выручка (оплачено)",
+        "paidOrders": "Оплаченных заказов",
+        "totalOrders": "Всего заказов",
+        "avgCheck": "Средний чек",
+        "conversion": "Конверсия в оплату",
+        "newCustomers": "Новые клиенты (30д)",
+        "defectRate": "Доля брака"
+      },
+      "trend": {
+        "title": "Выручка за 30 дней",
+        "empty": "Нет данных за период.",
+        "tooltip": "{date}: {amount} ₸"
+      },
+      "byStatus": {
+        "title": "Заказы по статусам",
+        "empty": "Заказов пока нет"
+      },
+      "topProducts": {
+        "title": "Топ товаров",
+        "empty": "Продаж пока нет"
+      },
+      "shortcuts": {
+        "products": "Товары",
+        "orders": "Заказы",
+        "stock": "Склад",
+        "prints": "Библиотека принтов"
+      },
+      "status": {
+        "created": "Создан",
+        "pending": "Ожидает оплаты",
+        "paid": "Оплачен",
+        "queued": "В очереди",
+        "printing": "Печать",
+        "quality_check": "Контроль",
+        "packing": "Упаковка",
+        "ready_to_ship": "К отгрузке",
+        "shipped": "Отправлен",
+        "delivered": "Доставлен",
+        "on_hold": "Пауза",
+        "reprint": "Перепечать",
+        "cancelled": "Отменён",
+        "refunded": "Возврат"
+      }
+    },
+    "orders": {
+      "label": "Заказы",
+      "title": "Все заказы",
+      "description": "Поиск, фильтр по статусу и периоду, экспорт.",
+      "exportCsv": "Экспорт CSV",
+      "summary": {
+        "count": "Заказов в выборке",
+        "sum": "Сумма выборки",
+        "paid": "Из них оплачено"
+      },
+      "searchPlaceholder": "Поиск по номеру",
+      "filter": {
+        "allStatuses": "Все статусы",
+        "periodAll": "За всё время",
+        "period7": "Последние 7 дней",
+        "period30": "Последние 30 дней",
+        "period90": "Последние 90 дней"
+      },
+      "empty": {
+        "title": "Заказов нет",
+        "text": "По выбранным условиям заказы не найдены."
+      },
+      "table": {
+        "number": "#",
+        "date": "Дата",
+        "items": "Позиций",
+        "sum": "Сумма",
+        "payment": "Оплата",
+        "status": "Статус"
+      },
+      "paid": "оплачен",
+      "csv": {
+        "number": "Номер",
+        "date": "Дата",
+        "items": "Позиций",
+        "sum": "Сумма",
+        "currency": "Валюта",
+        "status": "Статус",
+        "paid": "Оплачен",
+        "yes": "да",
+        "no": "нет"
+      }
+    },
+    "order": {
+      "label": "Заказ #{id}",
+      "backToList": "К списку",
+      "kindLabels": {
+        "qc": "Контроль качества",
+        "defect": "Брак",
+        "other": "Прочее"
+      },
+      "toast": {
+        "photoAdded": "Фото добавлено",
+        "uploadError": "Ошибка загрузки",
+        "statusChanged": "Статус: {status}",
+        "error": "Ошибка"
+      },
+      "item": {
+        "price": "Цена",
+        "cost": "Себестоимость",
+        "margin": "маржа"
+      },
+      "marginCard": {
+        "revenue": "Выручка",
+        "cost": "Себестоимость",
+        "margin": "Маржа"
+      },
+      "gift": {
+        "title": "Подарок",
+        "recipient": "Получатель: {name}",
+        "card": "Открытка: «{message}»",
+        "hidePrice": "Без чека с ценой в посылке"
+      },
+      "delivery": {
+        "title": "Доставка",
+        "tracking": "Трек: {no} ({carrier})",
+        "payment": "Оплата: {value}",
+        "notPaid": "не оплачен"
+      },
+      "log": {
+        "title": "Лог статусов"
+      },
+      "evidence": {
+        "title": "Фото-доказательства",
+        "add": "Добавить",
+        "empty": "Фото пока нет."
+      },
+      "control": {
+        "title": "Управление",
+        "final": "Конечный статус."
+      },
+      "modal": {
+        "trackingNo": "Трек-номер",
+        "carrier": "Перевозчик",
+        "reason": "Причина",
+        "confirm": "Подтвердить"
+      }
+    },
+    "customers": {
+      "headTitle": "Клиенты — INKMADE",
+      "label": "CRM",
+      "title": "Клиенты",
+      "description": "База покупателей с историей заказов и суммой покупок.",
+      "sort": {
+        "recent": "По последнему заказу",
+        "spent": "По сумме покупок",
+        "orders": "По числу заказов"
+      },
+      "summary": {
+        "count": "Всего клиентов",
+        "paying": "С покупками",
+        "revenue": "Выручка по клиентам"
+      },
+      "searchPlaceholder": "Поиск по имени, email, телефону",
+      "empty": {
+        "title": "Клиентов нет",
+        "text": "Покупатели появятся здесь после регистрации."
+      },
+      "table": {
+        "customer": "Клиент",
+        "phone": "Телефон",
+        "orders": "Заказов",
+        "spent": "Потрачено",
+        "lastOrder": "Последний заказ",
+        "contact": "Связь"
+      },
+      "noName": "Без имени",
+      "consent": "согласие"
+    },
+    "customer": {
+      "notFound": "Клиент не найден",
+      "headTitle": "{name} — клиент",
+      "label": "Клиент",
+      "noName": "Без имени",
+      "backToList": "К списку",
+      "kpi": {
+        "orders": "Заказов",
+        "ltv": "Потрачено (LTV)",
+        "lastOrder": "Последний заказ"
+      },
+      "contacts": {
+        "title": "Контакты",
+        "email": "Email",
+        "phone": "Телефон",
+        "whatsApp": "WhatsApp",
+        "call": "Позвонить",
+        "consent": "Согласие на связь",
+        "yes": "да",
+        "no": "нет",
+        "registered": "Регистрация"
+      },
+      "greeting": "Здравствуйте! Это INKMADE 👕",
+      "addresses": {
+        "title": "Адреса",
+        "default": "по умолч.",
+        "empty": "Адресов нет."
+      },
+      "ordersHistory": {
+        "title": "История заказов",
+        "table": {
+          "number": "#",
+          "date": "Дата",
+          "sum": "Сумма",
+          "status": "Статус",
+          "payment": "Оплата"
+        },
+        "paid": "оплачен",
+        "notPaid": "не оплачен",
+        "empty": {
+          "title": "Заказов нет",
+          "text": "Клиент ещё не оформлял заказы."
+        }
+      }
+    },
+    "leads": {
+      "headTitle": "Лиды — INKMADE",
+      "label": "CRM",
+      "title": "Лиды",
+      "description": "Контакты клиентов для связи в WhatsApp и по телефону. Всего: {n}.",
+      "exportCsv": "Экспорт CSV",
+      "searchPlaceholder": "Поиск по имени, телефону, email",
+      "onlyConsent": "Только давшие согласие на связь",
+      "greeting": "Здравствуйте! Это INKMADE 👕",
+      "noLeadsToExport": "Нет лидов для экспорта",
+      "empty": {
+        "title": "Пока нет лидов",
+        "description": "Контакты появятся после регистрации клиентов с указанием телефона."
+      },
+      "table": {
+        "name": "Имя",
+        "phone": "Телефон",
+        "email": "Email",
+        "consent": "Согласие",
+        "date": "Дата",
+        "contact": "Связаться"
+      },
+      "whatsApp": "WhatsApp",
+      "call": "Позвонить",
+      "yes": "да",
+      "no": "нет",
+      "csv": {
+        "name": "Имя",
+        "phone": "Телефон",
+        "email": "Email",
+        "consent": "Согласие на связь",
+        "registered": "Дата регистрации",
+        "yes": "да",
+        "no": "нет"
+      }
+    },
+    "finance": {
+      "label": "Финансы",
+      "title": "P&L и аналитика",
+      "csv": "CSV",
+      "tax": "Налоговый",
+      "period": {
+        "d7": "7 дней",
+        "d30": "30 дней",
+        "d90": "90 дней",
+        "all": "Всё время"
+      },
+      "type": {
+        "revenue": "Выручка",
+        "cogs": "Себестоимость",
+        "royalty": "Роялти",
+        "acquiring_fee": "Эквайринг",
+        "shipping": "Доставка",
+        "refund": "Возврат",
+        "other": "Прочее"
+      },
+      "kpi": {
+        "revenue": "Выручка",
+        "cogs": "Себестоимость",
+        "royalty": "Роялти",
+        "refund": "Возвраты",
+        "profit": "Чистая прибыль"
+      },
+      "chart": {
+        "title": "Динамика",
+        "revenue": "выручка",
+        "profit": "прибыль",
+        "tooltip": "{day}: выручка {revenue}, прибыль {profit}"
+      },
+      "byProduct": {
+        "title": "Маржа по изделиям",
+        "product": "Изделие",
+        "qty": "Шт",
+        "revenue": "Выручка",
+        "margin": "Маржа",
+        "empty": "Продаж пока нет"
+      },
+      "byMethod": {
+        "title": "Маржа по методам",
+        "method": "Метод",
+        "qty": "Шт",
+        "revenue": "Выручка",
+        "margin": "Маржа",
+        "empty": "Продаж пока нет"
+      },
+      "ledger": {
+        "title": "Леджер",
+        "empty": {
+          "title": "Движений пока нет",
+          "text": "Появятся после оплат."
+        }
+      },
+      "taxCsv": {
+        "period": "Период",
+        "revenue": "Выручка",
+        "refund": "Возвраты",
+        "turnover": "Чистый оборот",
+        "cogs": "Себестоимость",
+        "royalty": "Роялти дизайнерам",
+        "profit": "Чистая прибыль",
+        "estTax": "Оценочный налог (упрощёнка ~3% от оборота)"
+      }
+    },
+    "returns": {
+      "label": "Сервис",
+      "title": "Возвраты и рекламации",
+      "description": "Персонализация снимает возврат «по капризу», но не снимает ответственность за брак.",
+      "empty": {
+        "title": "Проблемных заказов нет",
+        "text": "Все заказы в штатном статусе — рекламаций сейчас нет."
+      },
+      "reasonPrompt": "Причина перехода в «{status}»:",
+      "statusChanged": "Статус: {status}",
+      "error": "Ошибка",
+      "reprint": "Переделать",
+      "refund": "Возврат"
+    },
+    "audit": {
+      "label": "Безопасность",
+      "title": "Аудит действий",
+      "empty": {
+        "title": "Записей пока нет",
+        "text": "Действия администратора будут появляться здесь."
+      },
+      "action": {
+        "role_change": "Смена роли",
+        "product_update": "Изменение товара"
+      },
+      "entity": {
+        "profile": "Пользователь",
+        "product": "Товар",
+        "print_library": "Принт",
+        "payouts": "Выплата",
+        "promo_codes": "Промокод",
+        "designer_profiles": "Дизайнер"
+      },
+      "describe": {
+        "product": "цена {priceBefore}→{priceAfter}, активен {activeBefore}→{activeAfter}",
+        "print": "«{title}»: модерация {before} → {after}",
+        "payout": "выплата {before} → {after} ({amount} ₸)",
+        "promo": "{code}: {state}",
+        "promoActive": "активен",
+        "promoInactive": "выключен",
+        "designer": "ставка {before}% → {after}%"
+      }
+    },
+    "users": {
+      "headTitle": "Пользователи — INKMADE",
+      "label": "Доступ",
+      "title": "Пользователи и роли",
+      "description": "Оператор видит производственный кабинет /studio, администратор — этот раздел /admin.",
+      "roles": {
+        "customer": "Покупатель",
+        "operator": "Оператор (производство)",
+        "admin": "Администратор"
+      },
+      "roleUpdated": "Роль обновлена",
+      "error": "Ошибка",
+      "table": {
+        "email": "Email",
+        "name": "Имя",
+        "role": "Роль"
+      },
+      "you": "вы",
+      "note": "Свою роль изменить нельзя — это защита от случайной потери доступа администратором."
+    },
+    "settings": {
+      "deliveryEtaDefault": "Обычно 3–7 дней по Казахстану",
+      "label": "Платформа",
+      "title": "Настройки",
+      "tax": {
+        "simplified": "Упрощёнка (4%)",
+        "our": "ОУР + НДС"
+      },
+      "saved": "Настройки сохранены",
+      "error": "Ошибка",
+      "globalParams": "Глобальные параметры",
+      "form": {
+        "supportEmail": "Контактный email",
+        "deliveryEta": "Сроки доставки (текст)",
+        "payoutThreshold": "Порог выплаты дизайнерам, ₸",
+        "taxMode": "Налоговый режим",
+        "companyDetails": "Реквизиты компании"
+      },
+      "payments": {
+        "title": "Платежи и валюта",
+        "currency": "Валюта:",
+        "site": "Сайт:",
+        "providerNote": "Платёжный провайдер и фискализация (ОФД РК) подключаются на запуске продаж."
+      }
+    }
+  }
+}

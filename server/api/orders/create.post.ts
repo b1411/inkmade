@@ -26,6 +26,19 @@ export default defineEventHandler(async (event) => {
   const svc = serverSupabaseServiceRole<Database>(event)
   const uid = user.id
 
+  // Файлы дизайна (превью, печатные файлы, ассеты принтов) должны лежать в нашем
+  // Storage — иначе в designs попадёт произвольный URL, который покажется оператору
+  // (anti-SSRF / защита от подмены §17.3). Проверяем префикс публичного бакета.
+  const cfg = useRuntimeConfig(event)
+  const supaUrl = String((cfg.public as { supabase?: { url?: string } })?.supabase?.url || process.env.SUPABASE_URL || '').replace(/\/$/, '')
+  const storagePrefix = supaUrl ? `${supaUrl}/storage/v1/object/public/` : ''
+  function assertOwnStorageUrl(url: string | null | undefined, label: string): void {
+    if (!url || !storagePrefix) return
+    if (!url.startsWith(storagePrefix)) {
+      throw createError({ statusCode: 400, statusMessage: `Недопустимый источник файла (${label})` })
+    }
+  }
+
   // ── пересчёт каждой позиции по БД ──────────────────────────────
   interface Priced { item: Item; unitPrice: number; unitCost: number }
   const priced: Priced[] = []
@@ -53,10 +66,22 @@ export default defineEventHandler(async (event) => {
     }
     // геометрия плейсментов (конечные неотрицательные мм) уже проверена Zod-схемой
 
-    // H2: DPI-валидация от МАКСИМАЛЬНОГО размера изделия (§24 инв.1), серверная
+    // источники файлов должны принадлежать нашему Storage
+    assertOwnStorageUrl(it.spec?.composition_url, 'превью')
+    for (const f of it.spec?.print_files ?? []) assertOwnStorageUrl(f.url, 'печатный файл')
+    for (const p of placements) assertOwnStorageUrl(p.asset_url, 'принт')
+
+    // H2: DPI-валидация от МАКСИМАЛЬНОГО размера изделия (§24 инв.1), серверная.
+    // Векторные принты (PDF/SVG) не имеют растрового DPI — пропускаем (vector=true).
     const maxPrint = product.max_print_mm as { width?: number; height?: number } | null
+    const hasRaster = placements.some(p => !p.vector && Number(p.natural_w) > 0 && Number(p.natural_h) > 0)
+    // растровый принт без заданного max_print_mm = нельзя гарантировать DPI → отказ
+    if (hasRaster && !(maxPrint?.width && maxPrint?.height)) {
+      throw createError({ statusCode: 400, statusMessage: 'У товара не задан максимальный размер печати' })
+    }
     if (maxPrint?.width && maxPrint?.height) {
       for (const p of placements) {
+        if (p.vector) continue
         if (p.natural_w && p.natural_h) {
           const dpi = dpiAtMaxSize(p.natural_w, p.natural_h, { width: maxPrint.width, height: maxPrint.height })
           if (dpi < DPI_MIN) {
@@ -66,28 +91,45 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // зона из spec → площадь зоны для расчёта (§5.5)
-    const zoneName = placements[0]?.zone ?? null
-    const { data: zoneRow } = zoneName
-      ? await svc.from('print_zones').select('max_width_mm, max_height_mm')
-          .eq('product_id', it.productId).eq('name', zoneName).limit(1).maybeSingle()
-      : { data: null }
-    const zoneAreaMm2 = (Number(zoneRow?.max_width_mm) || 0) * (Number(zoneRow?.max_height_mm) || 0)
-
-    const mode: PrintMode = (it.spec?.print_mode as PrintMode) ?? (material.print_mode as PrintMode)
-    const printAreaMm2 = Math.min(
-      zoneAreaMm2 || Infinity,
-      placements.reduce((s, p) => s + (Number(p.width_mm) || 0) * (Number(p.height_mm) || 0), 0),
-    )
+    // мультизона (§7.1): печать считается по каждой занятой зоне отдельно.
+    // Режим берём ТОЛЬКО из материала по БД — клиентскому spec.print_mode
+    // доверять нельзя (можно навязать дешёвую/дорогую ставку).
+    const mode: PrintMode = material.print_mode as PrintMode
+    const byZone = new Map<string, typeof placements>()
+    for (const p of placements) {
+      const zn = p.zone ?? '__none__'
+      byZone.set(zn, [...(byZone.get(zn) ?? []), p])
+    }
+    const zonesForPrice: { mode: PrintMode; printAreaMm2: number; zoneAreaMm2: number }[] = []
+    for (const [zn, pls] of byZone) {
+      const { data: zoneRow } = zn !== '__none__'
+        ? await svc.from('print_zones').select('max_width_mm, max_height_mm')
+            .eq('product_id', it.productId).eq('name', zn).limit(1).maybeSingle()
+        : { data: null }
+      const zoneAreaMm2 = (Number(zoneRow?.max_width_mm) || 0) * (Number(zoneRow?.max_height_mm) || 0)
+      const printAreaMm2 = Math.min(
+        zoneAreaMm2 || Infinity,
+        pls.reduce((s, p) => s + (Number(p.width_mm) || 0) * (Number(p.height_mm) || 0), 0),
+      )
+      zonesForPrice.push({ mode, printAreaMm2, zoneAreaMm2 })
+    }
     const hasText = placements.some(p => p.source === 'text' || p.text != null)
 
+    const isSilkscreen = material.print_method === 'silkscreen'
+    const colorCount = Math.max(0, Math.round(Number(it.spec?.color_count) || 0))
+    // шелкография: каждый цвет = отдельный трафарет; без числа цветов цена неполна
+    if (isSilkscreen && colorCount < 1) {
+      throw createError({ statusCode: 400, statusMessage: 'Для шелкографии укажите число цветов в макете' })
+    }
     const breakdown = calcPrice({
       basePrice: Number(product.base_price) || 0,
       materialSurcharge: Number(material.surcharge) || 0,
       methodSurcharge: METHOD_SURCHARGE[material.print_method as PrintMethod] ?? 0,
-      zones: [{ mode, printAreaMm2, zoneAreaMm2 }],
+      zones: zonesForPrice,
       hasText,
       quantity: 1,
+      perColorPricing: isSilkscreen,
+      colorCount,
     })
     if (breakdown.unitPrice <= 0) {
       throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции' })
@@ -132,17 +174,24 @@ export default defineEventHandler(async (event) => {
         spec: item.spec as unknown as Json,
         // превью «для глаз» из скриншота композиции (§13.2) — для галереи и шаринга
         preview_url: item.spec?.composition_url ?? null,
+        // печатный файл (§13.2, «для печати»): первая зона → designs.print_file_url,
+        // все зоны лежат в spec.print_files. Решает проблему шрифтов в цеху.
+        print_file_url: item.spec?.print_files?.[0]?.url ?? null,
       })
       .select('id').single()
     if (dErr || !design) throw createError({ statusCode: 500, statusMessage: 'Не удалось сохранить дизайн' })
 
-    // принт из библиотеки → атрибуция роялти владельцу-дизайнеру (CRM §7.3, §8.4)
+    // принт из библиотеки → атрибуция роялти владельцу-дизайнеру (CRM §7.3, §8.4).
+    // Anti-fraud: роялти только за АКТИВНЫЙ принт, РЕАЛЬНО использованный в дизайне
+    // (его file_url присутствует среди ассетов плейсментов) — нельзя начислить
+    // роялти произвольному дизайнеру, подставив чужой print_id.
     let printId: string | null = null
     let printOwnerId: string | null = null
     if (item.spec?.print_id) {
       const { data: pl } = await svc.from('print_library')
-        .select('id, owner_id').eq('id', item.spec.print_id).maybeSingle()
-      if (pl) { printId = pl.id; printOwnerId = pl.owner_id }
+        .select('id, owner_id, file_url, is_active').eq('id', item.spec.print_id).maybeSingle()
+      const usedInDesign = !!pl && (item.spec?.placements ?? []).some(p => p.asset_url === pl.file_url)
+      if (pl && pl.is_active && usedInDesign) { printId = pl.id; printOwnerId = pl.owner_id }
     }
 
     const { error: iErr } = await svc.from('order_items').insert({

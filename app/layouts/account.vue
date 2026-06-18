@@ -1,12 +1,13 @@
 <script setup lang="ts">
 // Личный кабинет клиента (§8.1). Светлый контекст (§2.2).
-const nav = [
-  { label: 'Мои заказы', to: '/account/orders', icon: 'i-lucide-package' },
-  { label: 'Мои дизайны', to: '/account/designs', icon: 'i-lucide-shapes' },
-  { label: 'Избранное', to: '/account/favorites', icon: 'i-lucide-heart' },
-  { label: 'Адреса', to: '/account/addresses', icon: 'i-lucide-map-pin' },
-  { label: 'Профиль', to: '/account', icon: 'i-lucide-user' },
-]
+const { t } = useI18n()
+const nav = computed(() => [
+  { label: t('account.nav.orders'), to: '/account/orders', icon: 'i-lucide-package' },
+  { label: t('account.nav.designs'), to: '/account/designs', icon: 'i-lucide-shapes' },
+  { label: t('account.nav.favorites'), to: '/account/favorites', icon: 'i-lucide-heart' },
+  { label: t('account.nav.addresses'), to: '/account/addresses', icon: 'i-lucide-map-pin' },
+  { label: t('account.nav.profile'), to: '/account', icon: 'i-lucide-user' },
+])
 const { signOut, profile, homePath } = useAuth()
 async function onSignOut() { await signOut(); await navigateTo('/') }
 // админ/оператор/дизайнер не залипают в клиентском кабинете — уводим в их кабинет
@@ -21,8 +22,8 @@ watchEffect(() => {
       <div class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between">
         <UiAppLogo :subtitle="false" />
         <div class="flex items-center gap-4">
-          <UiSectionLabel>Личный кабинет</UiSectionLabel>
-          <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-log-out" @click="onSignOut">Выйти</UButton>
+          <UiSectionLabel>{{ $t('account.title') }}</UiSectionLabel>
+          <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-log-out" @click="onSignOut">{{ $t('account.nav.signOut') }}</UButton>
         </div>
       </div>
     </header>

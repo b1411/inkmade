@@ -5,7 +5,8 @@ import { LEGAL } from '~~/shared/config/legal'
 import { normalizeKzPhone, isValidKzPhone } from '~~/shared/config/phone'
 
 definePageMeta({ layout: 'auth' })
-useHead({ title: 'Регистрация — INKMADE' })
+const { t } = useI18n()
+useHead({ title: () => `${t('auth.register.label')} — INKMADE` })
 
 const { signUp } = useAuth()
 const supabase = useSupabaseClient()
@@ -24,11 +25,11 @@ const phoneValid = computed(() => isValidKzPhone(phone.value))
 
 async function onSubmit() {
   if (!agree.value) {
-    toast.add({ title: 'Подтвердите согласие с условиями', color: 'warning' })
+    toast.add({ title: t('auth.register.consentWarning'), color: 'warning' })
     return
   }
   if (!phoneValid.value) {
-    toast.add({ title: 'Укажите корректный номер', description: 'Формат: +7 700 123 45 67', color: 'warning' })
+    toast.add({ title: t('auth.register.phoneWarningTitle'), description: t('auth.register.phoneWarningDescription'), color: 'warning' })
     return
   }
   loading.value = true
@@ -48,7 +49,7 @@ async function onSubmit() {
     }
     done.value = true
   } catch (e) {
-    toast.add({ title: 'Не удалось зарегистрироваться', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('auth.register.errorTitle'), description: (e as Error).message, color: 'error' })
   } finally {
     loading.value = false
   }
@@ -57,50 +58,50 @@ async function onSubmit() {
 
 <template>
   <div>
-    <UiSectionLabel accent>Регистрация</UiSectionLabel>
-    <h1 class="ink-display text-3xl mt-2">Создать аккаунт</h1>
-    <p class="text-ink-gray-600 mt-2 mb-8">Пара минут — и можно собирать свой мерч.</p>
+    <UiSectionLabel accent>{{ $t('auth.register.label') }}</UiSectionLabel>
+    <h1 class="ink-display text-3xl mt-2">{{ $t('auth.register.title') }}</h1>
+    <p class="text-ink-gray-600 mt-2 mb-8">{{ $t('auth.register.subtitle') }}</p>
 
     <UAlert
       v-if="done"
       color="success"
       icon="i-lucide-mail-check"
-      title="Почти готово"
-      description="Подтвердите email по ссылке из письма, затем войдите."
+      :title="$t('auth.register.doneTitle')"
+      :description="$t('auth.register.doneDescription')"
     />
 
     <form v-else class="space-y-4" @submit.prevent="onSubmit">
-      <UFormField label="Имя">
+      <UFormField :label="$t('auth.register.nameLabel')">
         <UInput v-model="fullName" size="lg" autocomplete="name" icon="i-lucide-user" class="w-full" />
       </UFormField>
-      <UFormField label="Email">
+      <UFormField :label="$t('auth.register.emailLabel')">
         <UInput v-model="email" type="email" size="lg" autocomplete="email" icon="i-lucide-mail" required class="w-full" />
       </UFormField>
-      <UFormField label="Телефон" :error="phone && !phoneValid ? 'Формат: +7 700 123 45 67' : undefined">
-        <UInput v-model="phone" type="tel" size="lg" autocomplete="tel" inputmode="tel" icon="i-lucide-phone" placeholder="+7 700 123 45 67" required class="w-full" />
+      <UFormField :label="$t('auth.register.phoneLabel')" :error="phone && !phoneValid ? $t('auth.register.phoneError') : undefined">
+        <UInput v-model="phone" type="tel" size="lg" autocomplete="tel" inputmode="tel" icon="i-lucide-phone" :placeholder="$t('auth.register.phonePlaceholder')" required class="w-full" />
       </UFormField>
-      <UFormField label="Пароль">
+      <UFormField :label="$t('auth.register.passwordLabel')">
         <UInput v-model="password" type="password" size="lg" autocomplete="new-password" icon="i-lucide-lock" required class="w-full" />
       </UFormField>
       <UCheckbox v-model="agree" required>
         <template #label>
-          Я принимаю
-          <NuxtLink to="/legal/terms" target="_blank" class="text-ink-burgundy font-semibold">Условия использования</NuxtLink>
-          и
-          <NuxtLink to="/legal/privacy" target="_blank" class="text-ink-burgundy font-semibold">Политику конфиденциальности</NuxtLink>
+          {{ $t('auth.register.agreePrefix') }}
+          <NuxtLink to="/legal/terms" target="_blank" class="text-ink-burgundy font-semibold">{{ $t('auth.register.agreeTerms') }}</NuxtLink>
+          {{ $t('auth.register.agreeConjunction') }}
+          <NuxtLink to="/legal/privacy" target="_blank" class="text-ink-burgundy font-semibold">{{ $t('auth.register.agreePrivacy') }}</NuxtLink>
         </template>
       </UCheckbox>
       <UCheckbox v-model="contactConsent">
         <template #label>
-          Согласен(на) получать сообщения о заказе и предложения в WhatsApp и по телефону
+          {{ $t('auth.register.contactConsent') }}
         </template>
       </UCheckbox>
-      <UButton type="submit" color="primary" size="lg" block :loading="loading" :disabled="!agree || !phoneValid" trailing-icon="i-lucide-arrow-right">Зарегистрироваться</UButton>
+      <UButton type="submit" color="primary" size="lg" block :loading="loading" :disabled="!agree || !phoneValid" trailing-icon="i-lucide-arrow-right">{{ $t('auth.register.submit') }}</UButton>
     </form>
 
     <p class="text-caption text-ink-gray-600 mt-8 text-center">
-      Уже есть аккаунт?
-      <NuxtLink to="/login" class="text-ink-burgundy font-semibold">Войти</NuxtLink>
+      {{ $t('auth.register.haveAccount') }}
+      <NuxtLink to="/login" class="text-ink-burgundy font-semibold">{{ $t('auth.register.loginLink') }}</NuxtLink>
     </p>
   </div>
 </template>

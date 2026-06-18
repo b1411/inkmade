@@ -4,17 +4,18 @@ import type { ProductWithRelations } from '~/types/models'
 // Мастер создания/редактирования товара (§8.2.1). Черновик сохраняется на каждом шаге.
 const props = defineProps<{ initialId?: string }>()
 
+const { t } = useI18n()
 const { getProduct } = useAdmin()
 const toast = useToast()
 
-const STEPS = [
-  { n: 1, title: 'Основное' },
-  { n: 2, title: 'Материалы' },
-  { n: 3, title: 'Варианты' },
-  { n: 4, title: 'Зоны' },
-  { n: 5, title: 'Фото' },
-  { n: 6, title: 'Публикация' },
-]
+const STEPS = computed(() => [
+  { n: 1, title: t('admin.wizard.stepBasics') },
+  { n: 2, title: t('admin.wizard.stepMaterials') },
+  { n: 3, title: t('admin.wizard.stepVariants') },
+  { n: 4, title: t('admin.wizard.stepZones') },
+  { n: 5, title: t('admin.wizard.stepImages') },
+  { n: 6, title: t('admin.wizard.stepPublish') },
+])
 
 const step = ref(1)
 const productId = ref<string | null>(props.initialId ?? null)
@@ -27,7 +28,7 @@ async function reload() {
   try {
     product.value = (await getProduct(productId.value)) as ProductWithRelations
   } catch (e) {
-    toast.add({ title: 'Ошибка загрузки', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.loadError'), description: (e as Error).message, color: 'error' })
   } finally {
     loading.value = false
   }
@@ -63,7 +64,7 @@ const canStep = (n: number) => n === 1 || !!productId.value
       </button>
     </nav>
 
-    <div v-if="loading" class="py-10 text-center text-ink-gray-600">Загрузка…</div>
+    <div v-if="loading" class="py-10 text-center text-ink-gray-600">{{ $t('states.loading') }}</div>
 
     <template v-else>
       <AdminWizardStepBasics v-if="step === 1" :product="product" @saved="onBasicsSaved" />

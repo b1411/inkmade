@@ -3,6 +3,7 @@
 definePageMeta({ layout: 'account', middleware: 'auth' })
 const { list, create, update, remove, setDefault } = useAddresses()
 const toast = useToast()
+const { t } = useI18n()
 
 const { data: addresses, refresh, pending } = await useAsyncData('account-addresses', () => list())
 
@@ -22,25 +23,25 @@ function startEdit(a: { id: string; full_name: string | null; phone: string | nu
 
 async function onSubmit() {
   if (!form.full_name || !form.phone || !form.address) {
-    toast.add({ title: 'Заполните имя, телефон и адрес', color: 'warning' }); return
+    toast.add({ title: t('account.addresses.validationTitle'), color: 'warning' }); return
   }
   adding.value = true
   try {
     if (editingId.value) {
       await update(editingId.value, { ...form })
-      toast.add({ title: 'Адрес обновлён', color: 'success' })
+      toast.add({ title: t('account.addresses.updatedTitle'), color: 'success' })
     } else {
       await create({ ...form, is_default: !(addresses.value?.length) })
-      toast.add({ title: 'Адрес добавлен', color: 'success' })
+      toast.add({ title: t('account.addresses.addedTitle'), color: 'success' })
     }
     resetForm()
     await refresh()
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.addresses.errorTitle'), description: (e as Error).message, color: 'error' })
   } finally { adding.value = false }
 }
 async function onRemove(id: string) {
-  if (!confirm('Удалить этот адрес?')) return
+  if (!confirm(t('account.addresses.removeConfirm'))) return
   await remove(id)
   if (editingId.value === id) resetForm()
   await refresh()
@@ -50,7 +51,7 @@ async function onDefault(id: string) { await setDefault(id); await refresh() }
 
 <template>
   <div class="max-w-2xl">
-    <UiPageHeader label="Доставка" title="Адреса" description="Сохранённые адреса подставляются при оформлении заказа." />
+    <UiPageHeader :label="$t('account.addresses.label')" :title="$t('account.addresses.title')" :description="$t('account.addresses.description')" />
 
     <div v-if="pending" class="space-y-3 mb-8">
       <UiSkeleton v-for="n in 2" :key="n" rounded="rounded-lg" class="h-20" />
@@ -59,8 +60,8 @@ async function onDefault(id: string) { await setDefault(id); await refresh() }
     <UiEmptyState
       v-else-if="!addresses?.length"
       icon="i-lucide-map-pin"
-      title="Адресов пока нет"
-      text="Добавьте адрес ниже — он подставится в оформлении заказа."
+      :title="$t('account.addresses.emptyTitle')"
+      :text="$t('account.addresses.emptyText')"
       class="mb-4"
     />
 
@@ -69,7 +70,7 @@ async function onDefault(id: string) { await setDefault(id); await refresh() }
         <div>
           <p class="font-semibold">
             {{ a.full_name }}
-            <UBadge v-if="a.is_default" color="primary" variant="subtle" size="xs" class="ml-1">по умолчанию</UBadge>
+            <UBadge v-if="a.is_default" color="primary" variant="subtle" size="xs" class="ml-1">{{ $t('account.addresses.default') }}</UBadge>
           </p>
           <p class="text-caption text-ink-gray-600 mt-0.5">{{ a.phone }} · {{ a.city }}, {{ a.address }}</p>
         </div>
@@ -81,19 +82,19 @@ async function onDefault(id: string) { await setDefault(id); await refresh() }
       </div>
     </div>
 
-    <UiPanel :title="editingId ? 'Редактировать адрес' : 'Новый адрес'" :icon="editingId ? 'i-lucide-pencil' : 'i-lucide-plus'">
+    <UiPanel :title="editingId ? $t('account.addresses.editAddress') : $t('account.addresses.newAddress')" :icon="editingId ? 'i-lucide-pencil' : 'i-lucide-plus'">
       <div class="space-y-4">
         <div class="grid sm:grid-cols-2 gap-3">
-          <UInput v-model="form.full_name" placeholder="Имя и фамилия" />
-          <UInput v-model="form.phone" type="tel" placeholder="+7 700 000 00 00" />
-          <UInput v-model="form.city" placeholder="Город" />
-          <UInput v-model="form.address" placeholder="Улица, дом, кв." />
+          <UInput v-model="form.full_name" :placeholder="$t('account.addresses.fullNamePlaceholder')" />
+          <UInput v-model="form.phone" type="tel" :placeholder="$t('account.addresses.phonePlaceholder')" />
+          <UInput v-model="form.city" :placeholder="$t('account.addresses.cityPlaceholder')" />
+          <UInput v-model="form.address" :placeholder="$t('account.addresses.addressPlaceholder')" />
         </div>
         <div class="flex gap-2">
           <UButton color="primary" :icon="editingId ? 'i-lucide-check' : 'i-lucide-plus'" :loading="adding" @click="onSubmit">
-            {{ editingId ? 'Сохранить' : 'Добавить адрес' }}
+            {{ editingId ? $t('account.addresses.save') : $t('account.addresses.addAddress') }}
           </UButton>
-          <UButton v-if="editingId" color="neutral" variant="ghost" @click="resetForm">Отмена</UButton>
+          <UButton v-if="editingId" color="neutral" variant="ghost" @click="resetForm">{{ $t('account.addresses.cancel') }}</UButton>
         </div>
       </div>
     </UiPanel>

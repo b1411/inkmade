@@ -1,0 +1,217 @@
+{
+  "studio": {
+    "nav": {
+      "badge": "STUDIO",
+      "queue": "Кезек",
+      "stock": "Қойма",
+      "signOut": "Шығу",
+      "designerStudio": "Дизайнер студиясы",
+      "dashboard": "Дашборд",
+      "prints": "Менің принттерім",
+      "finance": "Қаржы",
+      "profile": "Профиль"
+    },
+    "production": {
+      "label": "Кезек",
+      "title": "Өндіріс",
+      "description": "Тапсырыстар тақтасы кезеңдер бойынша. Автоматты түрде жаңарады (Realtime).",
+      "refresh": "Жаңарту",
+      "positions": "Позициялар: {count}",
+      "empty": "—",
+      "order": {
+        "label": "Тапсырыс #{id}",
+        "backToQueue": "Кезекке",
+        "gift": "Сыйлық қаптамасы",
+        "giftRecipient": "Алушы:",
+        "giftCard": "Ашықхат: «{message}»",
+        "giftHidePrice": "⚠ Бағасы көрсетілген түбіртекті салмаңыз",
+        "spec": "Басып шығару спецификациясы",
+        "specZone": "аймақ {zone}: {width}×{height} мм {'@'} ({x}, {y}) ∠{rotation}°",
+        "specText": " — мәтін «{text}»",
+        "specEmpty": "дерек жоқ",
+        "original": "Түпнұсқа",
+        "compositionAlt": "Композиция {title}",
+        "approve": "Мақұлдау",
+        "reject": "Қабылдамау",
+        "statusLog": "Мәртебелер журналы",
+        "evidence": "Фото-дәлелдер",
+        "commentPlaceholder": "Пікір",
+        "addPhoto": "Фото қосу",
+        "changeStage": "Кезеңді ауыстыру",
+        "tracking": "Трек: {tracking} ({carrier})",
+        "approveAllHint": "Тапсырысты басып шығаруға жіберу үшін барлық дизайндарды мақұлдаңыз.",
+        "finalStatus": "Соңғы мәртебе.",
+        "trackingNo": "Трек-нөмір",
+        "carrier": "Тасымалдаушы",
+        "carrierPlaceholder": "Kazpost / CDEK / курьер",
+        "reason": "Себеп",
+        "reasonPlaceholder": "Себебін сипаттаңыз",
+        "confirm": "Растау",
+        "moderation": {
+          "pending": "Модерацияда",
+          "approved": "Мақұлданды",
+          "rejected": "Қабылданбады"
+        },
+        "evidenceKind": {
+          "qc": "Сапаны бақылау",
+          "defect": "Ақау",
+          "other": "Басқа"
+        },
+        "toast": {
+          "designModerated": "Дизайн: {status}",
+          "moderationError": "Модерация қатесі",
+          "statusChanged": "Мәртебе: {status}",
+          "error": "Қате",
+          "photoAdded": "Фото қосылды",
+          "uploadError": "Жүктеу қатесі"
+        }
+      }
+    },
+    "stock": {
+      "label": "Қойма",
+      "title": "Дайындамалар қоймасы",
+      "description": "Нұсқалар бойынша қалдықтар, қозғалыс тарихы және ақауды есептен шығару.",
+      "table": {
+        "product": "Тауар",
+        "colorSize": "Түс / өлшем",
+        "sku": "SKU",
+        "stock": "Қалдық"
+      },
+      "history": "Тарих",
+      "defect": "Ақау",
+      "historyTitle": "Тарих: {title}",
+      "historyEmpty": "Қозғалыс жоқ.",
+      "reason": {
+        "purchase": "Кіріс",
+        "correction": "Түзету",
+        "defect": "Ақау",
+        "order": "Тапсырыс"
+      },
+      "toast": {
+        "defectWrittenOff": "Ақау есептен шығарылды (−1)",
+        "error": "Қате",
+        "historyError": "Тарихты жүктеу мүмкін болмады"
+      }
+    },
+    "designer": {
+      "overview": {
+        "label": "Студия",
+        "title": "Сәлем, {name}",
+        "defaultName": "дизайнер",
+        "description": "Табыс, принттер мәртебесі және соңғы сатылымдар.",
+        "notConfigured": "Дизайнер профилін әкімші әлі баптаған жоқ. Принттерді жүктеу мен роялти белсендірілгеннен кейін қолжетімді болады.",
+        "totalEarned": "Барлық табыс",
+        "available": "Шығаруға қолжетімді",
+        "availableHint": "Төлемді «Қаржы» бөлімінде сұраңыз",
+        "royaltyRate": "Роялти мөлшерлемесі",
+        "totalPrints": "Барлық принттер",
+        "pending": "Модерацияда",
+        "approved": "Мақұлданды",
+        "rejected": "Қабылданбады",
+        "topPrints": "Үздік принттер",
+        "salesCount": "{count} сатылым",
+        "recentSales": "Соңғы сатылымдар",
+        "noSales": "Сатылым әзірге жоқ. Принттерді мына бөлімде жүктеңіз:",
+        "noSalesLink": "«Менің принттерім» бөлімі",
+        "noSalesTail": "— мақұлданғаннан кейін олар каталогта пайда болады.",
+        "printFallback": "принт"
+      },
+      "prints": {
+        "label": "Каталог",
+        "title": "Менің принттерім",
+        "description": "Модерацияға жүктеу, мәртебелер және әр принт бойынша сатылымдар.",
+        "uploadTitle": "Принт жүктеу",
+        "namePlaceholder": "Принт атауы",
+        "tagsPlaceholder": "Тегтер үтір арқылы (стрит, граффити…)",
+        "fileChosen": "Файл таңдалды",
+        "chooseFile": "Файл таңдау (PNG/JPG/PDF, жоғары ажыратымдылық)",
+        "agree": "Дизайн менікі, авторлық құқыққа жауап беремін (оферта)",
+        "submit": "Модерацияға жіберу",
+        "emptyTitle": "Принттер әзірге жоқ",
+        "emptyText": "Алғашқы принтті жоғарыдағы формада жүктеңіз — модерациядан кейін ол каталогта пайда болады.",
+        "salesRoyalty": "сатылым: {sales} · роялти: {royalty}",
+        "rate": "мөлшерлеме {rate}%",
+        "hide": "Жасыру",
+        "show": "Көрсету",
+        "status": {
+          "pending": "Модерацияда",
+          "approved": "Мақұлданды",
+          "rejected": "Қабылданбады"
+        },
+        "toast": {
+          "enterName": "Атауын енгізіңіз",
+          "chooseFile": "Принт файлын таңдаңыз",
+          "confirmRights": "Дизайнға құқықты растаңыз",
+          "lowResolution": "Ажыратымдылық тым төмен",
+          "lowResolutionDesc": "{w}×{h}px — кіші жағынан {min}px-тен болуы керек. Үлкенірек файл жүктеңіз.",
+          "borderlineResolution": "Назар аударыңыз: ажыратымдылық шектік",
+          "borderlineResolutionDesc": "{w}×{h}px — ұсақ басып шығаруға жарайды, ірісі үшін {ok}px-тен жақсырақ.",
+          "checkFailed": "Суретті тексеру мүмкін болмады",
+          "submitted": "Принт модерацияға жіберілді",
+          "uploadError": "Жүктеу қатесі",
+          "readError": "Суретті оқу мүмкін болмады"
+        }
+      },
+      "finance": {
+        "label": "Қаржы",
+        "title": "Баланс және төлемдер",
+        "description": "Роялти есептеулері, қолжетімді қалдық және төлемдер тарихы.",
+        "accrued": "Есептелді",
+        "paid": "Төленді",
+        "available": "Қолжетімді",
+        "requestPayout": "Төлемді сұрау",
+        "amount": "Сома, ₸",
+        "request": "Сұрау",
+        "minHint": "Кемінде {min} ₸. Роялти мөлшерлемесі: {rate}%.",
+        "accrualHistory": "Есептеулер тарихы",
+        "noAccruals": "Есептеулер әзірге жоқ.",
+        "payouts": "Төлемдер",
+        "noPayouts": "Төлемдер әлі болған жоқ.",
+        "printFallback": "принт",
+        "earningStatus": {
+          "accrued": "есептелді",
+          "paid": "төленді",
+          "reversed": "жойылды"
+        },
+        "toast": {
+          "minPayout": "Шығаруға ең азы — {min} ₸",
+          "overBalance": "Қолжетімді баланстан артық",
+          "payoutRequested": "Төлемге өтінім жасалды",
+          "error": "Қате",
+          "failed": "Орындалмады"
+        }
+      },
+      "profile": {
+        "label": "Профиль",
+        "title": "Витрина және деректемелер",
+        "description": "Автордың ашық витринасы және роялти төлемдеріне арналған деректер.",
+        "notActivated": "Дизайнер профилін әкімші әлі белсендірмеген.",
+        "showcase": "Витрина",
+        "avatarAlt": "Аватар",
+        "uploadAvatar": "Аватар жүктеу",
+        "displayName": "Бүркеншік ат (витрина үшін)",
+        "bio": "Өзім туралы",
+        "isPublic": "Автордың ашық витринасын көрсету",
+        "openShowcase": "Витринамды ашу",
+        "payoutDetails": "Төлемге арналған деректемелер",
+        "taxStatus": "Салық мәртебесі",
+        "bank": "Банк",
+        "account": "Шот/карта (IBAN)",
+        "save": "Сақтау",
+        "offerNote": "Дизайнер офертасы v1.0. Таңдалған мәртебе бойынша салықтар — сізде.",
+        "tax": {
+          "individual": "Жеке тұлға",
+          "selfEmployed": "Өзін-өзі жұмыспен қамтыған",
+          "ip": "ЖК"
+        },
+        "toast": {
+          "avatarUpdated": "Аватар жаңартылды",
+          "uploadError": "Жүктеу қатесі",
+          "notActivated": "Профильді әкімші белсендірмеген",
+          "saved": "Профиль сақталды",
+          "error": "Қате"
+        }
+      }
+    }
+  }
+}

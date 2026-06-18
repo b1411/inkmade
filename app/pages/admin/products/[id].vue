@@ -6,9 +6,9 @@ const id = route.params.id as string
 
 <template>
   <div>
-    <UiPageHeader label="Редактирование" title="Товар">
+    <UiPageHeader :label="$t('admin.products.editLabel')" :title="$t('admin.products.editTitle')">
       <template #actions>
-        <UButton to="/admin/products" color="neutral" variant="ghost" icon="i-lucide-arrow-left">К списку</UButton>
+        <UButton to="/admin/products" color="neutral" variant="ghost" icon="i-lucide-arrow-left">{{ $t('admin.products.toList') }}</UButton>
       </template>
     </UiPageHeader>
     <AdminProductWizard :initial-id="id" />

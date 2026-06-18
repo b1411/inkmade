@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Товары категории (§6.1). SSR для SEO. Категория проверяется по БД.
 // Единая карточка CatalogProductCard, скелетоны при загрузке, auto-animate сетки.
+const { t } = useI18n()
 const route = useRoute()
 const category = route.params.category as string
 const { listByCategory } = useCatalog()
@@ -10,13 +11,13 @@ const { data: cat } = await useAsyncData(`cat-${category}`, async () => {
   const cats = await listActive()
   return cats.find(c => c.slug === category) ?? null
 })
-if (!cat.value) throw createError({ statusCode: 404, statusMessage: 'Категория не найдена' })
+if (!cat.value) throw createError({ statusCode: 404, statusMessage: t('catalog.category.notFound') })
 const label = cat.value.title
 useSeoMeta({
-  title: `${label} — INKMADE`,
-  description: `${label} с печатью вашего принта по требованию. Кастомизируй в браузере и закажи от одной штуки — INKMADE.`,
-  ogTitle: `${label} — INKMADE`,
-  ogDescription: `${label}: создай свой принт и закажи от одной штуки.`,
+  title: t('catalog.category.metaTitle', { label }),
+  description: t('catalog.category.metaDescription', { label }),
+  ogTitle: t('catalog.category.metaTitle', { label }),
+  ogDescription: t('catalog.category.ogDescription', { label }),
 })
 
 const { data: products, pending } = await useAsyncData(
@@ -30,13 +31,13 @@ const count = computed(() => products.value?.length ?? 0)
   <section class="space-y-8">
     <div class="flex items-end justify-between gap-4">
       <div>
-        <UiSectionLabel accent>Каталог</UiSectionLabel>
+        <UiSectionLabel accent>{{ $t('catalog.label') }}</UiSectionLabel>
         <h1 class="ink-display text-h1 mt-2">{{ label }}</h1>
         <p v-if="!pending" class="ink-label text-ink-gray-600 mt-2">
-          {{ count }} {{ count === 1 ? 'изделие' : 'изделий' }} · печать от одной штуки
+          {{ count === 1 ? $t('catalog.category.countOne', { n: count }) : $t('catalog.category.countMany', { n: count }) }}
         </p>
       </div>
-      <UButton to="/catalog" color="neutral" variant="ghost" icon="i-lucide-arrow-left">Категории</UButton>
+      <UButton to="/catalog" color="neutral" variant="ghost" icon="i-lucide-arrow-left">{{ $t('catalog.category.toCategories') }}</UButton>
     </div>
 
     <!-- Скелетоны загрузки -->
@@ -54,10 +55,10 @@ const count = computed(() => products.value?.length ?? 0)
     <UiEmptyState
       v-else-if="!products?.length"
       icon="i-lucide-package-search"
-      title="Здесь пока пусто"
-      text="В этой категории ещё нет изделий. Загляни в другие — там есть из чего собрать своё."
+      :title="$t('catalog.category.emptyTitle')"
+      :text="$t('catalog.category.emptyText')"
     >
-      <UiAppButton to="/catalog" variant="primary" size="md">В каталог</UiAppButton>
+      <UiAppButton to="/catalog" variant="primary" size="md">{{ $t('catalog.category.toCatalog') }}</UiAppButton>
     </UiEmptyState>
 
     <!-- Сетка товаров -->

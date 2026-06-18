@@ -3,6 +3,7 @@
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 import { LEGAL } from '~~/shared/config/legal'
 import type { Database } from '~/types/database.types'
+const { t } = useI18n()
 const supabase = useSupabaseClient<Database>()
 
 const { data: consents } = await useAsyncData('admin-consents', async () => {
@@ -13,37 +14,40 @@ const { data: consents } = await useAsyncData('admin-consents', async () => {
     .limit(100)
   return data
 })
-const typeLabel: Record<string, string> = { tos: 'Условия', privacy: 'Конфиденциальность', copyright: 'Авторские права' }
+const typeLabel = computed<Record<string, string>>(() => ({
+  tos: t('admin.legalAdmin.typeTos'),
+  privacy: t('admin.legalAdmin.typePrivacy'),
+  copyright: t('admin.legalAdmin.typeCopyright'),
+}))
 </script>
 
 <template>
   <div>
-    <UiPageHeader label="Право" title="Юридические документы" />
+    <UiPageHeader :label="$t('admin.legalAdmin.label')" :title="$t('admin.legalAdmin.title')" />
 
     <div class="space-y-6">
       <div class="grid sm:grid-cols-2 gap-4">
-        <UiPanel title="Условия (ToS)">
-          <p class="font-semibold">версия {{ LEGAL.tosVersion }}</p>
-          <NuxtLink to="/legal/terms" class="text-caption text-ink-burgundy">Открыть страницу →</NuxtLink>
+        <UiPanel :title="$t('admin.legalAdmin.tosTitle')">
+          <p class="font-semibold">{{ $t('admin.legalAdmin.version', { version: LEGAL.tosVersion }) }}</p>
+          <NuxtLink to="/legal/terms" class="text-caption text-ink-burgundy">{{ $t('admin.legalAdmin.openPage') }}</NuxtLink>
         </UiPanel>
-        <UiPanel title="Конфиденциальность">
-          <p class="font-semibold">версия {{ LEGAL.privacyVersion }}</p>
-          <NuxtLink to="/legal/privacy" class="text-caption text-ink-burgundy">Открыть страницу →</NuxtLink>
+        <UiPanel :title="$t('admin.legalAdmin.privacyTitle')">
+          <p class="font-semibold">{{ $t('admin.legalAdmin.version', { version: LEGAL.privacyVersion }) }}</p>
+          <NuxtLink to="/legal/privacy" class="text-caption text-ink-burgundy">{{ $t('admin.legalAdmin.openPage') }}</NuxtLink>
         </UiPanel>
       </div>
 
       <p class="text-caption text-ink-gray-500">
-        Тексты документов хранятся в <code>shared/config/legal.ts</code> и на страницах <code>/legal/*</code>.
-        Изменение версии требует правки конфига и редеплоя — согласия фиксируются с номером версии.
+        {{ $t('admin.legalAdmin.configHint') }}
       </p>
 
       <UiEmptyState
         v-if="!consents?.length"
         icon="i-lucide-file-check"
-        title="Согласий пока нет"
-        text="Согласия пользователей с документами будут фиксироваться здесь."
+        :title="$t('admin.legalAdmin.consentsEmptyTitle')"
+        :text="$t('admin.legalAdmin.consentsEmptyText')"
       />
-      <UiPanel v-else title="Журнал согласий" :padded="false">
+      <UiPanel v-else :title="$t('admin.legalAdmin.consentsLogTitle')" :padded="false">
         <div class="divide-y divide-ink-gray-200 text-caption">
           <div v-for="c in consents" :key="c.id" class="flex items-center justify-between px-6 py-3">
             <span class="text-ink-gray-500">{{ new Date(c.accepted_at).toLocaleString('ru') }}</span>

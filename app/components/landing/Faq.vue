@@ -1,18 +1,18 @@
 <script setup lang="ts">
 // FAQ (§5.9): оплата, доставка, сроки, возвраты, расхождение цвета.
-const items = [
-  { label: 'Как происходит оплата?', content: 'Онлайн картой или Kaspi. Заказ уходит в печать только после подтверждения платежа — мы не начинаем работу, пока деньги не подтверждены.' },
-  { label: 'Сколько идёт доставка?', content: 'Изготовление 2–4 дня плюс доставка по Казахстану. Трек-номер появится в личном кабинете, как только заказ уедет.' },
-  { label: 'Можно ли вернуть товар?', content: 'Вещь с твоим дизайном — индивидуальная, поэтому возврат «передумал» по ней не делаем. Но если есть брак печати или дефект — переделаем или вернём деньги. За качество отвечаем.' },
-  { label: 'Почему цвет на печати отличается от экрана?', content: 'Экран светится, ткань — нет. Небольшое расхождение возможно. Перед печатью мы согласуем цвет, чтобы попасть в задумку.' },
-  { label: 'Какой нужен файл?', content: 'PNG, JPG, SVG или PDF. Чем выше разрешение, тем чётче принт. Конструктор сам предупредит, если файл мелковат для выбранного размера.' },
-]
+const { t } = useI18n()
+const items = computed(() =>
+  [0, 1, 2, 3, 4].map(i => ({
+    label: t(`landing.faq.items[${i}].label`),
+    content: t(`landing.faq.items[${i}].content`),
+  })),
+)
 </script>
 
 <template>
   <section aria-labelledby="faq-heading">
-    <UiSectionLabel accent>Вопросы</UiSectionLabel>
-    <h2 id="faq-heading" class="ink-display text-h2 mt-2 mb-8">Коротко о важном</h2>
+    <UiSectionLabel accent>{{ $t('landing.faq.label') }}</UiSectionLabel>
+    <h2 id="faq-heading" class="ink-display text-h2 mt-2 mb-8">{{ $t('landing.faq.title') }}</h2>
     <UAccordion :items="items" />
   </section>
 </template>

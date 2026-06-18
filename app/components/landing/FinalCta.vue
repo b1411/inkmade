@@ -21,11 +21,11 @@ const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.
       class="relative mx-auto max-w-(--container-max) px-4 text-center"
       style="padding-block: var(--section-pad)"
     >
-      <h2 class="ink-hero text-hero">Готов носить своё?</h2>
-      <p class="text-lead mt-5 text-ink-cream/80">Собери первую вещь за пару минут.</p>
+      <h2 class="ink-hero text-hero">{{ $t('landing.finalCta.title') }}</h2>
+      <p class="text-lead mt-5 text-ink-cream/80">{{ $t('landing.finalCta.subtitle') }}</p>
       <div class="mt-8 flex justify-center">
         <UiAppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>
-          Начать создавать
+          {{ $t('landing.finalCta.cta') }}
         </UiAppButton>
       </div>
     </div>

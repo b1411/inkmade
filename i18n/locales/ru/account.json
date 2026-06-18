@@ -1,0 +1,89 @@
+{
+  "account": {
+    "title": "Личный кабинет",
+    "nav": {
+      "orders": "Мои заказы",
+      "designs": "Мои дизайны",
+      "favorites": "Избранное",
+      "addresses": "Адреса",
+      "profile": "Профиль",
+      "signOut": "Выйти"
+    },
+    "overview": {
+      "label": "Профиль",
+      "title": "Личный кабинет",
+      "description": "Ваши контактные данные и безопасность аккаунта.",
+      "personalData": "Личные данные",
+      "email": "Email",
+      "fullName": "Имя и фамилия",
+      "phone": "Телефон",
+      "phonePlaceholder": "+7 700 000 00 00",
+      "save": "Сохранить",
+      "passwordTitle": "Смена пароля",
+      "passwordSubtitle": "Минимум 8 символов: буквы и цифры.",
+      "newPassword": "Новый пароль",
+      "changePassword": "Изменить",
+      "savedTitle": "Профиль сохранён",
+      "errorTitle": "Ошибка",
+      "passwordTooShortTitle": "Пароль слишком короткий",
+      "passwordTooShortText": "Минимум 6 символов",
+      "passwordChangedTitle": "Пароль изменён"
+    },
+    "orders": {
+      "label": "Заказы",
+      "title": "Мои заказы",
+      "description": "История покупок, статусы и быстрый повтор заказа.",
+      "emptyTitle": "Заказов пока нет",
+      "emptyText": "Собери первую вещь — она появится здесь с трек-номером.",
+      "toCatalog": "В каталог",
+      "itemsShort": "поз.",
+      "repeat": "Повторить",
+      "reorderSuccess": "Добавлено в корзину: {count}",
+      "reorderErrorTitle": "Не удалось повторить"
+    },
+    "designs": {
+      "label": "Дизайны",
+      "title": "Мои дизайны",
+      "description": "Собранные в конструкторе принты — дорабатывайте и заказывайте.",
+      "emptyTitle": "Дизайнов пока нет",
+      "emptyText": "Собери принт в конструкторе — он сохранится здесь, его можно доработать и заказать.",
+      "toConstructor": "В конструктор",
+      "refine": "Доработать",
+      "share": "Поделиться",
+      "shareTitle": "Мой дизайн на INKMADE",
+      "shareErrorTitle": "Не удалось создать ссылку"
+    },
+    "favorites": {
+      "label": "Избранное",
+      "title": "Сохранённое",
+      "description": "Понравившиеся товары и принты — в одном месте.",
+      "products": "Товары",
+      "prints": "Принты",
+      "emptyProducts": "Нет избранных товаров.",
+      "emptyPrints": "Нет избранных принтов.",
+      "toCatalog": "В каталог"
+    },
+    "addresses": {
+      "label": "Доставка",
+      "title": "Адреса",
+      "description": "Сохранённые адреса подставляются при оформлении заказа.",
+      "emptyTitle": "Адресов пока нет",
+      "emptyText": "Добавьте адрес ниже — он подставится в оформлении заказа.",
+      "default": "по умолчанию",
+      "newAddress": "Новый адрес",
+      "editAddress": "Редактировать адрес",
+      "fullNamePlaceholder": "Имя и фамилия",
+      "phonePlaceholder": "+7 700 000 00 00",
+      "cityPlaceholder": "Город",
+      "addressPlaceholder": "Улица, дом, кв.",
+      "save": "Сохранить",
+      "addAddress": "Добавить адрес",
+      "cancel": "Отмена",
+      "validationTitle": "Заполните имя, телефон и адрес",
+      "updatedTitle": "Адрес обновлён",
+      "addedTitle": "Адрес добавлен",
+      "errorTitle": "Ошибка",
+      "removeConfirm": "Удалить этот адрес?"
+    }
+  }
+}

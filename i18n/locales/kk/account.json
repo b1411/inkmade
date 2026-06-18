@@ -1,0 +1,89 @@
+{
+  "account": {
+    "title": "Жеке кабинет",
+    "nav": {
+      "orders": "Менің тапсырыстарым",
+      "designs": "Менің дизайндарым",
+      "favorites": "Таңдаулылар",
+      "addresses": "Мекенжайлар",
+      "profile": "Профиль",
+      "signOut": "Шығу"
+    },
+    "overview": {
+      "label": "Профиль",
+      "title": "Жеке кабинет",
+      "description": "Сіздің байланыс деректеріңіз және аккаунт қауіпсіздігі.",
+      "personalData": "Жеке деректер",
+      "email": "Email",
+      "fullName": "Аты-жөні",
+      "phone": "Телефон",
+      "phonePlaceholder": "+7 700 000 00 00",
+      "save": "Сақтау",
+      "passwordTitle": "Құпиясөзді ауыстыру",
+      "passwordSubtitle": "Кемінде 8 таңба: әріптер мен сандар.",
+      "newPassword": "Жаңа құпиясөз",
+      "changePassword": "Өзгерту",
+      "savedTitle": "Профиль сақталды",
+      "errorTitle": "Қате",
+      "passwordTooShortTitle": "Құпиясөз тым қысқа",
+      "passwordTooShortText": "Кемінде 6 таңба",
+      "passwordChangedTitle": "Құпиясөз өзгертілді"
+    },
+    "orders": {
+      "label": "Тапсырыстар",
+      "title": "Менің тапсырыстарым",
+      "description": "Сатып алу тарихы, мәртебелер және тапсырысты жылдам қайталау.",
+      "emptyTitle": "Әзірге тапсырыстар жоқ",
+      "emptyText": "Алғашқы затыңды жаса — ол мұнда трек-нөмірімен пайда болады.",
+      "toCatalog": "Каталогқа",
+      "itemsShort": "поз.",
+      "repeat": "Қайталау",
+      "reorderSuccess": "Себетке қосылды: {count}",
+      "reorderErrorTitle": "Қайталау мүмкін болмады"
+    },
+    "designs": {
+      "label": "Дизайндар",
+      "title": "Менің дизайндарым",
+      "description": "Конструкторда жасалған принттер — өңдеп, тапсырыс беріңіз.",
+      "emptyTitle": "Әзірге дизайндар жоқ",
+      "emptyText": "Конструкторда принт жаса — ол мұнда сақталады, оны өңдеп, тапсырыс беруге болады.",
+      "toConstructor": "Конструкторға",
+      "refine": "Өңдеу",
+      "share": "Бөлісу",
+      "shareTitle": "INKMADE-тегі менің дизайным",
+      "shareErrorTitle": "Сілтеме жасау мүмкін болмады"
+    },
+    "favorites": {
+      "label": "Таңдаулылар",
+      "title": "Сақталғандар",
+      "description": "Ұнаған тауарлар мен принттер — бір жерде.",
+      "products": "Тауарлар",
+      "prints": "Принттер",
+      "emptyProducts": "Таңдаулы тауарлар жоқ.",
+      "emptyPrints": "Таңдаулы принттер жоқ.",
+      "toCatalog": "Каталогқа"
+    },
+    "addresses": {
+      "label": "Жеткізу",
+      "title": "Мекенжайлар",
+      "description": "Сақталған мекенжайлар тапсырысты рәсімдеу кезінде қойылады.",
+      "emptyTitle": "Әзірге мекенжайлар жоқ",
+      "emptyText": "Төменде мекенжай қосыңыз — ол тапсырысты рәсімдеуде қойылады.",
+      "default": "әдепкі",
+      "newAddress": "Жаңа мекенжай",
+      "editAddress": "Мекенжайды өңдеу",
+      "fullNamePlaceholder": "Аты-жөні",
+      "phonePlaceholder": "+7 700 000 00 00",
+      "cityPlaceholder": "Қала",
+      "addressPlaceholder": "Көше, үй, пәтер",
+      "save": "Сақтау",
+      "addAddress": "Мекенжай қосу",
+      "cancel": "Бас тарту",
+      "validationTitle": "Аты-жөні, телефон және мекенжайды толтырыңыз",
+      "updatedTitle": "Мекенжай жаңартылды",
+      "addedTitle": "Мекенжай қосылды",
+      "errorTitle": "Қате",
+      "removeConfirm": "Осы мекенжайды жою керек пе?"
+    }
+  }
+}

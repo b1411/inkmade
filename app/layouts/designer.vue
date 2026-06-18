@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // Кабинет дизайнера (CRM §4). Мотивирующий: заработок на виду.
-const nav = [
-  { label: 'Дашборд', to: '/studio-designer', icon: 'i-lucide-layout-dashboard' },
-  { label: 'Мои принты', to: '/studio-designer/prints', icon: 'i-lucide-image' },
-  { label: 'Финансы', to: '/studio-designer/finance', icon: 'i-lucide-wallet' },
-  { label: 'Профиль', to: '/studio-designer/profile', icon: 'i-lucide-user' },
-]
+const { t } = useI18n()
+const nav = computed(() => [
+  { label: t('studio.nav.dashboard'), to: '/studio-designer', icon: 'i-lucide-layout-dashboard' },
+  { label: t('studio.nav.prints'), to: '/studio-designer/prints', icon: 'i-lucide-image' },
+  { label: t('studio.nav.finance'), to: '/studio-designer/finance', icon: 'i-lucide-wallet' },
+  { label: t('studio.nav.profile'), to: '/studio-designer/profile', icon: 'i-lucide-user' },
+])
 const { signOut } = useAuth()
 async function onSignOut() { await signOut(); await navigateTo('/') }
 </script>
@@ -16,9 +17,9 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
       <div class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <UiAppLogo :subtitle="false" />
-          <UiSectionLabel accent>Студия дизайнера</UiSectionLabel>
+          <UiSectionLabel accent>{{ $t('studio.nav.designerStudio') }}</UiSectionLabel>
         </div>
-        <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-log-out" @click="onSignOut">Выйти</UButton>
+        <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-log-out" @click="onSignOut">{{ $t('studio.nav.signOut') }}</UButton>
       </div>
     </header>
 

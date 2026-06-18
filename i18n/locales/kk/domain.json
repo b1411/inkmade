@@ -1,0 +1,52 @@
+{
+  "domain": {
+    "orderStatus": {
+      "created": "Жасалды",
+      "pending": "Төлемді күтуде",
+      "paid": "Төленді",
+      "queued": "Кезекте",
+      "printing": "Басылуда",
+      "quality_check": "Сапа бақылауы",
+      "packing": "Қаптама",
+      "ready_to_ship": "Жөнелтуге дайын",
+      "shipped": "Жөнелтілді",
+      "delivered": "Жеткізілді",
+      "on_hold": "Кідіртілді",
+      "reprint": "Қайта басу",
+      "cancelled": "Бас тартылды",
+      "refunded": "Қаражат қайтарылды"
+    },
+    "customerStatus": {
+      "created": "Рәсімдеу",
+      "pending": "Төлемді күтуде",
+      "paid": "Өндірісте",
+      "queued": "Өндірісте",
+      "printing": "Өндірісте",
+      "quality_check": "Өндірісте",
+      "packing": "Қаптама",
+      "ready_to_ship": "Қаптама",
+      "shipped": "Жолда",
+      "delivered": "Жеткізілді",
+      "on_hold": "Өңделуде",
+      "reprint": "Өндірісте",
+      "cancelled": "Бас тартылды",
+      "refunded": "Қаражат қайтарылды"
+    },
+    "printMethod": {
+      "dtg": "DTG (тікелей цифрлық)",
+      "dtf": "DTF (термотасымал)",
+      "silkscreen": "Шелкография (трафарет)",
+      "embroidery": "Кесте",
+      "sublimation": "Сублимация (full-print)"
+    },
+    "printMode": {
+      "zonal": "Аймақтық басу",
+      "fullprint": "Full-print (бүкіл бет)"
+    },
+    "payoutStatus": {
+      "pending": "Күтуде",
+      "paid": "Төленді",
+      "rejected": "Қабылданбады"
+    }
+  }
+}

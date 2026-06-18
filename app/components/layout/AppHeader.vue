@@ -7,13 +7,14 @@ import type { DropdownMenuItem } from '@nuxt/ui'
 import { LEGAL } from '~~/shared/config/legal'
 
 const route = useRoute()
+const { t } = useI18n()
 const cart = useCart()
 const cartCount = computed(() => cart.count.value)
 const { homePath: cabinetTo, isAuthenticated, signOut } = useAuth()
 async function onSignOut() { await signOut(); await navigateTo('/') }
 const userMenu = computed<DropdownMenuItem[][]>(() => [
-  [{ label: 'Мой кабинет', icon: 'i-lucide-layout-dashboard', to: cabinetTo.value }],
-  [{ label: 'Выйти', icon: 'i-lucide-log-out', onSelect: onSignOut }],
+  [{ label: t('header.myCabinet'), icon: 'i-lucide-layout-dashboard', to: cabinetTo.value }],
+  [{ label: t('header.signOut'), icon: 'i-lucide-log-out', onSelect: onSignOut }],
 ])
 
 const { y } = useWindowScroll()
@@ -24,10 +25,10 @@ const overHero = computed(() => route.path === '/' && !scrolled.value)
 // Стекло включаем когда не overHero (проскроллено ИЛИ внутренняя страница).
 const glass = computed(() => !overHero.value)
 
-const navLinks = [
-  { label: 'Каталог', to: '/catalog' },
-  { label: 'Как это работает', to: '/#how' },
-]
+const navLinks = computed(() => [
+  { label: t('nav.catalog'), to: '/catalog' },
+  { label: t('nav.howItWorks'), to: '/#how' },
+])
 
 // ── Бейдж корзины: «отскок» при увеличении количества ──
 const bouncing = ref(false)
@@ -75,12 +76,12 @@ onMounted(() => {
       class="mx-auto max-w-(--container-max) px-4 flex items-center justify-between transition-all duration-300"
       :class="scrolled ? 'h-14' : 'h-16'"
     >
-      <NuxtLink to="/" class="ink-logo text-2xl tracking-wide" aria-label="INKMADE — на главную">
+      <NuxtLink to="/" class="ink-logo text-2xl tracking-wide" :aria-label="$t('header.toHome')">
         INKMADE
       </NuxtLink>
 
       <!-- Десктоп-навигация -->
-      <nav class="hidden md:flex items-center gap-7" aria-label="Основная навигация">
+      <nav class="hidden md:flex items-center gap-7" :aria-label="$t('header.mainNav')">
         <NuxtLink
           v-for="l in navLinks"
           :key="l.to"
@@ -94,7 +95,8 @@ onMounted(() => {
 
       <!-- Иконки справа -->
       <div class="flex items-center gap-4">
-        <NuxtLink to="/cart" data-cart-icon class="relative inline-flex items-center" aria-label="Корзина">
+        <UiLangSwitcher class="hidden sm:inline-flex" />
+        <NuxtLink to="/cart" data-cart-icon class="relative inline-flex items-center" :aria-label="$t('header.cart')">
           <UIcon name="i-lucide-shopping-cart" class="size-5" />
           <ClientOnly>
             <span
@@ -112,11 +114,11 @@ onMounted(() => {
               <UIcon name="i-lucide-user" class="size-5" />
             </button>
           </UDropdownMenu>
-          <NuxtLink v-else to="/login" class="hidden md:inline-flex items-center" aria-label="Войти">
+          <NuxtLink v-else to="/login" class="hidden md:inline-flex items-center" :aria-label="$t('header.login')">
             <UIcon name="i-lucide-user" class="size-5" />
           </NuxtLink>
           <template #fallback>
-            <NuxtLink to="/login" class="hidden md:inline-flex items-center" aria-label="Войти">
+            <NuxtLink to="/login" class="hidden md:inline-flex items-center" :aria-label="$t('header.login')">
               <UIcon name="i-lucide-user" class="size-5" />
             </NuxtLink>
           </template>
@@ -125,7 +127,7 @@ onMounted(() => {
         <button
           class="md:hidden inline-flex items-center"
           :aria-expanded="menuOpen"
-          aria-label="Меню"
+          :aria-label="$t('header.menu')"
           @click="menuOpen = !menuOpen"
         >
           <UIcon :name="menuOpen ? 'i-lucide-x' : 'i-lucide-menu'" class="size-6" />
@@ -142,11 +144,11 @@ onMounted(() => {
         >
           <div class="flex items-center justify-between h-16 px-4">
             <span class="ink-logo text-2xl">INKMADE</span>
-            <button aria-label="Закрыть меню" @click="closeMenu">
+            <button :aria-label="$t('header.closeMenu')" @click="closeMenu">
               <UIcon name="i-lucide-x" class="size-6" />
             </button>
           </div>
-          <nav class="flex-1 flex flex-col justify-center gap-2 px-6" aria-label="Мобильная навигация">
+          <nav class="flex-1 flex flex-col justify-center gap-2 px-6" :aria-label="$t('header.mobileNav')">
             <NuxtLink
               v-for="(l, i) in navLinks"
               :key="l.to"
@@ -167,7 +169,7 @@ onMounted(() => {
               class="ink-display text-4xl py-2"
               @click="closeMenu"
             >
-              Кабинет
+              {{ $t('nav.cabinet') }}
             </NuxtLink>
             <ClientOnly>
               <button
@@ -175,12 +177,13 @@ onMounted(() => {
                 class="ink-display text-4xl py-2 text-left text-ink-cream/80"
                 @click="closeMenu(); onSignOut()"
               >
-                Выйти
+                {{ $t('header.signOut') }}
               </button>
             </ClientOnly>
           </nav>
-          <div class="px-6 py-8 ink-label text-ink-cream/60">
-            {{ LEGAL.supportEmail }}
+          <div class="px-6 py-8 flex items-center justify-between gap-4">
+            <span class="ink-label text-ink-cream/60">{{ LEGAL.supportEmail }}</span>
+            <UiLangSwitcher />
           </div>
         </div>
       </Transition>

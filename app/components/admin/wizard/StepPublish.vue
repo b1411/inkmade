@@ -5,18 +5,19 @@ import type { ProductWithRelations } from '~/types/models'
 const props = defineProps<{ product: ProductWithRelations }>()
 const emit = defineEmits<{ changed: [] }>()
 
+const { t } = useI18n()
 const { setPublished } = useAdmin()
 const toast = useToast()
 
 const checks = computed(() => {
   const zonesWithMockup = props.product.print_zones.filter(z => z.mockup_url)
   return [
-    { ok: props.product.materials.length > 0, label: 'Есть хотя бы один материал' },
-    { ok: props.product.variants.length > 0, label: 'Есть варианты (цвет × размер)' },
-    { ok: props.product.print_zones.length > 0, label: 'Есть зоны печати' },
-    { ok: zonesWithMockup.length > 0, label: 'Хотя бы одна зона с мокапом (для превью конструктора)' },
-    { ok: props.product.product_images.length > 0, label: 'Загружено фото товара' },
-    { ok: !!props.product.max_print_mm, label: 'Указан размер печати на макс. размере (DPI)' },
+    { ok: props.product.materials.length > 0, label: t('admin.wizard.publish.checkMaterial') },
+    { ok: props.product.variants.length > 0, label: t('admin.wizard.publish.checkVariants') },
+    { ok: props.product.print_zones.length > 0, label: t('admin.wizard.publish.checkZones') },
+    { ok: zonesWithMockup.length > 0, label: t('admin.wizard.publish.checkMockup') },
+    { ok: props.product.product_images.length > 0, label: t('admin.wizard.publish.checkPhoto') },
+    { ok: !!props.product.max_print_mm, label: t('admin.wizard.publish.checkDpi') },
   ]
 })
 
@@ -27,10 +28,10 @@ async function togglePublish() {
   busy.value = true
   try {
     await setPublished(props.product.id, !props.product.is_active)
-    toast.add({ title: props.product.is_active ? 'Снято с публикации' : 'Опубликовано', color: 'success' })
+    toast.add({ title: props.product.is_active ? t('admin.wizard.publish.unpublished') : t('admin.wizard.publish.published'), color: 'success' })
     emit('changed')
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.publish.error'), description: (e as Error).message, color: 'error' })
   } finally {
     busy.value = false
   }
@@ -41,7 +42,7 @@ async function togglePublish() {
   <div class="space-y-6 max-w-xl">
     <div class="flex items-center gap-3">
       <UBadge :color="product.is_active ? 'success' : 'neutral'" variant="subtle">
-        {{ product.is_active ? 'Опубликован' : 'Черновик' }}
+        {{ product.is_active ? $t('admin.wizard.publish.statusPublished') : $t('admin.wizard.publish.statusDraft') }}
       </UBadge>
       <UButton
         v-if="product.alias"
@@ -51,7 +52,7 @@ async function togglePublish() {
         variant="subtle"
         icon="i-lucide-external-link"
       >
-        Предпросмотр конструктора
+        {{ $t('admin.wizard.publish.previewConstructor') }}
       </UButton>
     </div>
 
@@ -65,8 +66,8 @@ async function togglePublish() {
     <UAlert
       v-if="!canPublish && !product.is_active"
       color="warning"
-      title="Не готово к публикации"
-      description="Выполните все пункты выше — иначе конструктор не покажет товар корректно."
+      :title="$t('admin.wizard.publish.notReadyTitle')"
+      :description="$t('admin.wizard.publish.notReadyText')"
     />
 
     <UButton
@@ -76,7 +77,7 @@ async function togglePublish() {
       :loading="busy"
       @click="togglePublish"
     >
-      {{ product.is_active ? 'Снять с публикации' : 'Опубликовать' }}
+      {{ product.is_active ? $t('admin.wizard.publish.unpublish') : $t('admin.wizard.publish.publish') }}
     </UButton>
   </div>
 </template>

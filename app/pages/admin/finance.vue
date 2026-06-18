@@ -1,15 +1,16 @@
 <script setup lang="ts">
 // Финансы CRM (§6.1, §6.2): P&L + динамика по дням + маржа по разрезам + леджер + CSV.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
+const { t } = useI18n()
 const fin = useFinance()
 
 // период
-const periods = [
-  { label: '7 дней', value: 7 },
-  { label: '30 дней', value: 30 },
-  { label: '90 дней', value: 90 },
-  { label: 'Всё время', value: 0 },
-]
+const periods = computed(() => [
+  { label: t('admin.finance.period.d7'), value: 7 },
+  { label: t('admin.finance.period.d30'), value: 30 },
+  { label: t('admin.finance.period.d90'), value: 90 },
+  { label: t('admin.finance.period.all'), value: 0 },
+])
 const period = ref(30)
 function rangeFor(days: number): { from?: string; to?: string } {
   if (!days) return {}
@@ -27,9 +28,8 @@ const { data, pending, refresh } = await useAsyncData('admin-finance', async () 
 }, { watch: [period] })
 
 const money = (n: number | null | undefined) => `${Math.round(Number(n) || 0).toLocaleString('ru')} ₸`
-const typeLabel: Record<string, string> = {
-  revenue: 'Выручка', cogs: 'Себестоимость', royalty: 'Роялти', acquiring_fee: 'Эквайринг', shipping: 'Доставка', refund: 'Возврат', other: 'Прочее',
-}
+const { te } = useI18n()
+const typeLabel = (type: string) => te(`admin.finance.type.${type}`) ? t(`admin.finance.type.${type}`) : type
 
 // масштаб графика
 const chartMax = computed(() => {
@@ -59,18 +59,18 @@ function exportCsv() {
 function exportTaxCsv() {
   const s = data.value?.stats
   if (!s) return
-  const periodLabel = periods.find(p => p.value === period.value)?.label ?? ''
+  const periodLabel = periods.value.find(p => p.value === period.value)?.label ?? ''
   const turnover = (Number(s.revenue) || 0) - (Number(s.refund) || 0)
   const tax = Math.round(turnover * 0.03)
   const rows: [string, string | number][] = [
-    ['Период', periodLabel],
-    ['Выручка', Math.round(Number(s.revenue) || 0)],
-    ['Возвраты', Math.round(Number(s.refund) || 0)],
-    ['Чистый оборот', Math.round(turnover)],
-    ['Себестоимость', Math.round(Number(s.cogs) || 0)],
-    ['Роялти дизайнерам', Math.round(Number(s.royalty) || 0)],
-    ['Чистая прибыль', Math.round(Number(s.profit) || 0)],
-    ['Оценочный налог (упрощёнка ~3% от оборота)', tax],
+    [t('admin.finance.taxCsv.period'), periodLabel],
+    [t('admin.finance.taxCsv.revenue'), Math.round(Number(s.revenue) || 0)],
+    [t('admin.finance.taxCsv.refund'), Math.round(Number(s.refund) || 0)],
+    [t('admin.finance.taxCsv.turnover'), Math.round(turnover)],
+    [t('admin.finance.taxCsv.cogs'), Math.round(Number(s.cogs) || 0)],
+    [t('admin.finance.taxCsv.royalty'), Math.round(Number(s.royalty) || 0)],
+    [t('admin.finance.taxCsv.profit'), Math.round(Number(s.profit) || 0)],
+    [t('admin.finance.taxCsv.estTax'), tax],
   ]
   downloadCsv(rows.map(r => `${r[0]},${r[1]}`).join('\n'), 'inkmade-tax.csv')
 }
@@ -78,11 +78,11 @@ function exportTaxCsv() {
 
 <template>
   <div>
-    <UiPageHeader label="Финансы" title="P&amp;L и аналитика">
+    <UiPageHeader :label="$t('admin.finance.label')" :title="$t('admin.finance.title')">
       <template #actions>
         <USelect v-model="period" :items="periods" value-key="value" class="w-36" />
-        <UButton color="neutral" variant="subtle" icon="i-lucide-download" @click="exportCsv">CSV</UButton>
-        <UButton color="neutral" variant="subtle" icon="i-lucide-receipt" @click="exportTaxCsv">Налоговый</UButton>
+        <UButton color="neutral" variant="subtle" icon="i-lucide-download" @click="exportCsv">{{ $t('admin.finance.csv') }}</UButton>
+        <UButton color="neutral" variant="subtle" icon="i-lucide-receipt" @click="exportTaxCsv">{{ $t('admin.finance.tax') }}</UButton>
       </template>
     </UiPageHeader>
 
@@ -93,21 +93,21 @@ function exportTaxCsv() {
       <div class="space-y-8">
         <!-- KPI -->
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <UiStatCard label="Выручка" :value="money(data?.stats?.revenue)" icon="i-lucide-trending-up" />
-          <UiStatCard label="Себестоимость" :value="`−${money(data?.stats?.cogs)}`" icon="i-lucide-factory" />
-          <UiStatCard label="Роялти" :value="`−${money(data?.stats?.royalty)}`" icon="i-lucide-palette" />
-          <UiStatCard label="Возвраты" :value="`−${money(data?.stats?.refund)}`" icon="i-lucide-rotate-ccw" />
-          <UiStatCard label="Чистая прибыль" :value="money(data?.stats?.profit)" icon="i-lucide-wallet" accent />
+          <UiStatCard :label="$t('admin.finance.kpi.revenue')" :value="money(data?.stats?.revenue)" icon="i-lucide-trending-up" />
+          <UiStatCard :label="$t('admin.finance.kpi.cogs')" :value="`−${money(data?.stats?.cogs)}`" icon="i-lucide-factory" />
+          <UiStatCard :label="$t('admin.finance.kpi.royalty')" :value="`−${money(data?.stats?.royalty)}`" icon="i-lucide-palette" />
+          <UiStatCard :label="$t('admin.finance.kpi.refund')" :value="`−${money(data?.stats?.refund)}`" icon="i-lucide-rotate-ccw" />
+          <UiStatCard :label="$t('admin.finance.kpi.profit')" :value="money(data?.stats?.profit)" icon="i-lucide-wallet" accent />
         </div>
 
         <!-- динамика по дням -->
-        <UiPanel v-if="data?.series?.length" title="Динамика" icon="i-lucide-bar-chart-3">
+        <UiPanel v-if="data?.series?.length" :title="$t('admin.finance.chart.title')" icon="i-lucide-bar-chart-3">
           <template #actions>
-            <span class="text-caption flex items-center gap-1"><span class="size-2.5 rounded-sm bg-ink-burgundy inline-block" /> выручка</span>
-            <span class="text-caption flex items-center gap-1"><span class="size-2.5 rounded-sm bg-ink-success inline-block" /> прибыль</span>
+            <span class="text-caption flex items-center gap-1"><span class="size-2.5 rounded-sm bg-ink-burgundy inline-block" /> {{ $t('admin.finance.chart.revenue') }}</span>
+            <span class="text-caption flex items-center gap-1"><span class="size-2.5 rounded-sm bg-ink-success inline-block" /> {{ $t('admin.finance.chart.profit') }}</span>
           </template>
           <div class="flex items-end gap-1 h-48 overflow-x-auto border-b border-ink-gray-200 pb-1">
-            <div v-for="d in data.series" :key="d.day" class="flex flex-col items-center justify-end gap-0.5 shrink-0" :title="`${d.day}: выручка ${money(d.revenue)}, прибыль ${money(d.profit)}`">
+            <div v-for="d in data.series" :key="d.day" class="flex flex-col items-center justify-end gap-0.5 shrink-0" :title="$t('admin.finance.chart.tooltip', { day: d.day, revenue: money(d.revenue), profit: money(d.profit) })">
               <div class="flex items-end gap-0.5 h-40">
                 <div class="w-2 bg-ink-burgundy rounded-t" :style="{ height: `${Math.max(2, (Number(d.revenue) / chartMax) * 100)}%` }" />
                 <div class="w-2 rounded-t" :class="Number(d.profit) >= 0 ? 'bg-ink-success' : 'bg-ink-error'" :style="{ height: `${Math.max(2, (Math.abs(Number(d.profit)) / chartMax) * 100)}%` }" />
@@ -119,11 +119,11 @@ function exportTaxCsv() {
 
         <!-- маржа по разрезам -->
         <div class="grid lg:grid-cols-2 gap-6">
-          <UiPanel title="Маржа по изделиям" icon="i-lucide-shirt" :padded="false">
+          <UiPanel :title="$t('admin.finance.byProduct.title')" icon="i-lucide-shirt" :padded="false">
             <div v-if="data?.margin?.by_product?.length" class="overflow-x-auto">
               <table class="w-full text-caption">
                 <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
-                  <th class="text-left px-6 py-2">Изделие</th><th class="text-right">Шт</th><th class="text-right">Выручка</th><th class="text-right px-6">Маржа</th>
+                  <th class="text-left px-6 py-2">{{ $t('admin.finance.byProduct.product') }}</th><th class="text-right">{{ $t('admin.finance.byProduct.qty') }}</th><th class="text-right">{{ $t('admin.finance.byProduct.revenue') }}</th><th class="text-right px-6">{{ $t('admin.finance.byProduct.margin') }}</th>
                 </tr></thead>
                 <tbody>
                   <tr v-for="p in data.margin.by_product" :key="p.title" class="border-b border-ink-gray-200/60">
@@ -135,14 +135,14 @@ function exportTaxCsv() {
                 </tbody>
               </table>
             </div>
-            <UiEmptyState v-else icon="i-lucide-package" title="Продаж пока нет" />
+            <UiEmptyState v-else icon="i-lucide-package" :title="$t('admin.finance.byProduct.empty')" />
           </UiPanel>
 
-          <UiPanel title="Маржа по методам" icon="i-lucide-printer" :padded="false">
+          <UiPanel :title="$t('admin.finance.byMethod.title')" icon="i-lucide-printer" :padded="false">
             <div v-if="data?.margin?.by_method?.length" class="overflow-x-auto">
               <table class="w-full text-caption">
                 <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
-                  <th class="text-left px-6 py-2">Метод</th><th class="text-right">Шт</th><th class="text-right">Выручка</th><th class="text-right px-6">Маржа</th>
+                  <th class="text-left px-6 py-2">{{ $t('admin.finance.byMethod.method') }}</th><th class="text-right">{{ $t('admin.finance.byMethod.qty') }}</th><th class="text-right">{{ $t('admin.finance.byMethod.revenue') }}</th><th class="text-right px-6">{{ $t('admin.finance.byMethod.margin') }}</th>
                 </tr></thead>
                 <tbody>
                   <tr v-for="m in data.margin.by_method" :key="m.method" class="border-b border-ink-gray-200/60">
@@ -154,22 +154,22 @@ function exportTaxCsv() {
                 </tbody>
               </table>
             </div>
-            <UiEmptyState v-else icon="i-lucide-package" title="Продаж пока нет" />
+            <UiEmptyState v-else icon="i-lucide-package" :title="$t('admin.finance.byMethod.empty')" />
           </UiPanel>
         </div>
 
         <!-- леджер -->
-        <UiPanel title="Леджер" icon="i-lucide-receipt-text" :padded="false">
+        <UiPanel :title="$t('admin.finance.ledger.title')" icon="i-lucide-receipt-text" :padded="false">
           <div v-if="data?.entries?.length" class="divide-y divide-ink-gray-200 text-caption">
             <div v-for="e in data.entries" :key="e.id" class="flex items-center justify-between px-6 py-3">
               <span class="text-ink-gray-500 w-28">{{ new Date(e.created_at).toLocaleDateString('ru') }}</span>
-              <span class="flex-1">{{ typeLabel[e.entry_type] ?? e.entry_type }}<span v-if="e.note" class="text-ink-gray-400"> · {{ e.note }}</span></span>
+              <span class="flex-1">{{ typeLabel(e.entry_type) }}<span v-if="e.note" class="text-ink-gray-400"> · {{ e.note }}</span></span>
               <span class="font-semibold" :class="e.entry_type === 'revenue' ? 'text-ink-success' : 'text-ink-error'">
                 {{ e.entry_type === 'revenue' ? '+' : '−' }}{{ money(Math.abs(Number(e.amount))) }}
               </span>
             </div>
           </div>
-          <UiEmptyState v-else icon="i-lucide-receipt" title="Движений пока нет" text="Появятся после оплат." />
+          <UiEmptyState v-else icon="i-lucide-receipt" :title="$t('admin.finance.ledger.empty.title')" :text="$t('admin.finance.ledger.empty.text')" />
         </UiPanel>
       </div>
     </template>

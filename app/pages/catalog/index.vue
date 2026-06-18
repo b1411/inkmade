@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Каталог категорий плитками (§6). Публичная страница, SSR. Категории — из БД.
-useHead({ title: 'Каталог — INKMADE' })
+const { t } = useI18n()
+useHead({ title: t('catalog.pageTitle') })
 
 const { listActive } = useCategories()
 const { data: categories } = await useAsyncData('catalog-categories', () => listActive())
@@ -9,16 +10,16 @@ const { data: categories } = await useAsyncData('catalog-categories', () => list
 <template>
   <section class="space-y-8">
     <div>
-      <UiSectionLabel accent>Каталог</UiSectionLabel>
-      <h1 class="ink-display text-h1 mt-2">Выбери основу</h1>
-      <p class="text-lead text-ink-gray-600 mt-3">Начни с изделия — принт добавишь в конструкторе.</p>
+      <UiSectionLabel accent>{{ $t('catalog.label') }}</UiSectionLabel>
+      <h1 class="ink-display text-h1 mt-2">{{ $t('catalog.index.title') }}</h1>
+      <p class="text-lead text-ink-gray-600 mt-3">{{ $t('catalog.index.subtitle') }}</p>
     </div>
 
     <UiEmptyState
       v-if="!categories?.length"
       icon="i-lucide-layout-grid"
-      title="Категории на подходе"
-      text="Совсем скоро здесь появятся изделия для кастомизации."
+      :title="$t('catalog.index.emptyTitle')"
+      :text="$t('catalog.index.emptyText')"
     />
 
     <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

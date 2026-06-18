@@ -4,6 +4,7 @@ import { assertSafeUpload } from '~/utils/upload-guard'
 
 // Загрузка принта + DPI-валидация на входе (§10, инвариант 1; §5.6).
 // Порог считается от МАКСИМАЛЬНОГО размера изделия (products.max_print_mm).
+const { t } = useI18n()
 const { product, addImage } = useDesign()
 const toast = useToast()
 const supabase = useSupabaseClient()
@@ -46,15 +47,16 @@ async function onFile(e: Event) {
     try {
       guard = await assertSafeUpload(file, { maxMb: MAX_FILE_MB })
     } catch (err) {
-      toast.add({ title: 'Файл отклонён', description: err instanceof Error ? err.message : '', color: 'error' })
+      toast.add({ title: t('customize.upload.rejected'), description: err instanceof Error ? err.message : '', color: 'error' })
       return
     }
 
-    // PDF-вектор не теряет качество — DPI не проверяем (§5.6), условные размеры
+    // PDF-вектор не теряет качество — DPI не проверяем (§5.6). Флаг vector=true,
+    // чтобы серверная проверка DPI пропустила его (иначе фейковые 1000px → блок).
     if (guard.kind === 'pdf') {
       const url = await uploadToStorage(file, guard.contentType)
-      addImage(url, 1000, 1000, 'upload')
-      toast.add({ title: 'Принт добавлен', color: 'success' })
+      addImage(url, 1000, 1000, 'upload', undefined, true)
+      toast.add({ title: t('customize.upload.added'), color: 'success' })
       return
     }
 
@@ -63,7 +65,7 @@ async function onFile(e: Event) {
     const { w, h } = await readImageSize(objectUrl)
     const maxPrint = product.value?.max_print_mm as { width: number; height: number } | null
     if (!maxPrint?.width || !maxPrint?.height) {
-      toast.add({ title: 'Нет данных о размере печати', description: 'У товара не задан max_print_mm.', color: 'error' })
+      toast.add({ title: t('customize.upload.noSizeData'), description: t('customize.upload.noSizeDataHint'), color: 'error' })
       URL.revokeObjectURL(objectUrl)
       return
     }
@@ -72,8 +74,8 @@ async function onFile(e: Event) {
     if (dpi < DPI_MIN) {
       // БЛОКИРУЕМ загрузку — иначе поток брака (§10)
       toast.add({
-        title: 'Низкое разрешение',
-        description: `На макс. размере изделия ${dpi} DPI (нужно от ${DPI_MIN}). Загрузите файл большего разрешения.`,
+        title: t('customize.upload.lowResolution'),
+        description: t('customize.upload.lowResolutionHint', { dpi, dpiMin: DPI_MIN }),
         color: 'error',
       })
       URL.revokeObjectURL(objectUrl)
@@ -84,12 +86,12 @@ async function onFile(e: Event) {
     URL.revokeObjectURL(objectUrl)
     addImage(url, w, h, 'upload')
     if (dpi < DPI_TARGET) {
-      toast.add({ title: `Принт добавлен · ${dpi} DPI`, description: `Для лучшего качества цель — ${DPI_TARGET} DPI.`, color: 'warning' })
+      toast.add({ title: t('customize.upload.addedDpi', { dpi }), description: t('customize.upload.targetDpiHint', { dpiTarget: DPI_TARGET }), color: 'warning' })
     } else {
-      toast.add({ title: `Принт добавлен · ${dpi} DPI`, color: 'success' })
+      toast.add({ title: t('customize.upload.addedDpi', { dpi }), color: 'success' })
     }
   } catch {
-    toast.add({ title: 'Не удалось обработать файл', color: 'error' })
+    toast.add({ title: t('customize.upload.processFailed'), color: 'error' })
   } finally {
     busy.value = false
     ;(e.target as HTMLInputElement).value = ''
@@ -99,10 +101,10 @@ async function onFile(e: Event) {
 
 <template>
   <div>
-    <UButton color="primary" icon="i-lucide-upload" :loading="busy" block @click="fileInput?.click()">Загрузить принт</UButton>
+    <UButton color="primary" icon="i-lucide-upload" :loading="busy" block @click="fileInput?.click()">{{ $t('customize.upload.button') }}</UButton>
     <input ref="fileInput" type="file" :accept="ACCEPT" class="hidden" @change="onFile">
     <p class="text-caption text-ink-gray-400 mt-2">
-      PNG, JPG, WEBP, GIF, AVIF или PDF · до {{ MAX_FILE_MB }} МБ. Минимум {{ DPI_MIN }} DPI на макс. размере, цель {{ DPI_TARGET }}.
+      {{ $t('customize.upload.hint', { maxMb: MAX_FILE_MB, dpiMin: DPI_MIN, dpiTarget: DPI_TARGET }) }}
     </p>
   </div>
 </template>

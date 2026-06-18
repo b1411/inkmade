@@ -8,6 +8,7 @@ import { PRODUCT_TYPE_TEMPLATES } from '~~/shared/config/product-types'
 const props = defineProps<{ product: ProductWithRelations | null }>()
 const emit = defineEmits<{ saved: [productId: string] }>()
 
+const { t } = useI18n()
 const { createProduct, updateProduct, createFromTemplate } = useAdmin()
 const { listAll: listCategories } = useCategories()
 const toast = useToast()
@@ -25,10 +26,10 @@ async function onCreateFromTemplate() {
   creatingTpl.value = true
   try {
     const id = await createFromTemplate(templateKey.value, templateTitle.value)
-    toast.add({ title: 'Черновик создан из шаблона', description: 'Материал, варианты и зоны заполнены. Добавьте фото и опубликуйте.', color: 'success' })
+    toast.add({ title: t('admin.wizard.basics.templateCreated'), description: t('admin.wizard.basics.templateCreatedText'), color: 'success' })
     emit('saved', id)
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.basics.error'), description: (e as Error).message, color: 'error' })
   } finally {
     creatingTpl.value = false
   }
@@ -60,15 +61,15 @@ const saving = ref(false)
 
 async function onSubmit() {
   if (!form.title || !form.alias || !form.slug) {
-    toast.add({ title: 'Заполните название, alias и slug', color: 'warning' })
+    toast.add({ title: t('admin.wizard.basics.validationBasics'), color: 'warning' })
     return
   }
   if (!form.category) {
-    toast.add({ title: 'Выберите категорию', color: 'warning' })
+    toast.add({ title: t('admin.wizard.basics.validationCategory'), color: 'warning' })
     return
   }
   if (form.max_print_w <= 0 || form.max_print_h <= 0) {
-    toast.add({ title: 'Укажите размер печати на макс. размере', description: 'Нужен для DPI-валидации (§10).', color: 'warning' })
+    toast.add({ title: t('admin.wizard.basics.validationPrintSize'), description: t('admin.wizard.basics.validationPrintSizeHint'), color: 'warning' })
     return
   }
   saving.value = true
@@ -86,10 +87,10 @@ async function onSubmit() {
     const saved = props.product
       ? await updateProduct(props.product.id, payload)
       : await createProduct(payload)
-    toast.add({ title: 'Сохранено', color: 'success' })
+    toast.add({ title: t('admin.wizard.basics.saved'), color: 'success' })
     emit('saved', saved.id)
   } catch (e) {
-    toast.add({ title: 'Ошибка сохранения', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.basics.saveError'), description: (e as Error).message, color: 'error' })
   } finally {
     saving.value = false
   }
@@ -100,68 +101,68 @@ async function onSubmit() {
   <div class="space-y-8 max-w-2xl">
     <!-- быстрый старт по шаблону (только при создании) -->
     <div v-if="!props.product" class="border border-ink-burgundy/30 bg-ink-burgundy/5 rounded-lg p-5 space-y-3">
-      <UiSectionLabel accent>Быстрый старт по шаблону</UiSectionLabel>
+      <UiSectionLabel accent>{{ $t('admin.wizard.basics.quickStartLabel') }}</UiSectionLabel>
       <p class="text-caption text-ink-gray-600">
-        Выберите тип изделия — черновик создастся с материалом, размерами, цветами и зонами печати. Останется добавить фото и опубликовать.
+        {{ $t('admin.wizard.basics.quickStartText') }}
       </p>
       <div class="grid grid-cols-2 gap-4">
-        <UFormField label="Тип изделия">
+        <UFormField :label="$t('admin.wizard.basics.fieldType')">
           <USelect v-model="templateKey" :items="templateItems" value-key="value" class="w-full" />
         </UFormField>
-        <UFormField label="Название (необязательно)">
-          <UInput v-model="templateTitle" placeholder="по умолчанию — как тип" class="w-full" />
+        <UFormField :label="$t('admin.wizard.basics.fieldTemplateTitle')">
+          <UInput v-model="templateTitle" :placeholder="$t('admin.wizard.basics.templateTitlePlaceholder')" class="w-full" />
         </UFormField>
       </div>
       <UButton color="primary" icon="i-lucide-wand-2" :loading="creatingTpl" @click="onCreateFromTemplate">
-        Создать из шаблона
+        {{ $t('admin.wizard.basics.createFromTemplate') }}
       </UButton>
     </div>
 
     <div v-if="!props.product" class="flex items-center gap-3 text-caption text-ink-gray-400">
-      <span class="flex-1 border-t border-ink-gray-200" /> или вручную <span class="flex-1 border-t border-ink-gray-200" />
+      <span class="flex-1 border-t border-ink-gray-200" /> {{ $t('admin.wizard.basics.orManual') }} <span class="flex-1 border-t border-ink-gray-200" />
     </div>
 
     <form class="space-y-5" @submit.prevent="onSubmit">
-      <UFormField label="Название" required>
-        <UInput v-model="form.title" class="w-full" placeholder="Футболка оверсайз" />
+      <UFormField :label="$t('admin.wizard.basics.fieldTitle')" required>
+        <UInput v-model="form.title" class="w-full" :placeholder="$t('admin.wizard.basics.titlePlaceholder')" />
       </UFormField>
 
       <div class="grid grid-cols-2 gap-4">
-        <UFormField label="Alias (URL конструктора)" required>
-          <UInput v-model="form.alias" class="w-full" placeholder="oversize-tee" />
+        <UFormField :label="$t('admin.wizard.basics.fieldAlias')" required>
+          <UInput v-model="form.alias" class="w-full" :placeholder="$t('admin.wizard.basics.aliasPlaceholder')" />
         </UFormField>
-        <UFormField label="Slug (URL товара)" required>
-          <UInput v-model="form.slug" class="w-full" placeholder="oversize-tee" />
+        <UFormField :label="$t('admin.wizard.basics.fieldSlug')" required>
+          <UInput v-model="form.slug" class="w-full" :placeholder="$t('admin.wizard.basics.slugPlaceholder')" />
         </UFormField>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
-        <UFormField label="Категория" required>
+        <UFormField :label="$t('admin.wizard.basics.fieldCategory')" required>
           <USelect v-model="form.category" :items="categoryItems" value-key="value" class="w-full" />
         </UFormField>
-        <UFormField label="Базовая цена, ₸" required>
+        <UFormField :label="$t('admin.wizard.basics.fieldBasePrice')" required>
           <UInput v-model.number="form.base_price" type="number" min="0" class="w-full" />
         </UFormField>
       </div>
 
       <div class="grid grid-cols-3 gap-4">
-        <UFormField label="Макс. размер линейки">
-          <UInput v-model="form.max_size_label" class="w-full" placeholder="6XL" />
+        <UFormField :label="$t('admin.wizard.basics.fieldMaxSize')">
+          <UInput v-model="form.max_size_label" class="w-full" :placeholder="$t('admin.wizard.basics.maxSizePlaceholder')" />
         </UFormField>
-        <UFormField label="Печать на макс., ширина мм" required>
+        <UFormField :label="$t('admin.wizard.basics.fieldPrintW')" required>
           <UInput v-model.number="form.max_print_w" type="number" min="0" class="w-full" />
         </UFormField>
-        <UFormField label="Печать на макс., высота мм" required>
+        <UFormField :label="$t('admin.wizard.basics.fieldPrintH')" required>
           <UInput v-model.number="form.max_print_h" type="number" min="0" class="w-full" />
         </UFormField>
       </div>
 
-      <UFormField label="Описание">
+      <UFormField :label="$t('admin.wizard.basics.fieldDescription')">
         <UTextarea v-model="form.description" :rows="4" class="w-full" />
       </UFormField>
 
       <UButton type="submit" color="primary" size="lg" :loading="saving">
-        {{ props.product ? 'Сохранить' : 'Создать черновик и продолжить' }}
+        {{ props.product ? $t('actions.save') : $t('admin.wizard.basics.submitCreate') }}
       </UButton>
     </form>
   </div>

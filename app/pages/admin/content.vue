@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // Контент и маркетинг (CRM §6.10): тексты лендинга + промо + пиксели.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
+const { t } = useI18n()
 const { get, set } = useSettings()
 const toast = useToast()
 
@@ -23,9 +24,9 @@ async function save() {
       set('landing.hero_subtitle', form.hero_subtitle),
       set('landing.promo', form.promo),
     ])
-    toast.add({ title: 'Контент сохранён', color: 'success' })
+    toast.add({ title: t('admin.content.saved'), color: 'success' })
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.content.error'), description: (e as Error).message, color: 'error' })
   } finally { saving.value = false }
 }
 const { public: pub } = useRuntimeConfig()
@@ -33,25 +34,25 @@ const { public: pub } = useRuntimeConfig()
 
 <template>
   <div class="max-w-2xl">
-    <UiPageHeader label="Маркетинг" title="Контент и промо" />
+    <UiPageHeader :label="$t('admin.content.label')" :title="$t('admin.content.title')" />
 
     <div class="space-y-6">
-      <UiPanel title="Тексты лендинга">
+      <UiPanel :title="$t('admin.content.landingTextsTitle')">
         <div class="space-y-4">
-          <UFormField label="Заголовок Hero (лендинг)"><UInput v-model="form.hero_title" class="w-full" /></UFormField>
-          <UFormField label="Подзаголовок Hero"><UTextarea v-model="form.hero_subtitle" :rows="2" class="w-full" /></UFormField>
-          <UFormField label="Промо-баннер (дроп/акция)"><UInput v-model="form.promo" class="w-full" placeholder="Напр.: −20% на первую вещь до 30 июня" /></UFormField>
-          <UButton color="primary" :loading="saving" @click="save">Сохранить</UButton>
-          <p class="text-caption text-ink-gray-500">Настройки хранятся в <code>platform_settings</code>. Тексты применяются на лендинге при чтении ключей.</p>
+          <UFormField :label="$t('admin.content.fieldHeroTitle')"><UInput v-model="form.hero_title" class="w-full" /></UFormField>
+          <UFormField :label="$t('admin.content.fieldHeroSubtitle')"><UTextarea v-model="form.hero_subtitle" :rows="2" class="w-full" /></UFormField>
+          <UFormField :label="$t('admin.content.fieldPromo')"><UInput v-model="form.promo" class="w-full" :placeholder="$t('admin.content.promoPlaceholder')" /></UFormField>
+          <UButton color="primary" :loading="saving" @click="save">{{ $t('actions.save') }}</UButton>
+          <p class="text-caption text-ink-gray-500">{{ $t('admin.content.settingsHint') }}</p>
         </div>
       </UiPanel>
 
-      <UiPanel title="Пиксели и аналитика">
+      <UiPanel :title="$t('admin.content.pixelsTitle')">
         <div class="text-caption text-ink-gray-600 space-y-1">
-          <p>Meta Pixel: <span class="font-mono">{{ pub.metaPixelId || 'не задан' }}</span></p>
-          <p>TikTok Pixel: <span class="font-mono">{{ pub.tiktokPixelId || 'не задан' }}</span></p>
-          <p>Google Analytics: <span class="font-mono">{{ pub.analyticsId || 'не задан' }}</span></p>
-          <p class="text-ink-gray-400">ID задаются env-переменными на Vercel (NUXT_PUBLIC_*_PIXEL_ID) и применяются с 1-го дня.</p>
+          <p>Meta Pixel: <span class="font-mono">{{ pub.metaPixelId || $t('admin.content.pixelNotSet') }}</span></p>
+          <p>TikTok Pixel: <span class="font-mono">{{ pub.tiktokPixelId || $t('admin.content.pixelNotSet') }}</span></p>
+          <p>Google Analytics: <span class="font-mono">{{ pub.analyticsId || $t('admin.content.pixelNotSet') }}</span></p>
+          <p class="text-ink-gray-400">{{ $t('admin.content.pixelsHint') }}</p>
         </div>
       </UiPanel>
     </div>

@@ -1,0 +1,121 @@
+{
+  "cart": {
+    "title": "Себет",
+    "headTitle": "Себет",
+    "empty": {
+      "title": "Әзірге бос",
+      "text": "Өзіңе бірдеңе жинайтын кез келді.",
+      "toCatalog": "Каталогқа"
+    },
+    "removeItem": "{title} өшіру",
+    "total": "Жиыны",
+    "checkout": "Тапсырыс беру"
+  },
+  "checkout": {
+    "title": "Тапсырыс беру",
+    "headTitle": "Тапсырыс беру",
+    "fields": {
+      "fullName": "Аты-жөні",
+      "email": "Email",
+      "emailHelp": "Оған тапсырыс растамасы келеді",
+      "emailPlaceholder": "example{'@'}mail.kz",
+      "phone": "Телефон",
+      "phonePlaceholder": "+7 700 000 00 00",
+      "city": "Қала",
+      "address": "Жеткізу мекенжайы"
+    },
+    "gift": {
+      "toggle": "Бұл сыйлық 🎁",
+      "recipient": "Алушының аты",
+      "recipientHelp": "Кімге табыстау керек — ашықхат пен қаптама үшін",
+      "recipientPlaceholder": "Алушының аты",
+      "message": "Ашықхат мәтіні",
+      "messagePlaceholder": "Туған күніңмен!",
+      "hidePrice": "Бағасы көрсетілген чекті жөнелтілімге салмау"
+    },
+    "summary": {
+      "title": "Сіздің тапсырысыңыз",
+      "item": "{title} ({size}) ×{qty}",
+      "promoPlaceholder": "Промокод",
+      "applyPromo": "Қолдану",
+      "promoApplied": "«{code}» коды қолданылды",
+      "discount": "Жеңілдік",
+      "total": "Жиыны",
+      "pay": "Төлеуге өту",
+      "secureNote": "Қауіпсіз онлайн төлем. Чек email-ге келеді."
+    },
+    "promo": {
+      "appliedToast": "Промокод қолданылды: −{amount}",
+      "invalid": "Промокод жарамсыз немесе тапсырысқа сәйкес келмейді",
+      "checkFailed": "Промокодты тексеру мүмкін болмады"
+    },
+    "validation": {
+      "title": "Өрістерді тексеріңіз",
+      "description": "Аты, дұрыс email, телефон (кемінде 10 цифр), қала және мекенжай міндетті"
+    },
+    "error": {
+      "title": "Тапсырыс беру қатесі"
+    }
+  },
+  "pay": {
+    "headTitle": "Төлем",
+    "label": "Демо-төлем",
+    "title": "Тапсырысты төлеу",
+    "amountLabel": "Төлеуге",
+    "submit": "Төлеу (демо)",
+    "cancel": "Бас тарту",
+    "note": "Сынақ төлем режимі. Картамен және Kaspi арқылы төлем іске қосылу кезінде қосылады.",
+    "success": "Төлем өтті",
+    "error": "Төлем қатесі"
+  },
+  "order": {
+    "headTitle": "Тапсырыс",
+    "notFound": "Тапсырыс табылмады",
+    "number": "Тапсырыс #{id}",
+    "tracking": {
+      "title": "Бақылау"
+    },
+    "items": {
+      "title": "Құрамы",
+      "total": "Жиыны"
+    },
+    "gift": {
+      "title": "Сыйлық тапсырыс",
+      "recipient": "Алушы:",
+      "card": "Ашықхат:",
+      "hidePrice": "Бағасы көрсетілген чек жөнелтілімге салынбайды."
+    },
+    "receipt": {
+      "title": "Төлем чегі",
+      "print": "Басып шығару",
+      "paidAt": "Төленген күні: {date}",
+      "transaction": "Транзакция: {txn}",
+      "pendingFiscal": "ОФД фискалдық чегі фискализациядан кейін қолжетімді болады."
+    },
+    "actions": {
+      "allOrders": "Барлық тапсырыстар",
+      "reorder": "Тапсырысты қайталау",
+      "toCatalog": "Каталогқа"
+    },
+    "reorderSuccess": "Себетке қосылды: {count}",
+    "reorderError": "Қайталау мүмкін болмады"
+  },
+  "status": {
+    "created": "Ресімделуде",
+    "pending": "Төлемді күтуде",
+    "in_production": "Өндірісте",
+    "packing": "Қаптау",
+    "shipped": "Жолда",
+    "delivered": "Жеткізілді",
+    "on_hold": "Өңделуде",
+    "cancelled": "Бас тартылды",
+    "refunded": "Қаражатты қайтару",
+    "stages": {
+      "placed": "Ресімделді",
+      "printing": "Басып жатырмыз",
+      "packing": "Қаптап жатырмыз",
+      "shipping": "Жолда",
+      "delivered": "Жеткізілді"
+    }
+  }
+}

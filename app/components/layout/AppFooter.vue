@@ -12,22 +12,22 @@ import { LEGAL } from '~~/shared/config/legal'
     >
       <div>
         <p class="ink-logo text-xl text-ink-cream">INKMADE</p>
-        <p class="ink-label mt-2 text-ink-cream/50">Merch Studio · EST. 2025</p>
-        <p class="text-caption mt-3">Печать твоего принта на одежде. От одной штуки. Казахстан.</p>
+        <p class="ink-label mt-2 text-ink-cream/50">{{ $t('footer.tagline') }}</p>
+        <p class="text-caption mt-3">{{ $t('footer.about') }}</p>
       </div>
       <div class="space-y-2">
-        <p class="ink-label text-ink-cream/50">Каталог</p>
-        <NuxtLink to="/catalog" class="footer-link block text-caption">Все категории</NuxtLink>
-        <NuxtLink to="/cart" class="footer-link block text-caption">Корзина</NuxtLink>
-        <NuxtLink to="/account" class="footer-link block text-caption">Личный кабинет</NuxtLink>
+        <p class="ink-label text-ink-cream/50">{{ $t('footer.catalogCol') }}</p>
+        <NuxtLink to="/catalog" class="footer-link block text-caption">{{ $t('footer.allCategories') }}</NuxtLink>
+        <NuxtLink to="/cart" class="footer-link block text-caption">{{ $t('footer.cart') }}</NuxtLink>
+        <NuxtLink to="/account" class="footer-link block text-caption">{{ $t('footer.account') }}</NuxtLink>
       </div>
       <div class="space-y-2">
-        <p class="ink-label text-ink-cream/50">Информация</p>
-        <NuxtLink to="/legal/terms" class="footer-link block text-caption">Условия использования</NuxtLink>
-        <NuxtLink to="/legal/privacy" class="footer-link block text-caption">Конфиденциальность</NuxtLink>
+        <p class="ink-label text-ink-cream/50">{{ $t('footer.infoCol') }}</p>
+        <NuxtLink to="/legal/terms" class="footer-link block text-caption">{{ $t('footer.terms') }}</NuxtLink>
+        <NuxtLink to="/legal/privacy" class="footer-link block text-caption">{{ $t('footer.privacy') }}</NuxtLink>
       </div>
       <div class="space-y-2">
-        <p class="ink-label text-ink-cream/50">Контакты</p>
+        <p class="ink-label text-ink-cream/50">{{ $t('footer.contactsCol') }}</p>
         <a :href="`mailto:${LEGAL.supportEmail}`" class="footer-link block text-caption">{{ LEGAL.supportEmail }}</a>
         <div class="flex items-center gap-3 pt-1">
           <a
@@ -53,7 +53,7 @@ import { LEGAL } from '~~/shared/config/legal'
     </div>
     <div class="border-t border-white/10">
       <div class="mx-auto max-w-(--container-max) px-4 py-4 ink-label text-ink-cream/40">
-        © 2025 INKMADE · Цвет на экране может отличаться от печати
+        {{ $t('footer.copyright') }}
       </div>
     </div>
   </footer>

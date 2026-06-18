@@ -1,12 +1,16 @@
 <script setup lang="ts">
 // «Как это работает» (§5.6): 4 шага. Соединительная линия «прорисовывается» по
 // ScrollTrigger (§8). Крупные display-номера, каскадное появление, якорь #how.
-const steps = [
-  { n: 1, icon: 'i-lucide-shirt', title: 'Выбери изделие', text: 'Футболка, худи, свитшот, кепка. Выбери цвет и размер.' },
-  { n: 2, icon: 'i-lucide-image-plus', title: 'Добавь принт', text: 'Загрузи свой файл, выбери из каталога или набери текст.' },
-  { n: 3, icon: 'i-lucide-move', title: 'Размести и оцени', text: 'Двигай, масштабируй, крути. Цена считается на лету.' },
-  { n: 4, icon: 'i-lucide-package-check', title: 'Оплати и получи', text: 'Онлайн-оплата, печать, доставка по Казахстану.' },
-]
+const { t } = useI18n()
+const icons = ['i-lucide-shirt', 'i-lucide-image-plus', 'i-lucide-move', 'i-lucide-package-check']
+const steps = computed(() =>
+  icons.map((icon, i) => ({
+    n: i + 1,
+    icon,
+    title: t(`landing.howItWorks.steps[${i}].title`),
+    text: t(`landing.howItWorks.steps[${i}].text`),
+  })),
+)
 
 const root = ref<HTMLElement | null>(null)
 const line = ref<HTMLElement | null>(null)
@@ -35,8 +39,8 @@ onBeforeUnmount(() => ctx?.revert())
 
 <template>
   <section id="how" ref="root" aria-labelledby="how-heading" style="scroll-margin-top: 96px">
-    <UiSectionLabel accent>Просто</UiSectionLabel>
-    <h2 id="how-heading" class="ink-display text-h2 mt-2 mb-10">От идеи до вещи — 4 шага</h2>
+    <UiSectionLabel accent>{{ $t('landing.howItWorks.label') }}</UiSectionLabel>
+    <h2 id="how-heading" class="ink-display text-h2 mt-2 mb-10">{{ $t('landing.howItWorks.title') }}</h2>
 
     <!-- Соединительная линия (десктоп) -->
     <div class="hidden lg:block relative h-0.5 mb-8 bg-ink-gray-200 rounded-full overflow-hidden">

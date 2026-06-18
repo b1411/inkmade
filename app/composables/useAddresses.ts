@@ -4,6 +4,7 @@ import type { Database, TablesInsert } from '~/types/database.types'
 export const useAddresses = () => {
   const supabase = useSupabaseClient<Database>()
   const user = useSupabaseUser()
+  const { t } = useI18n()
 
   async function list() {
     const { data, error } = await supabase
@@ -16,7 +17,7 @@ export const useAddresses = () => {
   }
 
   async function create(payload: Omit<TablesInsert<'addresses'>, 'user_id'>) {
-    if (!user.value) throw new Error('Требуется вход')
+    if (!user.value) throw new Error(t('errors.authRequired'))
     const { data, error } = await supabase
       .from('addresses')
       .insert({ ...payload, user_id: user.value.id })

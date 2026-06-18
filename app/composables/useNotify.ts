@@ -2,6 +2,7 @@
 // Микрокопи из ТЗ §7.2 — пресеты для частых событий, чтобы не дублировать строки.
 export function useNotify() {
   const toast = useToast()
+  const { t } = useI18n()
 
   const success = (title: string, description?: string) =>
     toast.add({ title, description, color: 'success', icon: 'i-lucide-check' })
@@ -19,10 +20,10 @@ export function useNotify() {
     warn,
     // Пресеты ТЗ §7.2
     addedToCart: () =>
-      toast.add({ title: 'Добавили. Собрать ещё или оформить?', color: 'success', icon: 'i-lucide-shopping-cart' }),
+      toast.add({ title: t('notify.addedToCart'), color: 'success', icon: 'i-lucide-shopping-cart' }),
     linkCopied: () =>
-      toast.add({ title: 'Ссылка скопирована — покажи друзьям', color: 'success', icon: 'i-lucide-link' }),
+      toast.add({ title: t('notify.linkCopied'), color: 'success', icon: 'i-lucide-link' }),
     paymentFailed: () =>
-      toast.add({ title: 'Оплата не прошла. Попробуй ещё раз или другой способ.', color: 'error', icon: 'i-lucide-credit-card' }),
+      toast.add({ title: t('notify.paymentFailed'), color: 'error', icon: 'i-lucide-credit-card' }),
   }
 }

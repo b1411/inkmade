@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Checkout (§9.1): логин требуется здесь, перед оплатой. Гость собирал корзину локально.
 definePageMeta({ middleware: 'auth' })
-useHead({ title: 'Оформление — INKMADE' })
+const { t } = useI18n()
+useHead({ title: () => `${t('cart.checkout.headTitle')} — INKMADE` })
 
 const cart = useCart()
 const { createFromCart } = useOrder()
@@ -45,14 +46,14 @@ async function applyPromo() {
     if (res.valid && res.discount) {
       promo.discount = res.discount
       promo.applied = res.code ?? promo.code.trim()
-      toast.add({ title: `Промокод применён: −${formatPrice(res.discount)}`, color: 'success' })
+      toast.add({ title: t('cart.checkout.promo.appliedToast', { amount: formatPrice(res.discount) }), color: 'success' })
     } else {
       promo.discount = 0
       promo.applied = ''
-      promo.error = 'Промокод недействителен или не подходит к заказу'
+      promo.error = t('cart.checkout.promo.invalid')
     }
   } catch {
-    promo.error = 'Не удалось проверить промокод'
+    promo.error = t('cart.checkout.promo.checkFailed')
   } finally {
     promo.checking = false
   }
@@ -71,7 +72,7 @@ const formValid = computed(() =>
 
 async function onPay() {
   if (!formValid.value) {
-    toast.add({ title: 'Проверьте поля', description: 'Имя, корректный email, телефон (мин. 10 цифр), город и адрес обязательны', color: 'warning' })
+    toast.add({ title: t('cart.checkout.validation.title'), description: t('cart.checkout.validation.description'), color: 'warning' })
     return
   }
   paying.value = true
@@ -85,7 +86,7 @@ async function onPay() {
     })
     await navigateTo(payUrl)
   } catch (e) {
-    toast.add({ title: 'Ошибка оформления', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('cart.checkout.error.title'), description: (e as Error).message, color: 'error' })
   } finally {
     paying.value = false
   }
@@ -95,27 +96,27 @@ async function onPay() {
 <template>
   <section class="grid md:grid-cols-[1fr_320px] gap-8 max-w-4xl">
     <div class="space-y-5">
-      <h1 class="ink-display text-h2">Оформление</h1>
-      <UFormField label="Имя и фамилия" required>
+      <h1 class="ink-display text-h2">{{ $t('cart.checkout.title') }}</h1>
+      <UFormField :label="$t('cart.checkout.fields.fullName')" required>
         <UInput v-model="form.full_name" autocomplete="name" class="w-full" />
       </UFormField>
-      <UFormField label="Email" required help="На него придёт подтверждение заказа">
+      <UFormField :label="$t('cart.checkout.fields.email')" required :help="$t('cart.checkout.fields.emailHelp')">
         <UInput
-          v-model="form.email" type="email" autocomplete="email" placeholder="example@mail.kz"
+          v-model="form.email" type="email" autocomplete="email" :placeholder="$t('cart.checkout.fields.emailPlaceholder')"
           :color="form.email && !emailValid ? 'error' : undefined" class="w-full"
         />
       </UFormField>
-      <UFormField label="Телефон" required>
+      <UFormField :label="$t('cart.checkout.fields.phone')" required>
         <UInput
-          v-model="form.phone" type="tel" autocomplete="tel" placeholder="+7 700 000 00 00"
+          v-model="form.phone" type="tel" autocomplete="tel" :placeholder="$t('cart.checkout.fields.phonePlaceholder')"
           :color="form.phone && phoneDigits.length < 10 ? 'error' : undefined" class="w-full"
         />
       </UFormField>
       <div class="grid grid-cols-2 gap-4">
-        <UFormField label="Город" required>
+        <UFormField :label="$t('cart.checkout.fields.city')" required>
           <UInput v-model="form.city" class="w-full" />
         </UFormField>
-        <UFormField label="Адрес доставки" required>
+        <UFormField :label="$t('cart.checkout.fields.address')" required>
           <UInput v-model="form.address" class="w-full" />
         </UFormField>
       </div>
@@ -123,56 +124,56 @@ async function onPay() {
       <!-- подарочный заказ (§3.1) -->
       <UiPanel>
         <div class="space-y-3">
-          <UCheckbox v-model="gift.on" label="Это подарок 🎁" />
+          <UCheckbox v-model="gift.on" :label="$t('cart.checkout.gift.toggle')" />
           <template v-if="gift.on">
-            <UFormField label="Имя получателя" help="Кому вручить — для открытки и упаковки">
-              <UInput v-model="gift.recipient" placeholder="Имя получателя" class="w-full" />
+            <UFormField :label="$t('cart.checkout.gift.recipient')" :help="$t('cart.checkout.gift.recipientHelp')">
+              <UInput v-model="gift.recipient" :placeholder="$t('cart.checkout.gift.recipientPlaceholder')" class="w-full" />
             </UFormField>
-            <UFormField label="Текст открытки">
-              <UTextarea v-model="gift.message" :rows="2" placeholder="С днём рождения!" class="w-full" maxlength="200" />
+            <UFormField :label="$t('cart.checkout.gift.message')">
+              <UTextarea v-model="gift.message" :rows="2" :placeholder="$t('cart.checkout.gift.messagePlaceholder')" class="w-full" maxlength="200" />
             </UFormField>
-            <UCheckbox v-model="gift.hidePrice" label="Не вкладывать чек с ценой в посылку" />
+            <UCheckbox v-model="gift.hidePrice" :label="$t('cart.checkout.gift.hidePrice')" />
           </template>
         </div>
       </UiPanel>
     </div>
 
     <aside class="h-fit md:sticky md:top-8">
-      <UiPanel title="Ваш заказ" icon="i-lucide-shopping-bag">
+      <UiPanel :title="$t('cart.checkout.summary.title')" icon="i-lucide-shopping-bag">
         <div class="space-y-3">
       <div v-for="i in cart.items.value" :key="i.id" class="flex justify-between text-caption">
-        <span>{{ i.title }} ({{ i.size }}) ×{{ i.quantity }}</span>
+        <span>{{ $t('cart.checkout.summary.item', { title: i.title, size: i.size, qty: i.quantity }) }}</span>
         <span>{{ formatPrice(i.unitPrice * i.quantity) }}</span>
       </div>
       <!-- промокод -->
       <div class="border-t border-ink-gray-200 pt-3 space-y-2">
         <div class="flex gap-2">
-          <UInput v-model="promo.code" placeholder="Промокод" size="sm" class="flex-1" :disabled="!!promo.applied" />
+          <UInput v-model="promo.code" :placeholder="$t('cart.checkout.summary.promoPlaceholder')" size="sm" class="flex-1" :disabled="!!promo.applied" />
           <UButton
             v-if="!promo.applied" size="sm" color="neutral" variant="subtle"
             :loading="promo.checking" @click="applyPromo"
-          >Применить</UButton>
+          >{{ $t('cart.checkout.summary.applyPromo') }}</UButton>
           <UButton
             v-else size="sm" color="neutral" variant="ghost" icon="i-lucide-x"
             @click="promo.code = ''; promo.discount = 0; promo.applied = ''"
           />
         </div>
         <p v-if="promo.error" class="text-caption text-ink-error">{{ promo.error }}</p>
-        <p v-if="promo.applied" class="text-caption text-ink-success">Код «{{ promo.applied }}» применён</p>
+        <p v-if="promo.applied" class="text-caption text-ink-success">{{ $t('cart.checkout.summary.promoApplied', { code: promo.applied }) }}</p>
       </div>
 
       <div v-if="promo.discount" class="flex justify-between text-caption text-ink-success">
-        <span>Скидка</span><span>−{{ formatPrice(promo.discount) }}</span>
+        <span>{{ $t('cart.checkout.summary.discount') }}</span><span>−{{ formatPrice(promo.discount) }}</span>
       </div>
       <div class="flex justify-between border-t border-ink-gray-200 pt-3 font-semibold">
-        <span>Итого</span><span class="text-ink-burgundy">{{ formatPrice(finalTotal) }}</span>
+        <span>{{ $t('cart.checkout.summary.total') }}</span><span class="text-ink-burgundy">{{ formatPrice(finalTotal) }}</span>
       </div>
       <UButton color="primary" size="lg" block icon="i-lucide-credit-card" :loading="paying" :disabled="!formValid" @click="onPay">
-        Перейти к оплате
+        {{ $t('cart.checkout.summary.pay') }}
       </UButton>
       <p class="text-caption text-ink-gray-400 flex items-center gap-1.5">
         <UIcon name="i-lucide-shield-check" class="shrink-0" />
-        Безопасная оплата онлайн. Чек придёт на email.
+        {{ $t('cart.checkout.summary.secureNote') }}
       </p>
         </div>
       </UiPanel>

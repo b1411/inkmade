@@ -1,0 +1,52 @@
+{
+  "domain": {
+    "orderStatus": {
+      "created": "Создан",
+      "pending": "Ожидает оплаты",
+      "paid": "Оплачен",
+      "queued": "В очереди",
+      "printing": "В печати",
+      "quality_check": "Контроль качества",
+      "packing": "Упаковка",
+      "ready_to_ship": "Готов к отгрузке",
+      "shipped": "Отправлен",
+      "delivered": "Доставлен",
+      "on_hold": "На паузе",
+      "reprint": "Повторная печать",
+      "cancelled": "Отменён",
+      "refunded": "Возврат средств"
+    },
+    "customerStatus": {
+      "created": "Оформление",
+      "pending": "Ожидает оплаты",
+      "paid": "В производстве",
+      "queued": "В производстве",
+      "printing": "В производстве",
+      "quality_check": "В производстве",
+      "packing": "Упаковка",
+      "ready_to_ship": "Упаковка",
+      "shipped": "В пути",
+      "delivered": "Доставлен",
+      "on_hold": "В обработке",
+      "reprint": "В производстве",
+      "cancelled": "Отменён",
+      "refunded": "Возврат средств"
+    },
+    "printMethod": {
+      "dtg": "DTG (прямая цифровая)",
+      "dtf": "DTF (термоперенос)",
+      "silkscreen": "Шелкография (трафарет)",
+      "embroidery": "Вышивка",
+      "sublimation": "Сублимация (full-print)"
+    },
+    "printMode": {
+      "zonal": "Зональная печать",
+      "fullprint": "Full-print (вся поверхность)"
+    },
+    "payoutStatus": {
+      "pending": "Ожидает",
+      "paid": "Выплачено",
+      "rejected": "Отклонено"
+    }
+  }
+}

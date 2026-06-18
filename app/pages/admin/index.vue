@@ -3,7 +3,8 @@ import type { Database } from '~/types/database.types'
 
 // Дашборд админа (§8.2.5): выручка, заказы по статусам, топ товаров, доля брака.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
-useHead({ title: 'Дашборд — INKMADE' })
+const { t, te } = useI18n()
+useHead({ title: t('admin.dashboard.headTitle') })
 
 interface Stats {
   revenue: number
@@ -58,12 +59,7 @@ const conversion = computed(() => {
   return total > 0 ? Math.round(((stats.value?.paid_orders ?? 0) / total) * 100) : 0
 })
 
-const STATUS_LABELS: Record<string, string> = {
-  created: 'Создан', pending: 'Ожидает оплаты', paid: 'Оплачен', queued: 'В очереди',
-  printing: 'Печать', quality_check: 'Контроль', packing: 'Упаковка',
-  ready_to_ship: 'К отгрузке', shipped: 'Отправлен', delivered: 'Доставлен',
-  on_hold: 'Пауза', reprint: 'Перепечать', cancelled: 'Отменён', refunded: 'Возврат',
-}
+const statusLabel = (s: string) => te(`admin.dashboard.status.${s}`) ? t(`admin.dashboard.status.${s}`) : s
 
 const byStatus = computed(() => Object.entries(stats.value?.by_status ?? {}))
 const defectRate = computed(() => {
@@ -75,7 +71,7 @@ const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(n)
 
 <template>
   <div>
-    <UiPageHeader label="Дашборд" title="Админ-кабинет" />
+    <UiPageHeader :label="$t('admin.dashboard.label')" :title="$t('admin.dashboard.title')" />
 
     <div v-if="pending" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-24" />
@@ -86,74 +82,74 @@ const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(n)
         <!-- требует внимания -->
         <div v-if="attention" class="flex flex-wrap gap-2">
           <NuxtLink v-if="attention.moderation" to="/admin/designers" class="inline-flex items-center gap-1 bg-ink-warning/10 text-ink-warning rounded-full px-3 py-1 text-caption font-semibold">
-            <UIcon name="i-lucide-image" /> Модерация принтов: {{ attention.moderation }}
+            <UIcon name="i-lucide-image" /> {{ $t('admin.dashboard.attention.moderation', { n: attention.moderation }) }}
           </NuxtLink>
           <NuxtLink v-if="attention.payouts" to="/admin/designers" class="inline-flex items-center gap-1 bg-ink-burgundy/10 text-ink-burgundy rounded-full px-3 py-1 text-caption font-semibold">
-            <UIcon name="i-lucide-wallet" /> Заявки на выплату: {{ attention.payouts }}
+            <UIcon name="i-lucide-wallet" /> {{ $t('admin.dashboard.attention.payouts', { n: attention.payouts }) }}
           </NuxtLink>
           <NuxtLink v-if="attention.problem" to="/admin/returns" class="inline-flex items-center gap-1 bg-ink-error/10 text-ink-error rounded-full px-3 py-1 text-caption font-semibold">
-            <UIcon name="i-lucide-triangle-alert" /> Проблемные заказы: {{ attention.problem }}
+            <UIcon name="i-lucide-triangle-alert" /> {{ $t('admin.dashboard.attention.problem', { n: attention.problem }) }}
           </NuxtLink>
           <NuxtLink v-if="attention.lowStock" to="/admin/stock" class="inline-flex items-center gap-1 bg-ink-gray-200 text-ink-gray-600 rounded-full px-3 py-1 text-caption font-semibold">
-            <UIcon name="i-lucide-boxes" /> Низкий сток: {{ attention.lowStock }}
+            <UIcon name="i-lucide-boxes" /> {{ $t('admin.dashboard.attention.lowStock', { n: attention.lowStock }) }}
           </NuxtLink>
         </div>
 
         <!-- ключевые метрики -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <UiStatCard label="Чистая прибыль" :value="`${fmt(attention?.profit ?? 0)} ₸`" icon="i-lucide-wallet" accent />
-          <UiStatCard label="Выручка (оплачено)" :value="`${fmt(stats?.revenue ?? 0)} ₸`" icon="i-lucide-trending-up" />
-          <UiStatCard label="Оплаченных заказов" :value="stats?.paid_orders ?? 0" icon="i-lucide-shopping-bag" />
-          <UiStatCard label="Всего заказов" :value="stats?.orders_total ?? 0" icon="i-lucide-clipboard-list" />
-          <UiStatCard label="Средний чек" :value="`${fmt(avgCheck)} ₸`" icon="i-lucide-receipt" />
-          <UiStatCard label="Конверсия в оплату" :value="`${conversion}%`" icon="i-lucide-percent" />
-          <UiStatCard label="Новые клиенты (30д)" :value="attention?.newCustomers ?? 0" icon="i-lucide-user-plus" />
-          <UiStatCard label="Доля брака" :value="`${defectRate}%`" icon="i-lucide-triangle-alert" />
+          <UiStatCard :label="$t('admin.dashboard.kpi.profit')" :value="`${fmt(attention?.profit ?? 0)} ₸`" icon="i-lucide-wallet" accent />
+          <UiStatCard :label="$t('admin.dashboard.kpi.revenuePaid')" :value="`${fmt(stats?.revenue ?? 0)} ₸`" icon="i-lucide-trending-up" />
+          <UiStatCard :label="$t('admin.dashboard.kpi.paidOrders')" :value="stats?.paid_orders ?? 0" icon="i-lucide-shopping-bag" />
+          <UiStatCard :label="$t('admin.dashboard.kpi.totalOrders')" :value="stats?.orders_total ?? 0" icon="i-lucide-clipboard-list" />
+          <UiStatCard :label="$t('admin.dashboard.kpi.avgCheck')" :value="`${fmt(avgCheck)} ₸`" icon="i-lucide-receipt" />
+          <UiStatCard :label="$t('admin.dashboard.kpi.conversion')" :value="`${conversion}%`" icon="i-lucide-percent" />
+          <UiStatCard :label="$t('admin.dashboard.kpi.newCustomers')" :value="attention?.newCustomers ?? 0" icon="i-lucide-user-plus" />
+          <UiStatCard :label="$t('admin.dashboard.kpi.defectRate')" :value="`${defectRate}%`" icon="i-lucide-triangle-alert" />
         </div>
 
         <!-- тренд выручки за 30 дней -->
-        <UiPanel title="Выручка за 30 дней" icon="i-lucide-bar-chart-3">
+        <UiPanel :title="$t('admin.dashboard.trend.title')" icon="i-lucide-bar-chart-3">
           <div v-if="trend?.length" class="flex items-end gap-0.5 h-32">
             <div
               v-for="d in trend"
               :key="d.day"
               class="flex-1 bg-ink-burgundy/70 hover:bg-ink-burgundy rounded-t transition-colors min-h-0.5"
               :style="{ height: Math.round((d.revenue / maxRev) * 100) + '%' }"
-              :title="`${new Date(d.day).toLocaleDateString('ru')}: ${fmt(d.revenue)} ₸`"
+              :title="$t('admin.dashboard.trend.tooltip', { date: new Date(d.day).toLocaleDateString('ru'), amount: fmt(d.revenue) })"
             />
           </div>
-          <p v-else class="text-caption text-ink-gray-400">Нет данных за период.</p>
+          <p v-else class="text-caption text-ink-gray-400">{{ $t('admin.dashboard.trend.empty') }}</p>
         </UiPanel>
 
         <div class="grid md:grid-cols-2 gap-6">
           <!-- заказы по статусам -->
-          <UiPanel title="Заказы по статусам" icon="i-lucide-list-checks" :padded="false">
+          <UiPanel :title="$t('admin.dashboard.byStatus.title')" icon="i-lucide-list-checks" :padded="false">
             <div v-if="byStatus.length" class="divide-y divide-ink-gray-200">
               <div v-for="[status, count] in byStatus" :key="status" class="flex justify-between px-6 py-3 text-caption">
-                <span>{{ STATUS_LABELS[status] ?? status }}</span>
+                <span>{{ statusLabel(status) }}</span>
                 <span class="font-semibold">{{ count }}</span>
               </div>
             </div>
-            <UiEmptyState v-else icon="i-lucide-clipboard-list" title="Заказов пока нет" />
+            <UiEmptyState v-else icon="i-lucide-clipboard-list" :title="$t('admin.dashboard.byStatus.empty')" />
           </UiPanel>
 
           <!-- топ товаров -->
-          <UiPanel title="Топ товаров" icon="i-lucide-trophy" :padded="false">
+          <UiPanel :title="$t('admin.dashboard.topProducts.title')" icon="i-lucide-trophy" :padded="false">
             <div v-if="stats?.top_products?.length" class="divide-y divide-ink-gray-200">
               <div v-for="(p, i) in stats.top_products" :key="i" class="flex justify-between px-6 py-3 text-caption">
                 <span>{{ p.title }}</span>
-                <span class="font-semibold">{{ p.qty }} шт</span>
+                <span class="font-semibold">{{ p.qty }} {{ $t('units.pcs') }}</span>
               </div>
             </div>
-            <UiEmptyState v-else icon="i-lucide-package" title="Продаж пока нет" />
+            <UiEmptyState v-else icon="i-lucide-package" :title="$t('admin.dashboard.topProducts.empty')" />
           </UiPanel>
         </div>
 
         <div class="flex flex-wrap gap-3">
-          <UButton to="/admin/products" color="primary" variant="subtle" icon="i-lucide-package">Товары</UButton>
-          <UButton to="/admin/orders" color="primary" variant="subtle" icon="i-lucide-clipboard-list">Заказы</UButton>
-          <UButton to="/admin/stock" color="primary" variant="subtle" icon="i-lucide-boxes">Склад</UButton>
-          <UButton to="/admin/prints" color="primary" variant="subtle" icon="i-lucide-image">Библиотека принтов</UButton>
+          <UButton to="/admin/products" color="primary" variant="subtle" icon="i-lucide-package">{{ $t('admin.dashboard.shortcuts.products') }}</UButton>
+          <UButton to="/admin/orders" color="primary" variant="subtle" icon="i-lucide-clipboard-list">{{ $t('admin.dashboard.shortcuts.orders') }}</UButton>
+          <UButton to="/admin/stock" color="primary" variant="subtle" icon="i-lucide-boxes">{{ $t('admin.dashboard.shortcuts.stock') }}</UButton>
+          <UButton to="/admin/prints" color="primary" variant="subtle" icon="i-lucide-image">{{ $t('admin.dashboard.shortcuts.prints') }}</UButton>
         </div>
       </div>
     </template>

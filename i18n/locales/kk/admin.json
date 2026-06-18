@@ -1,0 +1,446 @@
+{
+  "admin": {
+    "nav": {
+      "dashboard": "Бақылау тақтасы",
+      "finance": "Қаржы",
+      "designers": "Дизайнерлер",
+      "orders": "Тапсырыстар",
+      "returns": "Қайтарымдар",
+      "categories": "Санаттар",
+      "products": "Тауарлар",
+      "prints": "Принттер",
+      "stock": "Қойма",
+      "pricing": "Баға белгілеу",
+      "content": "Контент",
+      "legal": "Заңды құжаттар",
+      "customers": "Клиенттер",
+      "users": "Пайдаланушылар",
+      "leads": "Лидтер",
+      "audit": "Аудит",
+      "settings": "Баптаулар",
+      "signOut": "Шығу",
+      "badge": "ADMIN"
+    },
+    "dashboard": {
+      "headTitle": "Бақылау тақтасы — INKMADE",
+      "label": "Бақылау тақтасы",
+      "title": "Әкімші кабинеті",
+      "attention": {
+        "moderation": "Принттер модерациясы: {n}",
+        "payouts": "Төлем өтінімдері: {n}",
+        "problem": "Проблемалы тапсырыстар: {n}",
+        "lowStock": "Төмен қор: {n}"
+      },
+      "kpi": {
+        "profit": "Таза пайда",
+        "revenuePaid": "Кіріс (төленген)",
+        "paidOrders": "Төленген тапсырыстар",
+        "totalOrders": "Барлық тапсырыстар",
+        "avgCheck": "Орташа чек",
+        "conversion": "Төлемге конверсия",
+        "newCustomers": "Жаңа клиенттер (30к)",
+        "defectRate": "Ақау үлесі"
+      },
+      "trend": {
+        "title": "30 күндегі кіріс",
+        "empty": "Кезең бойынша дерек жоқ.",
+        "tooltip": "{date}: {amount} ₸"
+      },
+      "byStatus": {
+        "title": "Мәртебе бойынша тапсырыстар",
+        "empty": "Әзірге тапсырыс жоқ"
+      },
+      "topProducts": {
+        "title": "Үздік тауарлар",
+        "empty": "Әзірге сатылым жоқ"
+      },
+      "shortcuts": {
+        "products": "Тауарлар",
+        "orders": "Тапсырыстар",
+        "stock": "Қойма",
+        "prints": "Принттер кітапханасы"
+      },
+      "status": {
+        "created": "Жасалды",
+        "pending": "Төлемді күтуде",
+        "paid": "Төленді",
+        "queued": "Кезекте",
+        "printing": "Басып шығару",
+        "quality_check": "Бақылау",
+        "packing": "Қаптау",
+        "ready_to_ship": "Жөнелтуге дайын",
+        "shipped": "Жөнелтілді",
+        "delivered": "Жеткізілді",
+        "on_hold": "Кідіріс",
+        "reprint": "Қайта басу",
+        "cancelled": "Бас тартылды",
+        "refunded": "Қайтарым"
+      }
+    },
+    "orders": {
+      "label": "Тапсырыстар",
+      "title": "Барлық тапсырыстар",
+      "description": "Іздеу, мәртебе мен кезең бойынша сүзгі, экспорт.",
+      "exportCsv": "CSV экспорты",
+      "summary": {
+        "count": "Таңдаудағы тапсырыстар",
+        "sum": "Таңдау сомасы",
+        "paid": "Оның ішінде төленген"
+      },
+      "searchPlaceholder": "Нөмір бойынша іздеу",
+      "filter": {
+        "allStatuses": "Барлық мәртебелер",
+        "periodAll": "Барлық уақыт",
+        "period7": "Соңғы 7 күн",
+        "period30": "Соңғы 30 күн",
+        "period90": "Соңғы 90 күн"
+      },
+      "empty": {
+        "title": "Тапсырыс жоқ",
+        "text": "Таңдалған шарттар бойынша тапсырыс табылмады."
+      },
+      "table": {
+        "number": "#",
+        "date": "Күні",
+        "items": "Позиция",
+        "sum": "Сома",
+        "payment": "Төлем",
+        "status": "Мәртебе"
+      },
+      "paid": "төленді",
+      "csv": {
+        "number": "Нөмір",
+        "date": "Күні",
+        "items": "Позиция",
+        "sum": "Сома",
+        "currency": "Валюта",
+        "status": "Мәртебе",
+        "paid": "Төленген",
+        "yes": "иә",
+        "no": "жоқ"
+      }
+    },
+    "order": {
+      "label": "Тапсырыс #{id}",
+      "backToList": "Тізімге",
+      "kindLabels": {
+        "qc": "Сапа бақылауы",
+        "defect": "Ақау",
+        "other": "Басқа"
+      },
+      "toast": {
+        "photoAdded": "Фото қосылды",
+        "uploadError": "Жүктеу қатесі",
+        "statusChanged": "Мәртебе: {status}",
+        "error": "Қате"
+      },
+      "item": {
+        "price": "Бағасы",
+        "cost": "Өзіндік құны",
+        "margin": "маржа"
+      },
+      "marginCard": {
+        "revenue": "Кіріс",
+        "cost": "Өзіндік құны",
+        "margin": "Маржа"
+      },
+      "gift": {
+        "title": "Сыйлық",
+        "recipient": "Алушы: {name}",
+        "card": "Ашықхат: «{message}»",
+        "hidePrice": "Сәлемдемеде бағасы бар чексіз"
+      },
+      "delivery": {
+        "title": "Жеткізу",
+        "tracking": "Трек: {no} ({carrier})",
+        "payment": "Төлем: {value}",
+        "notPaid": "төленбеген"
+      },
+      "log": {
+        "title": "Мәртебелер журналы"
+      },
+      "evidence": {
+        "title": "Фото-дәлелдер",
+        "add": "Қосу",
+        "empty": "Әзірге фото жоқ."
+      },
+      "control": {
+        "title": "Басқару",
+        "final": "Соңғы мәртебе."
+      },
+      "modal": {
+        "trackingNo": "Трек-нөмір",
+        "carrier": "Тасымалдаушы",
+        "reason": "Себебі",
+        "confirm": "Растау"
+      }
+    },
+    "customers": {
+      "headTitle": "Клиенттер — INKMADE",
+      "label": "CRM",
+      "title": "Клиенттер",
+      "description": "Тапсырыстар тарихы мен сатып алу сомасы бар сатып алушылар базасы.",
+      "sort": {
+        "recent": "Соңғы тапсырыс бойынша",
+        "spent": "Сатып алу сомасы бойынша",
+        "orders": "Тапсырыстар саны бойынша"
+      },
+      "summary": {
+        "count": "Барлық клиенттер",
+        "paying": "Сатып алуы барлар",
+        "revenue": "Клиенттер бойынша кіріс"
+      },
+      "searchPlaceholder": "Аты, email, телефон бойынша іздеу",
+      "empty": {
+        "title": "Клиент жоқ",
+        "text": "Сатып алушылар тіркелгеннен кейін осында пайда болады."
+      },
+      "table": {
+        "customer": "Клиент",
+        "phone": "Телефон",
+        "orders": "Тапсырыс",
+        "spent": "Жұмсалды",
+        "lastOrder": "Соңғы тапсырыс",
+        "contact": "Байланыс"
+      },
+      "noName": "Атсыз",
+      "consent": "келісім"
+    },
+    "customer": {
+      "notFound": "Клиент табылмады",
+      "headTitle": "{name} — клиент",
+      "label": "Клиент",
+      "noName": "Атсыз",
+      "backToList": "Тізімге",
+      "kpi": {
+        "orders": "Тапсырыс",
+        "ltv": "Жұмсалды (LTV)",
+        "lastOrder": "Соңғы тапсырыс"
+      },
+      "contacts": {
+        "title": "Байланыстар",
+        "email": "Email",
+        "phone": "Телефон",
+        "whatsApp": "WhatsApp",
+        "call": "Қоңырау шалу",
+        "consent": "Байланысқа келісім",
+        "yes": "иә",
+        "no": "жоқ",
+        "registered": "Тіркелу"
+      },
+      "greeting": "Сәлеметсіз бе! Бұл INKMADE 👕",
+      "addresses": {
+        "title": "Мекенжайлар",
+        "default": "әдепкі",
+        "empty": "Мекенжай жоқ."
+      },
+      "ordersHistory": {
+        "title": "Тапсырыстар тарихы",
+        "table": {
+          "number": "#",
+          "date": "Күні",
+          "sum": "Сома",
+          "status": "Мәртебе",
+          "payment": "Төлем"
+        },
+        "paid": "төленді",
+        "notPaid": "төленбеген",
+        "empty": {
+          "title": "Тапсырыс жоқ",
+          "text": "Клиент әлі тапсырыс жасаған жоқ."
+        }
+      }
+    },
+    "leads": {
+      "headTitle": "Лидтер — INKMADE",
+      "label": "CRM",
+      "title": "Лидтер",
+      "description": "WhatsApp және телефон арқылы байланысуға арналған клиент контактілері. Барлығы: {n}.",
+      "exportCsv": "CSV экспорты",
+      "searchPlaceholder": "Аты, телефон, email бойынша іздеу",
+      "onlyConsent": "Тек байланысқа келісім бергендер",
+      "greeting": "Сәлеметсіз бе! Бұл INKMADE 👕",
+      "noLeadsToExport": "Экспорттауға лид жоқ",
+      "empty": {
+        "title": "Әзірге лид жоқ",
+        "description": "Контактілер клиенттер телефонын көрсетіп тіркелгеннен кейін пайда болады."
+      },
+      "table": {
+        "name": "Аты",
+        "phone": "Телефон",
+        "email": "Email",
+        "consent": "Келісім",
+        "date": "Күні",
+        "contact": "Байланысу"
+      },
+      "whatsApp": "WhatsApp",
+      "call": "Қоңырау шалу",
+      "yes": "иә",
+      "no": "жоқ",
+      "csv": {
+        "name": "Аты",
+        "phone": "Телефон",
+        "email": "Email",
+        "consent": "Байланысқа келісім",
+        "registered": "Тіркелу күні",
+        "yes": "иә",
+        "no": "жоқ"
+      }
+    },
+    "finance": {
+      "label": "Қаржы",
+      "title": "P&L және аналитика",
+      "csv": "CSV",
+      "tax": "Салықтық",
+      "period": {
+        "d7": "7 күн",
+        "d30": "30 күн",
+        "d90": "90 күн",
+        "all": "Барлық уақыт"
+      },
+      "type": {
+        "revenue": "Кіріс",
+        "cogs": "Өзіндік құны",
+        "royalty": "Роялти",
+        "acquiring_fee": "Эквайринг",
+        "shipping": "Жеткізу",
+        "refund": "Қайтарым",
+        "other": "Басқа"
+      },
+      "kpi": {
+        "revenue": "Кіріс",
+        "cogs": "Өзіндік құны",
+        "royalty": "Роялти",
+        "refund": "Қайтарымдар",
+        "profit": "Таза пайда"
+      },
+      "chart": {
+        "title": "Динамика",
+        "revenue": "кіріс",
+        "profit": "пайда",
+        "tooltip": "{day}: кіріс {revenue}, пайда {profit}"
+      },
+      "byProduct": {
+        "title": "Бұйымдар бойынша маржа",
+        "product": "Бұйым",
+        "qty": "Дана",
+        "revenue": "Кіріс",
+        "margin": "Маржа",
+        "empty": "Әзірге сатылым жоқ"
+      },
+      "byMethod": {
+        "title": "Әдістер бойынша маржа",
+        "method": "Әдіс",
+        "qty": "Дана",
+        "revenue": "Кіріс",
+        "margin": "Маржа",
+        "empty": "Әзірге сатылым жоқ"
+      },
+      "ledger": {
+        "title": "Леджер",
+        "empty": {
+          "title": "Әзірге қозғалыс жоқ",
+          "text": "Төлемдерден кейін пайда болады."
+        }
+      },
+      "taxCsv": {
+        "period": "Кезең",
+        "revenue": "Кіріс",
+        "refund": "Қайтарымдар",
+        "turnover": "Таза айналым",
+        "cogs": "Өзіндік құны",
+        "royalty": "Дизайнерлерге роялти",
+        "profit": "Таза пайда",
+        "estTax": "Болжамды салық (оңайлатылған ~айналымнан 3%)"
+      }
+    },
+    "returns": {
+      "label": "Сервис",
+      "title": "Қайтарымдар мен шағымдар",
+      "description": "Дербестендіру «қалауы бойынша» қайтаруды жояды, бірақ ақау үшін жауапкершіліктен босатпайды.",
+      "empty": {
+        "title": "Проблемалы тапсырыс жоқ",
+        "text": "Барлық тапсырыс қалыпты мәртебеде — қазір шағым жоқ."
+      },
+      "reasonPrompt": "«{status}» мәртебесіне ауысу себебі:",
+      "statusChanged": "Мәртебе: {status}",
+      "error": "Қате",
+      "reprint": "Қайта жасау",
+      "refund": "Қайтару"
+    },
+    "audit": {
+      "label": "Қауіпсіздік",
+      "title": "Әрекеттер аудиті",
+      "empty": {
+        "title": "Әзірге жазба жоқ",
+        "text": "Әкімші әрекеттері осында пайда болады."
+      },
+      "action": {
+        "role_change": "Рөлді өзгерту",
+        "product_update": "Тауарды өзгерту"
+      },
+      "entity": {
+        "profile": "Пайдаланушы",
+        "product": "Тауар",
+        "print_library": "Принт",
+        "payouts": "Төлем",
+        "promo_codes": "Промокод",
+        "designer_profiles": "Дизайнер"
+      },
+      "describe": {
+        "product": "баға {priceBefore}→{priceAfter}, белсенді {activeBefore}→{activeAfter}",
+        "print": "«{title}»: модерация {before} → {after}",
+        "payout": "төлем {before} → {after} ({amount} ₸)",
+        "promo": "{code}: {state}",
+        "promoActive": "белсенді",
+        "promoInactive": "өшірілген",
+        "designer": "мөлшерлеме {before}% → {after}%"
+      }
+    },
+    "users": {
+      "headTitle": "Пайдаланушылар — INKMADE",
+      "label": "Қолжетімділік",
+      "title": "Пайдаланушылар мен рөлдер",
+      "description": "Оператор /studio өндірістік кабинетін көреді, әкімші — осы /admin бөлімін.",
+      "roles": {
+        "customer": "Сатып алушы",
+        "operator": "Оператор (өндіріс)",
+        "admin": "Әкімші"
+      },
+      "roleUpdated": "Рөл жаңартылды",
+      "error": "Қате",
+      "table": {
+        "email": "Email",
+        "name": "Аты",
+        "role": "Рөл"
+      },
+      "you": "сіз",
+      "note": "Өз рөліңізді өзгерте алмайсыз — бұл әкімшінің қолжетімділікті кездейсоқ жоғалтудан қорғауы."
+    },
+    "settings": {
+      "deliveryEtaDefault": "Әдетте Қазақстан бойынша 3–7 күн",
+      "label": "Платформа",
+      "title": "Баптаулар",
+      "tax": {
+        "simplified": "Оңайлатылған (4%)",
+        "our": "ЖБР + ҚҚС"
+      },
+      "saved": "Баптаулар сақталды",
+      "error": "Қате",
+      "globalParams": "Жаһандық параметрлер",
+      "form": {
+        "supportEmail": "Байланыс email",
+        "deliveryEta": "Жеткізу мерзімі (мәтін)",
+        "payoutThreshold": "Дизайнерлерге төлем шегі, ₸",
+        "taxMode": "Салық режимі",
+        "companyDetails": "Компания деректемелері"
+      },
+      "payments": {
+        "title": "Төлемдер мен валюта",
+        "currency": "Валюта:",
+        "site": "Сайт:",
+        "providerNote": "Төлем провайдері мен фискализация (ҚР ОФД) сатылым іске қосылғанда жалғанады."
+      }
+    }
+  }
+}

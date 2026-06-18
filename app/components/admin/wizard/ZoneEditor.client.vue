@@ -143,18 +143,18 @@ onMounted(() => nextTick(() => {
     </div>
 
     <div class="flex-1 space-y-3">
-      <p class="text-caption text-ink-gray-600">Перетащите и измените рамку — это область печати на изделии.</p>
+      <p class="text-caption text-ink-gray-600">{{ $t('admin.wizard.zoneEditor.instruction') }}</p>
       <div class="grid grid-cols-2 gap-3 text-caption">
         <div class="border border-ink-gray-200 rounded-md p-2">
-          <span class="text-ink-gray-400 block">Размер печати</span>
-          <span class="font-semibold">{{ mm.w }} × {{ mm.h }} мм</span>
+          <span class="text-ink-gray-400 block">{{ $t('admin.wizard.zoneEditor.printSize') }}</span>
+          <span class="font-semibold">{{ $t('admin.wizard.zoneEditor.sizeMm', { w: mm.w, h: mm.h }) }}</span>
         </div>
         <div class="border border-ink-gray-200 rounded-md p-2">
-          <span class="text-ink-gray-400 block">Отступ от края</span>
-          <span class="font-semibold">{{ mm.x }}, {{ mm.y }} мм</span>
+          <span class="text-ink-gray-400 block">{{ $t('admin.wizard.zoneEditor.edgeOffset') }}</span>
+          <span class="font-semibold">{{ $t('admin.wizard.zoneEditor.offsetMm', { x: mm.x, y: mm.y }) }}</span>
         </div>
       </div>
-      <UButton color="primary" icon="i-lucide-check" block @click="onSave">Сохранить зону</UButton>
+      <UButton color="primary" icon="i-lucide-check" block @click="onSave">{{ $t('admin.wizard.zoneEditor.saveZone') }}</UButton>
     </div>
   </div>
 </template>

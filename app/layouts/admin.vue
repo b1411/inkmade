@@ -1,24 +1,25 @@
 <script setup lang="ts">
 // Админ-кабинет /admin (§8.2). Роль admin (middleware F0-13). Светлый контекст.
-const nav = [
-  { label: 'Дашборд', to: '/admin', icon: 'i-lucide-layout-dashboard' },
-  { label: 'Финансы', to: '/admin/finance', icon: 'i-lucide-wallet' },
-  { label: 'Дизайнеры', to: '/admin/designers', icon: 'i-lucide-palette' },
-  { label: 'Заказы', to: '/admin/orders', icon: 'i-lucide-receipt' },
-  { label: 'Возвраты', to: '/admin/returns', icon: 'i-lucide-undo-2' },
-  { label: 'Категории', to: '/admin/categories', icon: 'i-lucide-folder-tree' },
-  { label: 'Товары', to: '/admin/products', icon: 'i-lucide-shirt' },
-  { label: 'Принты', to: '/admin/prints', icon: 'i-lucide-image' },
-  { label: 'Склад', to: '/admin/stock', icon: 'i-lucide-boxes' },
-  { label: 'Ценообразование', to: '/admin/pricing', icon: 'i-lucide-tags' },
-  { label: 'Контент', to: '/admin/content', icon: 'i-lucide-newspaper' },
-  { label: 'Юр. документы', to: '/admin/legal', icon: 'i-lucide-scale' },
-  { label: 'Клиенты', to: '/admin/customers', icon: 'i-lucide-user-round-search' },
-  { label: 'Пользователи', to: '/admin/users', icon: 'i-lucide-users' },
-  { label: 'Лиды', to: '/admin/leads', icon: 'i-lucide-contact' },
-  { label: 'Аудит', to: '/admin/audit', icon: 'i-lucide-history' },
-  { label: 'Настройки', to: '/admin/settings', icon: 'i-lucide-settings' },
-]
+const { t } = useI18n()
+const nav = computed(() => [
+  { label: t('admin.nav.dashboard'), to: '/admin', icon: 'i-lucide-layout-dashboard' },
+  { label: t('admin.nav.finance'), to: '/admin/finance', icon: 'i-lucide-wallet' },
+  { label: t('admin.nav.designers'), to: '/admin/designers', icon: 'i-lucide-palette' },
+  { label: t('admin.nav.orders'), to: '/admin/orders', icon: 'i-lucide-receipt' },
+  { label: t('admin.nav.returns'), to: '/admin/returns', icon: 'i-lucide-undo-2' },
+  { label: t('admin.nav.categories'), to: '/admin/categories', icon: 'i-lucide-folder-tree' },
+  { label: t('admin.nav.products'), to: '/admin/products', icon: 'i-lucide-shirt' },
+  { label: t('admin.nav.prints'), to: '/admin/prints', icon: 'i-lucide-image' },
+  { label: t('admin.nav.stock'), to: '/admin/stock', icon: 'i-lucide-boxes' },
+  { label: t('admin.nav.pricing'), to: '/admin/pricing', icon: 'i-lucide-tags' },
+  { label: t('admin.nav.content'), to: '/admin/content', icon: 'i-lucide-newspaper' },
+  { label: t('admin.nav.legal'), to: '/admin/legal', icon: 'i-lucide-scale' },
+  { label: t('admin.nav.customers'), to: '/admin/customers', icon: 'i-lucide-user-round-search' },
+  { label: t('admin.nav.users'), to: '/admin/users', icon: 'i-lucide-users' },
+  { label: t('admin.nav.leads'), to: '/admin/leads', icon: 'i-lucide-contact' },
+  { label: t('admin.nav.audit'), to: '/admin/audit', icon: 'i-lucide-history' },
+  { label: t('admin.nav.settings'), to: '/admin/settings', icon: 'i-lucide-settings' },
+])
 const { signOut } = useAuth()
 async function onSignOut() { await signOut(); await navigateTo('/') }
 </script>
@@ -47,7 +48,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
           @click="onSignOut"
         >
           <UIcon name="i-lucide-log-out" class="size-4" />
-          Выйти
+          {{ $t('admin.nav.signOut') }}
         </button>
       </nav>
     </aside>

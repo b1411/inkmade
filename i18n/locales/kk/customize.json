@@ -1,0 +1,164 @@
+{
+  "customize": {
+    "page": {
+      "label": "Конструктор",
+      "headTitle": "Конструктор · {title} — INKMADE",
+      "notFound": "Бұйым табылмады",
+      "toProduct": "Тауарға",
+      "material": "Материал",
+      "size": "Өлшем",
+      "deleteSelected": "Таңдалғанды жою",
+      "canvasHint": "Аймақ шегінде сүйреп, өлшемі мен бұрылысын өзгерт.",
+      "saveDesign": "Дизайнды сақтау",
+      "print": "Принт",
+      "loadedForRework": "Дизайн өңдеуге жүктелді",
+      "addPrintOrText": "Принт немесе мәтін қосыңыз",
+      "zoneNotSelected": "Баспа аймағы таңдалмаған",
+      "selectSize": "Өлшемді таңдаңыз",
+      "savedToCabinet": "Дизайн кабинетте сақталды",
+      "saved": "Дизайн сақталды",
+      "savedGuestHint": "Кіріңіз — ол сіздің кабинетіңізде пайда болады.",
+      "saveFailed": "Сақтау мүмкін болмады",
+      "undo": "Болдырмау (Ctrl+Z)",
+      "redo": "Қайталау (Ctrl+Shift+Z)",
+      "quantity": "Саны",
+      "colorCount": "Макеттегі түстер",
+      "setup": "Бұйым"
+    },
+    "tools": {
+      "print": "Принт",
+      "text": "Мәтін",
+      "shapes": "Фигуралар"
+    },
+    "designPage": {
+      "label": "INKMADE дизайны",
+      "notFound": "Дизайн табылмады",
+      "seoTitle": "{title} — INKMADE дизайны",
+      "seoDescription": "INKMADE конструкторында жасалған дизайнды көр де, өзіңдікін жаса — бір данадан бастап сұраныс бойынша баспа.",
+      "ogDescription": "Өз принтіңді браузерде жаса да, бір данадан бастап тапсырыс бер.",
+      "previewAlt": "Дизайн — {title}",
+      "cta": "Ұнады ма? Өз принтіңді браузерде жина да, бір данадан бастап тапсырыс бер.",
+      "createOwn": "Өз принтіңді жасау",
+      "viewCatalog": "Каталогты қарау"
+    },
+    "designerPage": {
+      "notFound": "Витрина табылмады",
+      "defaultName": "INKMADE дизайнері",
+      "headTitle": "{name} — INKMADE принттері",
+      "seoDescription": "{name} дизайнерінің принттері INKMADE каталогында.",
+      "author": "Автор",
+      "prints": "Принттер ({count})",
+      "emptyTitle": "Әзірге принттер жоқ",
+      "emptyText": "Авторда әлі жарияланған принттер жоқ.",
+      "orderCta": "Бұйымды таңдап, принтпен тапсырыс беру"
+    },
+    "upload": {
+      "button": "Принт жүктеу",
+      "hint": "PNG, JPG, WEBP, GIF, AVIF немесе PDF · {maxMb} МБ дейін. Макс. өлшемде кемінде {dpiMin} DPI, мақсат {dpiTarget}.",
+      "rejected": "Файл қабылданбады",
+      "added": "Принт қосылды",
+      "addedDpi": "Принт қосылды · {dpi} DPI",
+      "noSizeData": "Баспа өлшемі туралы дерек жоқ",
+      "noSizeDataHint": "Тауарға max_print_mm берілмеген.",
+      "lowResolution": "Төмен ажыратымдылық",
+      "lowResolutionHint": "Бұйымның макс. өлшемінде {dpi} DPI (кемінде {dpiMin} қажет). Жоғары ажыратымдылықтағы файл жүктеңіз.",
+      "targetDpiHint": "Сапасы жақсырақ болу үшін мақсат — {dpiTarget} DPI.",
+      "processFailed": "Файлды өңдеу мүмкін болмады"
+    },
+    "price": {
+      "label": "Баға",
+      "base": "Бұйым",
+      "material": "Материал",
+      "method": "Басу әдісі",
+      "print": "Баспа",
+      "text": "Мәтін",
+      "colors": "Түстер (шелкография)",
+      "perUnit": "Бір данаға",
+      "total": "Барлығы",
+      "addToCart": "Себетке"
+    },
+    "layers": {
+      "label": "Қабаттар",
+      "textLayer": "Мәтін",
+      "libraryPrint": "Кітапханадан принт",
+      "uploadedPrint": "Жүктелген принт",
+      "duplicate": "Көшіру",
+      "delete": "Жою",
+      "toFront": "Алдыңғы планға",
+      "forward": "Жоғары",
+      "backward": "Төмен",
+      "toBack": "Артқы планға"
+    },
+    "inspector": {
+      "opacity": "Мөлдірлік",
+      "align": "Туралау",
+      "outline": "Контур",
+      "curve": "Доға иілісі",
+      "removeBg": "Фонды жою",
+      "bgProcessing": "Фон жойылуда…",
+      "bgDone": "Фон жойылды",
+      "bgFailed": "Фонды жою мүмкін болмады",
+      "fill": "Толтыру",
+      "pattern": "Плиткамен қайталау",
+      "patternScale": "Плитка масштабы",
+      "filters": "Сүзгілер",
+      "reset": "Тастау",
+      "brightness": "Жарықтық",
+      "contrast": "Контраст",
+      "saturation": "Қанықтық",
+      "posterize": "Постеризация",
+      "grayscale": "Ақ-қара",
+      "sepia": "Сепия",
+      "invert": "Инверсия",
+      "cm": "см",
+      "lock": "Бекіту",
+      "locked": "Бекітілген",
+      "align_left": "Аймақтың сол жиегіне",
+      "align_hcenter": "Ортаға (көлд.)",
+      "align_right": "Аймақтың оң жиегіне",
+      "align_top": "Аймақтың жоғарысына",
+      "align_vcenter": "Ортаға (тік.)",
+      "align_bottom": "Аймақтың төменіне"
+    },
+    "shapes": {
+      "label": "Фигуралар",
+      "rect": "Тіктөртбұрыш",
+      "circle": "Шеңбер",
+      "triangle": "Үшбұрыш",
+      "star": "Жұлдыз",
+      "heart": "Жүрек",
+      "line": "Сызық"
+    },
+    "text": {
+      "label": "Мәтін",
+      "placeholder": "Аты немесе жазу",
+      "fontSearch": "Қаріп іздеу…",
+      "previewLabel": "Алдын ала қарау: {value}",
+      "previewPlaceholder": "Сіздің мәтініңіз",
+      "add": "Мәтін қосу",
+      "enterText": "Мәтін енгізіңіз",
+      "noCyrillic": "Кириллицасы жоқ қаріп",
+      "noCyrillicHint": "«{font}» латиницаға арналған. Кириллица үшін басқа қаріп таңдаңыз."
+    },
+    "canvas": {
+      "zoomIn": "Жақындату",
+      "zoomOut": "Алыстату",
+      "zoomReset": "Масштабты тастау"
+    },
+    "zones": {
+      "label": "Басу аймағы"
+    },
+    "colors": {
+      "label": "Бұйым түсі"
+    },
+    "library": {
+      "button": "Кітапханадан таңдау",
+      "title": "Дайын принттер",
+      "loading": "Жүктелуде…",
+      "empty": "Кітапхана әзірге бос.",
+      "loadFailed": "Кітапхананы жүктеу мүмкін болмады",
+      "added": "«{title}» принті қосылды",
+      "loadPrintFailed": "Принтті жүктеу мүмкін болмады"
+    }
+  }
+}

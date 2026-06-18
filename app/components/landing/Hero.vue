@@ -3,6 +3,7 @@
 // справа крупное медиа. GSAP timeline входа (§8): лейбл → заголовок по строкам →
 // подзаголовок → кнопки (overshoot) → медиа (scale 1.06→1). Параллакс медиа при
 // скролле. Всё под гейтом reduced-motion; начальное скрытие — класс .hero-anim.
+const { t } = useI18n()
 const supabase = useSupabaseClient()
 const { get } = useSettings()
 
@@ -18,13 +19,13 @@ const [{ data: featured }, { data: content }] = await Promise.all([
     return data
   }),
   useAsyncData('hero-content', async () => ({
-    title: (await get<string>('landing.hero_title')) ?? 'ТВОЙ ПРИНТ. ТВОЯ ВЕЩЬ.',
-    subtitle: (await get<string>('landing.hero_subtitle')) ?? 'Собери в браузере, увидь цену сразу, получи через пару дней. Печатаем от одной штуки — без партий и переплат.',
+    title: (await get<string>('landing.hero_title')) ?? null,
+    subtitle: (await get<string>('landing.hero_subtitle')) ?? null,
   })),
 ])
 
-const heroTitle = computed(() => content.value?.title ?? 'ТВОЙ ПРИНТ. ТВОЯ ВЕЩЬ.')
-const heroSubtitle = computed(() => content.value?.subtitle ?? 'Собери в браузере, увидь цену сразу, получи через пару дней. Печатаем от одной штуки — без партий и переплат.')
+const heroTitle = computed(() => content.value?.title ?? t('landing.hero.title'))
+const heroSubtitle = computed(() => content.value?.subtitle ?? t('landing.hero.subtitle'))
 const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.value.alias}` : '/catalog'))
 const heroImage = computed(() => {
   const imgs = (featured.value?.product_images ?? []) as { url: string; is_primary: boolean }[]
@@ -88,7 +89,7 @@ onBeforeUnmount(() => ctx?.revert())
       <!-- Левая колонка: текст + CTA -->
       <div>
         <p data-hero="label" data-hero-y class="ink-label text-ink-cream/70">
-          MERCH STUDIO · ALMATY · EST. 2025
+          {{ $t('landing.hero.label') }}
         </p>
         <h1 data-hero="line" data-hero-y class="ink-hero text-hero mt-4">
           {{ heroTitle }}
@@ -98,14 +99,14 @@ onBeforeUnmount(() => ctx?.revert())
         </p>
         <div data-hero="cta" data-hero-y class="flex flex-wrap gap-3 mt-8">
           <UiAppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>
-            Создать свой принт
+            {{ $t('landing.hero.createCta') }}
           </UiAppButton>
           <UiAppButton to="/catalog" variant="secondary" size="xl" on-dark>
-            Смотреть каталог
+            {{ $t('landing.hero.catalogCta') }}
           </UiAppButton>
         </div>
         <p data-hero="note" class="ink-label text-ink-cream/55 mt-6">
-          Доставка по Казахстану · Оплата онлайн · Тираж от 1
+          {{ $t('landing.hero.note') }}
         </p>
       </div>
 
@@ -119,7 +120,7 @@ onBeforeUnmount(() => ctx?.revert())
           <NuxtImg
             v-if="heroImage"
             :src="heroImage"
-            :alt="featured?.title ?? 'Изделие с принтом INKMADE'"
+            :alt="featured?.title ?? $t('landing.hero.imageAlt')"
             class="w-full h-full object-cover"
             sizes="(max-width: 1024px) 90vw, 560px"
             loading="eager"

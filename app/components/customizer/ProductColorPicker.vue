@@ -23,7 +23,7 @@ watch(colors, (list) => {
 
 <template>
   <div v-if="colors.length">
-    <UiSectionLabel>Цвет изделия</UiSectionLabel>
+    <UiSectionLabel>{{ $t('customize.colors.label') }}</UiSectionLabel>
     <div class="flex gap-2 mt-2">
       <button
         v-for="c in colors"

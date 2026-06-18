@@ -7,6 +7,7 @@ import type { ProductWithRelations } from '~/types/models'
 const props = defineProps<{ product: ProductWithRelations }>()
 const emit = defineEmits<{ changed: [] }>()
 
+const { t } = useI18n()
 const { uploadCatalogImage, addImage, updateImage, replaceImageFile, reorderImages, deleteImage, setPrimaryImage } = useAdmin()
 const toast = useToast()
 
@@ -26,7 +27,7 @@ function mockupsFor(hex: string | null): ImageRow[] {
 // mockup-группы единым списком: цвета вариантов + «общие»
 const mockupGroups = computed(() => {
   const g = colors.value.map(c => ({ key: `c-${c.hex}`, title: c.name, hex: c.hex as string | null, images: mockupsFor(c.hex) }))
-  g.push({ key: 'common', title: 'Общие (без привязки к цвету)', hex: null, images: mockupsFor(null) })
+  g.push({ key: 'common', title: t('admin.wizard.images.commonGroup'), hex: null, images: mockupsFor(null) })
   return g
 })
 const lifestyle = computed(() =>
@@ -65,7 +66,7 @@ async function uploadFiles(files: FileList, ctx: { colorHex: string | null; kind
     }
     emit('changed')
   } catch (err) {
-    toast.add({ title: 'Ошибка загрузки', description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.images.uploadError'), description: (err as Error).message, color: 'error' })
   } finally {
     uploadingKey.value = null
   }
@@ -98,14 +99,14 @@ async function onCardDrop(groupKey: string, targetId: string, groupImages: Image
   if (from < 0 || to < 0) return
   ids.splice(to, 0, ids.splice(from, 1)[0]!)
   try { await reorderImages(ids); emit('changed') } catch (e) {
-    toast.add({ title: 'Ошибка порядка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.images.reorderError'), description: (e as Error).message, color: 'error' })
   }
 }
 
 // ── действия с фото (от MediaCard) ────────────────────────────────
 async function run(p: Promise<unknown>) {
   try { await p; emit('changed') } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.images.error'), description: (e as Error).message, color: 'error' })
   }
 }
 const onPrimary = (id: string) => run(setPrimaryImage(props.product.id, id))
@@ -115,7 +116,7 @@ const onAlt = (id: string, value: string) => run(updateImage(id, { alt: value.tr
 const onMoveColor = (id: string, hex: string | null) => run(updateImage(id, { color_hex: hex }))
 const onSetKind = (id: string, kind: 'mockup' | 'lifestyle') => run(updateImage(id, { kind }))
 async function onDelete(id: string) {
-  if (!confirm('Удалить это фото?')) return
+  if (!confirm(t('admin.wizard.images.deleteConfirm'))) return
   await run(deleteImage(id))
 }
 
@@ -159,7 +160,7 @@ async function bulkHide(hidden: boolean) {
 }
 async function bulkDelete() {
   if (!selected.value.size) return
-  if (!confirm(`Удалить выбранные фото (${selected.value.size})?`)) return
+  if (!confirm(t('admin.wizard.images.bulkDeleteConfirm', { count: selected.value.size }))) return
   await run(Promise.all([...selected.value].map(id => deleteImage(id))))
   exitSelection()
 }
@@ -172,25 +173,24 @@ async function bulkDelete() {
 
     <!-- панель управления медиа -->
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <UiSectionLabel>Медиа товара</UiSectionLabel>
+      <UiSectionLabel>{{ $t('admin.wizard.images.mediaLabel') }}</UiSectionLabel>
       <div v-if="!selectionMode">
-        <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-check-square" @click="selectionMode = true">Выбрать</UButton>
+        <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-check-square" @click="selectionMode = true">{{ $t('admin.wizard.images.select') }}</UButton>
       </div>
       <div v-else class="flex flex-wrap items-center gap-2">
-        <span class="text-caption text-ink-gray-600">Выбрано: {{ selected.size }}</span>
-        <UButton size="sm" color="neutral" variant="subtle" icon="i-lucide-eye-off" :disabled="!selected.size" @click="bulkHide(true)">Скрыть</UButton>
-        <UButton size="sm" color="neutral" variant="subtle" icon="i-lucide-eye" :disabled="!selected.size" @click="bulkHide(false)">Показать</UButton>
-        <UButton size="sm" color="error" variant="subtle" icon="i-lucide-trash-2" :disabled="!selected.size" @click="bulkDelete">Удалить</UButton>
-        <UButton size="sm" color="neutral" variant="ghost" @click="exitSelection">Готово</UButton>
+        <span class="text-caption text-ink-gray-600">{{ $t('admin.wizard.images.selected', { count: selected.size }) }}</span>
+        <UButton size="sm" color="neutral" variant="subtle" icon="i-lucide-eye-off" :disabled="!selected.size" @click="bulkHide(true)">{{ $t('admin.wizard.images.hide') }}</UButton>
+        <UButton size="sm" color="neutral" variant="subtle" icon="i-lucide-eye" :disabled="!selected.size" @click="bulkHide(false)">{{ $t('admin.wizard.images.show') }}</UButton>
+        <UButton size="sm" color="error" variant="subtle" icon="i-lucide-trash-2" :disabled="!selected.size" @click="bulkDelete">{{ $t('actions.delete') }}</UButton>
+        <UButton size="sm" color="neutral" variant="ghost" @click="exitSelection">{{ $t('admin.wizard.images.done') }}</UButton>
       </div>
     </div>
 
     <!-- фото изделия по цветам (mockup) -->
     <section>
-      <UiSectionLabel accent>Фото изделия по цветам</UiSectionLabel>
+      <UiSectionLabel accent>{{ $t('admin.wizard.images.colorPhotosTitle') }}</UiSectionLabel>
       <p class="text-caption text-ink-gray-600 mt-1">
-        Несколько ракурсов на цвет — перёд, спина, деталь. Перетащите файлы прямо в область цвета или нажмите «+».
-        Меню «⋯» на фото: основное, скрыть, привязать к цвету, тип, удалить. Порядок меняется перетаскиванием.
+        {{ $t('admin.wizard.images.colorPhotosHint') }}
       </p>
 
       <div class="space-y-6 mt-4">
@@ -210,7 +210,7 @@ async function bulkDelete() {
               :style="grp.hex ? { backgroundColor: grp.hex } : {}"
             />
             <span class="font-semibold text-caption">{{ grp.title }}</span>
-            <span class="ink-label text-ink-gray-400">{{ grp.images.length }} фото</span>
+            <span class="ink-label text-ink-gray-400">{{ $t('admin.wizard.images.photosCount', { count: grp.images.length }) }}</span>
           </div>
           <div class="grid grid-cols-3 sm:grid-cols-5 gap-3">
             <div
@@ -247,7 +247,7 @@ async function bulkDelete() {
               @click="pickClick(grp.hex, 'mockup', grp.key)"
             >
               <UIcon :name="uploadingKey === grp.key ? 'i-lucide-loader-circle' : 'i-lucide-plus'" :class="uploadingKey === grp.key ? 'size-5 animate-spin' : 'size-5'" />
-              <span class="text-[10px]">ракурс</span>
+              <span class="text-[10px]">{{ $t('admin.wizard.images.angle') }}</span>
             </button>
           </div>
         </div>
@@ -262,15 +262,15 @@ async function bulkDelete() {
       @dragleave="dragOverKey = null"
       @drop.prevent="onZoneDrop(lifestyleColor || null, 'lifestyle', 'life', $event)"
     >
-      <UiSectionLabel accent>На людях (lifestyle)</UiSectionLabel>
+      <UiSectionLabel accent>{{ $t('admin.wizard.images.lifestyleTitle') }}</UiSectionLabel>
       <p class="text-caption text-ink-gray-600 mt-1">
-        Фото изделия на человеке. Привяжите к цвету — покажется при его выборе; «общее» показывается всегда.
+        {{ $t('admin.wizard.images.lifestyleHint') }}
       </p>
 
       <div class="flex flex-wrap items-center gap-2 mt-3">
         <USelect
           v-model="lifestyleColor"
-          :items="[{ label: 'Общее (без цвета)', value: '' }, ...colors.map(c => ({ label: c.name, value: c.hex }))]"
+          :items="[{ label: $t('admin.wizard.images.common'), value: '' }, ...colors.map(c => ({ label: c.name, value: c.hex }))]"
           value-key="value"
           size="sm"
           class="w-52"
@@ -279,7 +279,7 @@ async function bulkDelete() {
           color="neutral" variant="subtle" size="sm" icon="i-lucide-camera"
           :loading="uploadingKey === 'life'"
           @click="pickClick(lifestyleColor || null, 'lifestyle', 'life')"
-        >Добавить фото на людях</UButton>
+        >{{ $t('admin.wizard.images.addLifestyle') }}</UButton>
       </div>
 
       <div v-if="lifestyle.length" class="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
@@ -306,11 +306,11 @@ async function bulkDelete() {
           />
         </div>
       </div>
-      <p v-else class="text-caption text-ink-gray-400 mt-3">Фото «на людях» пока нет.</p>
+      <p v-else class="text-caption text-ink-gray-400 mt-3">{{ $t('admin.wizard.images.lifestyleEmpty') }}</p>
     </section>
 
     <p v-if="!colors.length" class="text-ink-warning text-caption">
-      Сначала добавьте цвета на шаге «Варианты» — тогда появятся слоты для фото по цветам.
+      {{ $t('admin.wizard.images.needColors') }}
     </p>
 
     <!-- лайтбокс: крупное превью с навигацией -->
@@ -321,22 +321,22 @@ async function bulkDelete() {
           <UButton
             icon="i-lucide-chevron-left" color="neutral" variant="solid" size="lg"
             class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70"
-            aria-label="Предыдущее" @click="lbStep(-1)"
+            :aria-label="$t('admin.wizard.images.prev')" @click="lbStep(-1)"
           />
           <UButton
             icon="i-lucide-chevron-right" color="neutral" variant="solid" size="lg"
             class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70"
-            aria-label="Следующее" @click="lbStep(1)"
+            :aria-label="$t('admin.wizard.images.next')" @click="lbStep(1)"
           />
           <UButton
             icon="i-lucide-x" color="neutral" variant="solid" size="sm"
             class="absolute top-2 right-2 bg-black/50 hover:bg-black/70"
-            aria-label="Закрыть" @click="lightboxIndex = null"
+            :aria-label="$t('actions.close')" @click="lightboxIndex = null"
           />
           <div class="absolute bottom-0 inset-x-0 p-3 bg-linear-to-t from-black/70 to-transparent text-ink-cream flex items-center gap-2 text-caption">
             <span v-if="lbImage.label" class="ink-label">{{ lbImage.label }}</span>
-            <span v-if="lbImage.kind === 'lifestyle'" class="ink-label text-ink-cream/70">на людях</span>
-            <span v-if="lbImage.is_hidden" class="ink-label text-ink-cream/70">· скрыто</span>
+            <span v-if="lbImage.kind === 'lifestyle'" class="ink-label text-ink-cream/70">{{ $t('admin.wizard.images.lifestyleBadge') }}</span>
+            <span v-if="lbImage.is_hidden" class="ink-label text-ink-cream/70">{{ $t('admin.wizard.images.hiddenBadge') }}</span>
           </div>
         </div>
       </template>

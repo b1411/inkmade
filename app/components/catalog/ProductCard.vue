@@ -49,13 +49,13 @@ const secondary = computed(() => images.value.map(i => i.url).find(u => u !== pr
         class="absolute inset-x-3 bottom-3 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
       >
         <span class="block w-full text-center rounded-full bg-ink-burgundy text-ink-cream text-sm font-semibold py-2.5">
-          Кастомизировать
+          {{ $t('catalog.card.customize') }}
         </span>
       </div>
     </div>
     <div class="p-4">
       <p class="font-semibold group-hover:text-ink-burgundy transition-colors">{{ product.title }}</p>
-      <p class="text-ink-gray-600 mt-1">от {{ formatPrice(product.base_price) }}</p>
+      <p class="text-ink-gray-600 mt-1">{{ $t('catalog.card.priceFrom', { price: formatPrice(product.base_price) }) }}</p>
     </div>
   </UiAppCard>
 </template>

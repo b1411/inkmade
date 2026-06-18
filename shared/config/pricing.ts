@@ -11,6 +11,8 @@ export const PRICING = {
   textCost: 500,
   /** минимальный коэффициент площади, чтобы маленький принт не стоил почти 0 */
   minAreaCoef: 0.15,
+  /** ставка за каждый спот-цвет в шелкографии (число цветов в макете), ₸ */
+  silkscreenColorRate: 350,
 }
 
 /**
@@ -34,6 +36,10 @@ export interface PriceInput {
   zones: { mode: PrintMode; printAreaMm2: number; zoneAreaMm2: number }[]
   hasText: boolean
   quantity: number
+  /** шелкография: тарификация по числу спот-цветов в макете */
+  perColorPricing?: boolean
+  /** число цветов в макете (для шелкографии) */
+  colorCount?: number
 }
 
 export interface PriceBreakdown {
@@ -42,6 +48,7 @@ export interface PriceBreakdown {
   method: number
   print: number
   text: number
+  colors: number
   unitPrice: number
   total: number
 }
@@ -51,13 +58,18 @@ export function calcPrice(input: PriceInput): PriceBreakdown {
   const print = input.zones.reduce((sum, z) => sum + zonePrintCost(z.mode, z.printAreaMm2, z.zoneAreaMm2), 0)
   const text = input.hasText ? PRICING.textCost : 0
   const method = input.methodSurcharge ?? 0
-  const unitPrice = Math.round(input.basePrice + input.materialSurcharge + method + print + text)
+  // шелкография: каждый спот-цвет = отдельный трафарет → отдельная ставка
+  const colors = input.perColorPricing
+    ? PRICING.silkscreenColorRate * Math.max(0, Math.round(input.colorCount ?? 0))
+    : 0
+  const unitPrice = Math.round(input.basePrice + input.materialSurcharge + method + print + text + colors)
   return {
     base: input.basePrice,
     material: input.materialSurcharge,
     method,
     print,
     text,
+    colors,
     unitPrice,
     total: unitPrice * Math.max(1, input.quantity),
   }

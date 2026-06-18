@@ -6,7 +6,8 @@ import { formatDate } from '~/utils/format'
 // Источник — admin_list_users (phone + marketing_consent). Полноценной phone-OTP
 // авторизации нет; телефон собирается как поле профиля при регистрации.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
-useHead({ title: 'Лиды — INKMADE' })
+const { t } = useI18n()
+useHead({ title: t('admin.leads.headTitle') })
 
 const { listUsers } = useUsers()
 const toast = useToast()
@@ -30,21 +31,24 @@ const leads = computed(() => {
   })
 })
 
-const greeting = 'Здравствуйте! Это INKMADE 👕'
+const greeting = t('admin.leads.greeting')
 
 function exportCsv() {
   const rows = leads.value
   if (!rows.length) {
-    toast.add({ title: 'Нет лидов для экспорта', color: 'warning' })
+    toast.add({ title: t('admin.leads.noLeadsToExport'), color: 'warning' })
     return
   }
   const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
-  const header = ['Имя', 'Телефон', 'Email', 'Согласие на связь', 'Дата регистрации']
+  const header = [
+    t('admin.leads.csv.name'), t('admin.leads.csv.phone'), t('admin.leads.csv.email'),
+    t('admin.leads.csv.consent'), t('admin.leads.csv.registered'),
+  ]
   const lines = rows.map(u => [
     esc(u.full_name ?? ''),
     esc(formatKzPhone(u.phone)),
     esc(u.email ?? ''),
-    esc(u.marketing_consent ? 'да' : 'нет'),
+    esc(u.marketing_consent ? t('admin.leads.csv.yes') : t('admin.leads.csv.no')),
     esc(formatDate(u.created_at)),
   ].join(','))
   // BOM для корректной кириллицы в Excel
@@ -61,35 +65,35 @@ function exportCsv() {
 
 <template>
   <div>
-    <UiPageHeader label="CRM" title="Лиды" :description="`Контакты клиентов для связи в WhatsApp и по телефону. Всего: ${leads.length}.`">
+    <UiPageHeader :label="$t('admin.leads.label')" :title="$t('admin.leads.title')" :description="$t('admin.leads.description', { n: leads.length })">
       <template #actions>
-        <UButton icon="i-lucide-download" color="neutral" variant="subtle" @click="exportCsv">Экспорт CSV</UButton>
+        <UButton icon="i-lucide-download" color="neutral" variant="subtle" @click="exportCsv">{{ $t('admin.leads.exportCsv') }}</UButton>
       </template>
     </UiPageHeader>
 
     <div class="flex flex-wrap items-center gap-3 mb-4">
-      <UInput v-model="search" icon="i-lucide-search" placeholder="Поиск по имени, телефону, email" class="w-72" />
-      <UCheckbox v-model="onlyConsent" label="Только давшие согласие на связь" />
+      <UInput v-model="search" icon="i-lucide-search" :placeholder="$t('admin.leads.searchPlaceholder')" class="w-72" />
+      <UCheckbox v-model="onlyConsent" :label="$t('admin.leads.onlyConsent')" />
     </div>
 
-    <div v-if="pending" class="py-10 text-center text-ink-gray-600">Загрузка…</div>
+    <div v-if="pending" class="py-10 text-center text-ink-gray-600">{{ $t('states.loading') }}</div>
 
     <UiEmptyState
       v-else-if="!leads.length"
       icon="i-lucide-users"
-      title="Пока нет лидов"
-      description="Контакты появятся после регистрации клиентов с указанием телефона."
+      :title="$t('admin.leads.empty.title')"
+      :description="$t('admin.leads.empty.description')"
     />
 
     <table v-else class="w-full text-left border-collapse">
       <thead>
         <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
-          <th class="py-2 pr-4">Имя</th>
-          <th class="py-2 pr-4">Телефон</th>
-          <th class="py-2 pr-4">Email</th>
-          <th class="py-2 pr-4">Согласие</th>
-          <th class="py-2 pr-4">Дата</th>
-          <th class="py-2 text-right">Связаться</th>
+          <th class="py-2 pr-4">{{ $t('admin.leads.table.name') }}</th>
+          <th class="py-2 pr-4">{{ $t('admin.leads.table.phone') }}</th>
+          <th class="py-2 pr-4">{{ $t('admin.leads.table.email') }}</th>
+          <th class="py-2 pr-4">{{ $t('admin.leads.table.consent') }}</th>
+          <th class="py-2 pr-4">{{ $t('admin.leads.table.date') }}</th>
+          <th class="py-2 text-right">{{ $t('admin.leads.table.contact') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -98,8 +102,8 @@ function exportCsv() {
           <td class="py-3 pr-4 font-mono text-sm">{{ formatKzPhone(u.phone) }}</td>
           <td class="py-3 pr-4 text-ink-gray-600">{{ u.email }}</td>
           <td class="py-3 pr-4">
-            <UBadge v-if="u.marketing_consent" color="success" variant="subtle" size="sm">да</UBadge>
-            <UBadge v-else color="neutral" variant="subtle" size="sm">нет</UBadge>
+            <UBadge v-if="u.marketing_consent" color="success" variant="subtle" size="sm">{{ $t('admin.leads.yes') }}</UBadge>
+            <UBadge v-else color="neutral" variant="subtle" size="sm">{{ $t('admin.leads.no') }}</UBadge>
           </td>
           <td class="py-3 pr-4 text-ink-gray-600 text-sm">{{ formatDate(u.created_at) }}</td>
           <td class="py-3 text-right whitespace-nowrap">
@@ -112,7 +116,7 @@ function exportCsv() {
               variant="subtle"
               icon="i-lucide-message-circle"
               class="mr-1"
-            >WhatsApp</UButton>
+            >{{ $t('admin.leads.whatsApp') }}</UButton>
             <UButton
               v-if="telLink(u.phone)"
               :to="telLink(u.phone)!"
@@ -120,7 +124,7 @@ function exportCsv() {
               color="neutral"
               variant="ghost"
               icon="i-lucide-phone"
-            >Позвонить</UButton>
+            >{{ $t('admin.leads.call') }}</UButton>
           </td>
         </tr>
       </tbody>

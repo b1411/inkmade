@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Категории каталога (§6) — управление без кода. Только admin.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
-useHead({ title: 'Категории — INKMADE' })
+const { t } = useI18n()
+useHead({ title: t('admin.categories.headTitle') })
 
 const { listAll, create, update, remove } = useCategories()
 const toast = useToast()
@@ -34,17 +35,17 @@ function startEdit(c: NonNullable<typeof cats.value>[number]) {
 function reset() { Object.assign(form, blank()); slugTouched.value = false }
 
 async function onSubmit() {
-  if (!form.title.trim() || !form.slug.trim()) { toast.add({ title: 'Название и slug обязательны', color: 'warning' }); return }
+  if (!form.title.trim() || !form.slug.trim()) { toast.add({ title: t('admin.categories.validationRequired'), color: 'warning' }); return }
   saving.value = true
   try {
     const payload = { title: form.title.trim(), slug: form.slug.trim(), icon: form.icon || null, sort_order: form.sort_order, is_active: form.is_active }
     if (editing.value) await update(form.id, payload)
     else await create(payload)
-    toast.add({ title: editing.value ? 'Категория обновлена' : 'Категория добавлена', color: 'success' })
+    toast.add({ title: editing.value ? t('admin.categories.updated') : t('admin.categories.added'), color: 'success' })
     reset()
     refresh()
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.categories.error'), description: (e as Error).message, color: 'error' })
   } finally {
     saving.value = false
   }
@@ -52,21 +53,21 @@ async function onSubmit() {
 
 async function toggleActive(c: NonNullable<typeof cats.value>[number]) {
   try { await update(c.id, { is_active: !c.is_active }); refresh() }
-  catch (e) { toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('admin.categories.error'), description: (e as Error).message, color: 'error' }) }
 }
 
 async function onDelete(id: string, title: string) {
-  if (!confirm(`Удалить категорию «${title}»?`)) return
-  try { await remove(id); toast.add({ title: 'Удалена', color: 'success' }); refresh() }
+  if (!confirm(t('admin.categories.deleteConfirm', { title }))) return
+  try { await remove(id); toast.add({ title: t('admin.categories.deleted'), color: 'success' }); refresh() }
   catch {
-    toast.add({ title: 'Нельзя удалить', description: 'В категории есть товары — перенесите или удалите их сначала.', color: 'error' })
+    toast.add({ title: t('admin.categories.deleteForbidden'), description: t('admin.categories.deleteForbiddenText'), color: 'error' })
   }
 }
 </script>
 
 <template>
   <div>
-    <UiPageHeader label="Каталог" title="Категории" description="Управление категориями каталога — порядок, видимость и иконки." />
+    <UiPageHeader :label="$t('admin.categories.label')" :title="$t('admin.categories.title')" :description="$t('admin.categories.description')" />
 
     <div class="grid lg:grid-cols-[1fr_320px] gap-8">
       <div>
@@ -77,8 +78,8 @@ async function onDelete(id: string, title: string) {
         <UiEmptyState
           v-else-if="!cats?.length"
           icon="i-lucide-folder-tree"
-          title="Категорий нет"
-          text="Добавьте первую категорию через форму справа."
+          :title="$t('admin.categories.emptyTitle')"
+          :text="$t('admin.categories.emptyText')"
         />
 
         <UiPanel v-else :padded="false">
@@ -86,10 +87,10 @@ async function onDelete(id: string, title: string) {
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
-                  <th class="px-6 py-3">Название</th>
-                  <th class="px-6 py-3">Slug</th>
-                  <th class="px-6 py-3">Порядок</th>
-                  <th class="px-6 py-3">Статус</th>
+                  <th class="px-6 py-3">{{ $t('admin.categories.colName') }}</th>
+                  <th class="px-6 py-3">{{ $t('admin.categories.colSlug') }}</th>
+                  <th class="px-6 py-3">{{ $t('admin.categories.colOrder') }}</th>
+                  <th class="px-6 py-3">{{ $t('admin.categories.colStatus') }}</th>
                   <th class="px-6 py-3" />
                 </tr>
               </thead>
@@ -101,7 +102,7 @@ async function onDelete(id: string, title: string) {
                   <td class="px-6 py-3 ink-label text-ink-gray-400">{{ c.slug }}</td>
                   <td class="px-6 py-3">{{ c.sort_order }}</td>
                   <td class="px-6 py-3">
-                    <UBadge :color="c.is_active ? 'success' : 'neutral'" variant="subtle">{{ c.is_active ? 'Активна' : 'Скрыта' }}</UBadge>
+                    <UBadge :color="c.is_active ? 'success' : 'neutral'" variant="subtle">{{ c.is_active ? $t('admin.categories.statusActive') : $t('admin.categories.statusHidden') }}</UBadge>
                   </td>
                   <td class="px-6 py-3 text-right whitespace-nowrap">
                     <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-pencil" @click="startEdit(c)" />
@@ -115,26 +116,26 @@ async function onDelete(id: string, title: string) {
         </UiPanel>
       </div>
 
-      <UiPanel class="h-fit" :title="editing ? 'Редактировать' : 'Новая категория'" icon="i-lucide-folder-plus">
+      <UiPanel class="h-fit" :title="editing ? $t('admin.categories.formEdit') : $t('admin.categories.formNew')" icon="i-lucide-folder-plus">
         <template #actions>
-          <UButton v-if="editing" size="xs" color="neutral" variant="ghost" @click="reset">Новая</UButton>
+          <UButton v-if="editing" size="xs" color="neutral" variant="ghost" @click="reset">{{ $t('admin.categories.newButton') }}</UButton>
         </template>
         <div class="space-y-4">
-          <UFormField label="Название" required>
-            <UInput v-model="form.title" placeholder="Текстиль" class="w-full" />
+          <UFormField :label="$t('admin.categories.fieldName')" required>
+            <UInput v-model="form.title" :placeholder="$t('admin.categories.namePlaceholder')" class="w-full" />
           </UFormField>
-          <UFormField label="Slug (в URL)" required>
-            <UInput v-model="form.slug" placeholder="textile" class="w-full" @input="slugTouched = true" />
+          <UFormField :label="$t('admin.categories.fieldSlug')" required>
+            <UInput v-model="form.slug" :placeholder="$t('admin.categories.slugPlaceholder')" class="w-full" @input="slugTouched = true" />
           </UFormField>
-          <UFormField label="Иконка (lucide)">
-            <UInput v-model="form.icon" placeholder="i-lucide-shirt" class="w-full" />
+          <UFormField :label="$t('admin.categories.fieldIcon')">
+            <UInput v-model="form.icon" :placeholder="$t('admin.categories.iconPlaceholder')" class="w-full" />
           </UFormField>
-          <UFormField label="Порядок сортировки">
+          <UFormField :label="$t('admin.categories.fieldSortOrder')">
             <UInput v-model.number="form.sort_order" type="number" class="w-full" />
           </UFormField>
-          <UCheckbox v-model="form.is_active" label="Активна (видна на сайте)" />
-          <UButton color="primary" block :loading="saving" @click="onSubmit">{{ editing ? 'Сохранить' : 'Добавить' }}</UButton>
-          <p class="text-caption text-ink-gray-400">Иконки: lucide.dev. Категорию с товарами удалить нельзя.</p>
+          <UCheckbox v-model="form.is_active" :label="$t('admin.categories.activeLabel')" />
+          <UButton color="primary" block :loading="saving" @click="onSubmit">{{ editing ? $t('actions.save') : $t('actions.add') }}</UButton>
+          <p class="text-caption text-ink-gray-400">{{ $t('admin.categories.hint') }}</p>
         </div>
       </UiPanel>
     </div>

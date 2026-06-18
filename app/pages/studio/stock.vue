@@ -4,6 +4,7 @@
 definePageMeta({ layout: 'studio', middleware: 'studio-role' })
 const { listStock, addMovement, listMovements } = useStock()
 const toast = useToast()
+const { t } = useI18n()
 
 const { data: stock, refresh, pending } = await useAsyncData('studio-stock', () => listStock())
 
@@ -13,15 +14,20 @@ async function markDefect(variantId: string) {
   try {
     await addMovement(variantId, -1, 'defect')
     await refresh()
-    toast.add({ title: 'Брак списан (−1)', color: 'success' })
+    toast.add({ title: t('studio.stock.toast.defectWrittenOff'), color: 'success' })
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.stock.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
   } finally { busy.value = null }
 }
 const low = (n: number) => n <= 5
 
 // история движений по варианту (CRM §5.1)
-const REASON_LABELS: Record<string, string> = { purchase: 'Приход', correction: 'Коррекция', defect: 'Брак', order: 'Заказ' }
+const REASON_LABELS = computed<Record<string, string>>(() => ({
+  purchase: t('studio.stock.reason.purchase'),
+  correction: t('studio.stock.reason.correction'),
+  defect: t('studio.stock.reason.defect'),
+  order: t('studio.stock.reason.order'),
+}))
 const history = reactive({ open: false, title: '', loading: false, rows: [] as { id: string; delta: number; reason: string; created_at: string }[] })
 async function openHistory(variantId: string, label: string) {
   history.open = true
@@ -31,7 +37,7 @@ async function openHistory(variantId: string, label: string) {
   try {
     history.rows = await listMovements(variantId)
   } catch (e) {
-    toast.add({ title: 'Не удалось загрузить историю', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.stock.toast.historyError'), description: (e as Error).message, color: 'error' })
   } finally {
     history.loading = false
   }
@@ -40,7 +46,7 @@ async function openHistory(variantId: string, label: string) {
 
 <template>
   <div>
-    <UiPageHeader label="Склад" title="Склад заготовок" description="Остатки по вариантам, история движений и списание брака." />
+    <UiPageHeader :label="$t('studio.stock.label')" :title="$t('studio.stock.title')" :description="$t('studio.stock.description')" />
     <div v-if="pending" class="space-y-2">
       <UiSkeleton v-for="n in 6" :key="n" rounded="rounded-md" class="h-10" />
     </div>
@@ -49,8 +55,8 @@ async function openHistory(variantId: string, label: string) {
     <table class="w-full text-caption">
       <thead class="text-ink-gray-500 ink-label">
         <tr class="border-b border-ink-gray-200">
-          <th class="text-left p-3">Товар</th><th class="text-left">Цвет / размер</th><th class="text-left">SKU</th>
-          <th class="text-right">Остаток</th><th></th>
+          <th class="text-left p-3">{{ $t('studio.stock.table.product') }}</th><th class="text-left">{{ $t('studio.stock.table.colorSize') }}</th><th class="text-left">{{ $t('studio.stock.table.sku') }}</th>
+          <th class="text-right">{{ $t('studio.stock.table.stock') }}</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -65,8 +71,8 @@ async function openHistory(variantId: string, label: string) {
           <td class="font-mono text-ink-gray-500">{{ v.sku }}</td>
           <td class="text-right font-semibold" :class="low(v.stock) ? 'text-ink-error' : ''">{{ v.stock }}</td>
           <td class="text-right whitespace-nowrap">
-            <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-history" @click="openHistory(v.id, `${v.products?.title} · ${v.color_name}/${v.size}`)">История</UButton>
-            <UButton size="xs" color="error" variant="ghost" icon="i-lucide-triangle-alert" :loading="busy === v.id" @click="markDefect(v.id)">Брак</UButton>
+            <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-history" @click="openHistory(v.id, `${v.products?.title} · ${v.color_name}/${v.size}`)">{{ $t('studio.stock.history') }}</UButton>
+            <UButton size="xs" color="error" variant="ghost" icon="i-lucide-triangle-alert" :loading="busy === v.id" @click="markDefect(v.id)">{{ $t('studio.stock.defect') }}</UButton>
           </td>
         </tr>
       </tbody>
@@ -75,10 +81,10 @@ async function openHistory(variantId: string, label: string) {
     </UiPanel>
 
     <!-- история движений склада -->
-    <UModal v-model:open="history.open" :title="`История: ${history.title}`">
+    <UModal v-model:open="history.open" :title="$t('studio.stock.historyTitle', { title: history.title })">
       <template #body>
-        <div v-if="history.loading" class="py-6 text-center text-ink-gray-600">Загрузка…</div>
-        <div v-else-if="!history.rows.length" class="py-6 text-center text-ink-gray-600 text-caption">Движений нет.</div>
+        <div v-if="history.loading" class="py-6 text-center text-ink-gray-600">{{ $t('states.loading') }}</div>
+        <div v-else-if="!history.rows.length" class="py-6 text-center text-ink-gray-600 text-caption">{{ $t('studio.stock.historyEmpty') }}</div>
         <table v-else class="w-full text-caption">
           <tbody>
             <tr v-for="m in history.rows" :key="m.id" class="border-b border-ink-gray-200/60">

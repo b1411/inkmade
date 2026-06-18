@@ -716,6 +716,7 @@ export type Database = {
       print_library: {
         Row: {
           author: string | null
+          compatible_methods: string[]
           file_url: string
           id: string
           is_active: boolean
@@ -729,6 +730,7 @@ export type Database = {
         }
         Insert: {
           author?: string | null
+          compatible_methods?: string[]
           file_url: string
           id?: string
           is_active?: boolean
@@ -742,6 +744,7 @@ export type Database = {
         }
         Update: {
           author?: string | null
+          compatible_methods?: string[]
           file_url?: string
           id?: string
           is_active?: boolean

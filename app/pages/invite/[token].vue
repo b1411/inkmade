@@ -9,6 +9,7 @@ const route = useRoute()
 const token = route.params.token as string
 const supabase = useSupabaseClient<Database>()
 const { fetchProfile } = useAuth()
+const { t } = useI18n()
 
 const state = ref<'loading' | 'ok' | 'used' | 'error'>('loading')
 const message = ref('')
@@ -21,10 +22,10 @@ onMounted(async () => {
     if (res?.ok) {
       await fetchProfile(true)
       state.value = 'ok'
-      message.value = `Вы дизайнер INKMADE. Персональная ставка роялти: ${res.royalty_pct}%.`
+      message.value = t('legal.invite.okMessage', { pct: res.royalty_pct })
     } else {
       state.value = 'used'
-      message.value = 'Это приглашение уже использовано или отозвано.'
+      message.value = t('legal.invite.used')
     }
   } catch (e) {
     state.value = 'error'
@@ -35,22 +36,22 @@ onMounted(async () => {
 
 <template>
   <div class="max-w-md mx-auto py-12 text-center space-y-4">
-    <UiSectionLabel accent>Приглашение</UiSectionLabel>
+    <UiSectionLabel accent>{{ $t('legal.invite.label') }}</UiSectionLabel>
     <div v-if="state === 'loading'" class="flex flex-col items-center gap-3 text-ink-gray-600 py-6">
       <UIcon name="i-lucide-loader-circle" class="size-7 animate-spin text-ink-burgundy" />
-      Активируем приглашение…
+      {{ $t('legal.invite.loading') }}
     </div>
 
     <template v-else-if="state === 'ok'">
-      <h1 class="ink-display text-h2">Добро пожаловать в студию!</h1>
+      <h1 class="ink-display text-h2">{{ $t('legal.invite.okTitle') }}</h1>
       <p class="text-ink-gray-600">{{ message }}</p>
-      <UButton to="/studio-designer" color="primary" size="lg" icon="i-lucide-palette">В кабинет дизайнера</UButton>
+      <UButton to="/studio-designer" color="primary" size="lg" icon="i-lucide-palette">{{ $t('legal.invite.toStudio') }}</UButton>
     </template>
 
     <template v-else>
-      <h1 class="ink-display text-h2">Не удалось активировать</h1>
+      <h1 class="ink-display text-h2">{{ $t('legal.invite.errorTitle') }}</h1>
       <p class="text-ink-gray-600">{{ message }}</p>
-      <UButton to="/" color="neutral" variant="subtle">На главную</UButton>
+      <UButton to="/" color="neutral" variant="subtle">{{ $t('legal.invite.toHome') }}</UButton>
     </template>
   </div>
 </template>

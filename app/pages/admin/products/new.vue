@@ -4,7 +4,7 @@ definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 
 <template>
   <div>
-    <UiPageHeader label="Новый товар" title="Создание товара" />
+    <UiPageHeader :label="$t('admin.products.newPageLabel')" :title="$t('admin.products.newPageTitle')" />
     <AdminProductWizard />
   </div>
 </template>

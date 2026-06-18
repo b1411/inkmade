@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 
+const { t } = useI18n()
 const { listProducts, deleteProduct } = useAdmin()
 const { listAll: listCategories } = useCategories()
 const toast = useToast()
@@ -12,22 +13,22 @@ const categoryLabel = (v: string) =>
   categories.value?.find(c => c.slug === v)?.title ?? v
 
 async function onDelete(id: string, title: string) {
-  if (!confirm(`Удалить товар «${title}»? Действие необратимо.`)) return
+  if (!confirm(t('admin.products.deleteConfirm', { title }))) return
   try {
     await deleteProduct(id)
-    toast.add({ title: 'Товар удалён', color: 'success' })
+    toast.add({ title: t('admin.products.deleted'), color: 'success' })
     refresh()
   } catch (e) {
-    toast.add({ title: 'Ошибка удаления', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.products.deleteError'), description: (e as Error).message, color: 'error' })
   }
 }
 </script>
 
 <template>
   <div>
-    <UiPageHeader label="Каталог" title="Товары" description="Управление товарами магазина — публикация, цены и категории.">
+    <UiPageHeader :label="$t('admin.products.label')" :title="$t('admin.products.title')" :description="$t('admin.products.description')">
       <template #actions>
-        <UButton to="/admin/products/new" color="primary" icon="i-lucide-plus">Новый товар</UButton>
+        <UButton to="/admin/products/new" color="primary" icon="i-lucide-plus">{{ $t('admin.products.newProduct') }}</UButton>
       </template>
     </UiPageHeader>
 
@@ -38,10 +39,10 @@ async function onDelete(id: string, title: string) {
     <UiEmptyState
       v-else-if="!products?.length"
       icon="i-lucide-package"
-      title="Товаров пока нет"
-      text="Создайте первый товар, чтобы он появился в каталоге."
+      :title="$t('admin.products.emptyTitle')"
+      :text="$t('admin.products.emptyText')"
     >
-      <UButton to="/admin/products/new" color="primary" icon="i-lucide-plus">Новый товар</UButton>
+      <UButton to="/admin/products/new" color="primary" icon="i-lucide-plus">{{ $t('admin.products.newProduct') }}</UButton>
     </UiEmptyState>
 
     <UiPanel v-else :padded="false">
@@ -49,10 +50,10 @@ async function onDelete(id: string, title: string) {
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
-              <th class="px-6 py-3">Название</th>
-              <th class="px-6 py-3">Категория</th>
-              <th class="px-6 py-3">Цена</th>
-              <th class="px-6 py-3">Статус</th>
+              <th class="px-6 py-3">{{ $t('admin.products.colName') }}</th>
+              <th class="px-6 py-3">{{ $t('admin.products.colCategory') }}</th>
+              <th class="px-6 py-3">{{ $t('admin.products.colPrice') }}</th>
+              <th class="px-6 py-3">{{ $t('admin.products.colStatus') }}</th>
               <th class="px-6 py-3" />
             </tr>
           </thead>
@@ -63,10 +64,10 @@ async function onDelete(id: string, title: string) {
                 <span class="ink-label text-ink-gray-400 ml-2">{{ p.alias }}</span>
               </td>
               <td class="px-6 py-3">{{ categoryLabel(p.category) }}</td>
-              <td class="px-6 py-3">{{ p.base_price }} ₸</td>
+              <td class="px-6 py-3">{{ p.base_price }} {{ $t('units.currency') }}</td>
               <td class="px-6 py-3">
                 <UBadge :color="p.is_active ? 'success' : 'neutral'" variant="subtle">
-                  {{ p.is_active ? 'Опубликован' : 'Черновик' }}
+                  {{ p.is_active ? $t('admin.products.statusPublished') : $t('admin.products.statusDraft') }}
                 </UBadge>
               </td>
               <td class="px-6 py-3 text-right">

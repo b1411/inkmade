@@ -3,7 +3,8 @@ import type { UserRole } from '~/types/models'
 
 // Пользователи и роли (§8.1). Только admin. Роль определяет доступ к кабинетам.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
-useHead({ title: 'Пользователи — INKMADE' })
+const { t } = useI18n()
+useHead({ title: t('admin.users.headTitle') })
 
 const { listUsers, setUserRole } = useUsers()
 const me = useSupabaseUser()
@@ -11,12 +12,12 @@ const toast = useToast()
 
 const { data: users, refresh, pending } = await useAsyncData('admin-users', () => listUsers())
 
-const ROLES: { label: string; value: UserRole }[] = [
-  { label: 'Покупатель', value: 'customer' },
-  { label: 'Оператор (производство)', value: 'operator' },
-  { label: 'Администратор', value: 'admin' },
-]
-const roleLabel = (r: string) => ROLES.find(x => x.value === r)?.label ?? r
+const ROLES = computed<{ label: string; value: UserRole }[]>(() => [
+  { label: t('admin.users.roles.customer'), value: 'customer' },
+  { label: t('admin.users.roles.operator'), value: 'operator' },
+  { label: t('admin.users.roles.admin'), value: 'admin' },
+])
+const roleLabel = (r: string) => ROLES.value.find(x => x.value === r)?.label ?? r
 
 // локальный выбор роли по каждому пользователю (до сохранения)
 const draft = reactive<Record<string, UserRole>>({})
@@ -29,10 +30,10 @@ async function save(userId: string) {
   savingId.value = userId
   try {
     await setUserRole(userId, draft[userId]!)
-    toast.add({ title: 'Роль обновлена', color: 'success' })
+    toast.add({ title: t('admin.users.roleUpdated'), color: 'success' })
     await refresh()
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.users.error'), description: (e as Error).message, color: 'error' })
   } finally {
     savingId.value = null
   }
@@ -43,9 +44,9 @@ const changed = (u: { id: string; role: string }) => draft[u.id] !== u.role
 <template>
   <div>
     <UiPageHeader
-      label="Доступ"
-      title="Пользователи и роли"
-      description="Оператор видит производственный кабинет /studio, администратор — этот раздел /admin."
+      :label="$t('admin.users.label')"
+      :title="$t('admin.users.title')"
+      :description="$t('admin.users.description')"
     />
 
     <div v-if="pending" class="space-y-3">
@@ -57,9 +58,9 @@ const changed = (u: { id: string; role: string }) => draft[u.id] !== u.role
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
-              <th class="px-6 py-3">Email</th>
-              <th class="px-6 py-3">Имя</th>
-              <th class="px-6 py-3">Роль</th>
+              <th class="px-6 py-3">{{ $t('admin.users.table.email') }}</th>
+              <th class="px-6 py-3">{{ $t('admin.users.table.name') }}</th>
+              <th class="px-6 py-3">{{ $t('admin.users.table.role') }}</th>
               <th class="px-6 py-3" />
             </tr>
           </thead>
@@ -67,7 +68,7 @@ const changed = (u: { id: string; role: string }) => draft[u.id] !== u.role
             <tr v-for="u in users" :key="u.id" class="border-b border-ink-gray-200 last:border-b-0">
               <td class="px-6 py-3">
                 {{ u.email }}
-                <UBadge v-if="u.id === me?.id" color="primary" variant="subtle" size="sm" class="ml-1">вы</UBadge>
+                <UBadge v-if="u.id === me?.id" color="primary" variant="subtle" size="sm" class="ml-1">{{ $t('admin.users.you') }}</UBadge>
               </td>
               <td class="px-6 py-3">{{ u.full_name ?? '—' }}</td>
               <td class="px-6 py-3">
@@ -89,7 +90,7 @@ const changed = (u: { id: string; role: string }) => draft[u.id] !== u.role
                   :disabled="!changed(u)"
                   :loading="savingId === u.id"
                   @click="save(u.id)"
-                >Сохранить</UButton>
+                >{{ $t('actions.save') }}</UButton>
               </td>
             </tr>
           </tbody>
@@ -98,7 +99,7 @@ const changed = (u: { id: string; role: string }) => draft[u.id] !== u.role
     </UiPanel>
 
     <p class="text-caption text-ink-gray-400 mt-4">
-      Свою роль изменить нельзя — это защита от случайной потери доступа администратором.
+      {{ $t('admin.users.note') }}
     </p>
   </div>
 </template>

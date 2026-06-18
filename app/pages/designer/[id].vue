@@ -3,6 +3,7 @@ import type { Database } from '~/types/database.types'
 
 // Публичная витрина дизайнера (CRM §4.4). Открыта всем: profile.is_public + одобренные принты.
 // RLS: designer_profiles виден при is_public; print_library — approved+active.
+const { t } = useI18n()
 const route = useRoute()
 const id = route.params.id as string
 const supabase = useSupabaseClient<Database>()
@@ -25,14 +26,14 @@ const { data, error } = await useAsyncData(`vitrine-${id}`, async () => {
 })
 
 if (!data.value || error.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Витрина не найдена' })
+  throw createError({ statusCode: 404, statusMessage: t('customize.designerPage.notFound') })
 }
 
-const name = computed(() => data.value?.profile.display_name || 'Дизайнер INKMADE')
-useHead(() => ({ title: `${name.value} — принты на INKMADE` }))
+const name = computed(() => data.value?.profile.display_name || t('customize.designerPage.defaultName'))
+useHead(() => ({ title: t('customize.designerPage.headTitle', { name: name.value }) }))
 useSeoMeta({
-  title: () => `${name.value} — принты на INKMADE`,
-  description: () => data.value?.profile.bio || `Принты дизайнера ${name.value} в каталоге INKMADE.`,
+  title: () => t('customize.designerPage.headTitle', { name: name.value }),
+  description: () => data.value?.profile.bio || t('customize.designerPage.seoDescription', { name: name.value }),
   ogTitle: () => name.value,
 })
 </script>
@@ -48,7 +49,7 @@ useSeoMeta({
         </div>
       </div>
       <div>
-        <UiSectionLabel accent>Автор</UiSectionLabel>
+        <UiSectionLabel accent>{{ $t('customize.designerPage.author') }}</UiSectionLabel>
         <h1 class="ink-display text-h2">{{ name }}</h1>
         <p v-if="data.profile.bio" class="text-caption text-ink-gray-600 mt-1 max-w-prose">{{ data.profile.bio }}</p>
       </div>
@@ -56,12 +57,12 @@ useSeoMeta({
 
     <!-- принты автора -->
     <div>
-      <UiSectionLabel>Принты ({{ data.prints.length }})</UiSectionLabel>
+      <UiSectionLabel>{{ $t('customize.designerPage.prints', { count: data.prints.length }) }}</UiSectionLabel>
       <UiEmptyState
         v-if="!data.prints.length"
         icon="i-lucide-image"
-        title="Пока нет принтов"
-        text="У автора ещё нет опубликованных принтов."
+        :title="$t('customize.designerPage.emptyTitle')"
+        :text="$t('customize.designerPage.emptyText')"
       />
       <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-3">
         <div v-for="p in data.prints" :key="p.id" class="border border-ink-gray-200 rounded-lg shadow-sm overflow-hidden group">
@@ -76,7 +77,7 @@ useSeoMeta({
     </div>
 
     <UButton to="/catalog" color="primary" variant="subtle" icon="i-lucide-shopping-bag">
-      Выбрать изделие и заказать с принтом
+      {{ $t('customize.designerPage.orderCta') }}
     </UButton>
   </section>
 </template>

@@ -4,15 +4,14 @@ import type { NuxtError } from '#app'
 
 const props = defineProps<{ error: NuxtError }>()
 
+const { t } = useI18n()
 const is404 = computed(() => props.error?.statusCode === 404)
-const title = computed(() => (is404.value ? 'Страница не нашлась' : 'Что-то пошло не так'))
+const title = computed(() => (is404.value ? t('errorPage.notFoundTitle') : t('errorPage.genericTitle')))
 const text = computed(() =>
-  is404.value
-    ? 'Возможно, ссылка устарела или мы что-то переименовали. Вернись на главную или загляни в каталог.'
-    : 'Мы уже разбираемся. Попробуй обновить страницу или вернуться на главную.',
+  is404.value ? t('errorPage.notFoundText') : t('errorPage.genericText'),
 )
 
-useHead({ title: `${title.value} — INKMADE` })
+useHead({ title: () => `${title.value} — INKMADE` })
 
 function goHome() {
   clearError({ redirect: '/' })
@@ -31,8 +30,8 @@ function goCatalog() {
     <h1 class="ink-display text-h2 mt-2">{{ title }}</h1>
     <p class="text-lead text-ink-cream/75 mt-4 max-w-md">{{ text }}</p>
     <div class="flex flex-wrap gap-3 mt-8 justify-center">
-      <UiAppButton variant="primary" size="lg" on-dark @click="goHome">На главную</UiAppButton>
-      <UiAppButton variant="secondary" size="lg" on-dark @click="goCatalog">В каталог</UiAppButton>
+      <UiAppButton variant="primary" size="lg" on-dark @click="goHome">{{ $t('errorPage.toHome') }}</UiAppButton>
+      <UiAppButton variant="secondary" size="lg" on-dark @click="goCatalog">{{ $t('errorPage.toCatalog') }}</UiAppButton>
     </div>
   </div>
 </template>

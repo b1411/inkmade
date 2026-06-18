@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { OrderStatus } from '~~/shared/config/order-status'
-import { STATUS_LABELS, PRODUCTION_STAGES } from '~~/shared/config/order-status'
+import { PRODUCTION_STAGES } from '~~/shared/config/order-status'
 
 // Очередь производства (§8.3). Доска по этапам, обновление через Realtime.
 definePageMeta({ layout: 'studio', middleware: 'studio-role' })
@@ -22,16 +22,16 @@ const shortId = (id: string) => id.slice(0, 8)
 
 <template>
   <div>
-    <UiPageHeader label="Очередь" title="Производство" description="Доска заказов по этапам. Обновляется автоматически (Realtime).">
+    <UiPageHeader :label="$t('studio.production.label')" :title="$t('studio.production.title')" :description="$t('studio.production.description')">
       <template #actions>
-        <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="refresh()">Обновить</UButton>
+        <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="refresh()">{{ $t('studio.production.refresh') }}</UButton>
       </template>
     </UiPageHeader>
 
     <div class="flex gap-4 overflow-x-auto pb-4">
       <div v-for="col in COLUMNS" :key="col" class="shrink-0 w-64">
         <div class="ink-label text-ink-gray-600 mb-2 flex items-center justify-between">
-          <span>{{ STATUS_LABELS[col] }}</span>
+          <span>{{ $t(`domain.orderStatus.${col}`) }}</span>
           <span class="text-ink-gray-400">{{ byStatus(col).length }}</span>
         </div>
         <div class="space-y-2">
@@ -45,9 +45,9 @@ const shortId = (id: string) => id.slice(0, 8)
               <span class="ink-label">#{{ shortId(o.id) }}</span>
               <span class="text-caption text-ink-gray-400">{{ new Date(o.created_at).toLocaleDateString('ru') }}</span>
             </div>
-            <p class="text-caption text-ink-gray-600 mt-1">Позиций: {{ o.item_count ?? 0 }}</p>
+            <p class="text-caption text-ink-gray-600 mt-1">{{ $t('studio.production.positions', { count: o.item_count ?? 0 }) }}</p>
           </NuxtLink>
-          <p v-if="!byStatus(col).length" class="text-caption text-ink-gray-400 px-1">—</p>
+          <p v-if="!byStatus(col).length" class="text-caption text-ink-gray-400 px-1">{{ $t('studio.production.empty') }}</p>
         </div>
       </div>
     </div>

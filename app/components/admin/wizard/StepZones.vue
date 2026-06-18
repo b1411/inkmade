@@ -10,6 +10,7 @@ import { garmentKindForSlug } from '~~/shared/config/garment'
 const props = defineProps<{ product: ProductWithRelations }>()
 const emit = defineEmits<{ changed: [] }>()
 
+const { t } = useI18n()
 const { addZone, updateZone, deleteZone, uploadCatalogImage } = useAdmin()
 const toast = useToast()
 
@@ -25,7 +26,7 @@ function startEdit(z: ProductWithRelations['print_zones'][number]) {
 }
 async function saveEdit(id: string) {
   if (editForm.max_width_mm <= 0 || editForm.max_height_mm <= 0) {
-    toast.add({ title: 'Размеры зоны должны быть больше нуля', color: 'warning' })
+    toast.add({ title: t('admin.wizard.zones.validationSize'), color: 'warning' })
     return
   }
   try {
@@ -38,7 +39,7 @@ async function saveEdit(id: string) {
     editingId.value = null
     emit('changed')
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.error'), description: (e as Error).message, color: 'error' })
   }
 }
 
@@ -70,7 +71,7 @@ async function addFromPreset(presetName: string) {
     })
     emit('changed')
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.error'), description: (e as Error).message, color: 'error' })
   } finally {
     saving.value = false
   }
@@ -78,7 +79,7 @@ async function addFromPreset(presetName: string) {
 
 async function onDelete(id: string) {
   try { await deleteZone(id); emit('changed') } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.error'), description: (e as Error).message, color: 'error' })
   }
 }
 
@@ -96,7 +97,7 @@ function openVisual(z: ProductWithRelations['print_zones'][number]) {
 }
 async function onVisualSave(payload: { bounds_mm: BoundsMm; max_width_mm: number; max_height_mm: number }) {
   if (payload.max_width_mm <= 0 || payload.max_height_mm <= 0) {
-    toast.add({ title: 'Зона слишком мала', color: 'warning' }); return
+    toast.add({ title: t('admin.wizard.zones.zoneTooSmall'), color: 'warning' }); return
   }
   try {
     await updateZone(visual.zoneId, {
@@ -106,9 +107,9 @@ async function onVisualSave(payload: { bounds_mm: BoundsMm; max_width_mm: number
     })
     visual.open = false
     emit('changed')
-    toast.add({ title: 'Зона сохранена', color: 'success' })
+    toast.add({ title: t('admin.wizard.zones.zoneSaved'), color: 'success' })
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.error'), description: (e as Error).message, color: 'error' })
   }
 }
 
@@ -122,7 +123,7 @@ async function onMockup(zoneId: string, e: Event) {
     await updateZone(zoneId, { mockup_url: url })
     emit('changed')
   } catch (err) {
-    toast.add({ title: 'Ошибка загрузки мокапа', description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.mockupUploadError'), description: (err as Error).message, color: 'error' })
   } finally {
     uploadingFor.value = null
   }
@@ -134,13 +135,13 @@ async function onMockup(zoneId: string, e: Event) {
     <UAlert
       v-if="!product.materials.length"
       color="warning"
-      title="Нет материалов"
-      description="Режим зон определяется материалом — добавьте материал на шаге 2."
+      :title="$t('admin.wizard.zones.noMaterialsTitle')"
+      :description="$t('admin.wizard.zones.noMaterialsText')"
     />
 
     <template v-else>
       <div v-if="product.print_zones.length" class="space-y-2">
-        <UiSectionLabel>Зоны товара</UiSectionLabel>
+        <UiSectionLabel>{{ $t('admin.wizard.zones.zonesTitle') }}</UiSectionLabel>
         <div
           v-for="z in product.print_zones"
           :key="z.id"
@@ -150,17 +151,17 @@ async function onMockup(zoneId: string, e: Event) {
             <div>
               <p class="font-semibold">{{ z.title }} <span class="ink-label text-ink-gray-400">{{ z.print_mode }}</span></p>
               <p class="text-caption text-ink-gray-600">
-                до {{ z.max_width_mm }}×{{ z.max_height_mm }} мм · min {{ z.min_dpi }} DPI
-                <span v-if="z.mockup_url"> · мокап ✓</span>
+                {{ $t('admin.wizard.zones.sizeDpi', { w: z.max_width_mm, h: z.max_height_mm, dpi: z.min_dpi }) }}
+                <span v-if="z.mockup_url">{{ $t('admin.wizard.zones.mockupMark') }}</span>
               </p>
               <p v-if="z.placement_hint" class="text-caption text-ink-gray-400 mt-1">{{ z.placement_hint }}</p>
             </div>
             <div class="flex items-center gap-2">
-              <UButton color="neutral" variant="ghost" icon="i-lucide-frame" title="Визуальный редактор" @click="openVisual(z)" />
+              <UButton color="neutral" variant="ghost" icon="i-lucide-frame" :title="$t('admin.wizard.zones.visualEditor')" @click="openVisual(z)" />
               <UButton color="neutral" variant="ghost" icon="i-lucide-pencil" @click="editingId === z.id ? (editingId = null) : startEdit(z)" />
               <label class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-caption bg-ink-gray-200 hover:bg-ink-cream-dark transition-colors">
                 <UIcon :name="uploadingFor === z.id ? 'i-lucide-loader' : 'i-lucide-image-plus'" class="size-4" :class="uploadingFor === z.id && 'animate-spin'" />
-                Мокап
+                {{ $t('admin.wizard.zones.mockup') }}
                 <input type="file" accept="image/*" class="hidden" @change="(e) => onMockup(z.id, e)">
               </label>
               <UButton color="error" variant="ghost" icon="i-lucide-trash-2" @click="onDelete(z.id)" />
@@ -168,29 +169,29 @@ async function onMockup(zoneId: string, e: Event) {
           </div>
 
           <div v-if="editingId === z.id" class="mt-3 pt-3 border-t border-ink-gray-200 grid grid-cols-2 gap-3">
-            <UFormField label="Ширина зоны, мм">
+            <UFormField :label="$t('admin.wizard.zones.fieldZoneWidth')">
               <UInput v-model.number="editForm.max_width_mm" type="number" min="1" class="w-full" />
             </UFormField>
-            <UFormField label="Высота зоны, мм">
+            <UFormField :label="$t('admin.wizard.zones.fieldZoneHeight')">
               <UInput v-model.number="editForm.max_height_mm" type="number" min="1" class="w-full" />
             </UFormField>
-            <UFormField label="Минимальный DPI">
+            <UFormField :label="$t('admin.wizard.zones.fieldMinDpi')">
               <UInput v-model.number="editForm.min_dpi" type="number" min="72" class="w-full" />
             </UFormField>
-            <UFormField label="Подсказка по размещению" class="col-span-2">
+            <UFormField :label="$t('admin.wizard.zones.fieldPlacementHint')" class="col-span-2">
               <UInput v-model="editForm.placement_hint" class="w-full" />
             </UFormField>
             <div class="col-span-2 flex gap-2">
-              <UButton color="primary" icon="i-lucide-check" @click="saveEdit(z.id)">Сохранить</UButton>
-              <UButton color="neutral" variant="ghost" @click="editingId = null">Отмена</UButton>
+              <UButton color="primary" icon="i-lucide-check" @click="saveEdit(z.id)">{{ $t('actions.save') }}</UButton>
+              <UButton color="neutral" variant="ghost" @click="editingId = null">{{ $t('actions.cancel') }}</UButton>
             </div>
           </div>
         </div>
       </div>
-      <p v-else class="text-ink-gray-600">Зоны ещё не добавлены.</p>
+      <p v-else class="text-ink-gray-600">{{ $t('admin.wizard.zones.empty') }}</p>
 
       <div class="border-t border-ink-gray-200 pt-5 space-y-3">
-        <UiSectionLabel accent>Добавить зону из пресета</UiSectionLabel>
+        <UiSectionLabel accent>{{ $t('admin.wizard.zones.addPresetTitle') }}</UiSectionLabel>
         <div class="flex flex-wrap gap-2">
           <UButton
             v-for="p in presets"
@@ -205,13 +206,13 @@ async function onMockup(zoneId: string, e: Event) {
           </UButton>
         </div>
         <p class="text-caption text-ink-gray-400">
-          Границы и DPI можно затем уточнить. Товар без мокапа/зон не публикуется (§8.4).
+          {{ $t('admin.wizard.zones.presetHint') }}
         </p>
       </div>
     </template>
 
     <!-- визуальный редактор зоны -->
-    <UModal v-model:open="visual.open" :title="`Размещение зоны: ${visual.title}`" :ui="{ content: 'max-w-2xl' }">
+    <UModal v-model:open="visual.open" :title="$t('admin.wizard.zones.zonePlacementTitle', { title: visual.title })" :ui="{ content: 'max-w-2xl' }">
       <template #body>
         <AdminWizardZoneEditor
           :kind="garmentKind"

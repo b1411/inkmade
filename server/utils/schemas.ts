@@ -18,14 +18,26 @@ const placementSchema = z.object({
   height_mm: finiteNonNeg().optional(),
   natural_w: finiteNonNeg().optional(),
   natural_h: finiteNonNeg().optional(),
+  vector: z.boolean().optional(),
   source: z.string().max(32).optional(),
   text: z.string().max(2000).optional(),
+  asset_url: z.string().max(2048).optional(),
 }).passthrough()
+
+const printFileSchema = z.object({
+  zone: z.string().max(64),
+  url: z.string().max(2048),
+  w: z.number().finite().nonnegative(),
+  h: z.number().finite().nonnegative(),
+  dpi: z.number().finite().positive(),
+})
 
 const designSpecSchema = z.object({
   placements: z.array(placementSchema).max(20).optional(),
   print_mode: z.string().max(32).optional(),
   composition_url: z.string().max(2048).optional(),
+  color_count: z.number().int().min(0).max(12).optional(),
+  print_files: z.array(printFileSchema).max(8).optional(),
   print_id: z.uuid().nullish(),
 }).passthrough()
 

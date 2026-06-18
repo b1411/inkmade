@@ -1,21 +1,22 @@
 <script setup lang="ts">
 // Корзина (§9). Гостю доступна без логина (§9.1).
-useHead({ title: 'Корзина — INKMADE' })
+const { t } = useI18n()
+useHead({ title: () => `${t('cart.cart.headTitle')} — INKMADE` })
 const cart = useCart()
 onMounted(() => cart.load())
 </script>
 
 <template>
   <section class="space-y-6 max-w-3xl">
-    <h1 class="ink-display text-h2">Корзина</h1>
+    <h1 class="ink-display text-h2">{{ $t('cart.cart.title') }}</h1>
 
     <UiEmptyState
       v-if="!cart.items.value.length"
       icon="i-lucide-shopping-cart"
-      title="Пока пусто"
-      text="Самое время собрать что-нибудь своё."
+      :title="$t('cart.cart.empty.title')"
+      :text="$t('cart.cart.empty.text')"
     >
-      <UiAppButton to="/catalog" variant="primary" size="md">В каталог</UiAppButton>
+      <UiAppButton to="/catalog" variant="primary" size="md">{{ $t('cart.cart.empty.toCatalog') }}</UiAppButton>
     </UiEmptyState>
 
     <template v-else>
@@ -36,17 +37,17 @@ onMounted(() => cart.load())
             <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-plus" @click="cart.updateQty(i.id, i.quantity + 1)" />
           </div>
           <div class="w-24 text-right font-semibold">{{ formatPrice(i.unitPrice * i.quantity) }}</div>
-          <UButton color="error" variant="ghost" icon="i-lucide-trash-2" :aria-label="`Удалить ${i.title}`" @click="cart.remove(i.id)" />
+          <UButton color="error" variant="ghost" icon="i-lucide-trash-2" :aria-label="t('cart.cart.removeItem', { title: i.title })" @click="cart.remove(i.id)" />
         </div>
       </div>
 
       <div class="flex items-center justify-between border-t border-ink-gray-200 pt-4">
-        <span class="text-ink-gray-600">Итого</span>
+        <span class="text-ink-gray-600">{{ $t('cart.cart.total') }}</span>
         <span class="text-h3 font-bold text-ink-burgundy">{{ formatPrice(cart.total.value) }}</span>
       </div>
 
       <UiAppButton to="/checkout" variant="primary" size="xl" block trailing-icon="i-lucide-arrow-right">
-        Оформить заказ
+        {{ $t('cart.cart.checkout') }}
       </UiAppButton>
     </template>
   </section>

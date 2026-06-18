@@ -18,11 +18,68 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxtjs/supabase',
     '@nuxt/image',
+    '@nuxtjs/i18n',
     '@vueuse/motion/nuxt',
     '@formkit/auto-animate/nuxt',
   ],
 
   css: ['~/assets/css/main.css'],
+
+  // i18n: двуязычие RU/KK. Русский — по умолчанию и без префикса в URL
+  // (strategy: 'no_prefix'), казахский — переключателем в шапке, выбор хранится
+  // в cookie. Строки разбиты по зонам (namespace-файлы) — см. i18n/locales/{ru,kk}/*.
+  i18n: {
+    strategy: 'no_prefix',
+    defaultLocale: 'ru',
+    locales: [
+      {
+        code: 'ru',
+        language: 'ru-RU',
+        name: 'Русский',
+        files: [
+          'ru/common.json',
+          'ru/domain.json',
+          'ru/auth.json',
+          'ru/landing.json',
+          'ru/catalog.json',
+          'ru/product.json',
+          'ru/customize.json',
+          'ru/cart.json',
+          'ru/account.json',
+          'ru/legal.json',
+          'ru/admin.json',
+          'ru/admincat.json',
+          'ru/studio.json',
+        ],
+      },
+      {
+        code: 'kk',
+        language: 'kk-KZ',
+        name: 'Қазақша',
+        files: [
+          'kk/common.json',
+          'kk/domain.json',
+          'kk/auth.json',
+          'kk/landing.json',
+          'kk/catalog.json',
+          'kk/product.json',
+          'kk/customize.json',
+          'kk/cart.json',
+          'kk/account.json',
+          'kk/legal.json',
+          'kk/admin.json',
+          'kk/admincat.json',
+          'kk/studio.json',
+        ],
+      },
+    ],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'inkmade_lang',
+      redirectOn: 'root',
+      fallbackLocale: 'ru',
+    },
+  },
 
   // @nuxt/image (§3.3): оптимизация WebP/lazy/responsive. Фото товаров лежат в
   // Supabase Storage — разрешаем домен для внешней оптимизации.
@@ -75,7 +132,7 @@ export default defineNuxtConfig({
     // приложения, не перезагрузки. Под prefers-reduced-motion CSS гасит transform/opacity.
     pageTransition: { name: 'page', mode: 'out-in' },
     head: {
-      htmlAttrs: { lang: 'ru' },
+      // lang выставляется динамически от локали i18n (см. app/app.vue)
       title: 'INKMADE — Merch Studio',
       meta: [
         { charset: 'utf-8' },

@@ -2,7 +2,8 @@
 // Вход (§9.1). Брендовый auth-экран (layout 'auth'). Логин требуется поздно —
 // на checkout/шаринге, не на входе в каталог.
 definePageMeta({ layout: 'auth' })
-useHead({ title: 'Вход — INKMADE' })
+const { t } = useI18n()
+useHead({ title: () => `${t('auth.login.label')} — INKMADE` })
 
 const { signIn } = useAuth()
 const route = useRoute()
@@ -23,7 +24,7 @@ async function onSubmit() {
     const isSafeRedirect = raw && raw.startsWith('/') && !raw.startsWith('//') && !cabinets.some(c => raw.startsWith(c))
     await navigateTo(isSafeRedirect ? raw : homePath)
   } catch (e) {
-    toast.add({ title: 'Не удалось войти', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('auth.login.errorTitle'), description: (e as Error).message, color: 'error' })
   } finally {
     loading.value = false
   }
@@ -32,23 +33,23 @@ async function onSubmit() {
 
 <template>
   <div>
-    <UiSectionLabel accent>Вход</UiSectionLabel>
-    <h1 class="ink-display text-3xl mt-2">С возвращением</h1>
-    <p class="text-ink-gray-600 mt-2 mb-8">Войдите в аккаунт, чтобы продолжить.</p>
+    <UiSectionLabel accent>{{ $t('auth.login.label') }}</UiSectionLabel>
+    <h1 class="ink-display text-3xl mt-2">{{ $t('auth.login.title') }}</h1>
+    <p class="text-ink-gray-600 mt-2 mb-8">{{ $t('auth.login.subtitle') }}</p>
 
     <form class="space-y-4" @submit.prevent="onSubmit">
-      <UFormField label="Email">
+      <UFormField :label="$t('auth.login.emailLabel')">
         <UInput v-model="email" type="email" size="lg" autocomplete="email" icon="i-lucide-mail" required class="w-full" />
       </UFormField>
-      <UFormField label="Пароль">
+      <UFormField :label="$t('auth.login.passwordLabel')">
         <UInput v-model="password" type="password" size="lg" autocomplete="current-password" icon="i-lucide-lock" required class="w-full" />
       </UFormField>
-      <UButton type="submit" color="primary" size="lg" block :loading="loading" trailing-icon="i-lucide-arrow-right">Войти</UButton>
+      <UButton type="submit" color="primary" size="lg" block :loading="loading" trailing-icon="i-lucide-arrow-right">{{ $t('auth.login.submit') }}</UButton>
     </form>
 
     <p class="text-caption text-ink-gray-600 mt-8 text-center">
-      Нет аккаунта?
-      <NuxtLink to="/register" class="text-ink-burgundy font-semibold">Зарегистрироваться</NuxtLink>
+      {{ $t('auth.login.noAccount') }}
+      <NuxtLink to="/register" class="text-ink-burgundy font-semibold">{{ $t('auth.login.registerLink') }}</NuxtLink>
     </p>
   </div>
 </template>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { OrderStatus } from '~~/shared/config/order-status'
-import { STATUS_LABELS, TRANSITIONS, REASON_REQUIRED } from '~~/shared/config/order-status'
+import { TRANSITIONS, REASON_REQUIRED } from '~~/shared/config/order-status'
 
 // Карточка заказа в админке (§8.2.3): позиции, адрес, оплата, лог, ручное управление.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
+const { t } = useI18n()
 
 const route = useRoute()
 const id = route.params.id as string
@@ -16,7 +17,7 @@ const toast = useToast()
 const evidence = ref<{ id: string; kind: string; note: string | null; url: string | null }[]>([])
 const evUploading = ref(false)
 const evInput = ref<HTMLInputElement | null>(null)
-const KIND_LABELS: Record<string, string> = { qc: 'Контроль качества', defect: 'Брак', other: 'Прочее' }
+const kindLabel = (k: string) => t(`admin.order.kindLabels.${k}`)
 async function loadEvidence() {
   try { evidence.value = await listEvidence(id) } catch { /* не критично */ }
 }
@@ -29,9 +30,9 @@ async function onEvidencePick(e: Event) {
     await addEvidence(id, file, 'defect')
     if (evInput.value) evInput.value.value = ''
     await loadEvidence()
-    toast.add({ title: 'Фото добавлено', color: 'success' })
+    toast.add({ title: t('admin.order.toast.photoAdded'), color: 'success' })
   } catch (err) {
-    toast.add({ title: 'Ошибка загрузки', description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('admin.order.toast.uploadError'), description: (err as Error).message, color: 'error' })
   } finally { evUploading.value = false }
 }
 
@@ -60,11 +61,11 @@ async function perform(to: OrderStatus, opts?: { note?: string; trackingNo?: str
     // возврат идёт через refund_order: статус + реверс роялти + леджер (§7.3)
     if (to === 'refunded') await refundOrder(id, opts?.note)
     else await changeStatus(id, to, opts)
-    toast.add({ title: `Статус: ${STATUS_LABELS[to]}`, color: 'success' })
+    toast.add({ title: t('admin.order.toast.statusChanged', { status: t(`domain.orderStatus.${to}`) }), color: 'success' })
     modal.open = false
     await refresh()
   } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.order.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
   } finally { busy.value = false }
 }
 
@@ -74,9 +75,9 @@ const shortId = (s: string) => s.slice(0, 8)
 
 <template>
   <div v-if="order">
-    <UiPageHeader :label="`Заказ #${shortId(order.id)}`" :title="STATUS_LABELS[order.status as OrderStatus]">
+    <UiPageHeader :label="$t('admin.order.label', { id: shortId(order.id) })" :title="$t(`domain.orderStatus.${order.status}`)">
       <template #actions>
-        <UButton to="/admin/orders" color="neutral" variant="ghost" icon="i-lucide-arrow-left">К списку</UButton>
+        <UButton to="/admin/orders" color="neutral" variant="ghost" icon="i-lucide-arrow-left">{{ $t('admin.order.backToList') }}</UButton>
       </template>
     </UiPageHeader>
 
@@ -86,9 +87,9 @@ const shortId = (s: string) => s.slice(0, 8)
         <UiPanel v-for="it in order.order_items" :key="it.id">
           <p class="font-semibold">{{ it.variants?.products?.title }} · {{ it.variants?.color_name }}/{{ it.variants?.size }} ×{{ it.quantity }}</p>
           <p class="text-caption text-ink-gray-600 mt-1">
-            Цена {{ fmt(Number(it.unit_price)) }} ₸ · Себестоимость {{ fmt(Number(it.unit_cost)) }} ₸ ·
+            {{ $t('admin.order.item.price') }} {{ fmt(Number(it.unit_price)) }} ₸ · {{ $t('admin.order.item.cost') }} {{ fmt(Number(it.unit_cost)) }} ₸ ·
             <span :class="Number(it.unit_price) - Number(it.unit_cost) > 0 ? 'text-ink-burgundy font-semibold' : 'text-ink-error font-semibold'">
-              маржа {{ fmt((Number(it.unit_price) - Number(it.unit_cost)) * it.quantity) }} ₸
+              {{ $t('admin.order.item.margin') }} {{ fmt((Number(it.unit_price) - Number(it.unit_cost)) * it.quantity) }} ₸
             </span>
             · {{ it.print_method }}
           </p>
@@ -97,38 +98,38 @@ const shortId = (s: string) => s.slice(0, 8)
         <!-- сводка прибыли по заказу -->
         <div class="grid grid-cols-3 gap-2 text-center">
           <div class="border border-ink-gray-200 rounded-lg p-3">
-            <p class="ink-label text-ink-gray-400">Выручка</p>
+            <p class="ink-label text-ink-gray-400">{{ $t('admin.order.marginCard.revenue') }}</p>
             <p class="font-bold mt-1">{{ fmt(margin.revenue) }} ₸</p>
           </div>
           <div class="border border-ink-gray-200 rounded-lg p-3">
-            <p class="ink-label text-ink-gray-400">Себестоимость</p>
+            <p class="ink-label text-ink-gray-400">{{ $t('admin.order.marginCard.cost') }}</p>
             <p class="font-bold mt-1">{{ fmt(margin.cost) }} ₸</p>
           </div>
           <div class="border-2 border-ink-burgundy rounded-lg p-3 bg-ink-burgundy/5">
-            <p class="ink-label text-ink-burgundy">Маржа</p>
+            <p class="ink-label text-ink-burgundy">{{ $t('admin.order.marginCard.margin') }}</p>
             <p class="font-bold text-ink-burgundy mt-1">{{ fmt(margin.profit) }} ₸</p>
           </div>
         </div>
 
         <!-- подарок -->
         <div v-if="order.is_gift" class="border border-ink-burgundy/40 bg-ink-burgundy/5 rounded-lg p-4 text-caption space-y-1">
-          <p class="ink-label text-ink-burgundy flex items-center gap-1.5"><UIcon name="i-lucide-gift" class="size-3.5" /> Подарок</p>
-          <p v-if="order.gift_recipient">Получатель: {{ order.gift_recipient }}</p>
-          <p v-if="order.gift_message">Открытка: «{{ order.gift_message }}»</p>
-          <p v-if="order.gift_hide_price">Без чека с ценой в посылке</p>
+          <p class="ink-label text-ink-burgundy flex items-center gap-1.5"><UIcon name="i-lucide-gift" class="size-3.5" /> {{ $t('admin.order.gift.title') }}</p>
+          <p v-if="order.gift_recipient">{{ $t('admin.order.gift.recipient', { name: order.gift_recipient }) }}</p>
+          <p v-if="order.gift_message">{{ $t('admin.order.gift.card', { message: order.gift_message }) }}</p>
+          <p v-if="order.gift_hide_price">{{ $t('admin.order.gift.hidePrice') }}</p>
         </div>
 
         <!-- адрес + оплата -->
-        <UiPanel title="Доставка" icon="i-lucide-truck">
+        <UiPanel :title="$t('admin.order.delivery.title')" icon="i-lucide-truck">
           <div class="text-caption space-y-1">
             <p v-if="addr">{{ addr.full_name }}, {{ addr.phone }} — {{ addr.city }}, {{ addr.address }}</p>
-            <p v-if="order.tracking_no">Трек: {{ order.tracking_no }} ({{ order.carrier }})</p>
-            <p>Оплата: {{ order.paid_at ? new Date(order.paid_at).toLocaleString('ru') : 'не оплачен' }}</p>
+            <p v-if="order.tracking_no">{{ $t('admin.order.delivery.tracking', { no: order.tracking_no, carrier: order.carrier }) }}</p>
+            <p>{{ $t('admin.order.delivery.payment', { value: order.paid_at ? new Date(order.paid_at).toLocaleString('ru') : $t('admin.order.delivery.notPaid') }) }}</p>
           </div>
         </UiPanel>
 
         <!-- лог -->
-        <UiPanel title="Лог статусов" icon="i-lucide-history">
+        <UiPanel :title="$t('admin.order.log.title')" icon="i-lucide-history">
           <ul class="space-y-1 text-caption">
             <li v-for="l in (order.order_status_log ?? []).slice().reverse()" :key="l.id" class="flex gap-2">
               <span class="text-ink-gray-400">{{ new Date(l.created_at).toLocaleString('ru') }}</span>
@@ -139,22 +140,22 @@ const shortId = (s: string) => s.slice(0, 8)
         </UiPanel>
 
         <!-- доказательная база (§6.8) -->
-        <UiPanel title="Фото-доказательства" icon="i-lucide-camera">
+        <UiPanel :title="$t('admin.order.evidence.title')" icon="i-lucide-camera">
           <template #actions>
             <input ref="evInput" type="file" accept="image/*" class="hidden" @change="onEvidencePick">
-            <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="evUploading" @click="evInput?.click()">Добавить</UButton>
+            <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="evUploading" @click="evInput?.click()">{{ $t('admin.order.evidence.add') }}</UButton>
           </template>
           <div v-if="evidence.length" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
             <a v-for="e in evidence" :key="e.id" :href="e.url ?? '#'" target="_blank">
-              <img v-if="e.url" :src="e.url" :alt="KIND_LABELS[e.kind]" class="aspect-square w-full object-cover rounded-md border border-ink-gray-200">
-              <span class="text-[10px] text-ink-gray-500 block truncate">{{ KIND_LABELS[e.kind] }}</span>
+              <img v-if="e.url" :src="e.url" :alt="kindLabel(e.kind)" class="aspect-square w-full object-cover rounded-md border border-ink-gray-200">
+              <span class="text-[10px] text-ink-gray-500 block truncate">{{ kindLabel(e.kind) }}</span>
             </a>
           </div>
-          <p v-else class="text-caption text-ink-gray-400">Фото пока нет.</p>
+          <p v-else class="text-caption text-ink-gray-400">{{ $t('admin.order.evidence.empty') }}</p>
         </UiPanel>
       </div>
 
-      <UiPanel title="Управление" icon="i-lucide-settings-2" class="h-fit">
+      <UiPanel :title="$t('admin.order.control.title')" icon="i-lucide-settings-2" class="h-fit">
         <div class="space-y-3">
           <UButton
             v-for="to in nextStates"
@@ -162,21 +163,21 @@ const shortId = (s: string) => s.slice(0, 8)
             :color="['reprint','cancelled','refunded'].includes(to) ? 'error' : to === 'on_hold' ? 'warning' : 'primary'"
             variant="subtle" block :loading="busy"
             @click="start(to)"
-          >{{ STATUS_LABELS[to] }}</UButton>
-          <p v-if="!nextStates.length" class="text-caption text-ink-gray-400">Конечный статус.</p>
+          >{{ $t(`domain.orderStatus.${to}`) }}</UButton>
+          <p v-if="!nextStates.length" class="text-caption text-ink-gray-400">{{ $t('admin.order.control.final') }}</p>
         </div>
       </UiPanel>
     </div>
 
-    <UModal v-model:open="modal.open" :title="STATUS_LABELS[modal.to]">
+    <UModal v-model:open="modal.open" :title="$t(`domain.orderStatus.${modal.to}`)">
       <template #body>
         <div class="space-y-4">
           <template v-if="modal.to === 'shipped'">
-            <UFormField label="Трек-номер" required><UInput v-model="modal.trackingNo" class="w-full" /></UFormField>
-            <UFormField label="Перевозчик" required><UInput v-model="modal.carrier" class="w-full" /></UFormField>
+            <UFormField :label="$t('admin.order.modal.trackingNo')" required><UInput v-model="modal.trackingNo" class="w-full" /></UFormField>
+            <UFormField :label="$t('admin.order.modal.carrier')" required><UInput v-model="modal.carrier" class="w-full" /></UFormField>
           </template>
-          <UFormField v-else label="Причина" required><UTextarea v-model="modal.note" :rows="3" class="w-full" /></UFormField>
-          <UButton color="primary" block :loading="busy" @click="perform(modal.to, { note: modal.note, trackingNo: modal.trackingNo, carrier: modal.carrier })">Подтвердить</UButton>
+          <UFormField v-else :label="$t('admin.order.modal.reason')" required><UTextarea v-model="modal.note" :rows="3" class="w-full" /></UFormField>
+          <UButton color="primary" block :loading="busy" @click="perform(modal.to, { note: modal.note, trackingNo: modal.trackingNo, carrier: modal.carrier })">{{ $t('admin.order.modal.confirm') }}</UButton>
         </div>
       </template>
     </UModal>

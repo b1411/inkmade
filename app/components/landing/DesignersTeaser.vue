@@ -11,15 +11,14 @@
       style="padding-block: var(--section-pad)"
     >
       <div>
-        <UiSectionLabel class="text-ink-cream/60">Для дизайнеров</UiSectionLabel>
-        <h2 class="ink-display text-h1 mt-3">Рисуешь?<br>Зарабатывай на этом</h2>
+        <UiSectionLabel class="text-ink-cream/60">{{ $t('landing.designers.label') }}</UiSectionLabel>
+        <h2 class="ink-display text-h1 mt-3">{{ $t('landing.designers.titleLine1') }}<br>{{ $t('landing.designers.titleLine2') }}</h2>
         <p class="text-lead mt-5 max-w-xl text-ink-cream/85">
-          Загружай свои принты — мы печатаем и продаём, ты получаешь процент с каждой
-          продажи. Без вложений и забот о производстве.
+          {{ $t('landing.designers.text') }}
         </p>
         <div class="mt-8">
           <UiAppButton to="/login" variant="primary" size="lg" on-dark>
-            Стать дизайнером INKMADE
+            {{ $t('landing.designers.cta') }}
           </UiAppButton>
         </div>
       </div>

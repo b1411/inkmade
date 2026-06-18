@@ -24,10 +24,10 @@ const loop = computed(() => [...props.items, ...props.items])
 
 <template>
   <section v-if="items.length" aria-labelledby="examples-heading">
-    <UiSectionLabel accent>Галерея</UiSectionLabel>
-    <h2 id="examples-heading" class="ink-display text-h2 mt-2">Что создают на INKMADE</h2>
+    <UiSectionLabel accent>{{ $t('landing.examples.label') }}</UiSectionLabel>
+    <h2 id="examples-heading" class="ink-display text-h2 mt-2">{{ $t('landing.examples.title') }}</h2>
     <p class="text-lead text-ink-gray-600 mt-3 mb-8">
-      Реальные вещи реальных людей. Собери свою — добавим сюда.
+      {{ $t('landing.examples.subtitle') }}
     </p>
 
     <div class="marquee w-screen ml-[calc(50%-50vw)] px-4">
@@ -86,6 +86,15 @@ const loop = computed(() => [...props.items, ...props.items])
 @keyframes marquee {
   to {
     transform: translateX(-50%);
+  }
+}
+/* доступность: под reduced-motion лента статична (как заявлено) — виден первый набор */
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track {
+    animation: none;
+  }
+  .marquee__item:hover :where(img) {
+    transform: none;
   }
 }
 </style>

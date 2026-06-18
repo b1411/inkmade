@@ -4,6 +4,7 @@ import type { Database } from '~/types/database.types'
 export const useFavorites = () => {
   const supabase = useSupabaseClient<Database>()
   const user = useSupabaseUser()
+  const { t } = useI18n()
 
   async function listProducts() {
     const { data, error } = await supabase
@@ -31,7 +32,7 @@ export const useFavorites = () => {
   }
 
   async function toggleProduct(productId: string): Promise<boolean> {
-    if (!user.value) throw new Error('Требуется вход')
+    if (!user.value) throw new Error(t('errors.authRequired'))
     const existing = await isProductFav(productId)
     if (existing) {
       await supabase.from('favorites').delete().eq('id', existing)
@@ -42,7 +43,7 @@ export const useFavorites = () => {
   }
 
   async function togglePrint(printId: string): Promise<boolean> {
-    if (!user.value) throw new Error('Требуется вход')
+    if (!user.value) throw new Error(t('errors.authRequired'))
     const { data } = await supabase.from('favorites').select('id').eq('print_id', printId).maybeSingle()
     if (data?.id) {
       await supabase.from('favorites').delete().eq('id', data.id)

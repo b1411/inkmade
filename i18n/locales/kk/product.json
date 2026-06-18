@@ -1,0 +1,21 @@
+{
+  "product": {
+    "notFound": "Тауар табылмады",
+    "metaTitle": "{title} — INKMADE",
+    "metaDescription": "{title}: принтті браузерде кастомизациялап, бір данадан тапсырыс беріңіз — INKMADE.",
+    "ogDescriptionFallback": "{title} өз принтіңіздің басылымымен.",
+    "priceFrom": "{price} бастап",
+    "material": "Материал",
+    "color": "Түс",
+    "size": "Өлшем",
+    "lifestyle": "Адамдарда",
+    "photoNumber": "{n}-фото",
+    "lifestyleNumber": "Адамдарда {n}",
+    "goToConstructor": "Конструкторға өту",
+    "addToFav": "Таңдаулыларға",
+    "colorNote": {
+      "title": "Түс туралы",
+      "description": "Экрандағы түс басылған түстен өзгеше болуы мүмкін. Соңғы түсті оператор басып шығармас бұрын келіседі."
+    }
+  }
+}

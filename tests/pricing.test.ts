@@ -55,6 +55,25 @@ describe('calcPrice', () => {
     expect(r.unitPrice).toBe(2000)
   })
 
+  it('шелкография: цена по числу спот-цветов', () => {
+    const r = calcPrice({
+      basePrice: 3000, materialSurcharge: 0, hasText: false, quantity: 1,
+      zones: [{ mode: 'zonal', printAreaMm2: 100, zoneAreaMm2: 100 }],
+      perColorPricing: true, colorCount: 3,
+    })
+    expect(r.colors).toBe(PRICING.silkscreenColorRate * 3)
+    expect(r.unitPrice).toBe(3000 + PRICING.zonalRatePerZone + PRICING.silkscreenColorRate * 3)
+  })
+
+  it('без perColorPricing цвета не считаются', () => {
+    const r = calcPrice({
+      basePrice: 1000, materialSurcharge: 0, hasText: false, quantity: 1,
+      zones: [], colorCount: 5,
+    })
+    expect(r.colors).toBe(0)
+    expect(r.unitPrice).toBe(1000)
+  })
+
   it('несколько зон складывают стоимость печати', () => {
     const r = calcPrice({
       basePrice: 0, materialSurcharge: 0, hasText: false, quantity: 1,

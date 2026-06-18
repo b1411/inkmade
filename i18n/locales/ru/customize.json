@@ -1,0 +1,164 @@
+{
+  "customize": {
+    "page": {
+      "label": "Конструктор",
+      "headTitle": "Конструктор · {title} — INKMADE",
+      "notFound": "Изделие не найдено",
+      "toProduct": "К товару",
+      "material": "Материал",
+      "size": "Размер",
+      "deleteSelected": "Удалить выбранный",
+      "canvasHint": "Перетаскивай, меняй размер и поворот в пределах зоны.",
+      "saveDesign": "Сохранить дизайн",
+      "print": "Принт",
+      "loadedForRework": "Дизайн загружен для доработки",
+      "addPrintOrText": "Добавьте принт или текст",
+      "zoneNotSelected": "Зона печати не выбрана",
+      "selectSize": "Выберите размер",
+      "savedToCabinet": "Дизайн сохранён в кабинете",
+      "saved": "Дизайн сохранён",
+      "savedGuestHint": "Войдите — он появится в вашем кабинете.",
+      "saveFailed": "Не удалось сохранить",
+      "undo": "Отменить (Ctrl+Z)",
+      "redo": "Повторить (Ctrl+Shift+Z)",
+      "quantity": "Количество",
+      "colorCount": "Цветов в макете",
+      "setup": "Изделие"
+    },
+    "tools": {
+      "print": "Принт",
+      "text": "Текст",
+      "shapes": "Фигуры"
+    },
+    "designPage": {
+      "label": "Дизайн с INKMADE",
+      "notFound": "Дизайн не найден",
+      "seoTitle": "{title} — дизайн на INKMADE",
+      "seoDescription": "Смотри дизайн, созданный в конструкторе INKMADE, и сделай свой — печать по требованию от одной штуки.",
+      "ogDescription": "Создай свой принт в браузере и закажи от одной штуки.",
+      "previewAlt": "Дизайн — {title}",
+      "cta": "Нравится? Собери свой принт в браузере и закажи от одной штуки.",
+      "createOwn": "Создать свой принт",
+      "viewCatalog": "Смотреть каталог"
+    },
+    "designerPage": {
+      "notFound": "Витрина не найдена",
+      "defaultName": "Дизайнер INKMADE",
+      "headTitle": "{name} — принты на INKMADE",
+      "seoDescription": "Принты дизайнера {name} в каталоге INKMADE.",
+      "author": "Автор",
+      "prints": "Принты ({count})",
+      "emptyTitle": "Пока нет принтов",
+      "emptyText": "У автора ещё нет опубликованных принтов.",
+      "orderCta": "Выбрать изделие и заказать с принтом"
+    },
+    "upload": {
+      "button": "Загрузить принт",
+      "hint": "PNG, JPG, WEBP, GIF, AVIF или PDF · до {maxMb} МБ. Минимум {dpiMin} DPI на макс. размере, цель {dpiTarget}.",
+      "rejected": "Файл отклонён",
+      "added": "Принт добавлен",
+      "addedDpi": "Принт добавлен · {dpi} DPI",
+      "noSizeData": "Нет данных о размере печати",
+      "noSizeDataHint": "У товара не задан max_print_mm.",
+      "lowResolution": "Низкое разрешение",
+      "lowResolutionHint": "На макс. размере изделия {dpi} DPI (нужно от {dpiMin}). Загрузите файл большего разрешения.",
+      "targetDpiHint": "Для лучшего качества цель — {dpiTarget} DPI.",
+      "processFailed": "Не удалось обработать файл"
+    },
+    "price": {
+      "label": "Цена",
+      "base": "Изделие",
+      "material": "Материал",
+      "method": "Метод нанесения",
+      "print": "Печать",
+      "text": "Текст",
+      "colors": "Цвета (шелкография)",
+      "perUnit": "За штуку",
+      "total": "Итого",
+      "addToCart": "В корзину"
+    },
+    "layers": {
+      "label": "Слои",
+      "textLayer": "Текст",
+      "libraryPrint": "Принт из библиотеки",
+      "uploadedPrint": "Загруженный принт",
+      "duplicate": "Дублировать",
+      "delete": "Удалить",
+      "toFront": "На передний план",
+      "forward": "Выше",
+      "backward": "Ниже",
+      "toBack": "На задний план"
+    },
+    "inspector": {
+      "opacity": "Прозрачность",
+      "align": "Выравнивание",
+      "outline": "Обводка",
+      "curve": "Изгиб дуги",
+      "removeBg": "Удалить фон",
+      "bgProcessing": "Удаляю фон…",
+      "bgDone": "Фон удалён",
+      "bgFailed": "Не удалось удалить фон",
+      "fill": "Заливка",
+      "pattern": "Повтор плиткой",
+      "patternScale": "Масштаб плитки",
+      "filters": "Фильтры",
+      "reset": "Сбросить",
+      "brightness": "Яркость",
+      "contrast": "Контраст",
+      "saturation": "Насыщенность",
+      "posterize": "Постеризация",
+      "grayscale": "Ч/Б",
+      "sepia": "Сепия",
+      "invert": "Инверсия",
+      "cm": "см",
+      "lock": "Закрепить",
+      "locked": "Закреплён",
+      "align_left": "По левому краю зоны",
+      "align_hcenter": "По центру (гориз.)",
+      "align_right": "По правому краю зоны",
+      "align_top": "По верху зоны",
+      "align_vcenter": "По центру (верт.)",
+      "align_bottom": "По низу зоны"
+    },
+    "shapes": {
+      "label": "Фигуры",
+      "rect": "Прямоугольник",
+      "circle": "Круг",
+      "triangle": "Треугольник",
+      "star": "Звезда",
+      "heart": "Сердце",
+      "line": "Линия"
+    },
+    "text": {
+      "label": "Текст",
+      "placeholder": "Имя или надпись",
+      "fontSearch": "Поиск шрифта…",
+      "previewLabel": "Превью: {value}",
+      "previewPlaceholder": "Ваш текст",
+      "add": "Добавить текст",
+      "enterText": "Введите текст",
+      "noCyrillic": "Шрифт без кириллицы",
+      "noCyrillicHint": "«{font}» рассчитан на латиницу. Для кириллицы выберите другой шрифт."
+    },
+    "canvas": {
+      "zoomIn": "Приблизить",
+      "zoomOut": "Отдалить",
+      "zoomReset": "Сбросить масштаб"
+    },
+    "zones": {
+      "label": "Зона нанесения"
+    },
+    "colors": {
+      "label": "Цвет изделия"
+    },
+    "library": {
+      "button": "Выбрать из библиотеки",
+      "title": "Готовые принты",
+      "loading": "Загрузка…",
+      "empty": "Библиотека пока пуста.",
+      "loadFailed": "Не удалось загрузить библиотеку",
+      "added": "Принт «{title}» добавлен",
+      "loadPrintFailed": "Не удалось загрузить принт"
+    }
+  }
+}

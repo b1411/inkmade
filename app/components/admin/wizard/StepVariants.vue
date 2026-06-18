@@ -6,6 +6,7 @@ import { TEXTILE_COLORS } from '~~/shared/config/product-types'
 const props = defineProps<{ product: ProductWithRelations }>()
 const emit = defineEmits<{ changed: [] }>()
 
+const { t } = useI18n()
 const { generateVariants, deleteVariant } = useAdmin()
 const toast = useToast()
 
@@ -45,8 +46,8 @@ function onHexInput(v: string) {
 
 function addColor() {
   const hex = normalizeHex(newColor.hex)
-  if (!hex) { toast.add({ title: 'Неверный HEX', description: 'Формат #RRGGBB, напр. #1E2A44', color: 'warning' }); return }
-  if (form.colors.some(c => c.hex.toLowerCase() === hex)) { toast.add({ title: 'Цвет уже добавлен', color: 'warning' }); return }
+  if (!hex) { toast.add({ title: t('admin.wizard.variants.invalidHex'), description: t('admin.wizard.variants.invalidHexHint'), color: 'warning' }); return }
+  if (form.colors.some(c => c.hex.toLowerCase() === hex)) { toast.add({ title: t('admin.wizard.variants.colorExists'), color: 'warning' }); return }
   form.colors.push({ name: newColor.name.trim() || presetName(hex) || hex.toUpperCase(), hex })
   newColor.name = ''
   newColor.hex = '#111111'
@@ -66,19 +67,19 @@ function removeSize(i: number) { form.sizes.splice(i, 1) }
 
 const generating = ref(false)
 async function onGenerate() {
-  if (!form.materialId) { toast.add({ title: 'Сначала добавьте материал (шаг 2)', color: 'warning' }); return }
+  if (!form.materialId) { toast.add({ title: t('admin.wizard.variants.selectMaterialFirst'), color: 'warning' }); return }
   if (!form.colors.length || !form.sizes.length) {
-    toast.add({ title: 'Добавьте хотя бы один цвет и размер', color: 'warning' }); return
+    toast.add({ title: t('admin.wizard.variants.selectColorSize'), color: 'warning' }); return
   }
   generating.value = true
   try {
     await generateVariants(props.product.id, props.product.slug, form.materialId, form.colors, form.sizes, form.initialStock)
-    toast.add({ title: `Создано вариантов: ${form.colors.length * form.sizes.length}`, color: 'success' })
+    toast.add({ title: t('admin.wizard.variants.variantsCreated', { count: form.colors.length * form.sizes.length }), color: 'success' })
     form.colors = []
     form.sizes = []
     emit('changed')
   } catch (e) {
-    toast.add({ title: 'Ошибка генерации', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.variants.generateError'), description: (e as Error).message, color: 'error' })
   } finally {
     generating.value = false
   }
@@ -86,7 +87,7 @@ async function onGenerate() {
 
 async function onDelete(id: string) {
   try { await deleteVariant(id); emit('changed') } catch (e) {
-    toast.add({ title: 'Ошибка', description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.variants.error'), description: (e as Error).message, color: 'error' })
   }
 }
 </script>
@@ -96,13 +97,13 @@ async function onDelete(id: string) {
     <UAlert
       v-if="!product.materials.length"
       color="warning"
-      title="Нет материалов"
-      description="Добавьте материал на шаге 2 — вариант привязывается к материалу."
+      :title="$t('admin.wizard.variants.noMaterialsTitle')"
+      :description="$t('admin.wizard.variants.noMaterialsText')"
     />
 
     <template v-else>
       <div v-if="product.variants.length" class="space-y-1">
-        <UiSectionLabel>Существующие варианты ({{ product.variants.length }})</UiSectionLabel>
+        <UiSectionLabel>{{ $t('admin.wizard.variants.existingTitle', { count: product.variants.length }) }}</UiSectionLabel>
         <div class="flex flex-wrap gap-2 mt-2">
           <span
             v-for="v in product.variants"
@@ -117,15 +118,15 @@ async function onDelete(id: string) {
       </div>
 
       <div class="border-t border-ink-gray-200 pt-5 space-y-4">
-        <UiSectionLabel accent>Сгенерировать матрицу</UiSectionLabel>
+        <UiSectionLabel accent>{{ $t('admin.wizard.variants.generateTitle') }}</UiSectionLabel>
 
-        <UFormField label="Материал">
+        <UFormField :label="$t('admin.wizard.variants.fieldMaterial')">
           <USelect v-model="form.materialId" :items="materialItems" value-key="value" class="w-full max-w-sm" />
         </UFormField>
 
         <div class="grid md:grid-cols-2 gap-6">
           <div>
-            <UiSectionLabel>Цвета</UiSectionLabel>
+            <UiSectionLabel>{{ $t('admin.wizard.variants.colorsTitle') }}</UiSectionLabel>
             <div class="flex flex-wrap gap-2 my-2">
               <span v-for="(c, i) in form.colors" :key="i" class="inline-flex items-center gap-1 border rounded-full px-2 py-1 text-caption">
                 <span class="size-3 rounded-full border" :style="{ backgroundColor: c.hex }" />{{ c.name }}
@@ -134,7 +135,7 @@ async function onDelete(id: string) {
             </div>
 
             <!-- быстрая палитра: клик добавляет цвет -->
-            <p class="text-label ink-label text-ink-gray-400 mt-1 mb-1">Палитра</p>
+            <p class="text-label ink-label text-ink-gray-400 mt-1 mb-1">{{ $t('admin.wizard.variants.palette') }}</p>
             <div class="flex flex-wrap gap-1.5 mb-3">
               <button
                 v-for="c in TEXTILE_COLORS"
@@ -149,25 +150,25 @@ async function onDelete(id: string) {
 
             <!-- ввод по номеру цвета (#RRGGBB), как в Canva -->
             <div class="flex gap-2 items-end">
-              <UFormField label="HEX-номер">
+              <UFormField :label="$t('admin.wizard.variants.fieldHex')">
                 <UInput
                   :model-value="newColor.hex" placeholder="#1E2A44" class="w-28 font-mono"
                   @update:model-value="onHexInput"
                   @keydown.enter.prevent="addColor"
                 />
               </UFormField>
-              <UFormField label="Пипетка">
+              <UFormField :label="$t('admin.wizard.variants.fieldPicker')">
                 <UInput v-model="newColor.hex" type="color" class="w-12 p-1" />
               </UFormField>
-              <UFormField label="Название (необяз.)">
-                <UInput v-model="newColor.name" placeholder="авто по HEX" />
+              <UFormField :label="$t('admin.wizard.variants.fieldColorName')">
+                <UInput v-model="newColor.name" :placeholder="$t('admin.wizard.variants.colorNamePlaceholder')" />
               </UFormField>
               <UButton color="neutral" variant="subtle" icon="i-lucide-plus" @click="addColor" />
             </div>
           </div>
 
           <div>
-            <UiSectionLabel>Размеры</UiSectionLabel>
+            <UiSectionLabel>{{ $t('admin.wizard.variants.sizesTitle') }}</UiSectionLabel>
             <div class="flex flex-wrap gap-2 my-2">
               <span v-for="(s, i) in form.sizes" :key="i" class="inline-flex items-center gap-1 border rounded-full px-2 py-1 text-caption">
                 {{ s }}
@@ -175,18 +176,18 @@ async function onDelete(id: string) {
               </span>
             </div>
             <div class="flex gap-2 items-end">
-              <UFormField label="Размер"><UInput v-model="newSize" placeholder="M" @keydown.enter.prevent="addSize" /></UFormField>
+              <UFormField :label="$t('admin.wizard.variants.fieldSize')"><UInput v-model="newSize" placeholder="M" @keydown.enter.prevent="addSize" /></UFormField>
               <UButton color="neutral" variant="subtle" icon="i-lucide-plus" @click="addSize" />
             </div>
           </div>
         </div>
 
-        <UFormField label="Начальный остаток на вариант">
+        <UFormField :label="$t('admin.wizard.variants.fieldInitialStock')">
           <UInput v-model.number="form.initialStock" type="number" min="0" class="w-32" />
         </UFormField>
 
         <UButton color="primary" :loading="generating" @click="onGenerate">
-          Сгенерировать {{ form.colors.length * form.sizes.length || '' }} вариантов
+          {{ $t('admin.wizard.variants.generateButton', { count: form.colors.length * form.sizes.length || '' }) }}
         </UButton>
       </div>
     </template>

@@ -1,0 +1,21 @@
+{
+  "product": {
+    "notFound": "Товар не найден",
+    "metaTitle": "{title} — INKMADE",
+    "metaDescription": "{title}: кастомизируй принт в браузере и закажи от одной штуки — INKMADE.",
+    "ogDescriptionFallback": "{title} с печатью вашего принта.",
+    "priceFrom": "от {price}",
+    "material": "Материал",
+    "color": "Цвет",
+    "size": "Размер",
+    "lifestyle": "На людях",
+    "photoNumber": "Фото {n}",
+    "lifestyleNumber": "На людях {n}",
+    "goToConstructor": "Перейти в конструктор",
+    "addToFav": "В избранное",
+    "colorNote": {
+      "title": "О цвете",
+      "description": "Цвет на экране может отличаться от напечатанного. Финальный цвет согласует оператор перед печатью."
+    }
+  }
+}

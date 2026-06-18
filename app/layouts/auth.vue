@@ -1,11 +1,12 @@
 <script setup lang="ts">
 // Экран авторизации (§9.1): сильный брендовый split — слева бордовая панель с
 // лого/слоганом/преимуществами (десктоп), справа форма на светлом. Без шапки/футера.
-const benefits = [
-  { icon: 'i-lucide-wand-2', text: 'Конструктор принтов прямо в браузере' },
-  { icon: 'i-lucide-package', text: 'Печать по требованию — от одной штуки' },
-  { icon: 'i-lucide-truck', text: 'Доставка по всему Казахстану' },
-]
+const { t } = useI18n()
+const benefits = computed(() => [
+  { icon: 'i-lucide-wand-2', text: t('auth.layout.benefitBuilder') },
+  { icon: 'i-lucide-package', text: t('auth.layout.benefitPrint') },
+  { icon: 'i-lucide-truck', text: t('auth.layout.benefitDelivery') },
+])
 </script>
 
 <template>
@@ -19,9 +20,9 @@ const benefits = [
       <NuxtLink to="/" class="ink-logo text-3xl tracking-wide relative z-10">INKMADE</NuxtLink>
 
       <div class="relative z-10">
-        <h2 class="ink-display text-5xl leading-[1.05]">Создай<br>свой мерч.</h2>
+        <h2 class="ink-display text-5xl leading-[1.05]">{{ $t('auth.layout.headline') }}</h2>
         <p class="text-ink-cream/75 mt-5 text-lead max-w-sm">
-          Кастомные футболки, худи и кепки с печатью твоего дизайна.
+          {{ $t('auth.layout.tagline') }}
         </p>
         <ul class="mt-10 space-y-4">
           <li v-for="b in benefits" :key="b.text" class="flex items-center gap-3 text-ink-cream/85">
@@ -33,7 +34,7 @@ const benefits = [
         </ul>
       </div>
 
-      <p class="ink-label text-ink-cream/50 relative z-10">MERCH STUDIO · EST. 2025</p>
+      <p class="ink-label text-ink-cream/50 relative z-10">{{ $t('auth.layout.footnote') }}</p>
     </aside>
 
     <!-- форма -->
