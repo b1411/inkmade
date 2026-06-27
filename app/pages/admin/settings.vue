@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Настройки платформы (CRM §6.12): глобальные параметры в platform_settings.
-definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 import { LEGAL } from '~~/shared/config/legal'
+definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
 const { get, set } = useSettings()
 const toast = useToast()

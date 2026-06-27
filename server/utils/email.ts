@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '~/types/database.types'
 import { normalizeKzPhone } from '~~/shared/config/phone'
+import { logError } from '~~/server/utils/logger'
 
 // Транзакционные письма + WhatsApp (P1.7). Провайдеры включаются ключами в env;
 // без ключа — no-op (код готов, отправка не критична для бизнес-операции и не валит её).
@@ -31,7 +32,7 @@ export async function sendEmail(args: SendArgs): Promise<void> {
       body: { from, to: args.to, subject: args.subject, html: args.html },
     })
   } catch (e) {
-    console.error('[email] не удалось отправить письмо:', (e as Error).message)
+    await logError('email', e, { to: args.to, subject: args.subject })
   }
 }
 
@@ -129,7 +130,7 @@ async function sendWhatsApp(phoneE164: string, body: string): Promise<void> {
       body: { messaging_product: 'whatsapp', to: phoneE164.replace('+', ''), type: 'text', text: { body } },
     })
   } catch (e) {
-    console.error('[whatsapp] не удалось отправить:', (e as Error).message)
+    await logError('whatsapp', e, { phone: phoneE164 })
   }
 }
 

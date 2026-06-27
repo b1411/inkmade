@@ -137,7 +137,7 @@ function specPlacements(item: { designs?: { spec?: unknown } | null }) {
     <div class="grid lg:grid-cols-[1fr_300px] gap-8">
       <!-- позиции -->
       <div class="space-y-4">
-        <div v-for="(it, idx) in order.order_items" :key="it.id" class="border border-ink-gray-200 rounded-lg p-4">
+        <div v-for="it in order.order_items" :key="it.id" class="border border-ink-gray-200 rounded-lg p-4">
           <div class="flex items-center justify-between">
             <p class="font-semibold">{{ it.variants?.products?.title }} · {{ it.variants?.color_name }}/{{ it.variants?.size }}</p>
             <span class="ink-label text-ink-gray-400">×{{ it.quantity }}</span>

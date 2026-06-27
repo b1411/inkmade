@@ -13,7 +13,7 @@ import { applyKonvaFilters } from '~/utils/konva-filters'
 const design = useDesign()
 const {
   product, zoneRect, placements, activePlacements, selectedId, productColorHex,
-  updatePlacement, removePlacement, duplicatePlacement, undo, redo, zone, zoneName,
+  updatePlacement, removePlacement, duplicatePlacement, undo, redo, zone,
   registerStage, registerExporter, pxPerMmForZone,
 } = design
 const { load: loadFont } = useFontLoader()

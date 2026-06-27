@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Возвраты и рекламации (CRM §6.8): заказы с проблемами + решение reprint/refunded.
 // Доказательная база — скриншот композиции + спецификация (в карточке заказа /admin/orders/[id]).
-definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 import type { Database } from '~/types/database.types'
 import type { OrderStatus } from '~~/shared/config/order-status'
+definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
 const supabase = useSupabaseClient<Database>()
 const { changeStatus } = useStudio()

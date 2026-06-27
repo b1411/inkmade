@@ -456,7 +456,7 @@ export const useDesign = () => {
   async function generatePrintFiles(dpi = 300): Promise<PrintFile[]> {
     const fn = exporterFn.value
     if (!fn) { printFiles.value = []; return [] }
-    let blobs: ZoneBlob[] = []
+    let blobs: ZoneBlob[]
     try { blobs = await fn(dpi) } catch { blobs = [] }
     const supabase = useSupabaseClient()
     const out: PrintFile[] = []

@@ -2,7 +2,6 @@
 // Дашборд дизайнера (CRM §4.1): заработок на виду + последние продажи.
 definePageMeta({ layout: 'designer', middleware: 'designer-role' })
 const d = useDesigner()
-const { t } = useI18n()
 
 const { data, refresh } = await useAsyncData('designer-dash', async () => {
   const [profile, balance, earnings, prints, stats] = await Promise.all([

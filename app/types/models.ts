@@ -1,6 +1,9 @@
 // Ручные доменные типы (§5). Полные типы БД сгенерируем позже:
 // `supabase gen types typescript` → app/types/database.types.ts (F0-9/после применения миграций).
 
+// ── Каталог (вложенная агрегированная форма для мастера/витрины) ───
+import type { Tables } from '~/types/database.types'
+
 export type UserRole = 'customer' | 'designer' | 'operator' | 'admin'
 
 export interface Profile {
@@ -10,9 +13,6 @@ export interface Profile {
   phone?: string | null
   created_at: string
 }
-
-// ── Каталог (вложенная агрегированная форма для мастера/витрины) ───
-import type { Tables } from '~/types/database.types'
 
 export type Product = Tables<'products'>
 export type Material = Tables<'materials'>

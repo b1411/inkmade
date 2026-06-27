@@ -19,7 +19,7 @@ function rangeFor(days: number): { from?: string; to?: string } {
   return { from: from.toISOString(), to: to.toISOString() }
 }
 
-const { data, pending, refresh } = await useAsyncData('admin-finance', async () => {
+const { data, pending } = await useAsyncData('admin-finance', async () => {
   const { from, to } = rangeFor(period.value)
   const [stats, series, margin, entries] = await Promise.all([
     fin.stats(from, to), fin.series(from, to), fin.marginBreakdown(), fin.entries(300),

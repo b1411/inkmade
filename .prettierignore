@@ -1,0 +1,12 @@
+.nuxt
+.output
+.data
+.nitro
+.cache
+dist
+node_modules
+pnpm-lock.yaml
+package-lock.json
+supabase/migrations
+app/types/database.types.ts
+*.md

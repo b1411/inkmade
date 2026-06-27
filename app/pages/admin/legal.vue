@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // Юр.документы (CRM §6.9): версии документов + лог согласий пользователей.
-definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 import { LEGAL } from '~~/shared/config/legal'
 import type { Database } from '~/types/database.types'
+definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
 const supabase = useSupabaseClient<Database>()
 

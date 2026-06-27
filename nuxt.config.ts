@@ -14,6 +14,7 @@ export default defineNuxtConfig({
   },
 
   modules: [
+    '@nuxt/eslint',
     '@nuxt/ui',
     '@nuxt/fonts',
     '@nuxtjs/supabase',
@@ -22,6 +23,12 @@ export default defineNuxtConfig({
     '@vueuse/motion/nuxt',
     '@formkit/auto-animate/nuxt',
   ],
+
+  // ESLint: используем стилевые правила из @nuxt/eslint, форматирование отдаём
+  // Prettier (eslint-config-prettier гасит конфликтующие правила в eslint.config.mjs).
+  eslint: {
+    config: { stylistic: false },
+  },
 
   css: ['~/assets/css/main.css'],
 

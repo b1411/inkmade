@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // Ценообразование (CRM §6.7): текущие ставки + надбавки методов (справочно).
-definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 import { PRICING } from '~~/shared/config/pricing'
 import { METHOD_SURCHARGE, type PrintMethod } from '~~/shared/config/print-methods'
+definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 
 const methods = Object.keys(METHOD_SURCHARGE) as PrintMethod[]
 
