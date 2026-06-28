@@ -13,9 +13,10 @@ const [{ data: featured }, { data: content }, { data: minPrice }] = await Promis
   useAsyncData('hero-featured', async () => {
     const { data } = await supabase
       .from('products')
-      .select('alias, title, product_images(url, is_primary)')
+      .select('alias')
       .eq('is_active', true)
       .not('alias', 'is', null)
+      .order('is_featured', { ascending: false }) // витринный товар для ссылки CTA (миграция 0050)
       .limit(1)
       .maybeSingle()
     return data
@@ -54,10 +55,6 @@ const priceFrom = computed(() =>
     ? t('landing.hero.priceFrom', { price: new Intl.NumberFormat('ru-RU').format(minPrice.value) })
     : '',
 )
-const heroImage = computed(() => {
-  const imgs = (featured.value?.product_images ?? []) as { url: string; is_primary: boolean }[]
-  return imgs.find(i => i.is_primary)?.url ?? imgs[0]?.url
-})
 
 const root = ref<HTMLElement | null>(null)
 const animate = ref(false)
@@ -108,6 +105,17 @@ onBeforeUnmount(() => ctx?.revert())
     <div class="absolute inset-0 bg-linear-to-br from-ink-burgundy via-ink-burgundy to-ink-burgundy-dark opacity-80" />
     <!-- WebGL «текучий» бордо-фон (Tier 3) — рисуется поверх фолбэка только на десктопе -->
     <UiShaderBackdrop />
+    <!-- фоновое фото-лукбук: размыто и приглушено, поверх бордо-фона — атмосфера улицы.
+         scale-105 убирает прозрачные края от blur, mix-blend-luminosity тонирует кадр
+         под бордо (бренд сохраняется). aria-hidden — чисто декоративный слой. -->
+    <img
+      src="/media/hero/hero-bg.jpg"
+      alt=""
+      aria-hidden="true"
+      class="absolute inset-0 size-full scale-100 object-cover object-[50%_25%] opacity-75 blur-[3px] mix-blend-luminosity pointer-events-none select-none"
+    >
+    <!-- бордо-тинт + затемнение слева под заголовок/CTA (контраст текста) -->
+    <div class="absolute inset-0 bg-linear-to-r from-ink-burgundy/70 via-ink-burgundy/25 to-ink-burgundy-dark/50" />
     <div class="absolute -top-24 -right-24 size-96 rounded-full bg-ink-burgundy-light/30 blur-3xl ink-ambient-a" />
     <div class="absolute -bottom-32 -left-20 size-80 rounded-full bg-ink-black/30 blur-3xl ink-ambient-b" />
 
@@ -143,13 +151,12 @@ onBeforeUnmount(() => ctx?.revert())
       <div
         data-hero="media"
         data-hero-media
-        class="relative rounded-2xl bg-white/5 ring-1 ring-white/10 p-2.5 shadow-[0_24px_80px_rgba(0,0,0,0.4)] backdrop-blur-[2px] max-w-[460px] lg:ml-auto"
+        class="relative w-full rounded-2xl bg-white/5 ring-1 ring-white/10 p-2.5 shadow-[0_24px_80px_rgba(0,0,0,0.4)] backdrop-blur-[2px] max-w-[460px] lg:ml-auto"
       >
         <UiMediaSlot
           name="hero.main"
-          :src="heroImage"
           ratio="4/5"
-          :alt="featured?.title ?? $t('landing.hero.imageAlt')"
+          :alt="$t('landing.hero.imageAlt')"
           :priority="true"
           loading="eager"
           sizes="(max-width: 1024px) 90vw, 440px"

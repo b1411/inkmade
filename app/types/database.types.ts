@@ -864,6 +864,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          is_featured: boolean
           max_print_mm: Json | null
           max_size_label: string | null
           slug: string
@@ -877,6 +878,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_featured?: boolean
           max_print_mm?: Json | null
           max_size_label?: string | null
           slug: string
@@ -890,6 +892,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          is_featured?: boolean
           max_print_mm?: Json | null
           max_size_label?: string | null
           slug?: string

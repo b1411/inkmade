@@ -11,6 +11,7 @@ const { data: featured } = await useAsyncData('constructor-featured', async () =
     .select('alias')
     .eq('is_active', true)
     .not('alias', 'is', null)
+    .order('is_featured', { ascending: false }) // витринный товар-герой первым (миграция 0050)
     .limit(1)
     .maybeSingle()
   return data
