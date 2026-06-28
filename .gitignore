@@ -35,3 +35,12 @@ supabase/.temp
 
 # Пакетный менеджер — используем pnpm; npm-lock не коммитим
 package-lock.json
+
+# Артефакты тестов Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# Исходники фото/баннеров в корне — заливаются в Supabase Storage, в репо не нужны
+/IMG*-orig.jpg
+/баннер.jpg
