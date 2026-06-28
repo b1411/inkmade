@@ -20,7 +20,8 @@ let ctx: { revert: () => void } | null = null
 onMounted(() => {
   if (prefersReduced.value) return
   const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
-  const el = root.value
+  // template-ref выводится vue-tsc структурно (конфликт CSSOM) — приводим к HTMLElement.
+  const el = root.value as HTMLElement | null
   const ln = line.value
   if (!gsap || !el || !ln) return
 

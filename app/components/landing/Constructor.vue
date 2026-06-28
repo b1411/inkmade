@@ -24,7 +24,9 @@ const points = computed(() => [0, 1, 2].map(i => t(`landing.constructor.points[$
 const root = ref<HTMLElement | null>(null)
 const fx = useScrollFx()
 onMounted(() => {
-  const el = root.value
+  // vue-tsc выводит тип template-ref структурно (конфликт CSSOM с lib.dom) —
+  // приводим к именованному HTMLElement на границе, чтобы gsap/scope приняли цель.
+  const el = root.value as HTMLElement | null
   if (!el) return
   fx.scope(el, (gsap, _reveal, parallax) => {
     const wipe = el.querySelector('[data-c-wipe]')

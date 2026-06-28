@@ -18,10 +18,23 @@ export default defineEventHandler(async (event) => {
   if (order.paid_at) throw createError({ statusCode: 409, statusMessage: 'Заказ уже оплачен' })
 
   const config = useRuntimeConfig()
+  const total = Number(order.total)
+  if (!Number.isFinite(total) || total < 0) {
+    throw createError({ statusCode: 400, statusMessage: 'Некорректная сумма заказа' })
+  }
+
+  // Бесплатный заказ (например 100% промо): провайдеру платить нечего, реальному
+  // шлюзу amount=0 слать нельзя. Подтверждаем сервером напрямую через apply_paid
+  // (service_role) — §10 не нарушается: paid ставит серверная RPC, а не клиент/клиентская сумма.
+  if (total === 0) {
+    await svc.rpc('apply_paid', { p_order_id: order.id, p_provider_txn: `free_${order.id}`, p_raw: { free: true } })
+    return { payUrl: `/order/${order.id}`, paymentId: `free_${order.id}`, free: true }
+  }
+
   const provider = getPaymentProvider()
-  const init = provider.createPayment(order.id, Number(order.total), config.public.siteUrl || '')
+  const init = provider.createPayment(order.id, total, config.public.siteUrl || '')
 
   await svc.from('orders').update({ status: 'pending', payment_id: init.paymentId }).eq('id', orderId)
 
-  return { payUrl: init.payUrl, paymentId: init.paymentId }
+  return { payUrl: init.payUrl, paymentId: init.paymentId, free: false }
 })

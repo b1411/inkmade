@@ -172,7 +172,7 @@ async function onAddToCart() {
     })
     useAnalytics().addToCart(breakdown.value.unitPrice * quantity.value)
     // «улёт в корзину» + toast (§6.3, §7.2). Остаёмся в конструкторе — собрать ещё или оформить.
-    fly(canvasWrap.value, previewObjUrl)
+    fly(canvasWrap.value as HTMLElement | null, previewObjUrl)
     notify.addedToCart()
   } finally {
     submitting.value = false

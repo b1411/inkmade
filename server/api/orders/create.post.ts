@@ -42,6 +42,12 @@ export default defineEventHandler(async (event) => {
   // ── пересчёт каждой позиции по БД ──────────────────────────────
   interface Priced { item: Item; unitPrice: number; unitCost: number }
   const priced: Priced[] = []
+  // Проверка остатка (анти-оверселл): суммируем потребность по варианту и текущий
+  // остаток. Это дружелюбный pre-check ДО оплаты — авторитетная атомарная проверка
+  // под row-lock варианта живёт в apply_paid (миграция 0052). Между этой проверкой
+  // и оплатой остаток может измениться, поэтому финальное слово — за apply_paid.
+  const needByVariant = new Map<string, number>()
+  const stockByVariant = new Map<string, number>()
 
   for (const it of items) {
     const { data: product } = await svc.from('products')
@@ -55,6 +61,8 @@ export default defineEventHandler(async (event) => {
     if (!variant || variant.product_id !== it.productId) {
       throw createError({ statusCode: 400, statusMessage: 'Вариант не найден' })
     }
+    needByVariant.set(it.variantId, (needByVariant.get(it.variantId) ?? 0) + it.quantity)
+    stockByVariant.set(it.variantId, Number(variant.stock) || 0)
 
     const { data: material } = await svc.from('materials')
       .select('surcharge, print_mode, print_method').eq('id', variant.material_id).single()
@@ -123,6 +131,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции' })
     }
     priced.push({ item: it, unitPrice: breakdown.unitPrice, unitCost: Number(variant.blank_cost) || 0 })
+  }
+
+  // анти-оверселл: ни одна позиция не должна превышать текущий остаток варианта
+  for (const [vid, need] of needByVariant) {
+    if (need > (stockByVariant.get(vid) ?? 0)) {
+      throw createError({ statusCode: 409, statusMessage: 'Недостаточно товара на складе — обновите корзину' })
+    }
   }
 
   // ── запись: designs → order → order_items (серверная цена) ──────

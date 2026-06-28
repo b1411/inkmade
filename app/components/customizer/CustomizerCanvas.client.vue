@@ -40,7 +40,7 @@ onMounted(() => {
   recomputeScale()
   if (typeof ResizeObserver !== 'undefined' && frameRef.value) {
     ro = new ResizeObserver(scheduleRecompute)
-    ro.observe(frameRef.value)
+    ro.observe(frameRef.value as HTMLElement) // template-ref: приводим к именованному HTMLElement (конфликт CSSOM-типов)
   }
   window.addEventListener('resize', scheduleRecompute)
   window.addEventListener('keydown', onKey)

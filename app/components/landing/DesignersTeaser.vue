@@ -7,7 +7,9 @@ const root = ref<HTMLElement | null>(null)
 const fx = useScrollFx()
 
 onMounted(() => {
-  const el = root.value
+  // vue-tsc выводит тип template-ref структурно (конфликт CSSOM с lib.dom) —
+  // приводим к именованному HTMLElement на границе, чтобы gsap/scope приняли цель.
+  const el = root.value as HTMLElement | null
   if (!el) return
   fx.scope(el, (_gsap, _reveal, parallax, float) => {
     float('[data-d-float]', { y: 10 })

@@ -80,11 +80,17 @@ async function onPay() {
     useAnalytics().initiateCheckout(cart.total.value)
     const giftPayload = gift.on ? { recipient: gift.recipient.trim(), message: gift.message.trim(), hidePrice: gift.hidePrice } : undefined
     const { orderId } = await createFromCart(cart.items.value, { ...form }, promo.applied || undefined, giftPayload)
-    const { payUrl } = await $fetch<{ payUrl: string }>('/api/payment/create', {
+    const res = await $fetch<{ payUrl: string; free?: boolean }>('/api/payment/create', {
       method: 'POST',
       body: { orderId },
     })
-    await navigateTo(payUrl)
+    // бесплатный заказ подтверждается сервером минуя демо-оплату — чистим корзину здесь
+    // (в обычном потоке это делает страница оплаты после mock-confirm)
+    if (res.free) {
+      useAnalytics().purchase(0, orderId)
+      cart.clear()
+    }
+    await navigateTo(res.payUrl)
   } catch (e) {
     toast.add({ title: t('cart.checkout.error.title'), description: (e as Error).message, color: 'error' })
   } finally {
