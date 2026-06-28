@@ -32,4 +32,6 @@ supabase/.branches
 supabase/.temp
 
 .vercel
-pnpm-lock.yaml
+
+# Пакетный менеджер — используем pnpm; npm-lock не коммитим
+package-lock.json
