@@ -112,7 +112,9 @@ export const useDesign = () => {
     product.value = p
     materialId.value = p.materials[0]?.id ?? ''
     zoneName.value = p.print_zones[0]?.name ?? ''
-    productColorHex.value = p.variants[0]?.color_hex ?? '#111111'
+    // дефолтный цвет — первый В НАЛИЧИИ (скрытые stock=0 варианты игнорируем,
+    // иначе холст стартовал бы в недоступном цвете, рассинхрон с пикером)
+    productColorHex.value = (p.variants.find(v => v.stock > 0) ?? p.variants[0])?.color_hex ?? '#111111'
     placements.value = []
     selectedId.value = null
     colorCount.value = 1

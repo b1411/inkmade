@@ -96,6 +96,37 @@ watch(garmentUri, (uri) => {
   img.src = uri
 }, { immediate: true })
 
+// ── реальное фото изделия выбранного цвета (приоритет над силуэтом) ──
+// Источник — product_images (mockup) выбранного цвета. Перёд/спину выбираем по
+// активной зоне. Если фото нет — остаётся векторный силуэт (фолбэк).
+const isBackZone = computed(() => /back|спин|зад/.test(`${zone.value?.name ?? ''} ${zone.value?.title ?? ''}`.toLowerCase()))
+const productPhotoUrl = computed(() => {
+  const imgs = (product.value?.product_images ?? []).filter(
+    i => i.kind === 'mockup' && !i.is_hidden && i.color_hex === productColorHex.value,
+  )
+  if (!imgs.length) return null
+  const front = imgs.find(i => /пер[её]д|front/i.test(i.label ?? '')) ?? imgs[0]
+  const back = imgs.find(i => /спин|back|зад/i.test(i.label ?? ''))
+  return (isBackZone.value ? (back ?? front) : front)?.url ?? null
+})
+const productPhotoImg = ref<HTMLImageElement | null>(null)
+watch(productPhotoUrl, (url) => {
+  if (!url) { productPhotoImg.value = null; return }
+  const img = new window.Image()
+  img.crossOrigin = 'anonymous'
+  img.onload = () => { productPhotoImg.value = img; tick.value++ }
+  img.onerror = () => { productPhotoImg.value = null; tick.value++ }
+  img.src = url
+}, { immediate: true })
+const productPhotoConfig = computed(() => {
+  void tick.value
+  const img = productPhotoImg.value
+  if (!img) return null
+  const sc = Math.max(CANVAS.width / img.width, CANVAS.height / img.height) // cover-fit
+  const w = img.width * sc, h = img.height * sc
+  return { image: img, x: (CANVAS.width - w) / 2, y: (CANVAS.height - h) / 2, width: w, height: h, listening: false }
+})
+
 // ── конфиги слоёв ─────────────────────────────────────────────────
 const bgConfig = computed(() => ({ x: 0, y: 0, width: CANVAS.width, height: CANVAS.height, fill: '#efe9df', listening: false }))
 const garmentConfig = computed(() => {
@@ -494,7 +525,8 @@ async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
       <v-stage ref="stageRef" :config="stageConfig" @click="onStageClick" @tap="onStageClick" @wheel="onWheel">
         <v-layer>
           <v-rect :config="bgConfig" />
-          <v-image v-if="garmentConfig" :config="garmentConfig" />
+          <v-image v-if="productPhotoConfig" :config="productPhotoConfig" />
+          <v-image v-else-if="garmentConfig" :config="garmentConfig" />
           <v-image v-if="mockupConfig" :config="mockupConfig" />
           <v-rect :config="zoneFrameConfig" />
 
