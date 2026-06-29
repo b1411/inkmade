@@ -430,6 +430,16 @@ function attachTransformer() {
 }
 watch(selectedId, attachTransformer)
 watch(() => activePlacements.value.length, () => { attachTransformer(); nextTick(applyFilters) })
+// принт-изображение рендерится в Konva только ПОСЛЕ асинхронной загрузки (images[id]).
+// В момент addImage ноды ещё нет → трансформер цепляется к пустоте и принт нельзя
+// ресайзить. Переподключаемся, когда картинка догрузилась (tick), если выбран
+// элемент, но трансформер пока без ноды.
+watch(tick, () => {
+  if (!selectedId.value) return
+  const tr = transformerRef.value?.getNode?.()
+  if (tr && tr.nodes().length) return
+  attachTransformer()
+})
 watch(() => zone.value?.name, () => { selectedId.value = null; attachTransformer(); nextTick(applyFilters) })
 onMounted(() => {
   attachTransformer()

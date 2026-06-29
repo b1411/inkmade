@@ -32,13 +32,28 @@ async function uploadComposition(blob: Blob): Promise<string> {
 // «доработать» (§3.1): ?from=<designId> загружает сохранённый дизайн как основу версии
 const fromId = computed(() => (route.query.from as string) || null)
 const parentId = ref<string | null>(null)
+// доработка позиции корзины (§9.1): ?cart=<itemId> — восстанавливаем spec и параметры,
+// при повторном «в корзину» обновляем ЭТУ позицию, а не создаём дубль.
+const editCartId = computed(() => (route.query.cart as string) || null)
 
 // инициализация состояния на клиенте (canvas + Image — клиент)
 onMounted(async () => {
   if (!product.value) return
   design.init(product.value)
   useAnalytics().viewContent(product.value.id) // первое звено воронки (§3.5.1)
-  if (fromId.value) {
+  if (editCartId.value) {
+    // доработка позиции корзины: spec лежит локально, не в БД
+    cart.load()
+    const item = cart.items.value.find(i => i.id === editCartId.value)
+    if (item?.spec) {
+      design.loadSpec(item.spec)
+      await nextTick() // дать пересчитаться sizeVariants под восстановленные цвет/материал
+      // размер и количество — поля позиции, их нет в spec (размер — только если ещё в наличии)
+      if (item.size && sizeVariants.value.some(v => v.size === item.size)) selectedSize.value = item.size
+      quantity.value = item.quantity || 1
+      toast.add({ title: t('customize.page.loadedForRework'), color: 'success' })
+    }
+  } else if (fromId.value) {
     try {
       const { data } = await supabase.from('designs').select('spec').eq('id', fromId.value).single()
       if (data?.spec) {
@@ -75,12 +90,11 @@ const quantity = ref(1)
 const paramsOpen = ref(false)
 
 // ── 3-зонный редактор: левый тулбар выбирает активный инструмент ──
-type ToolKey = 'print' | 'text' | 'shapes'
+type ToolKey = 'print' | 'text'
 const activeTool = ref<ToolKey>('print')
 const TOOLS: Array<{ key: ToolKey; icon: string }> = [
   { key: 'print', icon: 'i-lucide-image' },
   { key: 'text', icon: 'i-lucide-type' },
-  { key: 'shapes', icon: 'i-lucide-shapes' },
 ]
 const lineTotal = computed(() => breakdown.value.unitPrice * Math.max(1, quantity.value))
 
@@ -95,6 +109,9 @@ async function onSaveDesign() {
   if (!design.zone.value) { toast.add({ title: t('customize.page.zoneNotSelected'), color: 'warning' }); return }
   saving.value = true
   try {
+    // снимаем выделение, иначе в скриншот попадут маркеры трансформера
+    design.selectedId.value = null
+    await nextTick()
     let previewUrl: string | null = null
     const blob = await design.captureComposition()
     if (blob) {
@@ -146,6 +163,9 @@ async function onAddToCart() {
   submitting.value = true
   let previewObjUrl: string | undefined
   try {
+    // снимаем выделение, иначе в скриншот попадут маркеры трансформера
+    design.selectedId.value = null
+    await nextTick()
     // скриншот композиции → Storage, ссылка попадёт в spec (§13.2)
     const blob = await design.captureComposition()
     if (blob) {
@@ -156,7 +176,7 @@ async function onAddToCart() {
     // печатные файлы на зону (300 DPI, прозрачный фон) — закрывает проблему шрифтов в цеху
     try { await generatePrintFiles() } catch { /* не блокируем заказ */ }
     const v = selectedVariant.value
-    cart.add({
+    const item = {
       productId: product.value!.id,
       slug: product.value!.slug,
       alias: product.value!.alias,
@@ -169,7 +189,15 @@ async function onAddToCart() {
       spec: toSpec() as unknown as import('~/types/database.types').Json,
       unitPrice: breakdown.value.unitPrice,
       quantity: quantity.value,
-    })
+    }
+    // доработка существующей позиции: обновляем её и возвращаемся в корзину
+    if (editCartId.value && cart.items.value.some(i => i.id === editCartId.value)) {
+      cart.update(editCartId.value, item)
+      notify.addedToCart()
+      await navigateTo('/cart')
+      return
+    }
+    cart.add(item)
     useAnalytics().addToCart(breakdown.value.unitPrice * quantity.value)
     // «улёт в корзину» + toast (§6.3, §7.2). Остаёмся в конструкторе — собрать ещё или оформить.
     fly(canvasWrap.value as HTMLElement | null, previewObjUrl)
@@ -228,7 +256,6 @@ async function onAddToCart() {
             <CustomizerPrintLibraryPicker />
           </template>
           <CustomizerTextTool v-else-if="activeTool === 'text'" />
-          <CustomizerShapePicker v-else-if="activeTool === 'shapes'" />
         </div>
       </div>
 

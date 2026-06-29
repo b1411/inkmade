@@ -85,6 +85,78 @@ export type Database = {
         }
         Relationships: []
       }
+      cart_items: {
+        Row: {
+          alias: string | null
+          color_hex: string
+          color_name: string
+          created_at: string
+          id: string
+          print_method: string | null
+          product_id: string
+          quantity: number
+          size: string
+          slug: string
+          spec: Json
+          title: string
+          unit_price: number
+          updated_at: string
+          user_id: string
+          variant_id: string | null
+        }
+        Insert: {
+          alias?: string | null
+          color_hex?: string
+          color_name?: string
+          created_at?: string
+          id?: string
+          print_method?: string | null
+          product_id: string
+          quantity?: number
+          size?: string
+          slug: string
+          spec?: Json
+          title: string
+          unit_price?: number
+          updated_at?: string
+          user_id: string
+          variant_id?: string | null
+        }
+        Update: {
+          alias?: string | null
+          color_hex?: string
+          color_name?: string
+          created_at?: string
+          id?: string
+          print_method?: string | null
+          product_id?: string
+          quantity?: number
+          size?: string
+          slug?: string
+          spec?: Json
+          title?: string
+          unit_price?: number
+          updated_at?: string
+          user_id?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cart_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -1215,6 +1287,7 @@ export type Database = {
         Args: { p_delta: number; p_reason: string; p_variant_id: string }
         Returns: number
       }
+      admin_customer: { Args: { p_id: string }; Returns: Json }
       admin_finance_series: {
         Args: { p_from?: string; p_to?: string }
         Returns: Json
@@ -1222,6 +1295,20 @@ export type Database = {
       admin_finance_stats: {
         Args: { p_from?: string; p_to?: string }
         Returns: Json
+      }
+      admin_list_customers: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          last_order_at: string
+          marketing_consent: boolean
+          orders_count: number
+          phone: string
+          total_spent: number
+        }[]
       }
       admin_list_users: {
         Args: never
@@ -1236,21 +1323,6 @@ export type Database = {
         }[]
       }
       admin_margin_breakdown: { Args: never; Returns: Json }
-      admin_customer: { Args: { p_id: string }; Returns: Json }
-      admin_list_customers: {
-        Args: never
-        Returns: {
-          id: string
-          email: string
-          full_name: string
-          phone: string
-          marketing_consent: boolean
-          created_at: string
-          orders_count: number
-          total_spent: number
-          last_order_at: string
-        }[]
-      }
       admin_stats: { Args: never; Returns: Json }
       apply_paid: {
         Args: { p_order_id: string; p_provider_txn: string; p_raw: Json }
