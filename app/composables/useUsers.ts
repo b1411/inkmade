@@ -23,5 +23,15 @@ export const useUsers = () => {
     }
   }
 
-  return { listUsers, setUserRole }
+  // Блокировка/разблокировка и приглашение требуют service-role (Auth Admin API),
+  // поэтому идут через серверные эндпоинты, которые перепроверяют роль admin.
+  async function setUserBanned(userId: string, ban: boolean) {
+    await $fetch('/api/admin/users/ban', { method: 'POST', body: { userId, ban } })
+  }
+
+  async function inviteUser(email: string, role: UserRole = 'customer') {
+    await $fetch('/api/admin/users/invite', { method: 'POST', body: { email, role } })
+  }
+
+  return { listUsers, setUserRole, setUserBanned, inviteUser }
 }

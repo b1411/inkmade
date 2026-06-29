@@ -1313,6 +1313,7 @@ export type Database = {
       admin_list_users: {
         Args: never
         Returns: {
+          banned_until: string | null
           created_at: string
           email: string
           full_name: string

@@ -91,7 +91,7 @@ const shortId = (s: string) => s.slice(0, 8)
             <span :class="Number(it.unit_price) - Number(it.unit_cost) > 0 ? 'text-ink-burgundy font-semibold' : 'text-ink-error font-semibold'">
               {{ $t('admin.order.item.margin') }} {{ fmt((Number(it.unit_price) - Number(it.unit_cost)) * it.quantity) }} ₸
             </span>
-            · {{ it.print_method }}
+            <span v-if="it.print_method"> · {{ it.print_method }}</span>
           </p>
         </UiPanel>
 
@@ -122,7 +122,8 @@ const shortId = (s: string) => s.slice(0, 8)
         <!-- адрес + оплата -->
         <UiPanel :title="$t('admin.order.delivery.title')" icon="i-lucide-truck">
           <div class="text-caption space-y-1">
-            <p v-if="addr">{{ addr.full_name }}, {{ addr.phone }} — {{ addr.city }}, {{ addr.address }}</p>
+            <p v-if="addr?.full_name">{{ addr.full_name }}, {{ addr.phone }} — {{ addr.city }}, {{ addr.address }}</p>
+            <p v-if="addr?.source === 'admin_manual'" class="text-ink-gray-500">{{ $t('admin.order.manualOrder') }}<span v-if="addr.note"> — {{ addr.note }}</span></p>
             <p v-if="order.tracking_no">{{ $t('admin.order.delivery.tracking', { no: order.tracking_no, carrier: order.carrier }) }}</p>
             <p>{{ $t('admin.order.delivery.payment', { value: order.paid_at ? new Date(order.paid_at).toLocaleString('ru') : $t('admin.order.delivery.notPaid') }) }}</p>
           </div>

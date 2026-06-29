@@ -68,6 +68,18 @@ export const useAdmin = () => {
     return updateProduct(id, { is_active: isActive })
   }
 
+  /** Массовая публикация/снятие — один UPDATE по списку id. */
+  async function setPublishedBulk(ids: string[], isActive: boolean) {
+    if (!ids.length) return
+    const { error } = await supabase.from('products').update({ is_active: isActive }).in('id', ids)
+    if (error) throw error
+  }
+
+  /** Массовое удаление: по очереди через deleteProduct, чтобы каждому подчистить Storage (H11). */
+  async function deleteProductsBulk(ids: string[]) {
+    for (const id of ids) await deleteProduct(id)
+  }
+
   /**
    * Создать товар-черновик из шаблона типа изделия (каркас каталога, §6):
    * сразу заводит материал, матрицу вариантов цвет×размер и зоны печати.
@@ -115,6 +127,26 @@ export const useAdmin = () => {
   }
 
   // ── Заказы (админ видит финансы: цена, себестоимость, маржа §6.4) ──
+  /** Варианты товара для ручного заказа (пикер позиции). */
+  async function getProductVariants(productId: string) {
+    const { data, error } = await supabase
+      .from('variants')
+      .select('id, color_name, color_hex, size, sku, stock')
+      .eq('product_id', productId)
+      .order('size')
+    if (error) throw error
+    return data
+  }
+
+  /** Ручной заказ (телефон/офлайн): создаётся на сервере под admin-проверкой, статус created. */
+  async function createManualOrder(payload: {
+    userId: string
+    items: { variantId: string; quantity: number; unitPrice: number }[]
+    note?: string
+  }) {
+    return await $fetch('/api/admin/orders/create', { method: 'POST', body: payload })
+  }
+
   async function getOrderAdmin(id: string) {
     const { data, error } = await supabase
       .from('orders')
@@ -341,6 +373,10 @@ export const useAdmin = () => {
     updateProduct,
     deleteProduct,
     setPublished,
+    setPublishedBulk,
+    deleteProductsBulk,
+    getProductVariants,
+    createManualOrder,
     getOrderAdmin,
     setVariantCost,
     listPromos,

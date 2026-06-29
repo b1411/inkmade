@@ -9,7 +9,7 @@
 //     клиентов, лиды, прайсинг/промо, аудит-лог, контент-редактор, юр-документы).
 export const FEATURES = {
   designerMarketplace: false,
-  advancedAdmin: false,
+  advancedAdmin: true,
 } as const
 
 // Префиксы роутов, скрываемых вместе с фичей. Используются глобальным

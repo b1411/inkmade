@@ -80,6 +80,7 @@ function exportCsv() {
   <div>
     <UiPageHeader :label="$t('admin.orders.label')" :title="$t('admin.orders.title')" :description="$t('admin.orders.description')">
       <template #actions>
+        <UButton to="/admin/orders/new" color="primary" icon="i-lucide-plus">{{ $t('admin.orders.newOrder') }}</UButton>
         <UButton icon="i-lucide-download" color="neutral" variant="subtle" :disabled="!filtered.length" @click="exportCsv">{{ $t('admin.orders.exportCsv') }}</UButton>
       </template>
     </UiPageHeader>

@@ -20,7 +20,18 @@
       "newPageTitle": "Тауар жасау",
       "editLabel": "Өңдеу",
       "editTitle": "Тауар",
-      "toList": "Тізімге"
+      "toList": "Тізімге",
+      "selectAll": "Барлығын таңдау",
+      "selected": "Таңдалды: {count}",
+      "clearSelection": "Таңдауды алып тастау",
+      "bulkPublish": "Жариялау",
+      "bulkUnpublish": "Жарияланымнан алу",
+      "bulkDelete": "Жою",
+      "bulkDeleteConfirm": "Таңдалған тауарларды жою керек пе ({count})? Әрекет қайтарылмайды.",
+      "bulkPublished": "Тауарлар жарияланды",
+      "bulkUnpublished": "Тауарлар жарияланымнан алынды",
+      "bulkDeleted": "Тауарлар жойылды ({count})",
+      "bulkError": "Жаппай операция қатесі"
     },
     "categories": {
       "headTitle": "Санаттар — INKMADE",

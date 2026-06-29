@@ -20,7 +20,18 @@
       "newPageTitle": "Создание товара",
       "editLabel": "Редактирование",
       "editTitle": "Товар",
-      "toList": "К списку"
+      "toList": "К списку",
+      "selectAll": "Выбрать все",
+      "selected": "Выбрано: {count}",
+      "clearSelection": "Снять выбор",
+      "bulkPublish": "Опубликовать",
+      "bulkUnpublish": "Снять с публикации",
+      "bulkDelete": "Удалить",
+      "bulkDeleteConfirm": "Удалить выбранные товары ({count})? Действие необратимо.",
+      "bulkPublished": "Товары опубликованы",
+      "bulkUnpublished": "Товары сняты с публикации",
+      "bulkDeleted": "Товары удалены ({count})",
+      "bulkError": "Ошибка массовой операции"
     },
     "categories": {
       "headTitle": "Категории — INKMADE",
