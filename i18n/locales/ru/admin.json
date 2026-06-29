@@ -452,7 +452,7 @@
       "invite": {
         "title": "Пригласить пользователя",
         "email": "Email",
-        "emailPlaceholder": "user@example.com",
+        "emailPlaceholder": "user{'@'}example.com",
         "role": "Роль",
         "submit": "Отправить приглашение",
         "sent": "Приглашение отправлено",

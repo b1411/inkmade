@@ -452,7 +452,7 @@
       "invite": {
         "title": "Пайдаланушыны шақыру",
         "email": "Email",
-        "emailPlaceholder": "user@example.com",
+        "emailPlaceholder": "user{'@'}example.com",
         "role": "Рөл",
         "submit": "Шақыру жіберу",
         "sent": "Шақыру жіберілді",
