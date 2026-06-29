@@ -143,15 +143,14 @@ export default defineEventHandler(async (event) => {
   // ── запись: designs → order → order_items (серверная цена) ──────
   const subtotal = priced.reduce((s, p) => s + p.unitPrice * p.item.quantity, 0)
 
-  // промокод (§6.7): скидка считается по БД; учёт использования атомарный RPC
+  // промокод (§6.7): скидка считается по БД read-only (валидность/лимит/срок —
+  // в evaluatePromo). Учёт использования (used_count++) НЕ здесь, а при оплате,
+  // в apply_paid (миграция 0055) — иначе брошенная корзина «сжигала» код.
   let discount = 0
   let promoCode: string | null = null
   if (body.promoCode) {
     const promo = await computePromoDiscount(svc, body.promoCode, subtotal)
-    if (promo) {
-      const { data: ok } = await svc.rpc('bump_promo_use', { p_code: promo.code })
-      if (ok) { discount = promo.discount; promoCode = promo.code }
-    }
+    if (promo) { discount = promo.discount; promoCode = promo.code }
   }
   const total = Math.max(0, subtotal - discount)
 

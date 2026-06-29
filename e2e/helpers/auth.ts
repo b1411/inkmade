@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 
 // Креды тест-аккаунтов берём из окружения — без них авторизованные сценарии
 // помечаются skip (как в purchase-funnel). PROD-SAFE: preview смотрит в прод-Supabase,
