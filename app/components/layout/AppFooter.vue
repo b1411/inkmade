@@ -65,7 +65,11 @@ const { isAuthenticated } = useAuth()
 
 <style scoped>
 .footer-link {
-  display: inline-block;
+  /* block + fit-content: ссылки встают в столбик (раньше inline-block перебивал
+     утилиту `block` → «Все категорииКорзина» слипались), подчёркивание ::after
+     остаётся по ширине текста. */
+  display: block;
+  width: fit-content;
   position: relative;
   transition: color var(--dur-fast) var(--ease-out);
 }
