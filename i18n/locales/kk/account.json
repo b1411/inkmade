@@ -39,6 +39,8 @@
       "itemsShort": "поз.",
       "repeat": "Қайталау",
       "reorderSuccess": "Себетке қосылды: {count}",
+      "reorderPartial": "Қосылды: {added}. Өткізілді (қоймада жоқ): {skipped}",
+      "reorderNone": "Бұл тауарлар қазір қолжетімсіз",
       "reorderErrorTitle": "Қайталау мүмкін болмады"
     },
     "designs": {

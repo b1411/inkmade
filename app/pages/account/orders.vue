@@ -16,6 +16,7 @@ const { data: orders, pending } = await useAsyncData('account-orders', async () 
 
 const badge = (s: string) => s === 'delivered' ? 'success' : s === 'cancelled' || s === 'refunded' ? 'error' : 'neutral'
 const shortId = (s: string) => s.slice(0, 8)
+const { date, money } = useFormat()
 
 // повтор заказа в один клик из списка (CRM §3.2)
 const { reorder } = useOrder()
@@ -24,8 +25,14 @@ const reordering = ref<string | null>(null)
 async function onReorder(orderId: string) {
   reordering.value = orderId
   try {
-    const n = await reorder(orderId)
-    notify.success(t('account.orders.reorderSuccess', { count: n }))
+    // reorder возвращает { added, skipped } — снятые с продажи/распроданные пропускаются
+    const { added, skipped } = await reorder(orderId)
+    if (added === 0) {
+      notify.error(t('account.orders.reorderNone'))
+      return
+    }
+    if (skipped > 0) notify.success(t('account.orders.reorderPartial', { added, skipped }))
+    else notify.success(t('account.orders.reorderSuccess', { count: added }))
     await navigateTo('/cart')
   } catch (e) {
     notify.error(t('account.orders.reorderErrorTitle'), (e as Error).message)
@@ -57,12 +64,12 @@ async function onReorder(orderId: string) {
         <div class="flex items-center justify-between p-4">
           <div>
             <p class="ink-label">#{{ shortId(o.id) }}</p>
-            <p class="text-caption text-ink-gray-600">{{ new Date(o.created_at).toLocaleDateString('ru') }} · {{ o.order_items?.length ?? 0 }} {{ $t('account.orders.itemsShort') }}</p>
+            <p class="text-caption text-ink-gray-600">{{ date(o.created_at) }} · {{ o.order_items?.length ?? 0 }} {{ $t('account.orders.itemsShort') }}</p>
           </div>
           <div class="flex items-center gap-3">
             <div class="text-right">
               <UBadge :color="badge(o.status)" variant="subtle">{{ $t(`domain.customerStatus.${o.status}`) }}</UBadge>
-              <p class="font-semibold mt-1">{{ o.total }} {{ o.currency }}</p>
+              <p class="font-semibold mt-1">{{ money(o.total, o.currency) }}</p>
             </div>
             <UButton
               size="xs" color="primary" variant="subtle" icon="i-lucide-repeat"

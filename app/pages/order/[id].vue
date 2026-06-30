@@ -102,7 +102,7 @@ interface FiscalReceipt {
   note?: string
 }
 const receipt = computed(() => (order.value?.fiscal_receipt ?? null) as FiscalReceipt | null)
-const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(Math.round(n))
+const { money, dateTime } = useFormat()
 function printReceipt() {
   if (import.meta.client) window.print()
 }
@@ -129,10 +129,10 @@ function printReceipt() {
       <div class="space-y-1">
         <div v-for="(it, i) in order.order_items" :key="i" class="flex justify-between border-b border-ink-gray-200 py-2 last:border-0">
           <span>{{ it.variants?.products?.title }} · {{ it.variants?.color_name }}/{{ it.variants?.size }} ×{{ it.quantity }}</span>
-          <span class="font-semibold">{{ it.unit_price * it.quantity }} ₸</span>
+          <span class="font-semibold">{{ money(it.unit_price * it.quantity, order.currency) }}</span>
         </div>
         <div class="flex justify-between pt-2 font-bold">
-          <span>{{ $t('cart.order.items.total') }}</span><span class="text-ink-burgundy">{{ order.total }} {{ order.currency }}</span>
+          <span>{{ $t('cart.order.items.total') }}</span><span class="text-ink-burgundy">{{ money(order.total, order.currency) }}</span>
         </div>
       </div>
     </UiPanel>
@@ -151,8 +151,8 @@ function printReceipt() {
         <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-printer" @click="printReceipt">{{ $t('cart.order.receipt.print') }}</UButton>
       </template>
       <div class="space-y-1">
-        <p class="font-semibold">{{ fmt(order.total) }} {{ order.currency }}</p>
-        <p class="text-caption text-ink-gray-600">{{ $t('cart.order.receipt.paidAt', { date: new Date(order.paid_at).toLocaleString('ru') }) }}</p>
+        <p class="font-semibold">{{ money(order.total, order.currency) }}</p>
+        <p class="text-caption text-ink-gray-600">{{ $t('cart.order.receipt.paidAt', { date: dateTime(order.paid_at) }) }}</p>
         <p v-if="receipt?.provider_txn" class="text-caption text-ink-gray-600">{{ $t('cart.order.receipt.transaction', { txn: receipt.provider_txn }) }}</p>
         <p v-if="receipt?.status === 'pending_fiscalization'" class="text-caption text-ink-gray-400">
           {{ $t('cart.order.receipt.pendingFiscal') }}

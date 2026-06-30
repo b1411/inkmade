@@ -39,6 +39,8 @@
       "itemsShort": "поз.",
       "repeat": "Повторить",
       "reorderSuccess": "Добавлено в корзину: {count}",
+      "reorderPartial": "Добавлено: {added}. Пропущено (нет в наличии): {skipped}",
+      "reorderNone": "Эти товары сейчас недоступны",
       "reorderErrorTitle": "Не удалось повторить"
     },
     "designs": {
