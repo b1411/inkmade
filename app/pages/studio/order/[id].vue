@@ -32,7 +32,7 @@ async function moderate(designId: string | undefined, status: 'approved' | 'reje
   }
 }
 
-const { data: order, refresh } = await useAsyncData(`studio-order-${id}`, () => getOrder(id))
+const { data: order, refresh, pending } = await useAsyncData(`studio-order-${id}`, () => getOrder(id))
 
 // ── контакты и адрес клиента (Фаза O1): данные уже в shipping_addr, защитное чтение ──
 const addr = computed<Record<string, string | undefined>>(
@@ -145,12 +145,47 @@ function specPlacements(item: { designs?: { spec?: unknown } | null }) {
   const spec = item.designs?.spec as { placements?: Record<string, unknown>[] } | undefined
   return spec?.placements ?? []
 }
+
+// Печатные файлы по зонам (§13.2) — отдельно от композиции-оригинала (Фаза O4).
+function printFiles(item: { designs?: { spec?: unknown } | null }) {
+  const spec = item.designs?.spec as { print_files?: { url?: string; zone?: string }[] } | undefined
+  return (spec?.print_files ?? []).filter(f => !!f.url) as { url: string; zone?: string }[]
+}
+
+// Упаковочный лист (Фаза O4): печать через отдельное окно — без серверного PDF
+// (serverless-дружелюбно, как клиентский чек на window.print()).
+function printPackingSlip() {
+  const o = order.value
+  if (!o) return
+  const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, c => (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }) as Record<string, string>)[c] ?? c)
+  const rows = (o.order_items ?? []).map(it => `<tr><td>${esc(it.variants?.products?.title)} · ${esc(it.variants?.color_name)}/${esc(it.variants?.size)}</td><td>${esc(it.variants?.sku)}</td><td style="text-align:right">×${esc(it.quantity)}</td></tr>`).join('')
+  const giftBlock = o.is_gift
+    ? `<div class="gift"><strong>${esc(t('studio.production.order.slip.gift'))}</strong>${o.gift_recipient ? ' · ' + esc(o.gift_recipient) : ''}${o.gift_message ? '<br>«' + esc(o.gift_message) + '»' : ''}${o.gift_hide_price ? '<br>' + esc(t('studio.production.order.giftHidePrice')) : ''}</div>`
+    : ''
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(t('studio.production.order.slip.title', { id: shortId(o.id) }))}</title><style>body{font-family:system-ui,Segoe UI,sans-serif;color:#111;padding:24px}h1{font-size:18px;margin:0 0 4px}.muted{color:#666;font-size:12px}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #ddd}.block{margin-top:16px;font-size:13px}.gift{margin-top:16px;padding:10px;border:1px solid #999;border-radius:6px;font-size:13px}.label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:2px}</style></head><body><h1>${esc(t('studio.production.order.slip.heading'))}</h1><div class="muted">${esc(t('studio.production.order.slip.orderNo', { id: shortId(o.id) }))} · ${esc(new Date(o.created_at).toLocaleDateString())}</div><div class="block"><div class="label">${esc(t('studio.production.order.slip.shipTo'))}</div>${customerName.value ? '<div><strong>' + esc(customerName.value) + '</strong></div>' : ''}${addr.value.phone ? '<div>' + esc(addr.value.phone) + '</div>' : ''}${cityAddress.value ? '<div>' + esc(cityAddress.value) + '</div>' : ''}</div><table><thead><tr><th>${esc(t('studio.production.order.slip.item'))}</th><th>SKU</th><th style="text-align:right">${esc(t('studio.production.order.slip.qty'))}</th></tr></thead><tbody>${rows}</tbody></table>${giftBlock}</body></html>`
+  const w = window.open('', '_blank', 'width=800,height=900')
+  if (!w) { toast.add({ title: t('studio.production.order.slip.popupBlocked'), color: 'error' }); return }
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  w.print()
+}
 </script>
 
 <template>
-  <div v-if="order">
+  <div v-if="pending" class="space-y-4">
+    <UiSkeleton rounded="rounded" class="h-9 w-64" />
+    <div class="grid lg:grid-cols-[1fr_300px] gap-8">
+      <div class="space-y-4">
+        <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-28" />
+      </div>
+      <UiSkeleton rounded="rounded-lg" class="h-48" />
+    </div>
+  </div>
+  <div v-else-if="order">
     <UiPageHeader :label="$t('studio.production.order.label', { id: shortId(order.id) })" :title="$t(`domain.orderStatus.${order.status}`)">
       <template #actions>
+        <UButton color="neutral" variant="subtle" icon="i-lucide-printer" @click="printPackingSlip">{{ $t('studio.production.order.packingSlip') }}</UButton>
         <UButton to="/studio" color="neutral" variant="ghost" icon="i-lucide-arrow-left">{{ $t('studio.production.order.backToQueue') }}</UButton>
       </template>
     </UiPageHeader>
@@ -232,6 +267,22 @@ function specPlacements(item: { designs?: { spec?: unknown } | null }) {
             <a v-if="it.designs?.original_url" :href="it.designs.original_url" target="_blank" class="text-caption text-ink-burgundy inline-flex items-center gap-1 mt-2">
               <UIcon name="i-lucide-download" class="size-3" /> {{ $t('studio.production.order.original') }}
             </a>
+
+            <!-- печатные файлы по зонам (§13.2) — отдельно от композиции (Фаза O4) -->
+            <div v-if="printFiles(it).length" class="mt-2">
+              <p class="ink-label text-ink-gray-500 mb-1">{{ $t('studio.production.order.printFilesLabel') }}</p>
+              <div class="flex flex-wrap gap-x-3 gap-y-1">
+                <a
+                  v-for="(f, fi) in printFiles(it)"
+                  :key="fi"
+                  :href="f.url"
+                  target="_blank"
+                  class="text-caption text-ink-burgundy inline-flex items-center gap-1"
+                >
+                  <UIcon name="i-lucide-file-down" class="size-3" /> {{ f.zone || $t('studio.production.order.printFile', { n: fi + 1 }) }}
+                </a>
+              </div>
+            </div>
           </div>
 
           <!-- модерация загрузки (P2.14): без approved заказ не уйдёт в печать -->
@@ -334,4 +385,9 @@ function specPlacements(item: { designs?: { spec?: unknown } | null }) {
       </template>
     </UModal>
   </div>
+
+  <!-- DoD: заказ не найден/не оплачен (Фаза O4) -->
+  <UiEmptyState v-else icon="i-lucide-package-x" :title="$t('studio.production.order.notFound')" :text="$t('studio.production.order.notFoundText')">
+    <UButton to="/studio" color="neutral" variant="subtle" icon="i-lucide-arrow-left">{{ $t('studio.production.order.backToQueue') }}</UButton>
+  </UiEmptyState>
 </template>

@@ -69,6 +69,21 @@
         "reason": "Причина",
         "reasonPlaceholder": "Опишите причину",
         "confirm": "Подтвердить",
+        "packingSlip": "Упаковочный лист",
+        "printFilesLabel": "Печатные файлы",
+        "printFile": "Файл {n}",
+        "notFound": "Заказ не найден",
+        "notFoundText": "Возможно, он ещё не оплачен или был удалён.",
+        "slip": {
+          "heading": "Упаковочный лист",
+          "title": "Лист #{id}",
+          "orderNo": "Заказ #{id}",
+          "shipTo": "Кому",
+          "item": "Позиция",
+          "qty": "Кол-во",
+          "gift": "Подарочная упаковка",
+          "popupBlocked": "Разрешите всплывающие окна для печати"
+        },
         "moderation": {
           "pending": "На модерации",
           "approved": "Одобрено",
