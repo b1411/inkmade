@@ -41,6 +41,33 @@ jobs:
           NUXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_ANON_KEY }}
           NUXT_PUBLIC_SITE_URL: ${{ secrets.NUXT_PUBLIC_SITE_URL }}
 
+  # RLS-аудит: интеграционные тесты политик через реальный PostgREST + JWT обычного
+  # пользователя (tests/integration). Лёгкий (без браузеров/сборки). Гейтится тем же
+  # флагом и секретами, что и e2e (нужна БД + тест-аккаунт); без них — пропускается.
+  rls-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: quality
+    if: ${{ vars.RUN_E2E == 'true' }}
+    env:
+      NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
+      NUXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      E2E_CUSTOMER_EMAIL: ${{ secrets.E2E_CUSTOMER_EMAIL }}
+      E2E_CUSTOMER_PASSWORD: ${{ secrets.E2E_CUSTOMER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: RLS security tests
+        run: npm run test:rls
+
   # E2E (Playwright) — запускается только если в репозитории включён vars.RUN_E2E='true'
   # и заданы секреты Supabase. Иначе пропускается (без красного CI).
   e2e:

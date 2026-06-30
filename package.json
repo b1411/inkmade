@@ -16,6 +16,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:rls": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "node node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
