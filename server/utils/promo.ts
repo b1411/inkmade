@@ -16,7 +16,10 @@ export async function computePromoDiscount(
   const code = (rawCode ?? '').trim()
   if (!code) return null
 
-  const { data } = await svc.from('promo_codes').select('*').ilike('code', code).maybeSingle()
+  // '_' и '%' — спецсимволы ILIKE, а схема промокода допускает '_'. Экранируем,
+  // чтобы код матчился буквально, а не как wildcard (иначе 'COD_1' подобрал бы 'CODE1').
+  const escaped = code.replace(/[\\%_]/g, '\\$&')
+  const { data } = await svc.from('promo_codes').select('*').ilike('code', escaped).maybeSingle()
   if (!data) return null
 
   return evaluatePromo(data, subtotal, Date.now())

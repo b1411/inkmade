@@ -11,11 +11,14 @@ export default defineEventHandler(async (event) => {
   const svc = serverSupabaseServiceRole<Database>(event)
   const { data } = await svc
     .from('designs')
-    .select('id, preview_url, spec, products(title, slug, alias)')
+    .select('id, preview_url, spec, moderation_status, products(title, slug, alias)')
     .eq('share_token', token)
     .maybeSingle()
 
-  if (!data) throw createError({ statusCode: 404, statusMessage: 'Дизайн не найден' })
+  // отклонённый модерацией дизайн (копирайт/запрещёнка) публично не отдаём по ссылке
+  if (!data || data.moderation_status === 'rejected') {
+    throw createError({ statusCode: 404, statusMessage: 'Дизайн не найден' })
+  }
 
   const spec = data.spec as { composition_url?: string } | null
   const product = data.products as { title: string; slug: string; alias: string } | null

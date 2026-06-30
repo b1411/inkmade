@@ -44,6 +44,22 @@ function imageSizeFor(aspect: AiAspect): string {
   return 'square_hd'
 }
 
+// anti-SSRF: URL картинки приходит из ответа провайдера. Провайдер доверенный, но
+// при компрометации/смене ответа не даём фетчить внутренние/loopback-адреса (метаданные
+// облака, localhost). Требуем https и отсекаем literal-IP приватных диапазонов.
+function assertSafeImageUrl(raw: string): void {
+  let u: URL
+  try { u = new URL(raw) }
+  catch { throw new Error('Некорректный URL изображения') }
+  if (u.protocol !== 'https:') throw new Error('Небезопасный протокол изображения')
+  const h = u.hostname.toLowerCase()
+  if (
+    h === 'localhost' || h === '0.0.0.0' || h === '::1'
+    || /^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h)
+    || /^169\.254\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h)
+  ) throw new Error('Запрещённый адрес изображения')
+}
+
 interface FalImage { url: string; width?: number; height?: number; content_type?: string }
 interface FalResponse { images?: FalImage[] }
 
@@ -73,6 +89,7 @@ async function falGenerate(prompt: string, aspect: AiAspect): Promise<AiImageRes
       })
       const img = res.images?.[0]
       if (!img?.url) throw new Error('Провайдер не вернул изображение')
+      assertSafeImageUrl(img.url)
       const bytes = await $fetch<ArrayBuffer>(img.url, { responseType: 'arrayBuffer' })
       return {
         buffer: Buffer.from(bytes),
