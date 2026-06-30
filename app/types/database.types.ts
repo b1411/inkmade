@@ -364,6 +364,7 @@ export type Database = {
           product_id: string
           share_token: string | null
           spec: Json
+          title: string | null
           user_id: string
           variant_id: string | null
         }
@@ -381,6 +382,7 @@ export type Database = {
           product_id: string
           share_token?: string | null
           spec?: Json
+          title?: string | null
           user_id: string
           variant_id?: string | null
         }
@@ -398,6 +400,7 @@ export type Database = {
           product_id?: string
           share_token?: string | null
           spec?: Json
+          title?: string | null
           user_id?: string
           variant_id?: string | null
         }

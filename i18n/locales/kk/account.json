@@ -53,7 +53,15 @@
       "refine": "Өңдеу",
       "share": "Бөлісу",
       "shareTitle": "INKMADE-тегі менің дизайным",
-      "shareErrorTitle": "Сілтеме жасау мүмкін болмады"
+      "shareErrorTitle": "Сілтеме жасау мүмкін болмады",
+      "untitled": "Атауы жоқ",
+      "renameTitle": "Дизайнды қайта атау",
+      "renamePlaceholder": "Дизайн атауы",
+      "renamed": "Дизайн қайта аталды",
+      "deleteTitle": "Дизайнды жою?",
+      "deleteConfirm": "Дизайн кабинетіңізден жойылады. Осы дизайны бар тапсырыстар өзгермейді.",
+      "deleted": "Дизайн жойылды",
+      "actionError": "Орындау мүмкін болмады"
     },
     "favorites": {
       "label": "Таңдаулылар",

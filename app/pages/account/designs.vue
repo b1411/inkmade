@@ -1,18 +1,25 @@
 <script setup lang="ts">
 import type { Database } from '~/types/database.types'
 
-// Сохранённые дизайны (§11.1). RLS — только свои.
+// Сохранённые дизайны (§11.1). RLS — только свои. Показываем ТОЛЬКО is_saved=true:
+// заказы создают отдельные копии дизайна (is_saved=false) — их в галерее быть не должно
+// (иначе мусор + удаление обнулило бы order_items.design_id).
 definePageMeta({ layout: 'account', middleware: 'auth' })
 const supabase = useSupabaseClient<Database>()
 const { t } = useI18n()
+const { date } = useFormat()
 
-const { data: designs, pending } = await useAsyncData('account-designs', async () => {
+const { data: designs, pending, refresh } = await useAsyncData('account-designs', async () => {
   const { data } = await supabase
     .from('designs')
-    .select('id, preview_url, created_at, products(title, slug, alias)')
+    .select('id, title, preview_url, created_at, products(title, slug, alias)')
+    .eq('is_saved', true)
     .order('created_at', { ascending: false })
   return data
 })
+
+type DesignRow = NonNullable<typeof designs.value>[number]
+const displayTitle = (d: DesignRow) => d.title || d.products?.title || t('account.designs.untitled')
 
 const notify = useNotify()
 const sharingId = ref<string | null>(null)
@@ -31,6 +38,47 @@ async function share(id: string) {
     notify.error(t('account.designs.shareErrorTitle'), (e as Error).message)
   } finally {
     sharingId.value = null
+  }
+}
+
+// ── переименование (Фаза C2): title обновляется прямым UPDATE под designs_owner_all ──
+const rename = reactive({ open: false, id: '', value: '', busy: false })
+function openRename(d: DesignRow) {
+  Object.assign(rename, { open: true, id: d.id, value: d.title || '', busy: false })
+}
+async function saveRename() {
+  rename.busy = true
+  try {
+    const { error } = await supabase.from('designs').update({ title: rename.value.trim() || null }).eq('id', rename.id)
+    if (error) throw error
+    notify.success(t('account.designs.renamed'))
+    rename.open = false
+    await refresh()
+  } catch (e) {
+    notify.error(t('account.designs.actionError'), (e as Error).message)
+  } finally {
+    rename.busy = false
+  }
+}
+
+// ── удаление (Фаза C2): чистим только строку. Файл превью в Storage НЕ трогаем —
+// он может быть общим с копией дизайна в заказе (composition_url). ──
+const del = reactive({ open: false, id: '', busy: false })
+function openDelete(d: DesignRow) {
+  Object.assign(del, { open: true, id: d.id, busy: false })
+}
+async function confirmDelete() {
+  del.busy = true
+  try {
+    const { error } = await supabase.from('designs').delete().eq('id', del.id)
+    if (error) throw error
+    notify.success(t('account.designs.deleted'))
+    del.open = false
+    await refresh()
+  } catch (e) {
+    notify.error(t('account.designs.actionError'), (e as Error).message)
+  } finally {
+    del.busy = false
   }
 }
 </script>
@@ -59,18 +107,46 @@ async function share(id: string) {
           <UIcon v-else name="i-lucide-shapes" class="size-8 text-ink-gray-400" />
         </div>
         <div class="p-3 space-y-2">
-          <p class="text-caption font-semibold truncate">{{ d.products?.title }}</p>
-          <div class="flex items-center justify-between gap-2">
-            <NuxtLink v-if="d.products?.alias" :to="`/customize/${d.products.alias}?from=${d.id}`" class="text-caption text-ink-burgundy">{{ $t('account.designs.refine') }}</NuxtLink>
-            <UButton
-              size="xs" color="neutral" variant="ghost" icon="i-lucide-share-2"
-              :loading="sharingId === d.id" @click="share(d.id)"
-            >
-              {{ $t('account.designs.share') }}
-            </UButton>
+          <div>
+            <p class="text-caption font-semibold truncate">{{ displayTitle(d) }}</p>
+            <p class="text-[11px] text-ink-gray-400">{{ date(d.created_at) }}</p>
+          </div>
+          <div class="flex items-center justify-between gap-1">
+            <NuxtLink v-if="d.products?.alias" :to="`/customize/${d.products.alias}?from=${d.id}`" class="text-caption text-ink-burgundy shrink-0">{{ $t('account.designs.refine') }}</NuxtLink>
+            <div class="flex items-center">
+              <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-share-2" :aria-label="$t('account.designs.share')" :loading="sharingId === d.id" @click="share(d.id)" />
+              <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" :aria-label="$t('actions.edit')" @click="openRename(d)" />
+              <UButton size="xs" color="error" variant="ghost" icon="i-lucide-trash-2" :aria-label="$t('actions.delete')" @click="openDelete(d)" />
+            </div>
           </div>
         </div>
       </UiAppCard>
     </div>
+
+    <!-- переименование -->
+    <UModal v-model:open="rename.open" :title="$t('account.designs.renameTitle')">
+      <template #body>
+        <div class="space-y-4">
+          <UInput v-model="rename.value" :placeholder="$t('account.designs.renamePlaceholder')" class="w-full" maxlength="120" />
+          <div class="flex gap-3 justify-end">
+            <UButton color="neutral" variant="ghost" @click="rename.open = false">{{ $t('actions.cancel') }}</UButton>
+            <UButton color="primary" :loading="rename.busy" @click="saveRename">{{ $t('actions.save') }}</UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
+
+    <!-- удаление -->
+    <UModal v-model:open="del.open" :title="$t('account.designs.deleteTitle')">
+      <template #body>
+        <div class="space-y-4">
+          <p class="text-ink-gray-600">{{ $t('account.designs.deleteConfirm') }}</p>
+          <div class="flex gap-3 justify-end">
+            <UButton color="neutral" variant="ghost" @click="del.open = false">{{ $t('actions.cancel') }}</UButton>
+            <UButton color="error" :loading="del.busy" @click="confirmDelete">{{ $t('actions.delete') }}</UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
