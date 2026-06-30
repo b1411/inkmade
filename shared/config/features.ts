@@ -10,6 +10,10 @@
 export const FEATURES = {
   designerMarketplace: false,
   advancedAdmin: true,
+  // aiDesign — AI-генерация принтов (text-to-design) в конструкторе. СКРЫТА до релиза
+  // (включим после запуска). Код и таблицы (миграция 0056) на месте — включение = true.
+  // Для работы также нужен ключ FAL_KEY в env. Гейт: вкладка «AI» + проверка флага в /api/ai/*.
+  aiDesign: false,
 } as const
 
 // Префиксы роутов, скрываемых вместе с фичей. Используются глобальным

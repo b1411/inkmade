@@ -11,6 +11,7 @@ interface Hit {
 const WINDOW_MS = 60_000
 // Порядок важен: более специфичные префиксы — ВЫШЕ общих (pickLimit берёт первый матч).
 const LIMITS: { prefix: string; max: number }[] = [
+  { prefix: '/api/ai/', max: 10 }, // AI-генерация дорогая — жёсткий лимит поверх месячной квоты
   { prefix: '/api/payment/webhook', max: 60 }, // приходит от провайдера, лимит мягче
   { prefix: '/api/payment/', max: 20 },
   { prefix: '/api/orders/create', max: 20 },

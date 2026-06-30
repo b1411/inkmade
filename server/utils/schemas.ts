@@ -90,10 +90,34 @@ export const promoValidateSchema = z.object({
   subtotal: z.number().finite().positive({ message: 'Некорректная сумма' }),
 })
 
+// ── POST /api/ai/generate ───────────────────────────────────────
+// Пресеты стилей синхронны с STYLE_KEYWORDS в server/utils/ai-image.ts
+export const aiStyles = ['minimal', 'vintage', 'lettering', 'street', 'anime', 'ornament'] as const
+export const aiPrintGenerateSchema = z.object({
+  prompt: z.string().trim()
+    .min(3, { message: 'Опишите идею принта (минимум 3 символа)' })
+    .max(500, { message: 'Слишком длинное описание (до 500 символов)' }),
+  style: z.enum(aiStyles).optional(),
+  aspect: z.enum(['square', 'portrait', 'landscape']).optional(),
+})
+
+// ── POST /api/orders/[id]/status ────────────────────────────────
+// `to` остаётся строкой — валидность перехода проверяет автомат (isValidTransition).
+// Здесь — только границы (длины), чтобы note/tracking не раздували лог статусов.
+export const orderStatusSchema = z.object({
+  to: z.string().trim().min(1).max(32),
+  note: z.string().max(1000).optional(),
+  trackingNo: z.string().max(128).optional(),
+  carrier: z.string().max(128).optional(),
+})
+
 // ── Webhook payload (после JSON.parse сырого тела) ──────────────
+// amount опционален: mock-провайдер его кладёт, реальный шлюз обязан — apply_paid
+// сверяет его с orders.total (anti-fraud «оплати 1 ₸»).
 export const webhookPayloadSchema = z.object({
   orderId: z.uuid({ message: 'orderId обязателен' }),
   providerTxn: z.string().max(256).optional(),
+  amount: z.number().finite().nonnegative().optional(),
 }).passthrough()
 
 /**

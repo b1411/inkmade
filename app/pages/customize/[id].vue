@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { FEATURES } from '~~/shared/config/features'
 
 // Кастомайзер (§7). Порядок шагов: изделие → материал → зона → принт/текст → цвет → цена → корзина.
 const route = useRoute()
@@ -90,11 +91,13 @@ const quantity = ref(1)
 const paramsOpen = ref(false)
 
 // ── 3-зонный редактор: левый тулбар выбирает активный инструмент ──
-type ToolKey = 'print' | 'text'
+type ToolKey = 'print' | 'text' | 'ai'
 const activeTool = ref<ToolKey>('print')
 const TOOLS: Array<{ key: ToolKey; icon: string }> = [
   { key: 'print', icon: 'i-lucide-image' },
   { key: 'text', icon: 'i-lucide-type' },
+  // вкладка AI-генерации — только при включённом флаге aiDesign
+  ...(FEATURES.aiDesign ? [{ key: 'ai' as const, icon: 'i-lucide-sparkles' }] : []),
 ]
 const lineTotal = computed(() => breakdown.value.unitPrice * Math.max(1, quantity.value))
 
@@ -256,6 +259,7 @@ async function onAddToCart() {
             <CustomizerPrintLibraryPicker />
           </template>
           <CustomizerTextTool v-else-if="activeTool === 'text'" />
+          <CustomizerAIGenerator v-else-if="activeTool === 'ai'" />
         </div>
       </div>
 

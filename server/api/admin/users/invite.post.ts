@@ -1,6 +1,7 @@
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
 import { EMAIL_RE } from '~~/server/utils/validation'
+import { logError } from '~~/server/utils/logger'
 
 // Приглашение пользователя по email (§8.1). Только admin.
 // Auth Admin API отправляет письмо-инвайт (нужен настроенный SMTP в Supabase).
@@ -24,7 +25,11 @@ export default defineEventHandler(async (event) => {
   if (!me || me.role !== 'admin') throw createError({ statusCode: 403, statusMessage: 'Только админ' })
 
   const { data, error } = await svc.auth.admin.inviteUserByEmail(email)
-  if (error) throw createError({ statusCode: 500, statusMessage: error.message })
+  if (error) {
+    // ошибка Auth Admin (например, email уже существует) — не утекаем её текст клиенту
+    await logError('admin/users/invite', error, { email, role })
+    throw createError({ statusCode: 500, statusMessage: 'Не удалось отправить приглашение' })
+  }
 
   if (role !== 'customer' && data.user) {
     await svc.from('profiles').update({ role }).eq('id', data.user.id)

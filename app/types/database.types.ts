@@ -85,6 +85,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_generations: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          image_url: string | null
+          prompt: string
+          status: string
+          style: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          prompt: string
+          status?: string
+          style?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_url?: string | null
+          prompt?: string
+          status?: string
+          style?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_quotas: {
+        Row: {
+          max_uses: number
+          month_year: string
+          updated_at: string
+          used_count: number
+          user_id: string
+        }
+        Insert: {
+          max_uses?: number
+          month_year: string
+          updated_at?: string
+          used_count?: number
+          user_id: string
+        }
+        Update: {
+          max_uses?: number
+          month_year?: string
+          updated_at?: string
+          used_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           alias: string | null
@@ -294,10 +351,12 @@ export type Database = {
       }
       designs: {
         Row: {
+          ai_generation_id: string | null
           created_at: string
           id: string
           is_saved: boolean
           moderation_status: string
+          origin: string
           original_url: string | null
           parent_design_id: string | null
           preview_url: string | null
@@ -309,10 +368,12 @@ export type Database = {
           variant_id: string | null
         }
         Insert: {
+          ai_generation_id?: string | null
           created_at?: string
           id?: string
           is_saved?: boolean
           moderation_status?: string
+          origin?: string
           original_url?: string | null
           parent_design_id?: string | null
           preview_url?: string | null
@@ -324,10 +385,12 @@ export type Database = {
           variant_id?: string | null
         }
         Update: {
+          ai_generation_id?: string | null
           created_at?: string
           id?: string
           is_saved?: boolean
           moderation_status?: string
+          origin?: string
           original_url?: string | null
           parent_design_id?: string | null
           preview_url?: string | null
@@ -339,6 +402,13 @@ export type Database = {
           variant_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "designs_ai_generation_id_fkey"
+            columns: ["ai_generation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_generations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "designs_parent_design_id_fkey"
             columns: ["parent_design_id"]
@@ -769,16 +839,19 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          is_public: boolean
           key: string
           updated_at: string
           value: Json
         }
         Insert: {
+          is_public?: boolean
           key: string
           updated_at?: string
           value: Json
         }
         Update: {
+          is_public?: boolean
           key?: string
           updated_at?: string
           value?: Json
@@ -1313,7 +1386,7 @@ export type Database = {
       admin_list_users: {
         Args: never
         Returns: {
-          banned_until: string | null
+          banned_until: string
           created_at: string
           email: string
           full_name: string
@@ -1329,6 +1402,10 @@ export type Database = {
         Args: { p_order_id: string; p_provider_txn: string; p_raw: Json }
         Returns: Json
       }
+      bump_ai_quota: {
+        Args: { p_max: number; p_month: string; p_user_id: string }
+        Returns: boolean
+      }
       bump_promo_use: { Args: { p_code: string }; Returns: boolean }
       change_order_status: {
         Args: {
@@ -1343,6 +1420,19 @@ export type Database = {
       }
       claim_designer_invite: { Args: { p_token: string }; Returns: Json }
       mark_payout_paid: { Args: { p_payout_id: string }; Returns: undefined }
+      refund_ai_quota: {
+        Args: { p_month: string; p_user_id: string }
+        Returns: undefined
+      }
+      public_designer_profile: {
+        Args: { p_id: string }
+        Returns: {
+          avatar_url: string | null
+          bio: string | null
+          display_name: string | null
+          id: string
+        }[]
+      }
       refund_order: {
         Args: { p_note?: string; p_order_id: string }
         Returns: Json

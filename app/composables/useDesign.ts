@@ -38,7 +38,7 @@ export interface Placement {
   opacity?: number // 0..1
   locked?: boolean // элемент защищён от перемещения/трансформации
   // image
-  source?: 'upload' | 'library'
+  source?: 'upload' | 'library' | 'ai'
   assetUrl?: string
   sourceFileUrl?: string // оригинал-исходник для оператора (напр. PDF, из которого отрисован PNG)
   printId?: string // id принта из библиотеки (для атрибуции роялти дизайнеру)
@@ -189,7 +189,7 @@ export const useDesign = () => {
   let seq = 0
   function nextId() { return `pl_${Date.now()}_${seq++}` }
 
-  function addImage(assetUrl: string, naturalW: number, naturalH: number, source: 'upload' | 'library', printId?: string, vector = false, sourceFileUrl?: string): Placement {
+  function addImage(assetUrl: string, naturalW: number, naturalH: number, source: 'upload' | 'library' | 'ai', printId?: string, vector = false, sourceFileUrl?: string): Placement {
     const r = zoneRect.value
     // защита от деления на ноль: некорректные размеры → 1:1 квадрат (иначе NaN-геометрия)
     const nW = naturalW > 0 ? naturalW : 1

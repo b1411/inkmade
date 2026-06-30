@@ -4,6 +4,7 @@ import type { OrderStatus } from '~~/shared/config/order-status'
 import { isValidTransition, REASON_REQUIRED } from '~~/shared/config/order-status'
 import { notifyOrder } from '~~/server/utils/email'
 import { requireUuid } from '~~/server/utils/validation'
+import { orderStatusSchema, parseOrThrow } from '~~/server/utils/schemas'
 
 // Серверная смена статуса (§8.5): проверка роли, валидация перехода по автомату (§5.3),
 // запись orders.status + order_status_log. Недопустимые переходы невозможны.
@@ -12,8 +13,8 @@ export default defineEventHandler(async (event) => {
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Требуется вход' })
 
   const orderId = requireUuid(getRouterParam(event, 'id'), 'идентификатор заказа')
-  const body = await readBody<{ to: OrderStatus; note?: string; trackingNo?: string; carrier?: string }>(event)
-  const to = body.to
+  const body = parseOrThrow(orderStatusSchema, await readBody(event))
+  const to = body.to as OrderStatus
 
   const svc = serverSupabaseServiceRole<Database>(event)
 

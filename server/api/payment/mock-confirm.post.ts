@@ -16,14 +16,15 @@ export default defineEventHandler(async (event) => {
   if (!orderId) throw createError({ statusCode: 400, statusMessage: 'orderId обязателен' })
 
   const svc = serverSupabaseServiceRole<Database>(event)
-  const { data: order, error } = await svc.from('orders').select('id, user_id, payment_id, status').eq('id', orderId).single()
+  const { data: order, error } = await svc.from('orders').select('id, user_id, payment_id, status, total').eq('id', orderId).single()
   if (error || !order) throw createError({ statusCode: 404, statusMessage: 'Заказ не найден' })
   if (order.user_id !== user.id) throw createError({ statusCode: 403, statusMessage: 'Чужой заказ' })
 
   const config = useRuntimeConfig()
   const secret = config.paymentWebhookSecret
   if (!secret) throw createError({ statusCode: 500, statusMessage: 'PAYMENT_WEBHOOK_SECRET не настроен' })
-  const raw = JSON.stringify({ orderId, providerTxn: order.payment_id || `mock_${orderId}` })
+  // amount в подписанном payload → apply_paid сверит его с orders.total (как реальный шлюз)
+  const raw = JSON.stringify({ orderId, providerTxn: order.payment_id || `mock_${orderId}`, amount: order.total })
   const signature = createHmac('sha256', secret).update(raw).digest('hex')
 
   // вызываем настоящий webhook с подписью (имитация провайдера)

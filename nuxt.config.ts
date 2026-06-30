@@ -110,6 +110,13 @@ export default defineNuxtConfig({
     paymentMerchantId: process.env.PAYMENT_MERCHANT_ID,
     paymentSecretKey: process.env.PAYMENT_SECRET_KEY,
     paymentWebhookSecret: process.env.PAYMENT_WEBHOOK_SECRET,
+    // AI-генерация принтов (§AI). Ключ провайдера — только сервер. Провайдер сменяемый
+    // (fal/Ideogram по умолчанию; Recraft/Flux — сменой AI_IMAGE_PROVIDER/AI_IMAGE_MODEL).
+    aiImageApiKey: process.env.FAL_KEY,
+    aiImageProvider: process.env.AI_IMAGE_PROVIDER || 'fal-ideogram',
+    aiImageModel: process.env.AI_IMAGE_MODEL || 'fal-ai/ideogram/v3',
+    aiImageTier: process.env.AI_IMAGE_TIER || 'BALANCED',
+    aiMonthlyQuota: Number(process.env.AI_MONTHLY_QUOTA) || 5,
     public: {
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL,
       metaPixelId: process.env.NUXT_PUBLIC_META_PIXEL_ID,

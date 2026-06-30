@@ -23,14 +23,31 @@ export default defineEventHandler(async (event) => {
   const { data: products } = await svc.from('products').select('id, is_active').in('id', ids)
   const activeIds = new Set((products ?? []).filter(p => p.is_active).map(p => p.id))
 
+  // parent_design_id обязан принадлежать ТЕКУЩЕМУ пользователю — иначе привязка к чужому
+  // дизайну (IDOR через service role в обход RLS). Неподтверждённые parentId обнуляем.
+  const parentIds = [...new Set(incoming.map(d => d.parentId).filter((x): x is string => !!x))]
+  let ownParents = new Set<string>()
+  if (parentIds.length) {
+    const { data: parents } = await svc.from('designs').select('id').in('id', parentIds).eq('user_id', user.id)
+    ownParents = new Set((parents ?? []).map(p => p.id))
+  }
+
+  // previewUrl обязан вести в НАШ публичный Storage (anti-SSRF/фишинг при показе в галерее/
+  // CRM-карточке), как в orders/create. Чужой/внешний URL отбрасываем (best-effort, не валим импорт).
+  const cfg = useRuntimeConfig(event)
+  const supaUrl = String((cfg.public as { supabase?: { url?: string } })?.supabase?.url || process.env.SUPABASE_URL || '').replace(/\/$/, '')
+  const storagePrefix = supaUrl ? `${supaUrl}/storage/v1/object/public/` : ''
+  const ownStorageUrl = (url: string | null | undefined): boolean =>
+    !url || (!!storagePrefix && url.startsWith(storagePrefix))
+
   const rows = incoming
     .filter(d => d.productId && activeIds.has(d.productId) && d.spec)
     .map(d => ({
       user_id: user.id,
       product_id: d.productId!,
       spec: d.spec as Json,
-      preview_url: d.previewUrl ?? null,
-      parent_design_id: d.parentId ?? null,
+      preview_url: ownStorageUrl(d.previewUrl) ? (d.previewUrl ?? null) : null,
+      parent_design_id: (d.parentId && ownParents.has(d.parentId)) ? d.parentId : null,
       is_saved: true,
     }))
   if (!rows.length) return { imported: 0 }

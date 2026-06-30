@@ -1,6 +1,7 @@
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
 import { requireUuid } from '~~/server/utils/validation'
+import { logError } from '~~/server/utils/logger'
 
 // Блокировка/разблокировка пользователя (§8.1). Только admin.
 // Бан через Auth Admin API: ban_duration отзывает сессии и запрещает вход.
@@ -28,7 +29,11 @@ export default defineEventHandler(async (event) => {
   const { error } = await svc.auth.admin.updateUserById(targetId, {
     ban_duration: ban ? '876000h' : 'none',
   })
-  if (error) throw createError({ statusCode: 500, statusMessage: error.message })
+  if (error) {
+    // не утекаем внутреннюю ошибку Auth Admin клиенту — логируем, отдаём обобщённое
+    await logError('admin/users/ban', error, { targetId, ban })
+    throw createError({ statusCode: 500, statusMessage: 'Не удалось изменить блокировку пользователя' })
+  }
 
   return { ok: true, banned: ban }
 })

@@ -1,20 +1,19 @@
 <script setup lang="ts">
 import type { Database } from '~/types/database.types'
 
-// Публичная витрина дизайнера (CRM §4.4). Открыта всем: profile.is_public + одобренные принты.
-// RLS: designer_profiles виден при is_public; print_library — approved+active.
+// Публичная витрина дизайнера (CRM §4.4). Открыта всем: одобренные принты публичного автора.
+// Профиль читаем через RPC public_designer_profile — она отдаёт ТОЛЬКО безопасные колонки
+// (без payout_details/tax_status/royalty_pct) и только is_public=true (миграции 0057/0058).
+// Прямой select из designer_profiles закрыт RLS до владельца/админа.
 const { t } = useI18n()
 const route = useRoute()
 const id = route.params.id as string
 const supabase = useSupabaseClient<Database>()
 
 const { data, error } = await useAsyncData(`vitrine-${id}`, async () => {
-  const { data: profile } = await supabase
-    .from('designer_profiles')
-    .select('id, display_name, bio, avatar_url, is_public')
-    .eq('id', id)
-    .maybeSingle()
-  if (!profile || !profile.is_public) return null
+  const { data: rows } = await supabase.rpc('public_designer_profile', { p_id: id })
+  const profile = rows?.[0] ?? null
+  if (!profile) return null
   const { data: prints } = await supabase
     .from('print_library')
     .select('id, title, thumbnail_url, tags')

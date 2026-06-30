@@ -15,5 +15,8 @@ export const useAnalytics = () => {
     // событие покупки с суммой — критично для оптимизации рекламы (§3.5.1)
     purchase: (value: number, orderId: string) =>
       emit('Purchase', { value, currency: 'KZT', content_ids: [orderId] }),
+    // воронка AI-генерации принтов — отдельное событие для оптимизации фичи
+    aiGenerate: (success: boolean, style?: string) =>
+      emit('AIGenerate', { success, style: style ?? null }),
   }
 }
