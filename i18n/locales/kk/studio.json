@@ -18,6 +18,18 @@
       "refresh": "Жаңарту",
       "positions": "Позициялар: {count}",
       "empty": "—",
+      "age": "{n} күн",
+      "filters": {
+        "search": "Іздеу: #id немесе клиент аты",
+        "onlyOverdue": "Тек мерзімі өткен"
+      },
+      "stats": {
+        "onBoard": "Жұмыста",
+        "overdue": "Мерзімі өткен",
+        "slaHint": "жасы > {days} күн",
+        "oldest": "Ең ескісі",
+        "oldestHint": "жұмыстағы күн"
+      },
       "order": {
         "label": "Тапсырыс #{id}",
         "backToQueue": "Кезекке",

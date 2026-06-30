@@ -18,6 +18,18 @@
       "refresh": "Обновить",
       "positions": "Позиций: {count}",
       "empty": "—",
+      "age": "{n} дн",
+      "filters": {
+        "search": "Поиск: #id или имя клиента",
+        "onlyOverdue": "Только просроченные"
+      },
+      "stats": {
+        "onBoard": "В работе",
+        "overdue": "Просрочено",
+        "slaHint": "возраст > {days} дн",
+        "oldest": "Старейший",
+        "oldestHint": "дней в работе"
+      },
       "order": {
         "label": "Заказ #{id}",
         "backToQueue": "К очереди",
