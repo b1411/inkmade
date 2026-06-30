@@ -7,7 +7,7 @@ definePageMeta({ layout: 'studio', middleware: 'studio-role' })
 
 const route = useRoute()
 const id = route.params.id as string
-const { getOrder, changeStatus, moderateDesign } = useStudio()
+const { getOrder, changeStatus, moderateDesign, setInternalNotes } = useStudio()
 const toast = useToast()
 const { t } = useI18n()
 
@@ -33,6 +33,35 @@ async function moderate(designId: string | undefined, status: 'approved' | 'reje
 }
 
 const { data: order, refresh } = await useAsyncData(`studio-order-${id}`, () => getOrder(id))
+
+// ── контакты и адрес клиента (Фаза O1): данные уже в shipping_addr, защитное чтение ──
+const addr = computed<Record<string, string | undefined>>(
+  () => (order.value?.shipping_addr ?? {}) as Record<string, string | undefined>,
+)
+const customerName = computed(() => addr.value.name || addr.value.full_name || '')
+const cityAddress = computed(() => [addr.value.city, addr.value.address].filter(Boolean).join(', '))
+const hasContact = computed(() =>
+  !!(customerName.value || addr.value.phone || addr.value.email || cityAddress.value),
+)
+
+// ── внутренние заметки цеха (Фаза O1) ──
+const notes = ref('')
+const savingNotes = ref(false)
+watch(order, (o) => { notes.value = o?.internal_notes ?? '' }, { immediate: true })
+const notesDirty = computed(() => notes.value.trim() !== (order.value?.internal_notes ?? '').trim())
+
+async function saveNotes() {
+  savingNotes.value = true
+  try {
+    await setInternalNotes(id, notes.value)
+    toast.add({ title: t('studio.production.order.notes.saved'), color: 'success' })
+    await refresh()
+  } catch (e) {
+    toast.add({ title: t('studio.production.order.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+  } finally {
+    savingNotes.value = false
+  }
+}
 
 const nextStates = computed<OrderStatus[]>(() => TRANSITIONS[(order.value?.status as OrderStatus) ?? 'paid'] ?? [])
 
@@ -137,6 +166,43 @@ function specPlacements(item: { designs?: { spec?: unknown } | null }) {
     <div class="grid lg:grid-cols-[1fr_300px] gap-8">
       <!-- позиции -->
       <div class="space-y-4">
+        <!-- контакты и адрес клиента (Фаза O1): кому и куда отправлять -->
+        <div class="border border-ink-gray-200 rounded-lg p-4">
+          <p class="ink-label text-ink-gray-600 mb-2">{{ $t('studio.production.order.customer.title') }}</p>
+          <template v-if="hasContact">
+            <p v-if="customerName" class="font-semibold">{{ customerName }}</p>
+            <div class="text-caption text-ink-gray-600 mt-1 space-y-0.5">
+              <p v-if="addr.phone">
+                <UIcon name="i-lucide-phone" class="size-3 inline-block align-[-1px]" />
+                <a :href="`tel:${addr.phone}`" class="hover:text-ink-burgundy">{{ addr.phone }}</a>
+              </p>
+              <p v-if="addr.email">
+                <UIcon name="i-lucide-mail" class="size-3 inline-block align-[-1px]" />
+                <a :href="`mailto:${addr.email}`" class="hover:text-ink-burgundy">{{ addr.email }}</a>
+              </p>
+              <p v-if="cityAddress">
+                <UIcon name="i-lucide-map-pin" class="size-3 inline-block align-[-1px]" />
+                {{ cityAddress }}
+              </p>
+            </div>
+          </template>
+          <p v-else class="text-caption text-ink-gray-400">{{ $t('studio.production.order.customer.empty') }}</p>
+        </div>
+
+        <!-- внутренние заметки цеха (Фаза O1): не видны клиенту -->
+        <div class="border border-ink-gray-200 rounded-lg p-4">
+          <p class="ink-label text-ink-gray-600 mb-2">{{ $t('studio.production.order.notes.title') }}</p>
+          <UTextarea v-model="notes" :rows="2" class="w-full" :placeholder="$t('studio.production.order.notes.placeholder')" />
+          <div class="flex justify-end mt-2">
+            <UButton
+              size="xs" color="neutral" variant="subtle" icon="i-lucide-save"
+              :loading="savingNotes" :disabled="!notesDirty" @click="saveNotes"
+            >
+              {{ $t('studio.production.order.notes.save') }}
+            </UButton>
+          </div>
+        </div>
+
         <div v-for="it in order.order_items" :key="it.id" class="border border-ink-gray-200 rounded-lg p-4">
           <div class="flex items-center justify-between">
             <p class="font-semibold">{{ it.variants?.products?.title }} · {{ it.variants?.color_name }}/{{ it.variants?.size }}</p>

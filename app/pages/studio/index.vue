@@ -45,6 +45,7 @@ const shortId = (id: string) => id.slice(0, 8)
               <span class="ink-label">#{{ shortId(o.id) }}</span>
               <span class="text-caption text-ink-gray-400">{{ new Date(o.created_at).toLocaleDateString('ru') }}</span>
             </div>
+            <p v-if="o.customer_name" class="text-caption font-medium text-ink-black mt-1 truncate">{{ o.customer_name }}</p>
             <p class="text-caption text-ink-gray-600 mt-1">{{ $t('studio.production.positions', { count: o.item_count ?? 0 }) }}</p>
           </NuxtLink>
           <p v-if="!byStatus(col).length" class="text-caption text-ink-gray-400 px-1">{{ $t('studio.production.empty') }}</p>

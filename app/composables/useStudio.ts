@@ -29,6 +29,7 @@ export interface StudioOrder {
   tracking_no: string | null
   carrier: string | null
   shipping_addr: Record<string, unknown> | null
+  internal_notes: string | null
   is_gift: boolean
   gift_recipient: string | null
   gift_message: string | null
@@ -69,6 +70,18 @@ export const useStudio = () => {
     return $fetch(`/api/orders/${orderId}/status`, { method: 'POST', body: { to, ...opts } })
   }
 
+  /**
+   * Внутренние заметки цеха. Прямой UPDATE под политикой orders_staff_update —
+   * internal_notes НЕ денежное поле, поэтому guard_orders_update (0057) пропускает.
+   */
+  async function setInternalNotes(orderId: string, notes: string) {
+    const { error } = await supabase
+      .from('orders')
+      .update({ internal_notes: notes.trim() || null })
+      .eq('id', orderId)
+    if (error) throw error
+  }
+
   /** Подписка на изменения заказов (Realtime, §8.3) — новый заказ виден мгновенно. */
   function subscribe(onChange: () => void) {
     const channel = supabase
@@ -107,5 +120,5 @@ export const useStudio = () => {
     return signed
   }
 
-  return { listQueue, getOrder, changeStatus, moderateDesign, subscribe, addEvidence, listEvidence }
+  return { listQueue, getOrder, changeStatus, setInternalNotes, moderateDesign, subscribe, addEvidence, listEvidence }
 }

@@ -705,6 +705,7 @@ export type Database = {
           gift_message: string | null
           gift_recipient: string | null
           id: string
+          internal_notes: string | null
           is_gift: boolean
           paid_at: string | null
           payment_id: string | null
@@ -726,6 +727,7 @@ export type Database = {
           gift_message?: string | null
           gift_recipient?: string | null
           id?: string
+          internal_notes?: string | null
           is_gift?: boolean
           paid_at?: string | null
           payment_id?: string | null
@@ -747,6 +749,7 @@ export type Database = {
           gift_message?: string | null
           gift_recipient?: string | null
           id?: string
+          internal_notes?: string | null
           is_gift?: boolean
           paid_at?: string | null
           payment_id?: string | null
@@ -1451,6 +1454,7 @@ export type Database = {
         Returns: {
           carrier: string
           created_at: string
+          customer_name: string | null
           id: string
           item_count: number
           status: string
