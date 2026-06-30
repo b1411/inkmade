@@ -93,6 +93,17 @@
       "label": "Қойма",
       "title": "Дайындамалар қоймасы",
       "description": "Нұсқалар бойынша қалдықтар, қозғалыс тарихы және ақауды есептен шығару.",
+      "filters": {
+        "search": "Іздеу: тауар, SKU, түс",
+        "onlyLow": "Тек төмен қалдық"
+      },
+      "stats": {
+        "total": "Нұсқалар",
+        "low": "Төмен қалдық",
+        "lowHint": "≤ {n} дана",
+        "zero": "Бітті"
+      },
+      "emptyFiltered": "Ештеңе табылмады",
       "table": {
         "product": "Тауар",
         "colorSize": "Түс / өлшем",
@@ -101,6 +112,10 @@
       },
       "history": "Тарих",
       "defect": "Ақау",
+      "defectTitle": "Ақауды есептен шығару",
+      "defectQty": "Саны, дана",
+      "defectMax": "Қолжетімді: {n}",
+      "defectConfirm": "Есептен шығару",
       "historyTitle": "Тарих: {title}",
       "historyEmpty": "Қозғалыс жоқ.",
       "reason": {
@@ -110,7 +125,7 @@
         "order": "Тапсырыс"
       },
       "toast": {
-        "defectWrittenOff": "Ақау есептен шығарылды (−1)",
+        "defectWrittenOff": "Ақау есептен шығарылды (−{n})",
         "error": "Қате",
         "historyError": "Тарихты жүктеу мүмкін болмады"
       }

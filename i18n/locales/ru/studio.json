@@ -93,6 +93,17 @@
       "label": "Склад",
       "title": "Склад заготовок",
       "description": "Остатки по вариантам, история движений и списание брака.",
+      "filters": {
+        "search": "Поиск: товар, SKU, цвет",
+        "onlyLow": "Только низкий остаток"
+      },
+      "stats": {
+        "total": "Вариантов",
+        "low": "Низкий остаток",
+        "lowHint": "≤ {n} шт",
+        "zero": "Закончились"
+      },
+      "emptyFiltered": "Ничего не найдено",
       "table": {
         "product": "Товар",
         "colorSize": "Цвет / размер",
@@ -101,6 +112,10 @@
       },
       "history": "История",
       "defect": "Брак",
+      "defectTitle": "Списание брака",
+      "defectQty": "Количество, шт",
+      "defectMax": "Доступно: {n}",
+      "defectConfirm": "Списать",
       "historyTitle": "История: {title}",
       "historyEmpty": "Движений нет.",
       "reason": {
@@ -110,7 +125,7 @@
         "order": "Заказ"
       },
       "toast": {
-        "defectWrittenOff": "Брак списан (−1)",
+        "defectWrittenOff": "Брак списан (−{n})",
         "error": "Ошибка",
         "historyError": "Не удалось загрузить историю"
       }
