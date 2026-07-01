@@ -83,10 +83,10 @@ export default defineNuxtConfig({
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'inkmade_lang',
-      // strategy 'no_prefix': redirectOn 'root' НЕ действует (документация i18n),
-      // из-за чего выбор локали из cookie не применялся на SSR — язык всегда падал
-      // в defaultLocale (ru). 'all' + alwaysRedirect — cookie-выбор уважается на всех
-      // маршрутах и при каждом запросе.
+      // strategy 'no_prefix': по документации i18n redirectOn 'root' действует только
+      // для стратегий С префиксом. Для no_prefix корректное значение — 'all', а
+      // alwaysRedirect гарантирует, что выбранная и сохранённая в cookie локаль
+      // применяется на КАЖДОМ запросе/маршруте (а не только при первом заходе на /).
       redirectOn: 'all',
       alwaysRedirect: true,
       fallbackLocale: 'ru',

@@ -48,7 +48,12 @@ export const useCart = () => {
   }
   function writeLocal(v: CartItem[]) {
     if (!import.meta.client) return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(v))
+    // приватный режим Safari / переполнение квоты бросают здесь. Раньше throw уходил
+    // вверх через persist() в любую мутацию (remove/updateQty) необработанным.
+    // Глушим запись (позиция остаётся в памяти на эту сессию), не валим поток.
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(v))
+    } catch { /* квота/приватный режим — кэш не записан, состояние живёт в памяти */ }
   }
   function clearLocal() {
     if (!import.meta.client) return
@@ -96,10 +101,17 @@ export const useCart = () => {
     if (!user.value) return
     const uid = user.value.id
     try {
-      await supabase.from('cart_items').delete().eq('user_id', uid)
+      // upsert-then-delete-stale вместо delete-all-then-insert: при сбое insert старая
+      // серверная корзина НЕ теряется (id клиентские и стабильные → conflict на id).
+      const ids = items.value.map(i => i.id)
       if (items.value.length) {
-        await supabase.from('cart_items').insert(items.value.map(i => toRow(i, uid)))
+        const { error } = await supabase.from('cart_items').upsert(items.value.map(i => toRow(i, uid)))
+        if (error) return
       }
+      // удалить строки, которых больше нет в текущей корзине
+      let del = supabase.from('cart_items').delete().eq('user_id', uid)
+      if (ids.length) del = del.not('id', 'in', `(${ids.join(',')})`)
+      await del
     } catch { /* сеть/офлайн — повторим при следующей мутации */ }
   }
   async function pullFromServer(): Promise<CartItem[]> {

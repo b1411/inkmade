@@ -5,7 +5,7 @@
 // скролле. Всё под гейтом reduced-motion; начальное скрытие — класс .hero-anim.
 import { FEATURES } from '~~/shared/config/features'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const supabase = useSupabaseClient()
 const { get } = useSettings()
 
@@ -46,8 +46,12 @@ const [{ data: featured }, { data: content }, { data: minPrice }] = await Promis
   }),
 ])
 
-const heroTitle = computed(() => content.value?.title ?? t('landing.hero.title'))
-const heroSubtitle = computed(() => content.value?.subtitle ?? t('landing.hero.subtitle'))
+// CMS-оверрайд заголовка/подзаголовка — ОДНА строка без локализации, поэтому применяем
+// его ТОЛЬКО для локали по умолчанию (ru). Иначе RU-текст перекрывает корректный перевод
+// на KK (заголовок «застывал» по-русски). `||` (а не `??`) — пустой оверрайд («») тоже
+// откатывается на i18n, иначе подзаголовок рендерился пустым.
+const heroTitle = computed(() => (locale.value === 'ru' && content.value?.title) || t('landing.hero.title'))
+const heroSubtitle = computed(() => (locale.value === 'ru' && content.value?.subtitle) || t('landing.hero.subtitle'))
 const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.value.alias}` : '/catalog'))
 // «от N ₸» — пусто, если в БД ещё нет цен (тогда note показывает только логистику).
 const priceFrom = computed(() =>
