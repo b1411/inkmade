@@ -63,6 +63,29 @@ async function saveNotes() {
   }
 }
 
+// ── заявки клиента на отмену/возврат (Фаза C3) ──
+const { listForOrder: listOrderRequests, resolve: resolveRequest } = useOrderRequests()
+const orderRequests = ref<Awaited<ReturnType<typeof listOrderRequests>>>([])
+const pendingReq = computed(() => orderRequests.value.find(r => r.status === 'pending') ?? null)
+const resolvingReq = ref(false)
+async function loadOrderRequests() {
+  try { orderRequests.value = await listOrderRequests(id) } catch { /* не критично */ }
+}
+onMounted(loadOrderRequests)
+async function resolveReq(status: 'approved' | 'rejected') {
+  if (!pendingReq.value) return
+  resolvingReq.value = true
+  try {
+    await resolveRequest(pendingReq.value.id, status)
+    toast.add({ title: t('studio.production.order.request.resolved'), color: 'success' })
+    await loadOrderRequests()
+  } catch (e) {
+    toast.add({ title: t('studio.production.order.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+  } finally {
+    resolvingReq.value = false
+  }
+}
+
 const nextStates = computed<OrderStatus[]>(() => TRANSITIONS[(order.value?.status as OrderStatus) ?? 'paid'] ?? [])
 
 // Гейт модерации (P2.14, §24) — дублируем серверную проверку в UI, чтобы оператор
@@ -196,6 +219,18 @@ function printPackingSlip() {
       <p v-if="order.gift_recipient" class="text-caption mt-2">{{ $t('studio.production.order.giftRecipient') }} <strong>{{ order.gift_recipient }}</strong></p>
       <p v-if="order.gift_message" class="text-caption mt-1">{{ $t('studio.production.order.giftCard', { message: order.gift_message }) }}</p>
       <p v-if="order.gift_hide_price" class="text-caption mt-1 font-semibold text-ink-burgundy">{{ $t('studio.production.order.giftHidePrice') }}</p>
+    </div>
+
+    <!-- заявка клиента на отмену/возврат (Фаза C3): клиент-инициированный сигнал -->
+    <div v-if="pendingReq" class="mb-6 border-2 border-ink-warning/50 bg-ink-warning/5 rounded-lg p-4">
+      <p class="ink-label text-ink-warning flex items-center gap-1.5">
+        <UIcon name="i-lucide-life-buoy" class="size-4" /> {{ $t(`studio.production.order.request.customer_${pendingReq.kind}`) }}
+      </p>
+      <p v-if="pendingReq.reason" class="text-caption mt-2">{{ pendingReq.reason }}</p>
+      <div class="flex gap-2 mt-3">
+        <UButton size="xs" color="primary" variant="subtle" icon="i-lucide-check" :loading="resolvingReq" @click="resolveReq('approved')">{{ $t('studio.production.order.request.approve') }}</UButton>
+        <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-x" :loading="resolvingReq" @click="resolveReq('rejected')">{{ $t('studio.production.order.request.reject') }}</UButton>
+      </div>
     </div>
 
     <div class="grid lg:grid-cols-[1fr_300px] gap-8">

@@ -103,6 +103,39 @@ interface FiscalReceipt {
 }
 const receipt = computed(() => (order.value?.fiscal_receipt ?? null) as FiscalReceipt | null)
 const { money, dateTime } = useFormat()
+
+// ── заявки на отмену/возврат (Фаза C3) ──
+const { listForOrder, create: createRequest } = useOrderRequests()
+const requests = ref<Awaited<ReturnType<typeof listForOrder>>>([])
+const pendingRequest = computed(() => requests.value.find(r => r.status === 'pending') ?? null)
+const latestRequest = computed(() => requests.value[0] ?? null)
+async function loadRequests() {
+  try { requests.value = await listForOrder(id) } catch { /* не критично */ }
+}
+onMounted(loadRequests)
+
+// отмена возможна до производства; возврат — после доставки
+const CANCELABLE: OrderStatus[] = ['created', 'pending', 'paid', 'queued']
+const canCancel = computed(() => CANCELABLE.includes(order.value?.status as OrderStatus))
+const canReturn = computed(() => order.value?.status === 'delivered')
+
+const reqModal = reactive({ open: false, kind: 'cancel' as 'cancel' | 'return', reason: '', busy: false })
+function openRequest(kind: 'cancel' | 'return') {
+  Object.assign(reqModal, { open: true, kind, reason: '', busy: false })
+}
+async function submitRequest() {
+  reqModal.busy = true
+  try {
+    await createRequest(id, reqModal.kind, reqModal.reason)
+    notify.success(t('cart.order.request.submitted'))
+    reqModal.open = false
+    await loadRequests()
+  } catch (e) {
+    notify.error(t('cart.order.request.error'), (e as Error).message)
+  } finally {
+    reqModal.busy = false
+  }
+}
 function printReceipt() {
   if (import.meta.client) window.print()
 }
@@ -160,10 +193,45 @@ function printReceipt() {
       </div>
     </UiPanel>
 
+    <!-- заявка на отмену/возврат (Фаза C3) -->
+    <UiPanel v-if="pendingRequest || latestRequest || canCancel || canReturn" :title="$t('cart.order.request.title')" icon="i-lucide-life-buoy">
+      <div v-if="pendingRequest" class="flex items-start gap-2 text-caption">
+        <UIcon name="i-lucide-clock" class="size-4 text-ink-warning shrink-0 mt-0.5" />
+        <div>
+          <p class="font-semibold">{{ $t(`cart.order.request.pending_${pendingRequest.kind}`) }}</p>
+          <p v-if="pendingRequest.reason" class="text-ink-gray-600 mt-0.5">{{ pendingRequest.reason }}</p>
+        </div>
+      </div>
+      <template v-else>
+        <p v-if="latestRequest" class="text-caption text-ink-gray-600 mb-3">
+          {{ $t(`cart.order.request.kind_${latestRequest.kind}`) }} — {{ $t(`cart.order.request.status_${latestRequest.status}`) }}
+        </p>
+        <div v-if="canCancel || canReturn" class="flex flex-wrap gap-3">
+          <UButton v-if="canCancel" color="error" variant="subtle" icon="i-lucide-x-circle" @click="openRequest('cancel')">{{ $t('cart.order.request.cancelCta') }}</UButton>
+          <UButton v-if="canReturn" color="warning" variant="subtle" icon="i-lucide-undo-2" @click="openRequest('return')">{{ $t('cart.order.request.returnCta') }}</UButton>
+        </div>
+      </template>
+    </UiPanel>
+
     <div class="flex flex-wrap gap-3">
       <UButton to="/account/orders" color="neutral" variant="ghost" icon="i-lucide-arrow-left">{{ $t('cart.order.actions.allOrders') }}</UButton>
       <UButton color="primary" variant="subtle" icon="i-lucide-repeat" :loading="reordering" @click="onReorder">{{ $t('cart.order.actions.reorder') }}</UButton>
       <UButton to="/catalog" color="neutral" variant="ghost" icon="i-lucide-shopping-bag">{{ $t('cart.order.actions.toCatalog') }}</UButton>
     </div>
+
+    <!-- модалка причины заявки -->
+    <UModal v-model:open="reqModal.open" :title="$t(reqModal.kind === 'cancel' ? 'cart.order.request.cancelTitle' : 'cart.order.request.returnTitle')">
+      <template #body>
+        <div class="space-y-4">
+          <UFormField :label="$t('cart.order.request.reasonLabel')">
+            <UTextarea v-model="reqModal.reason" :rows="3" class="w-full" :placeholder="$t('cart.order.request.reasonPlaceholder')" />
+          </UFormField>
+          <div class="flex gap-3 justify-end">
+            <UButton color="neutral" variant="ghost" @click="reqModal.open = false">{{ $t('actions.cancel') }}</UButton>
+            <UButton color="primary" :loading="reqModal.busy" @click="submitRequest">{{ $t('cart.order.request.submit') }}</UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </section>
 </template>

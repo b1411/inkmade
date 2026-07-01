@@ -1,136 +1,157 @@
 {
   "cart": {
-    "title": "Корзина",
-    "headTitle": "Корзина",
-    "empty": {
-      "title": "Пока пусто",
-      "text": "Самое время собрать что-нибудь своё.",
-      "toCatalog": "В каталог"
-    },
-    "removeItem": "Удалить {title}",
-    "viewItem": "Открыть {title}",
-    "decrease": "Уменьшить количество",
-    "clear": "Очистить корзину",
-    "clearConfirm": "Очистить корзину?",
-    "total": "Итого",
-    "checkout": "Оформить заказ"
-  },
-  "checkout": {
-    "title": "Оформление",
-    "headTitle": "Оформление",
-    "fields": {
-      "fullName": "Имя и фамилия",
-      "email": "Email",
-      "emailHelp": "На него придёт подтверждение заказа",
-      "emailPlaceholder": "example{'@'}mail.kz",
-      "phone": "Телефон",
-      "phonePlaceholder": "+7 700 000 00 00",
-      "city": "Город",
-      "address": "Адрес доставки"
-    },
-    "gift": {
-      "toggle": "Это подарок 🎁",
-      "recipient": "Имя получателя",
-      "recipientHelp": "Кому вручить — для открытки и упаковки",
-      "recipientPlaceholder": "Имя получателя",
-      "message": "Текст открытки",
-      "messagePlaceholder": "С днём рождения!",
-      "hidePrice": "Не вкладывать чек с ценой в посылку"
-    },
-    "summary": {
-      "title": "Ваш заказ",
-      "item": "{title} ({size}) ×{qty}",
-      "promoPlaceholder": "Промокод",
-      "applyPromo": "Применить",
-      "clearPromo": "Убрать промокод",
-      "promoApplied": "Код «{code}» применён",
-      "discount": "Скидка",
+    "cart": {
+      "title": "Корзина",
+      "headTitle": "Корзина",
+      "empty": {
+        "title": "Пока пусто",
+        "text": "Самое время собрать что-нибудь своё.",
+        "toCatalog": "В каталог"
+      },
+      "removeItem": "Удалить {title}",
+      "viewItem": "Открыть {title}",
+      "decrease": "Уменьшить количество",
+      "clear": "Очистить корзину",
+      "clearConfirm": "Очистить корзину?",
       "total": "Итого",
-      "pay": "Перейти к оплате",
-      "secureNote": "Безопасная оплата онлайн. Чек придёт на email."
+      "checkout": "Оформить заказ"
     },
-    "promo": {
-      "appliedToast": "Промокод применён: −{amount}",
-      "invalid": "Промокод недействителен или не подходит к заказу",
-      "checkFailed": "Не удалось проверить промокод"
+    "checkout": {
+      "title": "Оформление",
+      "headTitle": "Оформление",
+      "fields": {
+        "fullName": "Имя и фамилия",
+        "email": "Email",
+        "emailHelp": "На него придёт подтверждение заказа",
+        "emailPlaceholder": "example{'@'}mail.kz",
+        "phone": "Телефон",
+        "phonePlaceholder": "+7 700 000 00 00",
+        "city": "Город",
+        "address": "Адрес доставки"
+      },
+      "gift": {
+        "toggle": "Это подарок 🎁",
+        "recipient": "Имя получателя",
+        "recipientHelp": "Кому вручить — для открытки и упаковки",
+        "recipientPlaceholder": "Имя получателя",
+        "message": "Текст открытки",
+        "messagePlaceholder": "С днём рождения!",
+        "hidePrice": "Не вкладывать чек с ценой в посылку"
+      },
+      "summary": {
+        "title": "Ваш заказ",
+        "item": "{title} ({size}) ×{qty}",
+        "promoPlaceholder": "Промокод",
+        "applyPromo": "Применить",
+        "clearPromo": "Убрать промокод",
+        "promoApplied": "Код «{code}» применён",
+        "discount": "Скидка",
+        "total": "Итого",
+        "pay": "Перейти к оплате",
+        "secureNote": "Безопасная оплата онлайн. Чек придёт на email."
+      },
+      "promo": {
+        "appliedToast": "Промокод применён: −{amount}",
+        "invalid": "Промокод недействителен или не подходит к заказу",
+        "checkFailed": "Не удалось проверить промокод"
+      },
+      "validation": {
+        "title": "Проверьте поля",
+        "description": "Имя, корректный email, телефон (мин. 10 цифр), город и адрес обязательны"
+      },
+      "error": {
+        "title": "Ошибка оформления"
+      }
     },
-    "validation": {
-      "title": "Проверьте поля",
-      "description": "Имя, корректный email, телефон (мин. 10 цифр), город и адрес обязательны"
+    "pay": {
+      "headTitle": "Оплата",
+      "label": "Демо-оплата",
+      "title": "Оплата заказа",
+      "amountLabel": "К оплате",
+      "submit": "Оплатить (демо)",
+      "cancel": "Отмена",
+      "note": "Тестовый режим оплаты. Оплата картой и Kaspi подключаются на запуске.",
+      "success": "Оплата прошла",
+      "error": "Ошибка оплаты",
+      "notFoundTitle": "Заказ не найден",
+      "notFoundText": "Возможно, ссылка устарела или заказ был удалён.",
+      "doneTitle": "Заказ уже оплачен",
+      "doneText": "Оплата по этому заказу уже прошла — открыть детали.",
+      "closedTitle": "Оплата недоступна",
+      "closedText": "Этот заказ отменён или закрыт для оплаты.",
+      "viewOrder": "Открыть заказ",
+      "toOrders": "К моим заказам"
     },
-    "error": {
-      "title": "Ошибка оформления"
-    }
-  },
-  "pay": {
-    "headTitle": "Оплата",
-    "label": "Демо-оплата",
-    "title": "Оплата заказа",
-    "amountLabel": "К оплате",
-    "submit": "Оплатить (демо)",
-    "cancel": "Отмена",
-    "note": "Тестовый режим оплаты. Оплата картой и Kaspi подключаются на запуске.",
-    "success": "Оплата прошла",
-    "error": "Ошибка оплаты",
-    "notFoundTitle": "Заказ не найден",
-    "notFoundText": "Возможно, ссылка устарела или заказ был удалён.",
-    "doneTitle": "Заказ уже оплачен",
-    "doneText": "Оплата по этому заказу уже прошла — открыть детали.",
-    "closedTitle": "Оплата недоступна",
-    "closedText": "Этот заказ отменён или закрыт для оплаты.",
-    "viewOrder": "Открыть заказ",
-    "toOrders": "К моим заказам"
-  },
-  "order": {
-    "headTitle": "Заказ",
-    "notFound": "Заказ не найден",
-    "number": "Заказ #{id}",
-    "tracking": {
-      "title": "Отслеживание"
+    "order": {
+      "headTitle": "Заказ",
+      "notFound": "Заказ не найден",
+      "number": "Заказ #{id}",
+      "tracking": {
+        "title": "Отслеживание"
+      },
+      "items": {
+        "title": "Состав",
+        "total": "Итого"
+      },
+      "gift": {
+        "title": "Подарочный заказ",
+        "recipient": "Получатель:",
+        "card": "Открытка:",
+        "hidePrice": "Чек с ценой не вкладывается в посылку."
+      },
+      "receipt": {
+        "title": "Чек об оплате",
+        "print": "Печать",
+        "paidAt": "Оплачено: {date}",
+        "transaction": "Транзакция: {txn}",
+        "pendingFiscal": "Фискальный чек ОФД будет доступен после фискализации."
+      },
+      "actions": {
+        "allOrders": "Все заказы",
+        "reorder": "Повторить заказ",
+        "toCatalog": "В каталог"
+      },
+      "reorderSuccess": "Добавлено в корзину: {count}",
+      "reorderPartial": "Добавлено: {added}. Пропущено (нет в наличии): {skipped}",
+      "reorderNone": "Эти товары сейчас недоступны",
+      "reorderError": "Не удалось повторить",
+      "request": {
+        "title": "Отмена или возврат",
+        "pending_cancel": "Запрос на отмену — на рассмотрении",
+        "pending_return": "Запрос на возврат — на рассмотрении",
+        "kind_cancel": "Отмена",
+        "kind_return": "Возврат",
+        "status_pending": "на рассмотрении",
+        "status_approved": "одобрено",
+        "status_rejected": "отклонено",
+        "cancelCta": "Запросить отмену",
+        "returnCta": "Запросить возврат",
+        "cancelTitle": "Запрос на отмену",
+        "returnTitle": "Запрос на возврат",
+        "reasonLabel": "Причина",
+        "reasonPlaceholder": "Опишите причину (необязательно)",
+        "submit": "Отправить заявку",
+        "submitted": "Заявка отправлена",
+        "error": "Не удалось отправить заявку"
+      }
     },
-    "items": {
-      "title": "Состав",
-      "total": "Итого"
-    },
-    "gift": {
-      "title": "Подарочный заказ",
-      "recipient": "Получатель:",
-      "card": "Открытка:",
-      "hidePrice": "Чек с ценой не вкладывается в посылку."
-    },
-    "receipt": {
-      "title": "Чек об оплате",
-      "print": "Печать",
-      "paidAt": "Оплачено: {date}",
-      "transaction": "Транзакция: {txn}",
-      "pendingFiscal": "Фискальный чек ОФД будет доступен после фискализации."
-    },
-    "actions": {
-      "allOrders": "Все заказы",
-      "reorder": "Повторить заказ",
-      "toCatalog": "В каталог"
-    },
-    "reorderSuccess": "Добавлено в корзину: {count}",
-    "reorderPartial": "Добавлено: {added}. Пропущено (нет в наличии): {skipped}",
-    "reorderNone": "Эти товары сейчас недоступны",
-    "reorderError": "Не удалось повторить"
-  },
-  "status": {
-    "created": "Оформление",
-    "pending": "Ожидает оплаты",
-    "in_production": "В производстве",
-    "packing": "Упаковка",
-    "shipped": "В пути",
-    "delivered": "Доставлен",
-    "on_hold": "В обработке",
-    "cancelled": "Отменён",
-    "refunded": "Возврат средств",
-    "stages": {
-      "placed": "Оформлен",
-      "printing": "Печатаем",
-      "packing": "Упаковываем",
-      "shipping": "В пути",
-      "delivered": "Доставлен"
+    "status": {
+      "created": "Оформление",
+      "pending": "Ожидает оплаты",
+      "in_production": "В производстве",
+      "packing": "Упаковка",
+      "shipped": "В пути",
+      "delivered": "Доставлен",
+      "on_hold": "В обработке",
+      "cancelled": "Отменён",
+      "refunded": "Возврат средств",
+      "stages": {
+        "placed": "Оформлен",
+        "printing": "Печатаем",
+        "packing": "Упаковываем",
+        "shipping": "В пути",
+        "delivered": "Доставлен"
+      }
     }
   }
 }
