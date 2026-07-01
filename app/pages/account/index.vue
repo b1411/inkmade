@@ -45,10 +45,12 @@ onMounted(async () => {
 })
 
 // загрузка аватара (Фаза C4): публичный бакет design-uploads, путь avatars/<uid>/…
+// MIME по факту-allowlist бакета design-uploads (миграция 0040): png/jpeg/webp/gif/avif.
+const AVATAR_MIME = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/avif']
 async function onAvatarPick(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file || !user.value) return
-  if (!file.type.startsWith('image/')) { toast.add({ title: t('account.overview.avatar.typeError'), color: 'warning' }); return }
+  if (!AVATAR_MIME.includes(file.type)) { toast.add({ title: t('account.overview.avatar.typeError'), color: 'warning' }); return }
   uploadingAvatar.value = true
   try {
     const ext = file.name.split('.').pop() || 'jpg'
@@ -126,7 +128,7 @@ async function changePassword() {
               <p class="ink-display text-h3 truncate">{{ form.full_name || user?.email }}</p>
               <p v-if="form.full_name" class="text-caption text-ink-gray-600 truncate">{{ user?.email }}</p>
             </div>
-            <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="onAvatarPick">
+            <input ref="avatarInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="hidden" @change="onAvatarPick">
             <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="uploadingAvatar" @click="avatarInput?.click()">{{ $t('account.overview.avatar.upload') }}</UButton>
           </div>
           <UFormField :label="$t('account.overview.email')">

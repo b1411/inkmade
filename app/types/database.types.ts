@@ -1413,6 +1413,10 @@ export type Database = {
         Args: { p_delta: number; p_reason: string; p_variant_id: string }
         Returns: number
       }
+      anonymize_account: {
+        Args: { p_uid: string }
+        Returns: undefined
+      }
       admin_customer: { Args: { p_id: string }; Returns: Json }
       admin_finance_series: {
         Args: { p_from?: string; p_to?: string }

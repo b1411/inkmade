@@ -28,10 +28,12 @@ export const useOrderRequests = () => {
   }
 
   async function resolve(id: string, status: 'approved' | 'rejected') {
+    // .eq('status','pending') — оптимистичный guard: два оператора не перезапишут решение
     const { error } = await supabase
       .from('order_requests')
       .update({ status, resolved_at: new Date().toISOString(), resolved_by: user.value?.id ?? null })
       .eq('id', id)
+      .eq('status', 'pending')
     if (error) throw error
   }
 

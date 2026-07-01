@@ -167,57 +167,70 @@ export default defineEventHandler(async (event) => {
     .select('id').single()
   if (oErr || !order) throw createError({ statusCode: 500, statusMessage: 'Не удалось создать заказ' })
 
-  for (const { item, unitPrice, unitCost } of priced) {
-    const { data: design, error: dErr } = await svc.from('designs')
-      .insert({
-        user_id: uid,
-        product_id: item.productId,
-        variant_id: item.variantId,
-        spec: item.spec as unknown as Json,
-        // превью «для глаз» из скриншота композиции (§13.2) — для галереи и шаринга
-        preview_url: item.spec?.composition_url ?? null,
-        // печатный файл (§13.2, «для печати»): первая зона → designs.print_file_url,
-        // все зоны лежат в spec.print_files. Решает проблему шрифтов в цеху.
-        print_file_url: item.spec?.print_files?.[0]?.url ?? null,
-      })
-      .select('id').single()
-    if (dErr || !design) throw createError({ statusCode: 500, statusMessage: 'Не удалось сохранить дизайн' })
+  // Нет транзакции через PostgREST → полу-успех оставил бы заказ-сироту. Пишем
+  // designs/order_items/consents в try; при любом сбое откатываем заказ (каскад
+  // order_items) + созданные дизайны. Согласия §24 — с проверкой ошибки (юр. точка).
+  const createdDesignIds: string[] = []
+  try {
+    for (const { item, unitPrice, unitCost } of priced) {
+      const { data: design, error: dErr } = await svc.from('designs')
+        .insert({
+          user_id: uid,
+          product_id: item.productId,
+          variant_id: item.variantId,
+          spec: item.spec as unknown as Json,
+          // превью «для глаз» из скриншота композиции (§13.2) — для галереи и шаринга
+          preview_url: item.spec?.composition_url ?? null,
+          // печатный файл (§13.2, «для печати»): первая зона → designs.print_file_url,
+          // все зоны лежат в spec.print_files. Решает проблему шрифтов в цеху.
+          print_file_url: item.spec?.print_files?.[0]?.url ?? null,
+        })
+        .select('id').single()
+      if (dErr || !design) throw createError({ statusCode: 500, statusMessage: 'Не удалось сохранить дизайн' })
+      createdDesignIds.push(design.id)
 
-    // принт из библиотеки → атрибуция роялти владельцу-дизайнеру (CRM §7.3, §8.4).
-    // Anti-fraud: роялти только за АКТИВНЫЙ принт, РЕАЛЬНО использованный в дизайне
-    // (его file_url присутствует среди ассетов плейсментов) — нельзя начислить
-    // роялти произвольному дизайнеру, подставив чужой print_id.
-    let printId: string | null = null
-    let printOwnerId: string | null = null
-    if (item.spec?.print_id) {
-      const { data: pl } = await svc.from('print_library')
-        .select('id, owner_id, file_url, is_active').eq('id', item.spec.print_id).maybeSingle()
-      const usedInDesign = !!pl && (item.spec?.placements ?? []).some(p => p.asset_url === pl.file_url)
-      if (pl && pl.is_active && usedInDesign) { printId = pl.id; printOwnerId = pl.owner_id }
+      // принт из библиотеки → атрибуция роялти владельцу-дизайнеру (CRM §7.3, §8.4).
+      // Anti-fraud: роялти только за АКТИВНЫЙ принт, РЕАЛЬНО использованный в дизайне
+      // (его file_url присутствует среди ассетов плейсментов) — нельзя начислить
+      // роялти произвольному дизайнеру, подставив чужой print_id.
+      let printId: string | null = null
+      let printOwnerId: string | null = null
+      if (item.spec?.print_id) {
+        const { data: pl } = await svc.from('print_library')
+          .select('id, owner_id, file_url, is_active').eq('id', item.spec.print_id).maybeSingle()
+        const usedInDesign = !!pl && (item.spec?.placements ?? []).some(p => p.asset_url === pl.file_url)
+        if (pl && pl.is_active && usedInDesign) { printId = pl.id; printOwnerId = pl.owner_id }
+      }
+
+      const { error: iErr } = await svc.from('order_items').insert({
+        order_id: order.id,
+        design_id: design.id,
+        variant_id: item.variantId,
+        print_method: item.printMethod,
+        quantity: item.quantity,
+        unit_price: unitPrice,
+        unit_cost: unitCost,
+        print_id: printId,
+        print_owner_id: printOwnerId,
+      })
+      if (iErr) throw createError({ statusCode: 500, statusMessage: 'Не удалось сохранить позицию' })
     }
 
-    const { error: iErr } = await svc.from('order_items').insert({
-      order_id: order.id,
-      design_id: design.id,
-      variant_id: item.variantId,
-      print_method: item.printMethod,
-      quantity: item.quantity,
-      unit_price: unitPrice,
-      unit_cost: unitCost,
-      print_id: printId,
-      print_owner_id: printOwnerId,
-    })
-    if (iErr) throw createError({ statusCode: 500, statusMessage: 'Не удалось сохранить позицию' })
+    // фиксация согласий (§24): ToS + Privacy + копирайт. Ошибка вставки больше НЕ
+    // проглатывается — заказ без юр. согласия не проходит.
+    const ip = getRequestIP(event, { xForwardedFor: true }) ?? null
+    const { error: cErr } = await svc.from('user_consents').insert([
+      { user_id: uid, order_id: order.id, consent_type: 'tos', doc_version: LEGAL.tosVersion, ip },
+      { user_id: uid, order_id: order.id, consent_type: 'privacy', doc_version: LEGAL.privacyVersion, ip },
+      { user_id: uid, order_id: order.id, consent_type: 'copyright', doc_version: LEGAL.tosVersion, ip },
+    ])
+    if (cErr) throw createError({ statusCode: 500, statusMessage: 'Не удалось зафиксировать согласия' })
+  } catch (err) {
+    // откат сирот: заказ (каскадит order_items) + созданные дизайны
+    await svc.from('orders').delete().eq('id', order.id)
+    if (createdDesignIds.length) await svc.from('designs').delete().in('id', createdDesignIds)
+    throw err
   }
-
-  // фиксация согласий (§24): ToS + Privacy + перенос ответственности за копирайт.
-  // Это критическая юр. точка — фиксируется на сервере перед оплатой, гарантированно.
-  const ip = getRequestIP(event, { xForwardedFor: true }) ?? null
-  await svc.from('user_consents').insert([
-    { user_id: uid, order_id: order.id, consent_type: 'tos', doc_version: LEGAL.tosVersion, ip },
-    { user_id: uid, order_id: order.id, consent_type: 'privacy', doc_version: LEGAL.privacyVersion, ip },
-    { user_id: uid, order_id: order.id, consent_type: 'copyright', doc_version: LEGAL.tosVersion, ip },
-  ])
 
   return { orderId: order.id, total }
 })

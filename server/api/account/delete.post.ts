@@ -22,14 +22,22 @@ export default defineEventHandler(async (event) => {
   if (!me) throw createError({ statusCode: 404, statusMessage: 'Профиль не найден' })
   if (me.role !== 'customer') throw createError({ statusCode: 403, statusMessage: 'Удаление доступно только клиентам' })
 
-  // 1) персональные данные (заказы НЕ трогаем)
-  await svc.from('addresses').delete().eq('user_id', uid)
-  await svc.from('favorites').delete().eq('user_id', uid)
-  await svc.from('cart_items').delete().eq('user_id', uid)
-  await svc.from('designs').delete().eq('user_id', uid).eq('is_saved', true)
+  // 1) атомарная анонимизация: удаление персональных данных + обезличивание профиля
+  //    (адреса/избранное/корзина/сохранённые дизайны + full_name/phone/marketing/avatar_url).
+  //    Одна транзакция в RPC — без риска полу-удалённого состояния (аудит).
+  const { error: anonErr } = await svc.rpc('anonymize_account', { p_uid: uid })
+  if (anonErr) {
+    await logError('account/delete', anonErr, { uid, step: 'anonymize' })
+    throw createError({ statusCode: 500, statusMessage: 'Не удалось удалить аккаунт' })
+  }
 
-  // 2) обезличить профиль
-  await svc.from('profiles').update({ full_name: null, phone: null, marketing_consent: false }).eq('id', uid)
+  // 2) удалить файл(ы) аватара из публичного бакета (best-effort: путь avatars/<uid>/…)
+  try {
+    const { data: files } = await svc.storage.from('design-uploads').list(`avatars/${uid}`)
+    if (files?.length) {
+      await svc.storage.from('design-uploads').remove(files.map(f => `avatars/${uid}/${f.name}`))
+    }
+  } catch { /* не критично: строка профиля уже обезличена */ }
 
   // 3) обезличить email + бессрочный бан (876000h ≈ 100 лет)
   const { error } = await svc.auth.admin.updateUserById(uid, {
