@@ -37,7 +37,7 @@ const badgeLabel = computed(() => props.badge ?? (isNew.value ? t('catalog.card.
         v-if="primary"
         :src="primary"
         :alt="product.title"
-        class="absolute inset-0 w-full h-full object-cover transition-[opacity,transform] duration-500"
+        class="absolute inset-0 w-full h-full object-contain transition-[opacity,transform] duration-500"
         :class="secondary ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'"
         sizes="(max-width: 768px) 50vw, 320px"
         loading="lazy"
@@ -46,7 +46,7 @@ const badgeLabel = computed(() => props.badge ?? (isNew.value ? t('catalog.card.
         v-if="secondary"
         :src="secondary"
         :alt="product.title"
-        class="absolute inset-0 w-full h-full object-cover opacity-0 scale-105 group-hover:opacity-100 group-hover:scale-100 transition-[opacity,transform] duration-500"
+        class="absolute inset-0 w-full h-full object-contain opacity-0 scale-105 group-hover:opacity-100 group-hover:scale-100 transition-[opacity,transform] duration-500"
         sizes="(max-width: 768px) 50vw, 320px"
         loading="lazy"
       />
