@@ -40,8 +40,26 @@ export default defineEventHandler(async (event) => {
   const ownStorageUrl = (url: string | null | undefined): boolean =>
     !url || (!!storagePrefix && url.startsWith(storagePrefix))
 
+  // URL ВНУТРИ spec (превью-композиция, печатные файлы, ассеты плейсментов) тоже
+  // обязаны вести в наш Storage — как в orders/create. Иначе внешний URL персистится
+  // в designs.spec и рендерится в галерее/по share-ссылке (фишинг/stored-content).
+  function specUrlsOwn(spec: unknown): boolean {
+    const s = spec as {
+      composition_url?: string
+      print_files?: { url?: string }[]
+      placements?: { asset_url?: string; source_file_url?: string }[]
+    } | null | undefined
+    if (!s) return true
+    if (!ownStorageUrl(s.composition_url)) return false
+    for (const f of s.print_files ?? []) if (!ownStorageUrl(f?.url)) return false
+    for (const p of s.placements ?? []) {
+      if (!ownStorageUrl(p?.asset_url) || !ownStorageUrl(p?.source_file_url)) return false
+    }
+    return true
+  }
+
   const rows = incoming
-    .filter(d => d.productId && activeIds.has(d.productId) && d.spec)
+    .filter(d => d.productId && activeIds.has(d.productId) && d.spec && specUrlsOwn(d.spec))
     .map(d => ({
       user_id: user.id,
       product_id: d.productId!,

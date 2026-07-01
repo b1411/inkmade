@@ -83,6 +83,7 @@
       "share": "Бөлісу",
       "shareTitle": "INKMADE-тегі менің дизайным",
       "shareErrorTitle": "Сілтеме жасау мүмкін болмады",
+      "importedToast": "Сақталған дизайндар кабинетке көшірілді ({count})",
       "untitled": "Атауы жоқ",
       "renameTitle": "Дизайнды қайта атау",
       "renamePlaceholder": "Дизайн атауы",

@@ -83,6 +83,7 @@
       "share": "Поделиться",
       "shareTitle": "Мой дизайн на INKMADE",
       "shareErrorTitle": "Не удалось создать ссылку",
+      "importedToast": "Сохранённые дизайны перенесены в кабинет ({count})",
       "untitled": "Без названия",
       "renameTitle": "Переименовать дизайн",
       "renamePlaceholder": "Название дизайна",

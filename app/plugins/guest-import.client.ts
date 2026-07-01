@@ -5,6 +5,7 @@ export default defineNuxtPlugin(() => {
   const user = useSupabaseUser()
   const guest = useGuestDesigns()
   const toast = useToast()
+  const { t } = useI18n()
 
   watch(user, async (u) => {
     if (!u) return
@@ -17,7 +18,7 @@ export default defineNuxtPlugin(() => {
       })
       guest.clear()
       if (res.imported > 0) {
-        toast.add({ title: `Сохранённые дизайны перенесены в кабинет (${res.imported})`, color: 'success' })
+        toast.add({ title: t('account.designs.importedToast', { count: res.imported }), color: 'success' })
       }
     } catch {
       /* перенос не критичен — локальные данные останутся до следующего входа */

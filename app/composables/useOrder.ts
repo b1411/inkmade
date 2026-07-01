@@ -50,7 +50,7 @@ export const useOrder = () => {
       cart.add({
         productId: p.id,
         slug: p.slug,
-        alias: p.alias ?? p.slug,
+        alias: p.alias ?? null,
         title: p.title,
         variantId: v.id,
         colorName: v.color_name,

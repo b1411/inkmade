@@ -1,6 +1,7 @@
 import { createHmac } from 'node:crypto'
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
+import { requireUuid } from '~~/server/utils/validation'
 
 // DEV-ONLY: имитирует платёжного провайдера. Формирует подписанный payload и
 // вызывает реальный webhook (§10) — так поток оплаты тестируется честно,
@@ -12,8 +13,8 @@ export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Требуется вход' })
 
-  const { orderId } = await readBody<{ orderId: string }>(event)
-  if (!orderId) throw createError({ statusCode: 400, statusMessage: 'orderId обязателен' })
+  const body = await readBody<{ orderId?: string }>(event)
+  const orderId = requireUuid(body.orderId, 'заказ')
 
   const svc = serverSupabaseServiceRole<Database>(event)
   const { data: order, error } = await svc.from('orders').select('id, user_id, payment_id, status, total').eq('id', orderId).single()

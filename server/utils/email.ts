@@ -15,6 +15,11 @@ const BRAND = {
   line: '#E7DFD5',
 }
 
+// Экранирование значений, попадающих в HTML письма. trackingNo/carrier вводит
+// оператор → без экранирования это HTML-инъекция в почту клиента.
+const esc = (s: unknown) =>
+  String(s ?? '').replace(/[&<>"]/g, c => (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }) as Record<string, string>)[c] ?? c)
+
 interface SendArgs {
   to: string
   subject: string
@@ -47,7 +52,7 @@ interface LayoutOpts {
 }
 function layout(o: LayoutOpts): string {
   const rows = (o.rows ?? [])
-    .map(r => `<tr><td style="padding:6px 0;color:${BRAND.gray};font-size:14px">${r.k}</td><td style="padding:6px 0;text-align:right;font-weight:600;color:${BRAND.ink};font-size:14px">${r.v}</td></tr>`)
+    .map(r => `<tr><td style="padding:6px 0;color:${BRAND.gray};font-size:14px">${esc(r.k)}</td><td style="padding:6px 0;text-align:right;font-weight:600;color:${BRAND.ink};font-size:14px">${esc(r.v)}</td></tr>`)
     .join('')
   return `<!doctype html><html lang="ru"><body style="margin:0;background:${BRAND.cream};font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.cream};padding:32px 16px">
@@ -80,7 +85,7 @@ function template(type: OrderEmailType, ctx: { shortId: string; link: string; tr
         subject: `INKMADE — заказ #${ctx.shortId} принят в работу`,
         html: layout({
           heading: 'Спасибо за заказ!',
-          intro: `Оплата получена, заказ <strong>#${ctx.shortId}</strong> передан в производство. Мы напишем, когда отправим.`,
+          intro: `Оплата получена, заказ <strong>#${esc(ctx.shortId)}</strong> передан в производство. Мы напишем, когда отправим.`,
           ctaLabel: 'Следить за заказом',
           ctaUrl: ctx.link,
         }),
@@ -90,7 +95,7 @@ function template(type: OrderEmailType, ctx: { shortId: string; link: string; tr
         subject: `INKMADE — заказ #${ctx.shortId} отправлен`,
         html: layout({
           heading: 'Заказ в пути',
-          intro: `Заказ <strong>#${ctx.shortId}</strong> отправлен${ctx.carrier ? ` (${ctx.carrier})` : ''}.`,
+          intro: `Заказ <strong>#${esc(ctx.shortId)}</strong> отправлен${ctx.carrier ? ` (${esc(ctx.carrier)})` : ''}.`,
           rows: ctx.trackingNo ? [{ k: 'Трек-номер', v: ctx.trackingNo }] : [],
           ctaLabel: 'Отследить',
           ctaUrl: ctx.link,

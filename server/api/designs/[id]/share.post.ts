@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
 
   let token = design.share_token
   if (!token) {
-    token = randomBytes(9).toString('base64url')
+    token = randomBytes(16).toString('base64url')
     const { error } = await svc
       .from('designs')
       .update({ share_token: token, is_saved: true })
