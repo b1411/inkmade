@@ -41,7 +41,16 @@
       "reorderSuccess": "Добавлено в корзину: {count}",
       "reorderPartial": "Добавлено: {added}. Пропущено (нет в наличии): {skipped}",
       "reorderNone": "Эти товары сейчас недоступны",
-      "reorderErrorTitle": "Не удалось повторить"
+      "reorderErrorTitle": "Не удалось повторить",
+      "searchPlaceholder": "Поиск по #номеру",
+      "filter": {
+        "all": "Все",
+        "active": "Активные",
+        "delivered": "Доставленные",
+        "cancelled": "Отменённые"
+      },
+      "loadMore": "Показать ещё",
+      "noMatches": "Ничего не найдено"
     },
     "designs": {
       "label": "Дизайны",

@@ -41,7 +41,16 @@
       "reorderSuccess": "Себетке қосылды: {count}",
       "reorderPartial": "Қосылды: {added}. Өткізілді (қоймада жоқ): {skipped}",
       "reorderNone": "Бұл тауарлар қазір қолжетімсіз",
-      "reorderErrorTitle": "Қайталау мүмкін болмады"
+      "reorderErrorTitle": "Қайталау мүмкін болмады",
+      "searchPlaceholder": "#нөмір бойынша іздеу",
+      "filter": {
+        "all": "Барлығы",
+        "active": "Белсенді",
+        "delivered": "Жеткізілген",
+        "cancelled": "Болдырылмаған"
+      },
+      "loadMore": "Тағы көрсету",
+      "noMatches": "Ештеңе табылмады"
     },
     "designs": {
       "label": "Дизайндар",
