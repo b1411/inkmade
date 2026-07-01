@@ -3,7 +3,7 @@ import type { Database } from '~/types/database.types'
 
 // Профиль клиента (CRM §3.1): просмотр + правка имени/телефона + смена пароля.
 definePageMeta({ layout: 'account', middleware: 'auth' })
-const { profile, user, fetchProfile } = useAuth()
+const { profile, user, fetchProfile, signOut } = useAuth()
 const supabase = useSupabaseClient<Database>()
 const toast = useToast()
 const { t } = useI18n()
@@ -50,6 +50,20 @@ async function saveNotifications() {
     toast.add({ title: t('account.overview.errorTitle'), description: (e as Error).message, color: 'error' })
   } finally {
     savingNotif.value = false
+  }
+}
+
+// удаление аккаунта (Фаза C4): анонимизация + бан на сервере, затем выход.
+const del = reactive({ open: false, busy: false })
+async function deleteAccount() {
+  del.busy = true
+  try {
+    await $fetch('/api/account/delete', { method: 'POST' })
+    await signOut()
+    await navigateTo('/')
+  } catch (e) {
+    toast.add({ title: t('account.overview.errorTitle'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    del.busy = false
   }
 }
 
@@ -115,6 +129,26 @@ async function changePassword() {
           <UButton color="neutral" variant="subtle" :loading="savingNotif" @click="saveNotifications">{{ $t('account.overview.save') }}</UButton>
         </div>
       </UiPanel>
+
+      <!-- удаление аккаунта (Фаза C4) -->
+      <UiPanel :title="$t('account.overview.danger.title')" icon="i-lucide-triangle-alert">
+        <div class="space-y-3">
+          <p class="text-caption text-ink-gray-600">{{ $t('account.overview.danger.text') }}</p>
+          <UButton color="error" variant="subtle" icon="i-lucide-trash-2" @click="del.open = true">{{ $t('account.overview.danger.deleteBtn') }}</UButton>
+        </div>
+      </UiPanel>
     </div>
+
+    <UModal v-model:open="del.open" :title="$t('account.overview.danger.confirmTitle')">
+      <template #body>
+        <div class="space-y-4">
+          <p class="text-ink-gray-600">{{ $t('account.overview.danger.confirmText') }}</p>
+          <div class="flex gap-3 justify-end">
+            <UButton color="neutral" variant="ghost" @click="del.open = false">{{ $t('actions.cancel') }}</UButton>
+            <UButton color="error" :loading="del.busy" @click="deleteAccount">{{ $t('account.overview.danger.confirmBtn') }}</UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
