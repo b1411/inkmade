@@ -28,6 +28,11 @@
       "passwordTooShortTitle": "Құпиясөз тым қысқа",
       "passwordTooShortText": "Кемінде 6 таңба",
       "passwordChangedTitle": "Құпиясөз өзгертілді",
+      "avatar": {
+        "upload": "Фото жүктеу",
+        "updated": "Аватар жаңартылды",
+        "typeError": "Сурет файлы қажет"
+      },
       "notif": {
         "title": "Хабарламалар",
         "subtitle": "Сізбен қалай байланысу керек",

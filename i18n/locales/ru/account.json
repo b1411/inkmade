@@ -28,6 +28,11 @@
       "passwordTooShortTitle": "Пароль слишком короткий",
       "passwordTooShortText": "Минимум 6 символов",
       "passwordChangedTitle": "Пароль изменён",
+      "avatar": {
+        "upload": "Загрузить фото",
+        "updated": "Аватар обновлён",
+        "typeError": "Нужен файл изображения"
+      },
       "notif": {
         "title": "Уведомления",
         "subtitle": "Как с вами связываться",
