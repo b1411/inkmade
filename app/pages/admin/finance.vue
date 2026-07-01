@@ -29,7 +29,19 @@ const { data, pending } = await useAsyncData('admin-finance', async () => {
 
 const money = (n: number | null | undefined) => `${Math.round(Number(n) || 0).toLocaleString('ru')} ₸`
 const { te } = useI18n()
+const { date } = useFormat()
 const typeLabel = (type: string) => te(`admin.finance.type.${type}`) ? t(`admin.finance.type.${type}`) : type
+
+// леджер finance_entries (A1): фильтр по типу движения над загруженным набором
+const ledgerType = ref('all')
+const ledgerTypes = computed(() => {
+  const types = Array.from(new Set((data.value?.entries ?? []).map(e => e.entry_type)))
+  return [{ label: t('admin.finance.ledger.allTypes'), value: 'all' }, ...types.map(ty => ({ label: typeLabel(ty), value: ty }))]
+})
+const filteredEntries = computed(() => {
+  const rows = data.value?.entries ?? []
+  return ledgerType.value === 'all' ? rows : rows.filter(e => e.entry_type === ledgerType.value)
+})
 
 // масштаб графика
 const chartMax = computed(() => {
@@ -160,9 +172,12 @@ function exportTaxCsv() {
 
         <!-- леджер -->
         <UiPanel :title="$t('admin.finance.ledger.title')" icon="i-lucide-receipt-text" :padded="false">
-          <div v-if="data?.entries?.length" class="divide-y divide-ink-gray-200 text-caption">
-            <div v-for="e in data.entries" :key="e.id" class="flex items-center justify-between px-6 py-3">
-              <span class="text-ink-gray-500 w-28">{{ new Date(e.created_at).toLocaleDateString('ru') }}</span>
+          <template #actions>
+            <USelect v-model="ledgerType" :items="ledgerTypes" value-key="value" size="sm" class="w-40" />
+          </template>
+          <div v-if="filteredEntries.length" class="divide-y divide-ink-gray-200 text-caption">
+            <div v-for="e in filteredEntries" :key="e.id" class="flex items-center justify-between px-6 py-3">
+              <span class="text-ink-gray-500 w-28">{{ date(e.created_at) }}</span>
               <span class="flex-1">{{ typeLabel(e.entry_type) }}<span v-if="e.note" class="text-ink-gray-400"> · {{ e.note }}</span></span>
               <span class="font-semibold" :class="e.entry_type === 'revenue' ? 'text-ink-success' : 'text-ink-error'">
                 {{ e.entry_type === 'revenue' ? '+' : '−' }}{{ money(Math.abs(Number(e.amount))) }}

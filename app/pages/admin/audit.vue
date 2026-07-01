@@ -2,8 +2,17 @@
 // Аудит действий админа (CRM §6.11): смена ролей, цен, публикаций.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t, te } = useI18n()
+const { dateTime } = useFormat()
 const { auditLog } = useFinance()
 const { data: log, pending } = await useAsyncData('admin-audit', () => auditLog(300))
+
+// фильтр по сущности + поиск над загруженным логом (A1)
+const q = ref('')
+const entityFilter = ref('all')
+const entities = computed(() => {
+  const set = Array.from(new Set((log.value ?? []).map(e => e.entity)))
+  return [{ label: t('admin.audit.allEntities'), value: 'all' }, ...set.map(en => ({ label: te(`admin.audit.entity.${en}`) ? t(`admin.audit.entity.${en}`) : en, value: en }))]
+})
 
 function eventTitle(e: { action: string; entity: string }) {
   if (te(`admin.audit.action.${e.action}`)) return t(`admin.audit.action.${e.action}`)
@@ -32,6 +41,18 @@ function describe(e: { action: string; entity: string; before: unknown; after: u
     default: return ''
   }
 }
+
+const filteredLog = computed(() => {
+  const term = q.value.trim().toLowerCase()
+  return (log.value ?? []).filter((e) => {
+    if (entityFilter.value !== 'all' && e.entity !== entityFilter.value) return false
+    if (term) {
+      const hay = `${e.entity} ${e.action} ${eventTitle(e)} ${describe(e)}`.toLowerCase()
+      if (!hay.includes(term)) return false
+    }
+    return true
+  })
+})
 </script>
 
 <template>
@@ -49,14 +70,23 @@ function describe(e: { action: string; entity: string; before: unknown; after: u
       :text="$t('admin.audit.empty.text')"
     />
 
-    <UiPanel v-else :padded="false">
-      <div class="divide-y divide-ink-gray-200 text-caption">
-        <div v-for="e in log" :key="e.id" class="flex items-center justify-between px-6 py-3">
-          <span class="text-ink-gray-500 w-32">{{ new Date(e.created_at).toLocaleString('ru') }}</span>
-          <span class="w-40 font-semibold">{{ eventTitle(e) }}</span>
-          <span class="flex-1 text-ink-gray-600">{{ describe(e) }}</span>
-        </div>
+    <template v-else>
+      <div class="flex flex-wrap items-center gap-3 mb-4">
+        <UInput v-model="q" icon="i-lucide-search" :placeholder="$t('admin.audit.searchPlaceholder')" class="w-full sm:w-64" />
+        <USelect v-model="entityFilter" :items="entities" value-key="value" class="w-48" />
       </div>
-    </UiPanel>
+
+      <div v-if="!filteredLog.length" class="py-10 text-center text-ink-gray-400 text-caption">{{ $t('admin.audit.noMatches') }}</div>
+
+      <UiPanel v-else :padded="false">
+        <div class="divide-y divide-ink-gray-200 text-caption">
+          <div v-for="e in filteredLog" :key="e.id" class="flex items-center justify-between px-6 py-3">
+            <span class="text-ink-gray-500 w-32">{{ dateTime(e.created_at) }}</span>
+            <span class="w-40 font-semibold">{{ eventTitle(e) }}</span>
+            <span class="flex-1 text-ink-gray-600">{{ describe(e) }}</span>
+          </div>
+        </div>
+      </UiPanel>
+    </template>
   </div>
 </template>
