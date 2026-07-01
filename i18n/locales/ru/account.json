@@ -27,7 +27,14 @@
       "errorTitle": "Ошибка",
       "passwordTooShortTitle": "Пароль слишком короткий",
       "passwordTooShortText": "Минимум 6 символов",
-      "passwordChangedTitle": "Пароль изменён"
+      "passwordChangedTitle": "Пароль изменён",
+      "notif": {
+        "title": "Уведомления",
+        "subtitle": "Как с вами связываться",
+        "marketing": "Получать новости и акции на email",
+        "transactional": "Письма о статусе заказа приходят всегда.",
+        "saved": "Настройки сохранены"
+      }
     },
     "orders": {
       "label": "Заказы",

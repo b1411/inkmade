@@ -27,7 +27,14 @@
       "errorTitle": "Қате",
       "passwordTooShortTitle": "Құпиясөз тым қысқа",
       "passwordTooShortText": "Кемінде 6 таңба",
-      "passwordChangedTitle": "Құпиясөз өзгертілді"
+      "passwordChangedTitle": "Құпиясөз өзгертілді",
+      "notif": {
+        "title": "Хабарламалар",
+        "subtitle": "Сізбен қалай байланысу керек",
+        "marketing": "Жаңалықтар мен акцияларды email-ге алу",
+        "transactional": "Тапсырыс мәртебесі туралы хаттар әрқашан келеді.",
+        "saved": "Баптаулар сақталды"
+      }
     },
     "orders": {
       "label": "Тапсырыстар",

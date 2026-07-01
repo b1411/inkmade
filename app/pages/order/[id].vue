@@ -102,7 +102,29 @@ interface FiscalReceipt {
   note?: string
 }
 const receipt = computed(() => (order.value?.fiscal_receipt ?? null) as FiscalReceipt | null)
-const { money, dateTime } = useFormat()
+const { money, dateTime, date } = useFormat()
+
+// счёт/инвойс к печати (Фаза C4): чистый документ в отдельном окне — без серверного PDF
+// (тот же паттерн, что упаковочный лист в цеху).
+function printInvoice() {
+  const o = order.value
+  if (!o) return
+  const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, c => (({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }) as Record<string, string>)[c] ?? c)
+  const a = (o.shipping_addr ?? {}) as Record<string, string | undefined>
+  const name = a.name || a.full_name || ''
+  const cityAddr = [a.city, a.address].filter(Boolean).join(', ')
+  const subtotal = (o.order_items ?? []).reduce((s, it) => s + (Number(it.unit_price) || 0) * it.quantity, 0)
+  const rows = (o.order_items ?? []).map(it => `<tr><td>${esc(it.variants?.products?.title)} · ${esc(it.variants?.color_name)}/${esc(it.variants?.size)}</td><td style="text-align:center">×${esc(it.quantity)}</td><td style="text-align:right">${esc(money(Number(it.unit_price) * it.quantity, o.currency))}</td></tr>`).join('')
+  const discountRow = o.discount > 0 ? `<tr><td colspan="2">${esc(t('cart.order.invoice.discount'))}</td><td style="text-align:right">−${esc(money(o.discount, o.currency))}</td></tr>` : ''
+  const paidLine = o.paid_at ? `<p class="muted">${esc(t('cart.order.receipt.paidAt', { date: dateTime(o.paid_at) }))}</p>` : ''
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(t('cart.order.invoice.title', { id: shortId(o.id) }))}</title><style>body{font-family:system-ui,Segoe UI,sans-serif;color:#111;padding:32px;max-width:640px;margin:0 auto}h1{font-size:20px;margin:0}.brand{font-weight:700;letter-spacing:.02em}.muted{color:#666;font-size:12px;margin:2px 0}.row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #e5e5e5}tfoot td{border:0;padding-top:6px}.tot td{font-weight:700;border-top:2px solid #111}.label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#888;margin-bottom:3px}</style></head><body><div class="row"><div><h1 class="brand">INKMADE</h1><p class="muted">${esc(t('cart.order.invoice.heading'))}</p></div><div style="text-align:right"><p class="muted">${esc(t('cart.order.number', { id: shortId(o.id) }))}</p><p class="muted">${esc(date(o.created_at))}</p></div></div><div class="row"><div><div class="label">${esc(t('cart.order.invoice.billTo'))}</div>${name ? '<div><strong>' + esc(name) + '</strong></div>' : ''}${a.phone ? '<div class="muted">' + esc(a.phone) + '</div>' : ''}${a.email ? '<div class="muted">' + esc(a.email) + '</div>' : ''}${cityAddr ? '<div class="muted">' + esc(cityAddr) + '</div>' : ''}</div></div><table><thead><tr><th>${esc(t('cart.order.invoice.item'))}</th><th style="text-align:center">${esc(t('cart.order.invoice.qty'))}</th><th style="text-align:right">${esc(t('cart.order.invoice.sum'))}</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="2">${esc(t('cart.order.invoice.subtotal'))}</td><td style="text-align:right">${esc(money(subtotal, o.currency))}</td></tr>${discountRow}<tr class="tot"><td colspan="2">${esc(t('cart.order.items.total'))}</td><td style="text-align:right">${esc(money(o.total, o.currency))}</td></tr></tfoot></table>${paidLine}</body></html>`
+  const w = window.open('', '_blank', 'width=800,height=900')
+  if (!w) { notify.error(t('cart.order.invoice.popupBlocked')); return }
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  w.print()
+}
 
 // ── заявки на отмену/возврат (Фаза C3) ──
 const { listForOrder, create: createRequest } = useOrderRequests()
@@ -135,9 +157,6 @@ async function submitRequest() {
   } finally {
     reqModal.busy = false
   }
-}
-function printReceipt() {
-  if (import.meta.client) window.print()
 }
 </script>
 
@@ -181,7 +200,7 @@ function printReceipt() {
     <!-- чек об оплате (§3.1) -->
     <UiPanel v-if="order.paid_at" :title="$t('cart.order.receipt.title')" icon="i-lucide-receipt">
       <template #actions>
-        <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-printer" @click="printReceipt">{{ $t('cart.order.receipt.print') }}</UButton>
+        <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-printer" @click="printInvoice">{{ $t('cart.order.receipt.print') }}</UButton>
       </template>
       <div class="space-y-1">
         <p class="font-semibold">{{ money(order.total, order.currency) }}</p>

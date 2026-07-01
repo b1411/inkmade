@@ -30,6 +30,29 @@ async function saveProfile() {
   }
 }
 
+// уведомления (Фаза C4): маркетинговое согласие; транзакционные письма всегда включены.
+// marketing_consent нет в кэше useAuth (fetchProfile его не тянет) — грузим отдельно.
+const marketing = ref(false)
+const savingNotif = ref(false)
+onMounted(async () => {
+  if (!user.value) return
+  const { data } = await supabase.from('profiles').select('marketing_consent').eq('id', user.value.id).single()
+  marketing.value = !!data?.marketing_consent
+})
+async function saveNotifications() {
+  if (!user.value) return
+  savingNotif.value = true
+  try {
+    const { error } = await supabase.from('profiles').update({ marketing_consent: marketing.value }).eq('id', user.value.id)
+    if (error) throw error
+    toast.add({ title: t('account.overview.notif.saved'), color: 'success' })
+  } catch (e) {
+    toast.add({ title: t('account.overview.errorTitle'), description: (e as Error).message, color: 'error' })
+  } finally {
+    savingNotif.value = false
+  }
+}
+
 const pwd = reactive({ value: '' })
 const changingPwd = ref(false)
 async function changePassword() {
@@ -81,6 +104,15 @@ async function changePassword() {
             <UInput v-model="pwd.value" type="password" autocomplete="new-password" class="w-full" />
           </UFormField>
           <UButton color="neutral" variant="subtle" size="lg" :loading="changingPwd" @click="changePassword">{{ $t('account.overview.changePassword') }}</UButton>
+        </div>
+      </UiPanel>
+
+      <!-- уведомления (Фаза C4) -->
+      <UiPanel :title="$t('account.overview.notif.title')" icon="i-lucide-bell" :subtitle="$t('account.overview.notif.subtitle')">
+        <div class="space-y-3">
+          <UCheckbox v-model="marketing" :label="$t('account.overview.notif.marketing')" />
+          <p class="text-caption text-ink-gray-500">{{ $t('account.overview.notif.transactional') }}</p>
+          <UButton color="neutral" variant="subtle" :loading="savingNotif" @click="saveNotifications">{{ $t('account.overview.save') }}</UButton>
         </div>
       </UiPanel>
     </div>
