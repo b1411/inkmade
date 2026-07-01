@@ -13,8 +13,13 @@ const benefits = computed(() => [
   <div class="min-h-screen grid lg:grid-cols-2 bg-ink-white text-ink-black">
     <!-- брендовая панель (десктоп) -->
     <aside class="hidden lg:flex flex-col justify-between bg-ink-burgundy text-ink-cream p-12 ink-grain relative overflow-hidden">
-      <!-- фоновый визуал (фото/петля) — под бордо-вуалью для читаемости текста -->
-      <UiMediaSlot name="auth.visual" decorative rounded="rounded-none" class="absolute inset-0 z-0 opacity-45" />
+      <!-- фоновый визуал (фото/петля) — под бордо-вуалью для читаемости текста.
+           Обёртка absolute inset-0: UiMediaSlot имеет собственный `relative` + inline
+           aspect-ratio (9/16), из-за чего при прямом `absolute` он оставался в потоке
+           и раздувал панель. Здесь слот заполняет обёртку (w/h-full), ratio снят. -->
+      <div class="absolute inset-0 z-0 opacity-45">
+        <UiMediaSlot name="auth.visual" decorative rounded="rounded-none" ratio="" class="w-full h-full" />
+      </div>
       <div class="absolute inset-0 z-0 bg-linear-to-t from-ink-burgundy via-ink-burgundy/85 to-ink-burgundy/55" />
       <!-- декоративные круги -->
       <div class="absolute -top-24 -right-24 size-96 rounded-full bg-ink-burgundy-light/30 blur-3xl z-0" />

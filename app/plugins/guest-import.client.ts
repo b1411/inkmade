@@ -1,11 +1,14 @@
 // Перенос гостевых сохранённых дизайнов в аккаунт при входе (CRM §3.2).
 // Следит за состоянием пользователя; как только он входит — отправляет локальные
 // дизайны на сервер и очищает localStorage. При ошибке НЕ очищает (повтор при след. входе).
-export default defineNuxtPlugin(() => {
+export default defineNuxtPlugin((nuxtApp) => {
   const user = useSupabaseUser()
   const guest = useGuestDesigns()
   const toast = useToast()
-  const { t } = useI18n()
+  // useI18n() нельзя вызывать в setup плагина (нет component-context) — берём
+  // глобальный инстанс через nuxtApp.$i18n; .t() вызываем внутри watch (i18n готов).
+  const i18n = nuxtApp.$i18n as { t: (key: string, params?: Record<string, unknown>) => string }
+  const t = (key: string, params?: Record<string, unknown>) => i18n.t(key, params ?? {})
 
   watch(user, async (u) => {
     if (!u) return
