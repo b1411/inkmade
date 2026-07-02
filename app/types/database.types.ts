@@ -879,6 +879,77 @@ export type Database = {
           },
         ]
       }
+      shop_earnings: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          order_id: string
+          order_item_id: string | null
+          payout_id: string | null
+          rate_pct: number
+          sale_base: number
+          shop_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          order_id: string
+          order_item_id?: string | null
+          payout_id?: string | null
+          rate_pct: number
+          sale_base: number
+          shop_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          order_id?: string
+          order_item_id?: string | null
+          payout_id?: string | null
+          rate_pct?: number
+          sale_base?: number
+          shop_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_earnings_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_balances: {
+        Row: {
+          available: number
+          shop_id: string
+          total_earned: number
+          total_paid: number
+          updated_at: string
+        }
+        Insert: {
+          available?: number
+          shop_id: string
+          total_earned?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Update: {
+          available?: number
+          shop_id?: string
+          total_earned?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_status_log: {
         Row: {
           actor_id: string | null

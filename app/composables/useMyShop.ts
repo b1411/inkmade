@@ -77,6 +77,21 @@ export const useMyShop = () => {
     if (error) throw error
   }
 
+  // финансы магазина (Фаза B4): баланс + история начислений (RLS owner/admin read)
+  async function finance(shopId: string) {
+    const [bal, earn] = await Promise.all([
+      supabase.from('shop_balances').select('*').eq('shop_id', shopId).maybeSingle(),
+      supabase.from('shop_earnings')
+        .select('id, amount, rate_pct, sale_base, status, created_at, order_id')
+        .eq('shop_id', shopId)
+        .order('created_at', { ascending: false })
+        .limit(50),
+    ])
+    if (bal.error) throw bal.error
+    if (earn.error) throw earn.error
+    return { balance: bal.data, earnings: earn.data ?? [] }
+  }
+
   // сохранённые дизайны владельца — кандидаты в позиции витрины
   async function myDesigns() {
     if (!user.value) return []
@@ -90,5 +105,5 @@ export const useMyShop = () => {
     return data ?? []
   }
 
-  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns }
+  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance }
 }

@@ -4,7 +4,7 @@ definePageMeta({ layout: 'shop-admin', middleware: 'shop-owner' })
 const { t } = useI18n()
 useHead({ title: t('shopAdmin.dashboard.headTitle') })
 
-const { getMine, listItems } = useMyShop()
+const { getMine, listItems, finance } = useMyShop()
 const toast = useToast()
 const { public: { siteUrl } } = useRuntimeConfig()
 const site = (siteUrl as string) || 'https://inkmade-pi.vercel.app'
@@ -13,9 +13,13 @@ const { data: shop } = await useAsyncData('my-shop', () => getMine())
 const { data: items } = await useAsyncData('my-shop-items', async () => {
   return shop.value ? await listItems(shop.value.id) : []
 })
+const { data: fin } = await useAsyncData('my-shop-finance', async () =>
+  shop.value ? await finance(shop.value.id) : { balance: null, earnings: [] },
+)
 
 const storefrontUrl = computed(() => (shop.value ? `${site}/s/${shop.value.slug}` : ''))
 const activeItems = computed(() => (items.value ?? []).filter(i => i.is_active).length)
+const money = (n: number | null | undefined) => `${new Intl.NumberFormat('ru-RU').format(Math.round(Number(n) || 0))} ₸`
 
 async function copyLink() {
   try {
@@ -48,9 +52,9 @@ async function copyLink() {
 
     <!-- метрики -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <UiStatCard :label="$t('shopAdmin.dashboard.itemsActive')" :value="activeItems" icon="i-lucide-shopping-bag" accent />
+      <UiStatCard :label="$t('shopAdmin.dashboard.earned')" :value="money(fin?.balance?.available)" icon="i-lucide-wallet" accent />
+      <UiStatCard :label="$t('shopAdmin.dashboard.itemsActive')" :value="activeItems" icon="i-lucide-shopping-bag" />
       <UiStatCard :label="$t('shopAdmin.dashboard.itemsTotal')" :value="items?.length ?? 0" icon="i-lucide-layers" />
-      <UiStatCard :label="$t('shopAdmin.dashboard.statusLabel')" :value="shop.status === 'active' ? $t('shopAdmin.dashboard.statusActive') : $t('shopAdmin.dashboard.statusSuspended')" icon="i-lucide-activity" />
       <UiStatCard :label="$t('shopAdmin.dashboard.share')" :value="`${shop.revenue_share_pct}%`" icon="i-lucide-percent" />
     </div>
 
