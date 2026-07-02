@@ -46,18 +46,15 @@ const { data: categories } = await useAsyncData('landing-categories', () => list
     <!-- 2. Конструктор — главный дифференциатор, показываем сразу (тёмная секция) -->
     <LandingConstructor />
 
-    <!-- 3. «Как это работает»: снимаем страх перед новым механизмом -->
+    <!-- 3. B2B-магазины для команд (§B1) — отдельный полноширинный раздел (бордовая полоса)
+         высоко на лендинге. За флагом b2bShops. Differentiator, которого у конкурентов
+         на главной нет. Ведёт на посадочную /business с формой заявки. -->
+    <LandingBusinessCta v-if="FEATURES.b2bShops" />
+
+    <!-- 4. «Как это работает»: снимаем страх перед новым механизмом -->
     <section style="padding-block: var(--section-pad)">
       <LandingHowItWorks />
     </section>
-
-    <!-- 3.5. B2B-магазины для команд (§B1). За флагом b2bShops — differentiator, которого
-         у конкурентов на главной нет. Ведёт на посадочную /business с формой заявки. -->
-    <UiReveal v-if="FEATURES.b2bShops">
-      <section style="padding-block: var(--section-pad)">
-        <LandingBusinessCta />
-      </section>
-    </UiReveal>
 
     <!-- 4. «Выбери основу» — точка входа в каталог (§5.4).
          Скрыто, пока категорий < 3: пустая/одиночная сетка выглядит «недоделанной»

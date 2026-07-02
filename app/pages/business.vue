@@ -111,8 +111,8 @@ async function onSubmit() {
       <h2 class="ink-display text-h2 mt-2 mb-10">{{ $t('business.benefitsTitle') }}</h2>
       <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <UiReveal v-for="(b, i) in benefits" :key="i" :delay="i * 70">
-          <div class="h-full rounded-2xl border border-ink-cream-dark bg-ink-white p-6">
-            <span class="flex size-11 items-center justify-center rounded-full bg-ink-burgundy/10 text-ink-burgundy">
+          <div class="group h-full rounded-2xl border border-ink-cream-dark bg-ink-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-ink-burgundy/40 hover:shadow-md">
+            <span class="flex size-11 items-center justify-center rounded-full bg-ink-burgundy/10 text-ink-burgundy transition-colors group-hover:bg-ink-burgundy group-hover:text-ink-cream">
               <UIcon :name="b.icon" class="size-5" />
             </span>
             <h3 class="font-bold text-h3 mt-4">{{ b.title }}</h3>
