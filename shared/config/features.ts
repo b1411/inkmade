@@ -45,4 +45,5 @@ export const FEATURE_ROUTES: { prefix: string; enabled: boolean }[] = [
   { prefix: '/business', enabled: FEATURES.b2bShops },
   { prefix: '/admin/shops', enabled: FEATURES.b2bShops },
   { prefix: '/s', enabled: FEATURES.b2bStorefront },
+  { prefix: '/shop-admin', enabled: FEATURES.b2bStorefront },
 ]
