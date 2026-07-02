@@ -600,6 +600,7 @@ export type Database = {
           print_method: string | null
           print_owner_id: string | null
           quantity: number
+          shop_id: string | null
           unit_cost: number
           unit_price: number
           variant_id: string | null
@@ -612,6 +613,7 @@ export type Database = {
           print_method?: string | null
           print_owner_id?: string | null
           quantity?: number
+          shop_id?: string | null
           unit_cost?: number
           unit_price?: number
           variant_id?: string | null
@@ -624,6 +626,7 @@ export type Database = {
           print_method?: string | null
           print_owner_id?: string | null
           quantity?: number
+          shop_id?: string | null
           unit_cost?: number
           unit_price?: number
           variant_id?: string | null
@@ -750,6 +753,128 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      shops: {
+        Row: {
+          access_code: string | null
+          application_id: string | null
+          contacts: Json
+          created_at: string
+          hero: Json
+          id: string
+          is_public: boolean
+          logo_url: string | null
+          name: string
+          owner_id: string | null
+          revenue_share_pct: number
+          slug: string
+          status: string
+          theme: Json
+        }
+        Insert: {
+          access_code?: string | null
+          application_id?: string | null
+          contacts?: Json
+          created_at?: string
+          hero?: Json
+          id?: string
+          is_public?: boolean
+          logo_url?: string | null
+          name: string
+          owner_id?: string | null
+          revenue_share_pct?: number
+          slug: string
+          status?: string
+          theme?: Json
+        }
+        Update: {
+          access_code?: string | null
+          application_id?: string | null
+          contacts?: Json
+          created_at?: string
+          hero?: Json
+          id?: string
+          is_public?: boolean
+          logo_url?: string | null
+          name?: string
+          owner_id?: string | null
+          revenue_share_pct?: number
+          slug?: string
+          status?: string
+          theme?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shops_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "shop_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          design_id: string | null
+          id: string
+          is_active: boolean
+          markup: number
+          preview_url: string | null
+          price: number
+          product_id: string | null
+          shop_id: string
+          sort: number
+          title: string
+          variant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          design_id?: string | null
+          id?: string
+          is_active?: boolean
+          markup?: number
+          preview_url?: string | null
+          price?: number
+          product_id?: string | null
+          shop_id: string
+          sort?: number
+          title: string
+          variant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          design_id?: string | null
+          id?: string
+          is_active?: boolean
+          markup?: number
+          preview_url?: string | null
+          price?: number
+          product_id?: string | null
+          shop_id?: string
+          sort?: number
+          title?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_items_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_items_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_status_log: {
         Row: {
@@ -967,6 +1092,7 @@ export type Database = {
           moderation_status: string
           owner_id: string | null
           royalty_pct: number
+          shop_id: string | null
           tags: string[]
           thumbnail_url: string | null
           title: string
@@ -981,6 +1107,7 @@ export type Database = {
           moderation_status?: string
           owner_id?: string | null
           royalty_pct?: number
+          shop_id?: string | null
           tags?: string[]
           thumbnail_url?: string | null
           title: string
@@ -995,6 +1122,7 @@ export type Database = {
           moderation_status?: string
           owner_id?: string | null
           royalty_pct?: number
+          shop_id?: string | null
           tags?: string[]
           thumbnail_url?: string | null
           title?: string
@@ -1503,6 +1631,34 @@ export type Database = {
       }
       admin_margin_breakdown: { Args: never; Returns: Json }
       admin_stats: { Args: never; Returns: Json }
+      admin_create_shop: {
+        Args: { p_app_id: string; p_name: string; p_revenue_share?: number; p_slug: string }
+        Returns: Json
+      }
+      admin_list_shops: {
+        Args: never
+        Returns: {
+          access_code: string | null
+          application_id: string | null
+          contacts: Json
+          created_at: string
+          hero: Json
+          id: string
+          is_public: boolean
+          logo_url: string | null
+          name: string
+          owner_id: string | null
+          revenue_share_pct: number
+          slug: string
+          status: string
+          theme: Json
+        }[]
+      }
+      is_reserved_shop_slug: { Args: { p_slug: string }; Returns: boolean }
+      shop_storefront: {
+        Args: { p_code?: string; p_slug: string }
+        Returns: Json
+      }
       apply_paid: {
         Args: { p_order_id: string; p_provider_txn: string; p_raw: Json }
         Returns: Json

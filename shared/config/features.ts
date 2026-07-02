@@ -20,6 +20,11 @@ export const FEATURES = {
   // не куплен — архитектура работает по пути /s/<slug>, субдомены включатся в фазе B6
   // (см. docs/B2B_SHOPS_PLAN.md).
   b2bShops: true,
+  // b2bStorefront — Фаза B2: публичная витрина магазина /s/<slug>, создание магазина из
+  // заявки (admin approve→shop), таблицы shops/shop_items. ВЫКЛЮЧЕНА до применения
+  // миграции 0066 в проде (иначе код обратится к несуществующим таблицам). Включение = true
+  // (после apply 0066). Аноним читает витрину через RPC shop_storefront (RLS не светит).
+  b2bStorefront: false,
 } as const
 
 // Префиксы роутов, скрываемых вместе с фичей. Используются глобальным
@@ -39,4 +44,5 @@ export const FEATURE_ROUTES: { prefix: string; enabled: boolean }[] = [
   { prefix: '/admin/legal', enabled: FEATURES.advancedAdmin },
   { prefix: '/business', enabled: FEATURES.b2bShops },
   { prefix: '/admin/shops', enabled: FEATURES.b2bShops },
+  { prefix: '/s', enabled: FEATURES.b2bStorefront },
 ]

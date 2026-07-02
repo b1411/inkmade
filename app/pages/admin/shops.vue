@@ -1,20 +1,25 @@
 <script setup lang="ts">
 import { formatKzPhone, whatsAppLink, telLink } from '~~/shared/config/phone'
 import { formatDate } from '~/utils/format'
+import { FEATURES } from '~~/shared/config/features'
 
-// Очередь заявок на B2B-магазины (Фаза B1). Только admin. Approve/reject + связь
-// с заявителем (WhatsApp/звонок/почта). Создание самого магазина — фаза B2.
+// Очередь заявок на B2B-магазины (Фаза B1/B2). Только admin. Reject/связь с заявителем.
+// Approve: при b2bStorefront создаёт магазин из заявки (admin_create_shop) + даёт ссылку
+// на витрину; без флага — просто помечает статус (поведение B1).
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
 useHead({ title: t('admin.shops.headTitle') })
 
 const { listApplications, resolve } = useBusiness()
+const { createShop } = useShops()
 const toast = useToast()
 
 const { data: apps, pending, refresh } = await useAsyncData('admin-shop-apps', () => listApplications())
 
 const tab = ref<'pending' | 'all'>('pending')
 const notes = reactive<Record<string, string>>({})
+const slugs = reactive<Record<string, string>>({})
+const shares = reactive<Record<string, number>>({})
 const busy = ref<string | null>(null)
 
 const list = computed(() => {
@@ -25,12 +30,30 @@ const pendingCount = computed(() => (apps.value ?? []).filter(a => a.status === 
 
 const greeting = t('admin.shops.greeting')
 
+// reject (и approve без storefront-флага) — просто смена статуса
 async function onResolve(id: string, status: 'approved' | 'rejected') {
   busy.value = id
   try {
     await resolve(id, status, notes[id])
     toast.add({ title: status === 'approved' ? t('admin.shops.approved') : t('admin.shops.rejected'), color: 'success' })
     notes[id] = ''
+    await refresh()
+  } catch (e) {
+    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+  } finally {
+    busy.value = null
+  }
+}
+
+// approve с созданием магазина (когда включён b2bStorefront)
+async function onApprove(a: NonNullable<typeof apps.value>[number]) {
+  if (!FEATURES.b2bStorefront) { await onResolve(a.id, 'approved'); return }
+  const slug = (slugs[a.id] || a.desired_slug || '').trim().toLowerCase()
+  if (!slug) { toast.add({ title: t('admin.shops.slugRequired'), color: 'warning' }); return }
+  busy.value = a.id
+  try {
+    const res = await createShop(a.id, slug, a.org_name, Number(shares[a.id] ?? 15))
+    toast.add({ title: t('admin.shops.shopCreated', { slug: res.slug }), color: 'success' })
     await refresh()
   } catch (e) {
     toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
@@ -121,15 +144,26 @@ function statusColor(s: string) {
         </div>
 
         <!-- разбор -->
-        <div v-if="a.status === 'pending'" class="mt-4 flex flex-wrap items-center gap-2 border-t border-ink-gray-200 pt-4">
-          <UInput
-            v-model="notes[a.id]"
-            :placeholder="$t('admin.shops.notePlaceholder')"
-            size="sm"
-            class="flex-1 min-w-48"
-          />
-          <UButton size="sm" color="success" variant="solid" icon="i-lucide-check" :loading="busy === a.id" @click="onResolve(a.id, 'approved')">{{ $t('admin.shops.approve') }}</UButton>
-          <UButton size="sm" color="error" variant="subtle" icon="i-lucide-x" :loading="busy === a.id" @click="onResolve(a.id, 'rejected')">{{ $t('admin.shops.reject') }}</UButton>
+        <div v-if="a.status === 'pending'" class="mt-4 border-t border-ink-gray-200 pt-4 space-y-2">
+          <!-- параметры магазина (при включённой витрине) -->
+          <div v-if="FEATURES.b2bStorefront" class="flex flex-wrap items-center gap-2">
+            <UInput v-model="slugs[a.id]" :placeholder="a.desired_slug || 'slug'" size="sm" class="w-44">
+              <template #trailing><span class="text-caption text-ink-gray-400">.inkmade.kz</span></template>
+            </UInput>
+            <UInput v-model.number="shares[a.id]" type="number" min="0" max="100" placeholder="15" size="sm" class="w-32">
+              <template #trailing><span class="text-caption text-ink-gray-400">% {{ $t('admin.shops.share') }}</span></template>
+            </UInput>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <UInput
+              v-model="notes[a.id]"
+              :placeholder="$t('admin.shops.notePlaceholder')"
+              size="sm"
+              class="flex-1 min-w-48"
+            />
+            <UButton size="sm" color="success" variant="solid" icon="i-lucide-check" :loading="busy === a.id" @click="onApprove(a)">{{ $t('admin.shops.approve') }}</UButton>
+            <UButton size="sm" color="error" variant="subtle" icon="i-lucide-x" :loading="busy === a.id" @click="onResolve(a.id, 'rejected')">{{ $t('admin.shops.reject') }}</UButton>
+          </div>
         </div>
         <p v-else-if="a.admin_note" class="mt-3 text-caption text-ink-gray-400">
           <UIcon name="i-lucide-sticky-note" class="size-3.5 inline" /> {{ a.admin_note }}
