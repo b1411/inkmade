@@ -703,6 +703,54 @@ export type Database = {
           },
         ]
       }
+      shop_applications: {
+        Row: {
+          admin_note: string | null
+          audience: string | null
+          comment: string | null
+          contact_name: string
+          created_at: string
+          desired_slug: string | null
+          email: string
+          id: string
+          org_name: string
+          phone: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+        }
+        Insert: {
+          admin_note?: string | null
+          audience?: string | null
+          comment?: string | null
+          contact_name: string
+          created_at?: string
+          desired_slug?: string | null
+          email: string
+          id?: string
+          org_name: string
+          phone: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Update: {
+          admin_note?: string | null
+          audience?: string | null
+          comment?: string | null
+          contact_name?: string
+          created_at?: string
+          desired_slug?: string | null
+          email?: string
+          id?: string
+          org_name?: string
+          phone?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       order_status_log: {
         Row: {
           actor_id: string | null

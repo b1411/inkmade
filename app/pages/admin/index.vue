@@ -35,6 +35,10 @@ const { data: attention } = await useAsyncData('admin-attention', async () => {
     supabase.from('variants').select('id', { count: 'exact', head: true }).lte('stock', 5),
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer').gte('created_at', from30),
   ])
+  // Заявки на B2B-магазины — только при включённой фиче (иначе таблицы может не быть)
+  const shopApps = FEATURES.b2bShops
+    ? await supabase.from('shop_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+    : { count: 0 }
   return {
     profit: (fin.data as { profit?: number } | null)?.profit ?? 0,
     moderation: mod.count ?? 0,
@@ -42,6 +46,7 @@ const { data: attention } = await useAsyncData('admin-attention', async () => {
     problem: problem.count ?? 0,
     lowStock: lowStock.count ?? 0,
     newCustomers: newCust.count ?? 0,
+    shopApps: shopApps.count ?? 0,
   }
 })
 
@@ -93,6 +98,9 @@ const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(n)
           </NuxtLink>
           <NuxtLink v-if="attention.lowStock" to="/admin/stock" class="inline-flex items-center gap-1 bg-ink-gray-200 text-ink-gray-600 rounded-full px-3 py-1 text-caption font-semibold">
             <UIcon name="i-lucide-boxes" /> {{ $t('admin.dashboard.attention.lowStock', { n: attention.lowStock }) }}
+          </NuxtLink>
+          <NuxtLink v-if="FEATURES.b2bShops && attention.shopApps" to="/admin/shops" class="inline-flex items-center gap-1 bg-ink-burgundy/10 text-ink-burgundy rounded-full px-3 py-1 text-caption font-semibold">
+            <UIcon name="i-lucide-store" /> {{ $t('admin.dashboard.attention.shopApps', { n: attention.shopApps }) }}
           </NuxtLink>
         </div>
 

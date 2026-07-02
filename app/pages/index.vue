@@ -51,6 +51,14 @@ const { data: categories } = await useAsyncData('landing-categories', () => list
       <LandingHowItWorks />
     </section>
 
+    <!-- 3.5. B2B-магазины для команд (§B1). За флагом b2bShops — differentiator, которого
+         у конкурентов на главной нет. Ведёт на посадочную /business с формой заявки. -->
+    <UiReveal v-if="FEATURES.b2bShops">
+      <section style="padding-block: var(--section-pad)">
+        <LandingBusinessCta />
+      </section>
+    </UiReveal>
+
     <!-- 4. «Выбери основу» — точка входа в каталог (§5.4).
          Скрыто, пока категорий < 3: пустая/одиночная сетка выглядит «недоделанной»
          и вредит премиальности больше, чем отсутствие секции. Вернётся само, как

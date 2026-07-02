@@ -14,6 +14,12 @@ export const FEATURES = {
   // (включим после запуска). Код и таблицы (миграция 0056) на месте — включение = true.
   // Для работы также нужен ключ FAL_KEY в env. Гейт: вкладка «AI» + проверка флага в /api/ai/*.
   aiDesign: false,
+  // b2bShops — B2B-магазины мерча на субдоменах («INKMADE для команд»). Фаза B1:
+  // секция на главной + посадочная /business + форма заявки + админ-очередь заявок.
+  // ВКЛЮЧЕНА (миграция 0065 shop_applications применена в проде 2026-07-02). Домен ещё
+  // не куплен — архитектура работает по пути /s/<slug>, субдомены включатся в фазе B6
+  // (см. docs/B2B_SHOPS_PLAN.md).
+  b2bShops: true,
 } as const
 
 // Префиксы роутов, скрываемых вместе с фичей. Используются глобальным
@@ -31,4 +37,6 @@ export const FEATURE_ROUTES: { prefix: string; enabled: boolean }[] = [
   { prefix: '/admin/audit', enabled: FEATURES.advancedAdmin },
   { prefix: '/admin/content', enabled: FEATURES.advancedAdmin },
   { prefix: '/admin/legal', enabled: FEATURES.advancedAdmin },
+  { prefix: '/business', enabled: FEATURES.b2bShops },
+  { prefix: '/admin/shops', enabled: FEATURES.b2bShops },
 ]

@@ -19,6 +19,7 @@ const nav = computed(() => [
   { label: t('admin.nav.legal'), to: '/admin/legal', icon: 'i-lucide-scale', show: FEATURES.advancedAdmin },
   { label: t('admin.nav.customers'), to: '/admin/customers', icon: 'i-lucide-user-round-search', show: FEATURES.advancedAdmin },
   { label: t('admin.nav.users'), to: '/admin/users', icon: 'i-lucide-users' },
+  { label: t('admin.nav.shops'), to: '/admin/shops', icon: 'i-lucide-store', show: FEATURES.b2bShops },
   { label: t('admin.nav.leads'), to: '/admin/leads', icon: 'i-lucide-contact', show: FEATURES.advancedAdmin },
   { label: t('admin.nav.audit'), to: '/admin/audit', icon: 'i-lucide-history', show: FEATURES.advancedAdmin },
   { label: t('admin.nav.settings'), to: '/admin/settings', icon: 'i-lucide-settings' },
