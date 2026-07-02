@@ -7,7 +7,11 @@ const isLanding = computed(() => route.path === '/')
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-ink-white text-ink-black">
+  <!-- overflow-x-clip: full-bleed секции используют w-screen (=100vw, включает ширину
+       вертикального скроллбара) → без клипа выезжают на ~15px и дают горизонтальный
+       скролл. clip обрезает лишний overhang фоновых полос, не создавая scroll-контейнер
+       (fixed-хедер и вертикальный скролл не затронуты; контент — в центрированном max-w). -->
+  <div class="min-h-screen flex flex-col bg-ink-white text-ink-black overflow-x-clip">
     <LayoutAppHeader />
 
     <main
