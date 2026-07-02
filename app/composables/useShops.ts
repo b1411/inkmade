@@ -34,6 +34,24 @@ export interface Storefront {
   closed: boolean
 }
 
+// Полезная нагрузка для «в корзину» (RPC shop_item_buy_payload) — всё для сборки CartItem.
+export interface ShopBuyPayload {
+  shopItemId: string
+  shopId: string
+  productId: string
+  slug: string
+  alias: string | null
+  title: string
+  variantId: string
+  colorName: string
+  colorHex: string
+  size: string
+  printMethod: string | null
+  spec: unknown
+  unitPrice: number
+  previewUrl: string | null
+}
+
 export const useShops = () => {
   const supabase = useSupabaseClient<Database>()
 
@@ -66,5 +84,15 @@ export const useShops = () => {
     return data ?? []
   }
 
-  return { storefront, createShop, listShops }
+  // «в корзину»: собрать позицию из shop_item (product/variant/spec владельца через RPC)
+  async function buyPayload(itemId: string, code?: string): Promise<ShopBuyPayload | null> {
+    const { data, error } = await supabase.rpc('shop_item_buy_payload', {
+      p_item_id: itemId,
+      p_code: code ?? undefined,
+    })
+    if (error) throw error
+    return (data as unknown as ShopBuyPayload | null) ?? null
+  }
+
+  return { storefront, createShop, listShops, buyPayload }
 }

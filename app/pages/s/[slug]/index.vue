@@ -3,11 +3,15 @@
 // Свой брендовый хром (layout: false), тема из shop.theme через CSS-переменные.
 // Данные — через RPC shop_storefront (аноним не видит access_code). Гейт роута — глобальный
 // feature-flags middleware (404 при выключенном b2bStorefront).
+import type { Json } from '~/types/database.types'
+
 definePageMeta({ layout: false })
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const { storefront } = useShops()
+const { storefront, buyPayload } = useShops()
+const cart = useCart()
+const toast = useToast()
 const { t } = useI18n()
 const { public: { siteUrl } } = useRuntimeConfig()
 const site = (siteUrl as string) || 'https://inkmade-pi.vercel.app'
@@ -47,6 +51,28 @@ async function unlock() {
   if (!code.value.trim()) return
   unlocking.value = true
   try { await refresh() } finally { unlocking.value = false }
+}
+
+// «в корзину»: тянем полную позицию через RPC (product/variant/spec владельца) и кладём
+// в общую корзину с меткой магазина (shopItemId → атрибуция заказа на сервере).
+const adding = ref<string | null>(null)
+async function addToCart(it: { id: string; title: string }) {
+  adding.value = it.id
+  try {
+    const p = await buyPayload(it.id, code.value || undefined)
+    if (!p) { toast.add({ title: t('shop.buy.unavailable'), color: 'warning' }); return }
+    cart.add({
+      productId: p.productId, slug: p.slug, alias: p.alias, title: p.title,
+      variantId: p.variantId, colorName: p.colorName, colorHex: p.colorHex, size: p.size,
+      printMethod: p.printMethod, spec: p.spec as Json, unitPrice: p.unitPrice, quantity: 1,
+      shopItemId: p.shopItemId,
+    })
+    toast.add({ title: t('shop.buy.added', { title: it.title }), color: 'success' })
+  } catch (e) {
+    toast.add({ title: t('shop.buy.error'), description: (e as Error).message, color: 'error' })
+  } finally {
+    adding.value = null
+  }
 }
 
 const contacts = computed(() => shop.value?.contacts ?? {})
@@ -135,7 +161,18 @@ const contacts = computed(() => shop.value?.contacts ?? {})
               <div class="p-4 flex-1 flex flex-col">
                 <h3 class="font-semibold">{{ it.title }}</h3>
                 <p v-if="it.description" class="text-caption text-ink-gray-500 mt-1 line-clamp-2">{{ it.description }}</p>
-                <div class="mt-auto pt-3 font-bold" style="color: var(--shop-primary)">{{ fmtPrice(it.price) }}</div>
+                <div class="mt-auto pt-3 flex items-center justify-between gap-2">
+                  <span class="font-bold" style="color: var(--shop-primary)">{{ fmtPrice(it.price) }}</span>
+                  <button
+                    class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                    :style="{ background: 'var(--shop-primary)' }"
+                    :disabled="adding === it.id"
+                    @click="addToCart(it)"
+                  >
+                    <UIcon :name="adding === it.id ? 'i-lucide-loader-2' : 'i-lucide-shopping-cart'" :class="['size-4', adding === it.id ? 'animate-spin' : '']" />
+                    {{ $t('shop.buy.add') }}
+                  </button>
+                </div>
               </div>
             </article>
           </div>

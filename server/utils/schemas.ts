@@ -61,6 +61,8 @@ const orderItemSchema = z.object({
   printMethod: z.string().max(32).nullable(),
   spec: designSpecSchema,
   quantity: z.number().int().min(1).max(1000),
+  // позиция куплена в B2B-магазине: id shop_item → сервер берёт цену/атрибуцию по БД
+  shopItemId: z.uuid().nullish(),
 })
 
 export const orderCreateSchema = z.object({

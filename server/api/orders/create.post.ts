@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── пересчёт каждой позиции по БД ──────────────────────────────
-  interface Priced { item: Item; unitPrice: number; unitCost: number }
+  interface Priced { item: Item; unitPrice: number; unitCost: number; shopId: string | null }
   const priced: Priced[] = []
   // Проверка остатка (анти-оверселл): суммируем потребность по варианту и текущий
   // остаток. Это дружелюбный pre-check ДО оплаты — авторитетная атомарная проверка
@@ -87,50 +87,67 @@ export default defineEventHandler(async (event) => {
     // печатью. Исходник и natural_w/h уходят в spec — оператор видит реальное
     // качество в CRM. Раньше здесь был жёсткий 422 по DPI (§24 инв.1, снят).
 
-    // мультизона (§7.1): печать считается по каждой занятой зоне отдельно.
-    // Режим берём ТОЛЬКО из материала по БД — клиентскому spec.print_mode
-    // доверять нельзя (можно навязать дешёвую/дорогую ставку).
-    const mode: PrintMode = material.print_mode as PrintMode
-    const byZone = new Map<string, typeof placements>()
-    for (const p of placements) {
-      const zn = p.zone ?? '__none__'
-      byZone.set(zn, [...(byZone.get(zn) ?? []), p])
-    }
-    const zonesForPrice: { mode: PrintMode; printAreaMm2: number; zoneAreaMm2: number }[] = []
-    for (const [zn, pls] of byZone) {
-      const { data: zoneRow } = zn !== '__none__'
-        ? await svc.from('print_zones').select('max_width_mm, max_height_mm')
-            .eq('product_id', it.productId).eq('name', zn).limit(1).maybeSingle()
-        : { data: null }
-      const zoneAreaMm2 = (Number(zoneRow?.max_width_mm) || 0) * (Number(zoneRow?.max_height_mm) || 0)
-      const printAreaMm2 = Math.min(
-        zoneAreaMm2 || Infinity,
-        pls.reduce((s, p) => s + (Number(p.width_mm) || 0) * (Number(p.height_mm) || 0), 0),
-      )
-      zonesForPrice.push({ mode, printAreaMm2, zoneAreaMm2 })
-    }
-    const hasText = placements.some(p => p.source === 'text' || p.text != null)
+    let unitPrice: number
+    let shopId: string | null = null
 
-    const isSilkscreen = material.print_method === 'silkscreen'
-    const colorCount = Math.max(0, Math.round(Number(it.spec?.color_count) || 0))
-    // шелкография: каждый цвет = отдельный трафарет; без числа цветов цена неполна
-    if (isSilkscreen && colorCount < 1) {
-      throw createError({ statusCode: 400, statusMessage: 'Для шелкографии укажите число цветов в макете' })
+    if (it.shopItemId) {
+      // Позиция куплена в B2B-магазине: розничную цену ставит владелец (shop_items.price).
+      // Берём её и shop_id ПО БД (не с клиента) — цена авторитетна, атрибуция серверная.
+      const { data: si } = await svc.from('shop_items')
+        .select('id, shop_id, price, markup, is_active').eq('id', it.shopItemId).maybeSingle()
+      if (!si || !si.is_active) throw createError({ statusCode: 400, statusMessage: 'Позиция магазина недоступна' })
+      const { data: shopRow } = await svc.from('shops').select('status').eq('id', si.shop_id).maybeSingle()
+      if (!shopRow || shopRow.status !== 'active') throw createError({ statusCode: 400, statusMessage: 'Магазин недоступен' })
+      unitPrice = Number(si.price) + Number(si.markup)
+      if (!(unitPrice > 0)) throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции магазина' })
+      shopId = si.shop_id
+    } else {
+      // мультизона (§7.1): печать считается по каждой занятой зоне отдельно.
+      // Режим берём ТОЛЬКО из материала по БД — клиентскому spec.print_mode
+      // доверять нельзя (можно навязать дешёвую/дорогую ставку).
+      const mode: PrintMode = material.print_mode as PrintMode
+      const byZone = new Map<string, typeof placements>()
+      for (const p of placements) {
+        const zn = p.zone ?? '__none__'
+        byZone.set(zn, [...(byZone.get(zn) ?? []), p])
+      }
+      const zonesForPrice: { mode: PrintMode; printAreaMm2: number; zoneAreaMm2: number }[] = []
+      for (const [zn, pls] of byZone) {
+        const { data: zoneRow } = zn !== '__none__'
+          ? await svc.from('print_zones').select('max_width_mm, max_height_mm')
+              .eq('product_id', it.productId).eq('name', zn).limit(1).maybeSingle()
+          : { data: null }
+        const zoneAreaMm2 = (Number(zoneRow?.max_width_mm) || 0) * (Number(zoneRow?.max_height_mm) || 0)
+        const printAreaMm2 = Math.min(
+          zoneAreaMm2 || Infinity,
+          pls.reduce((s, p) => s + (Number(p.width_mm) || 0) * (Number(p.height_mm) || 0), 0),
+        )
+        zonesForPrice.push({ mode, printAreaMm2, zoneAreaMm2 })
+      }
+      const hasText = placements.some(p => p.source === 'text' || p.text != null)
+
+      const isSilkscreen = material.print_method === 'silkscreen'
+      const colorCount = Math.max(0, Math.round(Number(it.spec?.color_count) || 0))
+      // шелкография: каждый цвет = отдельный трафарет; без числа цветов цена неполна
+      if (isSilkscreen && colorCount < 1) {
+        throw createError({ statusCode: 400, statusMessage: 'Для шелкографии укажите число цветов в макете' })
+      }
+      const breakdown = calcPrice({
+        basePrice: Number(product.base_price) || 0,
+        materialSurcharge: Number(material.surcharge) || 0,
+        methodSurcharge: METHOD_SURCHARGE[material.print_method as PrintMethod] ?? 0,
+        zones: zonesForPrice,
+        hasText,
+        quantity: 1,
+        perColorPricing: isSilkscreen,
+        colorCount,
+      })
+      if (breakdown.unitPrice <= 0) {
+        throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции' })
+      }
+      unitPrice = breakdown.unitPrice
     }
-    const breakdown = calcPrice({
-      basePrice: Number(product.base_price) || 0,
-      materialSurcharge: Number(material.surcharge) || 0,
-      methodSurcharge: METHOD_SURCHARGE[material.print_method as PrintMethod] ?? 0,
-      zones: zonesForPrice,
-      hasText,
-      quantity: 1,
-      perColorPricing: isSilkscreen,
-      colorCount,
-    })
-    if (breakdown.unitPrice <= 0) {
-      throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции' })
-    }
-    priced.push({ item: it, unitPrice: breakdown.unitPrice, unitCost: Number(variant.blank_cost) || 0 })
+    priced.push({ item: it, unitPrice, unitCost: Number(variant.blank_cost) || 0, shopId })
   }
 
   // анти-оверселл: ни одна позиция не должна превышать текущий остаток варианта
@@ -172,7 +189,7 @@ export default defineEventHandler(async (event) => {
   // order_items) + созданные дизайны. Согласия §24 — с проверкой ошибки (юр. точка).
   const createdDesignIds: string[] = []
   try {
-    for (const { item, unitPrice, unitCost } of priced) {
+    for (const { item, unitPrice, unitCost, shopId } of priced) {
       const { data: design, error: dErr } = await svc.from('designs')
         .insert({
           user_id: uid,
@@ -212,6 +229,7 @@ export default defineEventHandler(async (event) => {
         unit_cost: unitCost,
         print_id: printId,
         print_owner_id: printOwnerId,
+        shop_id: shopId,
       })
       if (iErr) throw createError({ statusCode: 500, statusMessage: 'Не удалось сохранить позицию' })
     }

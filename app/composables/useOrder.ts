@@ -19,6 +19,7 @@ export const useOrder = () => {
         printMethod: i.printMethod,
         spec: i.spec,
         quantity: i.quantity,
+        shopItemId: i.shopItemId ?? undefined,
       })),
       shippingAddr,
       promoCode: promoCode || undefined,

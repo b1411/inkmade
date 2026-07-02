@@ -18,6 +18,8 @@ export interface CartItem {
   spec: Json
   unitPrice: number
   quantity: number
+  // источник позиции из B2B-магазина (для атрибуции заказа магазину); null для обычных
+  shopItemId?: string | null
 }
 
 const STORAGE_KEY = 'inkmade_cart'
@@ -85,6 +87,7 @@ export const useCart = () => {
       id: i.id, user_id: userId, product_id: i.productId, variant_id: i.variantId || null,
       slug: i.slug, alias: i.alias, title: i.title, color_name: i.colorName, color_hex: i.colorHex,
       size: i.size, print_method: i.printMethod, spec: i.spec, unit_price: i.unitPrice, quantity: i.quantity,
+      shop_item_id: i.shopItemId ?? null,
     }
   }
   function fromRow(r: Row): CartItem {
@@ -92,6 +95,7 @@ export const useCart = () => {
       id: r.id, productId: r.product_id, slug: r.slug, alias: r.alias, title: r.title,
       variantId: r.variant_id ?? '', colorName: r.color_name, colorHex: r.color_hex, size: r.size,
       printMethod: r.print_method, spec: r.spec, unitPrice: Number(r.unit_price), quantity: r.quantity,
+      shopItemId: r.shop_item_id ?? null,
     }
   }
 
