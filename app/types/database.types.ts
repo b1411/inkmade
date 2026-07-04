@@ -1768,6 +1768,7 @@ export type Database = {
       }
       claim_designer_invite: { Args: { p_token: string }; Returns: Json }
       claim_shop: { Args: { p_token: string }; Returns: Json }
+      shop_orders: { Args: { p_shop_id: string }; Returns: Json }
       mark_payout_paid: { Args: { p_payout_id: string }; Returns: undefined }
       refund_ai_quota: {
         Args: { p_month: string; p_user_id: string }

@@ -7,6 +7,27 @@ import type { Database } from '~/types/database.types'
 export type Shop = Database['public']['Tables']['shops']['Row']
 export type ShopItem = Database['public']['Tables']['shop_items']['Row']
 
+// заказ магазина (RPC shop_orders) — только позиции своего магазина + минимум PII
+export interface ShopOrderLine {
+  title: string | null
+  color_name: string | null
+  size: string | null
+  quantity: number
+  unit_price: number
+  line_total: number
+}
+export interface ShopOrder {
+  id: string
+  created_at: string
+  status: string
+  paid: boolean
+  buyer_name: string | null
+  city: string | null
+  subtotal: number
+  earned: number
+  items: ShopOrderLine[]
+}
+
 // поля, которые владелец МОЖЕТ менять (slug/owner/status/revenue_share — только админ, guard-триггер)
 export interface ShopBrandingPatch {
   name?: string
@@ -92,6 +113,13 @@ export const useMyShop = () => {
     return { balance: bal.data, earnings: earn.data ?? [] }
   }
 
+  // заказы магазина (Tier1 B): продажи с атрибуцией order_items.shop_id (через definer RPC)
+  async function orders(shopId: string): Promise<ShopOrder[]> {
+    const { data, error } = await supabase.rpc('shop_orders', { p_shop_id: shopId })
+    if (error) throw error
+    return (data as unknown as ShopOrder[]) ?? []
+  }
+
   // сохранённые дизайны владельца — кандидаты в позиции витрины
   async function myDesigns() {
     if (!user.value) return []
@@ -105,5 +133,5 @@ export const useMyShop = () => {
     return data ?? []
   }
 
-  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance }
+  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, orders }
 }
