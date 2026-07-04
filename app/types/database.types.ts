@@ -1743,7 +1743,7 @@ export type Database = {
         Returns: Json
       }
       shop_item_buy_payload: {
-        Args: { p_code?: string; p_item_id: string }
+        Args: { p_code?: string; p_item_id: string; p_variant_id?: string }
         Returns: Json
       }
       apply_paid: {

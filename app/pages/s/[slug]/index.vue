@@ -4,6 +4,7 @@
 // Данные — через RPC shop_storefront (аноним не видит access_code). Гейт роута — глобальный
 // feature-flags middleware (404 при выключенном b2bStorefront).
 import type { Json } from '~/types/database.types'
+import type { StorefrontItem } from '~/composables/useShops'
 import { safeCssUrl } from '~/utils/safeUrl'
 
 definePageMeta({ layout: false })
@@ -47,6 +48,45 @@ const styleVars = computed(() => ({
 
 const fmtPrice = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
 
+// ── выбор размера/цвета на карточке: itemId → выбранный variantId ──────────────
+// Варианты = сиблинги того же продукта+материала (метод печати валиден). Сервер
+// повторно валидирует выбор в buy_payload — UI-состояние не авторитетно.
+const sel = reactive<Record<string, string>>({})
+const variantsOf = (it: StorefrontItem) => it.variants ?? []
+const selVariant = (it: StorefrontItem) => variantsOf(it).find(v => v.id === sel[it.id])
+const hasSizes = (it: StorefrontItem) => variantsOf(it).length > 1
+function colorsOf(it: StorefrontItem) {
+  const m = new Map<string, { name: string; hex: string; inStock: boolean }>()
+  for (const v of variantsOf(it)) {
+    const e = m.get(v.color_hex)
+    if (!e) m.set(v.color_hex, { name: v.color_name, hex: v.color_hex, inStock: v.in_stock })
+    else if (v.in_stock) e.inStock = true
+  }
+  return [...m.values()]
+}
+const hasColors = (it: StorefrontItem) => colorsOf(it).length > 1
+const sizesOf = (it: StorefrontItem) => variantsOf(it).filter(v => v.color_hex === selVariant(it)?.color_hex)
+function pickColor(it: StorefrontItem, hex: string) {
+  const cand = variantsOf(it).filter(v => v.color_hex === hex)
+  const v = cand.find(x => x.in_stock) ?? cand[0]
+  if (v) sel[it.id] = v.id
+}
+const pickSize = (it: StorefrontItem, variantId: string) => { sel[it.id] = variantId }
+function canAdd(it: StorefrontItem) {
+  const vs = variantsOf(it)
+  return vs.length ? !!selVariant(it)?.in_stock : true
+}
+// дефолтный выбор при загрузке витрины (первый в наличии → дизайн-вариант → первый)
+watch(items, (list) => {
+  for (const it of list) {
+    if (sel[it.id]) continue
+    const vs = variantsOf(it)
+    const def = vs.find(v => v.id === it.default_variant_id && v.in_stock)
+      ?? vs.find(v => v.in_stock) ?? vs.find(v => v.id === it.default_variant_id) ?? vs[0]
+    if (def) sel[it.id] = def.id
+  }
+}, { immediate: true })
+
 // баннер hero — только безопасный http(s) URL владельца (анти CSS-инъекция, F6)
 const bannerUrl = computed(() => safeCssUrl(shop.value?.hero?.banner_url))
 const hasBanner = computed(() => !!bannerUrl.value)
@@ -65,10 +105,11 @@ async function unlock() {
 // «в корзину»: тянем полную позицию через RPC (product/variant/spec владельца) и кладём
 // в общую корзину с меткой магазина (shopItemId → атрибуция заказа на сервере).
 const adding = ref<string | null>(null)
-async function addToCart(it: { id: string; title: string }) {
+async function addToCart(it: StorefrontItem) {
+  if (!canAdd(it)) return
   adding.value = it.id
   try {
-    const p = await buyPayload(it.id, code.value || undefined)
+    const p = await buyPayload(it.id, code.value || undefined, sel[it.id] || undefined)
     if (!p) { toast.add({ title: t('shop.buy.unavailable'), color: 'warning' }); return }
     cart.add({
       productId: p.productId, slug: p.slug, alias: p.alias, title: p.title,
@@ -171,16 +212,47 @@ const contacts = computed(() => shop.value?.contacts ?? {})
               <div class="p-4 flex-1 flex flex-col">
                 <h3 class="font-semibold">{{ it.title }}</h3>
                 <p v-if="it.description" class="text-caption text-ink-gray-500 mt-1 line-clamp-2">{{ it.description }}</p>
+
+                <!-- выбор цвета/размера (сиблинги того же продукта+материала) -->
+                <div v-if="hasSizes(it)" class="mt-3 space-y-2">
+                  <div v-if="hasColors(it)" class="flex flex-wrap gap-1.5">
+                    <button
+                      v-for="c in colorsOf(it)"
+                      :key="c.hex"
+                      type="button"
+                      :title="c.name"
+                      class="size-6 rounded-full border-2 transition-transform hover:scale-110"
+                      :style="{ backgroundColor: c.hex, borderColor: selVariant(it)?.color_hex === c.hex ? 'var(--shop-primary)' : 'rgba(0,0,0,0.12)' }"
+                      @click="pickColor(it, c.hex)"
+                    />
+                  </div>
+                  <div class="flex flex-wrap gap-1">
+                    <button
+                      v-for="v in sizesOf(it)"
+                      :key="v.id"
+                      type="button"
+                      :disabled="!v.in_stock"
+                      class="min-w-8 px-2 py-1 rounded-md border text-xs font-medium transition-colors"
+                      :class="!v.in_stock ? 'opacity-40 line-through cursor-not-allowed' : ''"
+                      :style="{
+                        borderColor: sel[it.id] === v.id ? 'var(--shop-primary)' : 'rgba(0,0,0,0.12)',
+                        color: sel[it.id] === v.id ? 'var(--shop-primary)' : undefined,
+                      }"
+                      @click="pickSize(it, v.id)"
+                    >{{ v.size }}</button>
+                  </div>
+                </div>
+
                 <div class="mt-auto pt-3 flex items-center justify-between gap-2">
                   <span class="font-bold" style="color: var(--shop-primary)">{{ fmtPrice(it.price) }}</span>
                   <button
-                    class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                    class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
                     :style="{ background: 'var(--shop-primary)' }"
-                    :disabled="adding === it.id"
+                    :disabled="adding === it.id || !canAdd(it)"
                     @click="addToCart(it)"
                   >
                     <UIcon :name="adding === it.id ? 'i-lucide-loader-2' : 'i-lucide-shopping-cart'" :class="['size-4', adding === it.id ? 'animate-spin' : '']" />
-                    {{ $t('shop.buy.add') }}
+                    {{ canAdd(it) ? $t('shop.buy.add') : $t('shop.buy.soldOut') }}
                   </button>
                 </div>
               </div>

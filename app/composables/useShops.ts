@@ -18,6 +18,13 @@ export interface StorefrontShop {
   contacts: ShopContacts
   closed_mode: boolean
 }
+export interface StorefrontVariant {
+  id: string
+  color_name: string
+  color_hex: string
+  size: string
+  in_stock: boolean
+}
 export interface StorefrontItem {
   id: string
   title: string
@@ -27,6 +34,8 @@ export interface StorefrontItem {
   design_id: string | null
   product_id: string | null
   variant_id: string | null
+  default_variant_id: string | null
+  variants: StorefrontVariant[]
 }
 export interface Storefront {
   shop: StorefrontShop
@@ -92,11 +101,13 @@ export const useShops = () => {
     return data ?? []
   }
 
-  // «в корзину»: собрать позицию из shop_item (product/variant/spec владельца через RPC)
-  async function buyPayload(itemId: string, code?: string): Promise<ShopBuyPayload | null> {
+  // «в корзину»: собрать позицию из shop_item (product/variant/spec владельца через RPC).
+  // variantId — выбранный покупателем размер/цвет (сервер валидирует как сиблинг).
+  async function buyPayload(itemId: string, code?: string, variantId?: string): Promise<ShopBuyPayload | null> {
     const { data, error } = await supabase.rpc('shop_item_buy_payload', {
       p_item_id: itemId,
       p_code: code ?? undefined,
+      p_variant_id: variantId ?? undefined,
     })
     if (error) throw error
     return (data as unknown as ShopBuyPayload | null) ?? null
