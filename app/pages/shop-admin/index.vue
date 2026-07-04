@@ -19,6 +19,21 @@ const { data: fin } = await useAsyncData('my-shop-finance', async () =>
 
 const storefrontUrl = computed(() => (shop.value ? `${site}/s/${shop.value.slug}` : ''))
 const activeItems = computed(() => (items.value ?? []).filter(i => i.is_active).length)
+
+// онбординг владельца (Tier2 F): чеклист настройки из имеющихся данных, без новой инфры
+const steps = computed(() => {
+  const s = shop.value
+  const hero = (s?.hero ?? {}) as { title?: string; subtitle?: string; banner_url?: string }
+  const its = items.value ?? []
+  return [
+    { key: 'logo', done: !!s?.logo_url, to: '/shop-admin/branding' },
+    { key: 'branding', done: !!(hero.title || hero.subtitle || hero.banner_url), to: '/shop-admin/branding' },
+    { key: 'item', done: its.length > 0, to: '/shop-admin/items' },
+    { key: 'publish', done: !!s?.is_public && activeItems.value > 0, to: '/shop-admin/settings' },
+  ]
+})
+const doneCount = computed(() => steps.value.filter(s => s.done).length)
+const allDone = computed(() => doneCount.value === steps.value.length)
 const money = (n: number | null | undefined) => `${new Intl.NumberFormat('ru-RU').format(Math.round(Number(n) || 0))} ₸`
 
 async function copyLink() {
@@ -34,6 +49,22 @@ async function copyLink() {
 <template>
   <div v-if="shop">
     <UiPageHeader :label="$t('shopAdmin.dashboard.label')" :title="shop.name" />
+
+    <!-- онбординг: чеклист настройки (скрывается, когда всё готово) -->
+    <UiPanel v-if="!allDone" :title="$t('shopAdmin.onboarding.title')" icon="i-lucide-rocket" class="mb-6">
+      <template #actions>
+        <span class="text-caption text-ink-gray-500">{{ doneCount }}/{{ steps.length }}</span>
+      </template>
+      <ul class="space-y-2">
+        <li v-for="st in steps" :key="st.key" class="flex items-center justify-between gap-3">
+          <span class="flex items-center gap-2" :class="st.done ? 'text-ink-gray-400 line-through' : 'text-ink-black'">
+            <UIcon :name="st.done ? 'i-lucide-check-circle-2' : 'i-lucide-circle'" :class="st.done ? 'text-ink-success' : 'text-ink-gray-300'" class="size-4 shrink-0" />
+            {{ $t(`shopAdmin.onboarding.step.${st.key}`) }}
+          </span>
+          <UButton v-if="!st.done" :to="st.to" size="xs" color="primary" variant="subtle" trailing-icon="i-lucide-arrow-right">{{ $t('shopAdmin.onboarding.go') }}</UButton>
+        </li>
+      </ul>
+    </UiPanel>
 
     <!-- ссылка на витрину -->
     <UiPanel :title="$t('shopAdmin.dashboard.storefront')" icon="i-lucide-store" class="mb-6">
