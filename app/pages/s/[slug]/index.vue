@@ -104,13 +104,36 @@ async function unlock() {
 
 // «в корзину»: тянем полную позицию через RPC (product/variant/spec владельца) и кладём
 // в общую корзину с меткой магазина (shopItemId → атрибуция заказа на сервере).
+// быстрый просмотр товара (Tier2 D): модалка с большим фото/описанием/выбором/шарингом
+const quick = ref<StorefrontItem | null>(null)
+const quickOpen = computed({ get: () => !!quick.value, set: (v: boolean) => { if (!v) quick.value = null } })
+const openQuick = (it: StorefrontItem) => { quick.value = it }
+async function addFromQuick() {
+  if (!quick.value) return
+  if (await addToCart(quick.value)) quick.value = null
+}
+
+async function shareItem(it: StorefrontItem) {
+  const url = `${site}/s/${slug.value}?item=${it.id}`
+  try {
+    if (import.meta.client && navigator.share) await navigator.share({ title: it.title, url })
+    else { await navigator.clipboard.writeText(url); toast.add({ title: t('shop.buy.linkCopied'), color: 'success' }) }
+  } catch { /* пользователь отменил шаринг */ }
+}
+
+// deep-link: /s/<slug>?item=<id> открывает быстрый просмотр товара
+onMounted(() => {
+  const id = route.query.item
+  if (typeof id === 'string') { const it = items.value.find(x => x.id === id); if (it) quick.value = it }
+})
+
 const adding = ref<string | null>(null)
-async function addToCart(it: StorefrontItem) {
-  if (!canAdd(it)) return
+async function addToCart(it: StorefrontItem): Promise<boolean> {
+  if (!canAdd(it)) return false
   adding.value = it.id
   try {
     const p = await buyPayload(it.id, code.value || undefined, sel[it.id] || undefined)
-    if (!p) { toast.add({ title: t('shop.buy.unavailable'), color: 'warning' }); return }
+    if (!p) { toast.add({ title: t('shop.buy.unavailable'), color: 'warning' }); return false }
     cart.add({
       productId: p.productId, slug: p.slug, alias: p.alias, title: p.title,
       variantId: p.variantId, colorName: p.colorName, colorHex: p.colorHex, size: p.size,
@@ -119,8 +142,10 @@ async function addToCart(it: StorefrontItem) {
       shopAccessCode: code.value || null,
     })
     toast.add({ title: t('shop.buy.added', { title: it.title }), color: 'success' })
+    return true
   } catch (e) {
     toast.add({ title: t('shop.buy.error'), description: (e as Error).message, color: 'error' })
+    return false
   } finally {
     adding.value = null
   }
@@ -198,7 +223,12 @@ const contacts = computed(() => shop.value?.contacts ?? {})
               :key="it.id"
               class="group rounded-xl overflow-hidden bg-white border border-black/5 flex flex-col"
             >
-              <div class="aspect-[3/4] bg-ink-cream/40 overflow-hidden">
+              <button
+                type="button"
+                class="aspect-[3/4] bg-ink-cream/40 overflow-hidden block w-full cursor-pointer"
+                :aria-label="it.title"
+                @click="openQuick(it)"
+              >
                 <img
                   v-if="it.preview_url"
                   :src="it.preview_url"
@@ -208,7 +238,7 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                 <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-300">
                   <UIcon name="i-lucide-shirt" class="size-10" />
                 </div>
-              </div>
+              </button>
               <div class="p-4 flex-1 flex flex-col">
                 <h3 class="font-semibold">{{ it.title }}</h3>
                 <p v-if="it.description" class="text-caption text-ink-gray-500 mt-1 line-clamp-2">{{ it.description }}</p>
@@ -276,5 +306,76 @@ const contacts = computed(() => shop.value?.contacts ?? {})
         <NuxtLink :to="site" class="text-caption text-ink-gray-400 hover:text-ink-gray-600">{{ $t('shop.poweredByFull') }}</NuxtLink>
       </div>
     </footer>
+
+    <!-- быстрый просмотр товара -->
+    <UModal v-model:open="quickOpen" :ui="{ content: 'max-w-2xl' }">
+      <template #content>
+        <div v-if="quick" :style="styleVars" class="p-5 sm:p-6" style="background: var(--shop-bg)">
+          <div class="flex justify-end -mt-1 -mr-1">
+            <button class="p-1.5 text-ink-gray-400 hover:text-ink-gray-700" :aria-label="$t('shop.quick.close')" @click="quick = null">
+              <UIcon name="i-lucide-x" class="size-5" />
+            </button>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-5">
+            <div class="aspect-[3/4] rounded-xl overflow-hidden bg-white border border-black/5">
+              <img v-if="quick.preview_url" :src="quick.preview_url" :alt="quick.title" class="w-full h-full object-contain">
+              <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-300"><UIcon name="i-lucide-shirt" class="size-12" /></div>
+            </div>
+            <div class="flex flex-col min-w-0">
+              <h2 class="text-xl font-bold" style="color: var(--shop-primary)">{{ quick.title }}</h2>
+              <p v-if="quick.description" class="text-sm text-ink-gray-600 mt-2 whitespace-pre-line">{{ quick.description }}</p>
+
+              <div v-if="hasSizes(quick)" class="mt-4 space-y-2">
+                <div v-if="hasColors(quick)" class="flex flex-wrap gap-1.5">
+                  <button
+                    v-for="c in colorsOf(quick)"
+                    :key="c.hex"
+                    type="button"
+                    :title="c.name"
+                    class="size-7 rounded-full border-2 transition-transform hover:scale-110"
+                    :style="{ backgroundColor: c.hex, borderColor: selVariant(quick)?.color_hex === c.hex ? 'var(--shop-primary)' : 'rgba(0,0,0,0.12)' }"
+                    @click="pickColor(quick, c.hex)"
+                  />
+                </div>
+                <div class="flex flex-wrap gap-1">
+                  <button
+                    v-for="v in sizesOf(quick)"
+                    :key="v.id"
+                    type="button"
+                    :disabled="!v.in_stock"
+                    class="min-w-9 px-2.5 py-1.5 rounded-md border text-sm font-medium transition-colors"
+                    :class="!v.in_stock ? 'opacity-40 line-through cursor-not-allowed' : ''"
+                    :style="{ borderColor: sel[quick.id] === v.id ? 'var(--shop-primary)' : 'rgba(0,0,0,0.12)', color: sel[quick.id] === v.id ? 'var(--shop-primary)' : undefined }"
+                    @click="pickSize(quick, v.id)"
+                  >{{ v.size }}</button>
+                </div>
+              </div>
+
+              <div class="mt-auto pt-5 flex items-center justify-between gap-3">
+                <span class="text-lg font-bold" style="color: var(--shop-primary)">{{ fmtPrice(quick.price) }}</span>
+                <div class="flex items-center gap-2">
+                  <button
+                    class="p-2 rounded-lg border border-black/10 text-ink-gray-500 hover:text-ink-gray-800"
+                    :title="$t('shop.buy.share')"
+                    @click="shareItem(quick)"
+                  >
+                    <UIcon name="i-lucide-share-2" class="size-4" />
+                  </button>
+                  <button
+                    class="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    :style="{ background: 'var(--shop-primary)' }"
+                    :disabled="adding === quick.id || !canAdd(quick)"
+                    @click="addFromQuick"
+                  >
+                    <UIcon :name="adding === quick.id ? 'i-lucide-loader-2' : 'i-lucide-shopping-cart'" :class="['size-4', adding === quick.id ? 'animate-spin' : '']" />
+                    {{ canAdd(quick) ? $t('shop.buy.add') : $t('shop.buy.soldOut') }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
