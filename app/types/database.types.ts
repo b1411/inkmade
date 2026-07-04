@@ -1723,6 +1723,8 @@ export type Database = {
         Returns: {
           access_code: string | null
           application_id: string | null
+          claim_email: string | null
+          claim_token: string | null
           contacts: Json
           created_at: string
           hero: Json
@@ -1737,6 +1739,7 @@ export type Database = {
           theme: Json
         }[]
       }
+      admin_reissue_shop_claim: { Args: { p_shop_id: string }; Returns: Json }
       is_reserved_shop_slug: { Args: { p_slug: string }; Returns: boolean }
       shop_storefront: {
         Args: { p_code?: string; p_slug: string }

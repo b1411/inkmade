@@ -101,6 +101,25 @@ export const useShops = () => {
     return data ?? []
   }
 
+  // админ: приостановить/вернуть магазин (RLS пускает is_admin, guard админа не блокирует)
+  async function setShopStatus(id: string, status: 'active' | 'suspended') {
+    const { error } = await supabase.from('shops').update({ status }).eq('id', id)
+    if (error) throw error
+  }
+
+  // админ: изменить долю магазина (%)
+  async function setShopShare(id: string, pct: number) {
+    const { error } = await supabase.from('shops').update({ revenue_share_pct: pct }).eq('id', id)
+    if (error) throw error
+  }
+
+  // админ: перевыпустить claim-ссылку (только для магазина без владельца)
+  async function reissueClaim(id: string) {
+    const { data, error } = await supabase.rpc('admin_reissue_shop_claim', { p_shop_id: id })
+    if (error) throw error
+    return data as unknown as { claim_token: string; claim_email: string }
+  }
+
   // «в корзину»: собрать позицию из shop_item (product/variant/spec владельца через RPC).
   // variantId — выбранный покупателем размер/цвет (сервер валидирует как сиблинг).
   async function buyPayload(itemId: string, code?: string, variantId?: string): Promise<ShopBuyPayload | null> {
@@ -113,5 +132,5 @@ export const useShops = () => {
     return (data as unknown as ShopBuyPayload | null) ?? null
   }
 
-  return { storefront, createShop, claimShop, listShops, buyPayload }
+  return { storefront, createShop, claimShop, listShops, setShopStatus, setShopShare, reissueClaim, buyPayload }
 }

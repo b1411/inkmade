@@ -11,11 +11,16 @@ const { t } = useI18n()
 useHead({ title: t('admin.shops.headTitle') })
 
 const { listApplications, resolve } = useBusiness()
-const { createShop } = useShops()
+const { createShop, listShops, setShopStatus, setShopShare, reissueClaim } = useShops()
 const toast = useToast()
 
 const { data: apps, pending, refresh } = await useAsyncData('admin-shop-apps', () => listApplications())
+// список созданных магазинов (только при включённой витрине)
+const { data: shops, pending: shopsPending, refresh: refreshShops } = await useAsyncData(
+  'admin-shops-list', async () => (FEATURES.b2bStorefront ? await listShops() : []),
+)
 
+const view = ref<'apps' | 'shops'>('apps')
 const tab = ref<'pending' | 'all'>('pending')
 const notes = reactive<Record<string, string>>({})
 const slugs = reactive<Record<string, string>>({})
@@ -83,6 +88,60 @@ async function onApprove(a: NonNullable<typeof apps.value>[number]) {
 function statusColor(s: string) {
   return s === 'approved' ? 'success' : s === 'rejected' ? 'error' : 'warning'
 }
+
+// ── управление магазинами (Tier1 C) ─────────────────────────────────────────
+const shopBusy = ref<string | null>(null)
+const shopShare = reactive<Record<string, number>>({})
+const shopClaim = reactive<Record<string, string>>({})
+type ShopRow = NonNullable<typeof shops.value>[number]
+
+watchEffect(() => {
+  for (const s of shops.value ?? []) if (shopShare[s.id] === undefined) shopShare[s.id] = Number(s.revenue_share_pct)
+})
+
+const shopsCount = computed(() => (shops.value ?? []).length)
+
+async function toggleShopStatus(s: ShopRow) {
+  shopBusy.value = s.id
+  try {
+    const next = s.status === 'active' ? 'suspended' : 'active'
+    await setShopStatus(s.id, next)
+    toast.add({ title: next === 'active' ? t('admin.shops.reactivated') : t('admin.shops.suspended'), color: 'success' })
+    await refreshShops()
+  } catch (e) {
+    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+  } finally { shopBusy.value = null }
+}
+
+async function saveShare(s: ShopRow) {
+  const pct = Number(shopShare[s.id])
+  if (!(pct >= 0 && pct <= 100)) { toast.add({ title: t('admin.shops.shareInvalid'), color: 'warning' }); return }
+  shopBusy.value = s.id
+  try {
+    await setShopShare(s.id, pct)
+    toast.add({ title: t('admin.shops.shareSaved'), color: 'success' })
+    await refreshShops()
+  } catch (e) {
+    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+  } finally { shopBusy.value = null }
+}
+
+async function onReissue(s: ShopRow) {
+  shopBusy.value = s.id
+  try {
+    const res = await reissueClaim(s.id)
+    shopClaim[s.id] = `${site.value}/shop-claim/${res.claim_token}`
+    try { await navigator.clipboard.writeText(shopClaim[s.id]!); toast.add({ title: t('admin.shops.claimCopied'), color: 'success' }) }
+    catch { toast.add({ title: shopClaim[s.id]!, color: 'info' }) }
+  } catch (e) {
+    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+  } finally { shopBusy.value = null }
+}
+
+async function copyShopClaim(id: string) {
+  try { await navigator.clipboard.writeText(shopClaim[id]!); toast.add({ title: t('admin.shops.claimCopied'), color: 'success' }) }
+  catch { toast.add({ title: shopClaim[id]!, color: 'info' }) }
+}
 </script>
 
 <template>
@@ -93,6 +152,32 @@ function statusColor(s: string) {
       :description="$t('admin.shops.description', { n: pendingCount })"
     />
 
+    <!-- переключатель раздела: заявки / созданные магазины -->
+    <div class="flex items-center gap-2 mb-6">
+      <UButton
+        :color="view === 'apps' ? 'primary' : 'neutral'"
+        :variant="view === 'apps' ? 'solid' : 'subtle'"
+        size="sm"
+        icon="i-lucide-inbox"
+        @click="view = 'apps'"
+      >
+        {{ $t('admin.shops.viewApps') }}
+        <UBadge v-if="pendingCount" color="neutral" variant="solid" size="sm" class="ml-1">{{ pendingCount }}</UBadge>
+      </UButton>
+      <UButton
+        v-if="FEATURES.b2bStorefront"
+        :color="view === 'shops' ? 'primary' : 'neutral'"
+        :variant="view === 'shops' ? 'solid' : 'subtle'"
+        size="sm"
+        icon="i-lucide-store"
+        @click="view = 'shops'"
+      >
+        {{ $t('admin.shops.viewShops') }}
+        <UBadge v-if="shopsCount" color="neutral" variant="solid" size="sm" class="ml-1">{{ shopsCount }}</UBadge>
+      </UButton>
+    </div>
+
+    <template v-if="view === 'apps'">
     <div class="flex items-center gap-2 mb-6">
       <UButton
         :color="tab === 'pending' ? 'primary' : 'neutral'"
@@ -199,5 +284,68 @@ function statusColor(s: string) {
         </div>
       </div>
     </div>
+    </template>
+
+    <!-- ── управление созданными магазинами (Tier1 C) ── -->
+    <template v-else>
+      <div v-if="shopsPending" class="py-10 text-center text-ink-gray-600">{{ $t('states.loading') }}</div>
+
+      <UiEmptyState
+        v-else-if="!shops?.length"
+        icon="i-lucide-store"
+        :title="$t('admin.shops.emptyShops.title')"
+        :description="$t('admin.shops.emptyShops.description')"
+      />
+
+      <div v-else class="space-y-4">
+        <div v-for="s in shops" :key="s.id" class="rounded-xl border border-ink-gray-200 p-5">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="font-bold text-h3 truncate">{{ s.name }}</h3>
+                <UBadge :color="s.status === 'active' ? 'success' : 'neutral'" variant="subtle" size="sm">
+                  {{ s.status === 'active' ? $t('admin.shops.shopActive') : $t('admin.shops.shopSuspended') }}
+                </UBadge>
+                <UBadge :color="s.owner_id ? 'info' : 'warning'" variant="subtle" size="sm">
+                  {{ s.owner_id ? $t('admin.shops.ownerActive') : $t('admin.shops.ownerPending') }}
+                </UBadge>
+              </div>
+              <p class="text-caption text-ink-gray-400 mt-1">
+                <UIcon name="i-lucide-globe" class="size-3.5 inline" /> /s/{{ s.slug }}
+                <span v-if="s.claim_email"> · {{ s.claim_email }}</span>
+              </p>
+            </div>
+            <span class="text-caption text-ink-gray-400 shrink-0">{{ formatDate(s.created_at) }}</span>
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            <UButton size="xs" color="primary" variant="subtle" icon="i-lucide-external-link" :to="`/s/${s.slug}`" target="_blank">{{ $t('admin.shops.openStorefront') }}</UButton>
+            <div class="flex items-center gap-1">
+              <UInput v-model.number="shopShare[s.id]" type="number" min="0" max="100" size="xs" class="w-24">
+                <template #trailing><span class="text-caption text-ink-gray-400">%</span></template>
+              </UInput>
+              <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-check" :loading="shopBusy === s.id" @click="saveShare(s)">{{ $t('admin.shops.saveShare') }}</UButton>
+            </div>
+            <UButton
+              size="xs"
+              :color="s.status === 'active' ? 'error' : 'success'"
+              variant="subtle"
+              :icon="s.status === 'active' ? 'i-lucide-pause' : 'i-lucide-play'"
+              :loading="shopBusy === s.id"
+              @click="toggleShopStatus(s)"
+            >{{ s.status === 'active' ? $t('admin.shops.suspend') : $t('admin.shops.reactivate') }}</UButton>
+            <UButton v-if="!s.owner_id" size="xs" color="neutral" variant="ghost" icon="i-lucide-link" :loading="shopBusy === s.id" @click="onReissue(s)">{{ $t('admin.shops.reissueClaim') }}</UButton>
+          </div>
+
+          <div v-if="shopClaim[s.id]" class="mt-3 rounded-lg bg-ink-cream/50 border border-ink-cream-dark px-3 py-2">
+            <p class="text-caption text-ink-gray-600 mb-1"><UIcon name="i-lucide-link" class="size-3.5 inline" /> {{ $t('admin.shops.claimHint') }}</p>
+            <div class="flex items-center gap-2">
+              <code class="text-xs font-mono break-all flex-1">{{ shopClaim[s.id] }}</code>
+              <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-copy" @click="copyShopClaim(s.id)">{{ $t('admin.shops.claimCopy') }}</UButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
