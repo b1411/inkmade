@@ -30,8 +30,13 @@ const form = reactive({
     announcement: { on: false, text: '' },
     about: { on: false, title: '', text: '' },
     cards: { ratio: 'portrait', showPrice: true, showDesc: true },
+    order: ['hero', 'items', 'about'] as string[],
   },
 })
+
+const SECTIONS_ALL = ['hero', 'items', 'about']
+const sectionIcon: Record<string, string> = { hero: 'i-lucide-image', items: 'i-lucide-shopping-bag', about: 'i-lucide-text' }
+const sectionCanHide: Record<string, boolean> = { hero: true, items: false, about: true }
 
 watchEffect(() => {
   const s = shop.value
@@ -71,6 +76,49 @@ watchEffect(() => {
   form.layout.cards.ratio = (cd.ratio as string) || 'portrait'
   form.layout.cards.showPrice = cd.showPrice !== false
   form.layout.cards.showDesc = cd.showDesc !== false
+  // порядок секций: чистим неизвестное, добираем недостающее в дефолтном порядке
+  const raw = Array.isArray(l.order) ? (l.order as string[]).filter(k => SECTIONS_ALL.includes(k)) : []
+  for (const k of SECTIONS_ALL) if (!raw.includes(k)) raw.push(k)
+  form.layout.order = raw
+})
+
+// ── порядок секций: drag + стрелки + видимость ──────────────────────────────
+const dragIndex = ref<number | null>(null)
+function onSectionDrop(i: number) {
+  const from = dragIndex.value
+  dragIndex.value = null
+  if (from === null || from === i) return
+  const arr = form.layout.order
+  const [moved] = arr.splice(from, 1)
+  arr.splice(i, 0, moved!)
+}
+function moveSection(i: number, dir: -1 | 1) {
+  const arr = form.layout.order
+  const j = i + dir
+  if (j < 0 || j >= arr.length) return
+  const tmp = arr[i]!
+  arr[i] = arr[j]!
+  arr[j] = tmp
+}
+function sectionVisible(key: string): boolean {
+  if (key === 'hero') return form.layout.showHero
+  if (key === 'about') return form.layout.about.on
+  return true
+}
+function setSectionVisible(key: string, val: boolean) {
+  if (key === 'hero') form.layout.showHero = val
+  else if (key === 'about') form.layout.about.on = val
+}
+
+// превью hero со стилем порядка (+ баннер)
+const previewHeroStyle = computed(() => {
+  const s: Record<string, string | number> = { order: form.layout.order.indexOf('hero') }
+  if (hasPreviewBanner.value) {
+    s.backgroundImage = `url('${previewBanner.value}')`
+    s.backgroundSize = 'cover'
+    s.backgroundPosition = 'center'
+  }
+  return s
 })
 
 // опции селектов (лейблы из i18n)
@@ -144,6 +192,7 @@ async function save() {
         announcement: { on: form.layout.announcement.on, text: form.layout.announcement.text.trim() },
         about: { on: form.layout.about.on, title: form.layout.about.title.trim(), text: form.layout.about.text.trim() },
         cards: { ratio: form.layout.cards.ratio, showPrice: form.layout.cards.showPrice, showDesc: form.layout.cards.showDesc },
+        order: [...form.layout.order],
       },
     })
     toast.add({ title: t('shopAdmin.branding.saved'), color: 'success' })
@@ -303,6 +352,34 @@ async function save() {
           </div>
         </UiPanel>
 
+        <!-- порядок секций -->
+        <UiPanel :title="$t('shopAdmin.branding.order')" icon="i-lucide-arrow-up-down">
+          <p class="text-caption text-ink-gray-500 mb-3">{{ $t('shopAdmin.branding.orderHint') }}</p>
+          <ul class="space-y-2">
+            <li
+              v-for="(key, i) in form.layout.order"
+              :key="key"
+              draggable="true"
+              class="flex items-center gap-3 rounded-lg border border-ink-gray-200 bg-white px-3 py-2 cursor-grab"
+              :class="dragIndex === i ? 'opacity-50' : ''"
+              @dragstart="dragIndex = i"
+              @dragover.prevent
+              @drop="onSectionDrop(i)"
+              @dragend="dragIndex = null"
+            >
+              <UIcon name="i-lucide-grip-vertical" class="size-4 text-ink-gray-300 shrink-0" />
+              <UIcon :name="sectionIcon[key]" class="size-4 text-ink-gray-500 shrink-0" />
+              <span class="flex-1 font-medium">{{ $t(`shopAdmin.branding.sectionName.${key}`) }}</span>
+              <USwitch v-if="sectionCanHide[key]" :model-value="sectionVisible(key)" @update:model-value="(v: boolean) => setSectionVisible(key, v)" />
+              <UBadge v-else color="neutral" variant="subtle" size="sm">{{ $t('shopAdmin.branding.alwaysOn') }}</UBadge>
+              <div class="flex flex-col -my-1">
+                <button type="button" class="text-ink-gray-400 hover:text-ink-black disabled:opacity-30" :disabled="i === 0" :aria-label="$t('shopAdmin.branding.moveUp')" @click="moveSection(i, -1)"><UIcon name="i-lucide-chevron-up" class="size-4" /></button>
+                <button type="button" class="text-ink-gray-400 hover:text-ink-black disabled:opacity-30" :disabled="i === form.layout.order.length - 1" :aria-label="$t('shopAdmin.branding.moveDown')" @click="moveSection(i, 1)"><UIcon name="i-lucide-chevron-down" class="size-4" /></button>
+              </div>
+            </li>
+          </ul>
+        </UiPanel>
+
         <!-- карточки товара -->
         <UiPanel :title="$t('shopAdmin.branding.cards')" icon="i-lucide-layout-grid">
           <div class="space-y-4">
@@ -343,13 +420,13 @@ async function save() {
       <!-- живое превью 2.0 -->
       <div class="lg:sticky lg:top-8">
         <UiSectionLabel accent>{{ $t('shopAdmin.branding.preview') }}</UiSectionLabel>
-        <div class="mt-3 rounded-2xl overflow-hidden border border-ink-gray-200 shadow-sm" :style="previewVars">
+        <div class="mt-3 rounded-2xl overflow-hidden border border-ink-gray-200 shadow-sm flex flex-col" :style="previewVars">
           <!-- объявление -->
-          <div v-if="form.layout.announcement.on && form.layout.announcement.text" class="text-center text-xs font-medium px-3 py-1.5" :style="{ background: form.theme.primary, color: 'var(--p-on)' }">
+          <div v-if="form.layout.announcement.on && form.layout.announcement.text" class="text-center text-xs font-medium px-3 py-1.5" :style="{ background: form.theme.primary, color: 'var(--p-on)', order: -2 }">
             {{ form.layout.announcement.text }}
           </div>
           <!-- шапка -->
-          <div class="h-12 flex items-center px-4 gap-2 border-b" :style="{ borderColor: 'var(--p-border)' }">
+          <div class="h-12 flex items-center px-4 gap-2 border-b" :style="{ borderColor: 'var(--p-border)', order: -1 }">
             <img v-if="form.logo_url" :src="form.logo_url" alt="" class="h-6 w-auto object-contain">
             <span class="font-bold text-sm" :style="{ color: form.theme.primary }">{{ form.name || '—' }}</span>
           </div>
@@ -357,7 +434,7 @@ async function save() {
           <div
             v-if="form.layout.showHero"
             class="relative px-5 py-10"
-            :style="hasPreviewBanner ? `background-image:url('${previewBanner}');background-size:cover;background-position:center` : ''"
+            :style="previewHeroStyle"
           >
             <div v-if="hasPreviewBanner" class="absolute inset-0" :style="{ background: `rgba(0,0,0,${form.hero.overlay / 100})` }" />
             <div class="relative" :class="form.hero.layout === 'center' ? 'text-center' : ''">
@@ -373,7 +450,7 @@ async function save() {
             </div>
           </div>
           <!-- карточки -->
-          <div class="p-4 grid grid-cols-2 gap-3">
+          <div class="p-4 grid grid-cols-2 gap-3" :style="{ order: form.layout.order.indexOf('items') }">
             <div v-for="n in 2" :key="n" class="overflow-hidden border" :style="{ background: 'var(--p-surface)', borderColor: 'var(--p-border)', borderRadius: 'var(--p-radius)' }">
               <div class="flex items-center justify-center" :style="{ background: 'var(--p-border)', aspectRatio: cardRatio(form.layout.cards.ratio) }">
                 <UIcon name="i-lucide-shirt" class="size-8 opacity-30" :style="{ color: 'var(--p-muted)' }" />
@@ -385,7 +462,7 @@ async function save() {
             </div>
           </div>
           <!-- о магазине -->
-          <div v-if="form.layout.about.on && (form.layout.about.title || form.layout.about.text)" class="px-5 py-4 border-t text-center" :style="{ borderColor: 'var(--p-border)' }">
+          <div v-if="form.layout.about.on && (form.layout.about.title || form.layout.about.text)" class="px-5 py-4 border-t text-center" :style="{ borderColor: 'var(--p-border)', order: form.layout.order.indexOf('about') }">
             <p v-if="form.layout.about.title" class="text-sm font-bold" :style="{ color: form.theme.primary }">{{ form.layout.about.title }}</p>
             <p v-if="form.layout.about.text" class="text-xs mt-1 line-clamp-3 whitespace-pre-line" :style="{ color: 'var(--p-muted)' }">{{ form.layout.about.text }}</p>
           </div>

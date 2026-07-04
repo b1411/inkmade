@@ -13,6 +13,7 @@ export interface StorefrontLayout {
   about?: { on?: boolean; title?: string; text?: string }
   showHero?: boolean
   cards?: { ratio?: string; showPrice?: boolean; showDesc?: boolean }
+  order?: string[]
 }
 
 export interface StorefrontShop {

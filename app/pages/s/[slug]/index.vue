@@ -82,6 +82,27 @@ function scrollToItems() {
   if (import.meta.client) document.getElementById('shop-items')?.scrollIntoView({ behavior: 'smooth' })
 }
 
+// порядок секций (модуль C): владелец задаёт последовательность hero/товары/«О магазине».
+// Реализуем через CSS order во flex-колонке — без реструктуризации DOM.
+const SECTION_KEYS = ['hero', 'items', 'about'] as const
+const orderedSections = computed(() => {
+  const raw = Array.isArray(layoutCfg.value.order)
+    ? (layoutCfg.value.order as string[]).filter(k => (SECTION_KEYS as readonly string[]).includes(k))
+    : []
+  for (const k of SECTION_KEYS) if (!raw.includes(k)) raw.push(k)
+  return raw
+})
+const pos = (k: string) => orderedSections.value.indexOf(k)
+const heroStyle = computed(() => {
+  const s: Record<string, string | number> = { order: pos('hero') }
+  if (hasBanner.value) {
+    s.backgroundImage = `url('${bannerUrl.value}')`
+    s.backgroundSize = 'cover'
+    s.backgroundPosition = 'center'
+  }
+  return s
+})
+
 const fmtPrice = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
 
 // ── выбор размера/цвета на карточке: itemId → выбранный variantId ──────────────
@@ -208,12 +229,14 @@ const contacts = computed(() => shop.value?.contacts ?? {})
       </div>
     </header>
 
-    <!-- hero (модуль B: раскладка/затемнение/CTA; тумблер показа — модуль C) -->
-    <section
-      v-if="showHero"
-      class="relative overflow-hidden"
-      :style="hasBanner ? `background-image:url('${bannerUrl}');background-size:cover;background-position:center` : ''"
-    >
+    <!-- контент: порядок секций задаёт владелец (модуль C) через CSS order -->
+    <main class="flex-1 flex flex-col">
+      <!-- hero (модуль B: раскладка/затемнение/CTA; тумблер показа) -->
+      <section
+        v-if="showHero"
+        class="relative overflow-hidden"
+        :style="heroStyle"
+      >
       <div v-if="hasBanner" class="absolute inset-0" :style="{ background: `rgba(0,0,0,${heroOverlayPct / 100})` }" />
       <div
         class="relative mx-auto max-w-(--container-max) px-6"
@@ -252,9 +275,9 @@ const contacts = computed(() => shop.value?.contacts ?? {})
       </div>
     </section>
 
-    <!-- контент -->
-    <main class="flex-1">
-      <div id="shop-items" class="mx-auto max-w-(--container-max) px-6 py-12">
+      <!-- товары -->
+      <section :style="{ order: pos('items') }">
+        <div id="shop-items" class="mx-auto max-w-(--container-max) px-6 py-12">
         <!-- закрытый магазин: запрос кода -->
         <div v-if="isClosed" class="max-w-sm mx-auto text-center py-16">
           <UIcon name="i-lucide-lock" class="size-10 mx-auto sf-muted" />
@@ -353,16 +376,17 @@ const contacts = computed(() => shop.value?.contacts ?? {})
             </article>
           </div>
         </template>
-      </div>
-    </main>
+        </div>
+      </section>
 
-    <!-- блок «О магазине» (модуль C) -->
-    <section v-if="about" class="border-t sf-bord" style="background: color-mix(in srgb, var(--shop-primary) 4%, transparent)">
-      <div class="mx-auto max-w-3xl px-6 py-12 text-center">
-        <h2 v-if="about.title" class="text-2xl font-bold" style="color: var(--shop-primary)">{{ about.title }}</h2>
-        <p v-if="about.text" class="mt-3 sf-muted whitespace-pre-line leading-relaxed">{{ about.text }}</p>
-      </div>
-    </section>
+      <!-- блок «О магазине» (модуль C) -->
+      <section v-if="about" class="border-t sf-bord" :style="{ background: 'color-mix(in srgb, var(--shop-primary) 4%, transparent)', order: pos('about') }">
+        <div class="mx-auto max-w-3xl px-6 py-12 text-center">
+          <h2 v-if="about.title" class="text-2xl font-bold" style="color: var(--shop-primary)">{{ about.title }}</h2>
+          <p v-if="about.text" class="mt-3 sf-muted whitespace-pre-line leading-relaxed">{{ about.text }}</p>
+        </div>
+      </section>
+    </main>
 
     <!-- футер -->
     <footer class="border-t sf-bord mt-8">
