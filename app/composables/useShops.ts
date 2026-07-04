@@ -65,7 +65,8 @@ export const useShops = () => {
     return (data as unknown as Storefront | null) ?? null
   }
 
-  // админ: создать магазин из заявки; возвращает { id, slug }
+  // админ: создать магазин из заявки. Если владелец ещё не зарегистрирован,
+  // возвращает claim_token — админ даёт владельцу ссылку /shop-claim/<token>.
   async function createShop(appId: string, slug: string, name: string, revenueShare: number) {
     const { data, error } = await supabase.rpc('admin_create_shop', {
       p_app_id: appId,
@@ -74,7 +75,14 @@ export const useShops = () => {
       p_revenue_share: revenueShare,
     })
     if (error) throw error
-    return data as unknown as { id: string; slug: string }
+    return data as unknown as { id: string; slug: string; claim_token: string | null; owner_id: string | null }
+  }
+
+  // владелец активирует владение магазином по claim-ссылке (email должен совпасть)
+  async function claimShop(token: string): Promise<{ ok: boolean; reason?: string; slug?: string }> {
+    const { data, error } = await supabase.rpc('claim_shop', { p_token: token })
+    if (error) throw error
+    return (data as unknown as { ok: boolean; reason?: string; slug?: string })
   }
 
   // админ: список магазинов
@@ -94,5 +102,5 @@ export const useShops = () => {
     return (data as unknown as ShopBuyPayload | null) ?? null
   }
 
-  return { storefront, createShop, listShops, buyPayload }
+  return { storefront, createShop, claimShop, listShops, buyPayload }
 }

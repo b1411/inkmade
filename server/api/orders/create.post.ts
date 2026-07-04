@@ -96,8 +96,12 @@ export default defineEventHandler(async (event) => {
       const { data: si } = await svc.from('shop_items')
         .select('id, shop_id, price, markup, is_active').eq('id', it.shopItemId).maybeSingle()
       if (!si || !si.is_active) throw createError({ statusCode: 400, statusMessage: 'Позиция магазина недоступна' })
-      const { data: shopRow } = await svc.from('shops').select('status').eq('id', si.shop_id).maybeSingle()
-      if (!shopRow || shopRow.status !== 'active') throw createError({ statusCode: 400, statusMessage: 'Магазин недоступен' })
+      const { data: shopRow } = await svc.from('shops').select('status, is_public, access_code').eq('id', si.shop_id).maybeSingle()
+      if (!shopRow || shopRow.status !== 'active' || !shopRow.is_public) throw createError({ statusCode: 400, statusMessage: 'Магазин недоступен' })
+      // закрытый магазин: код нельзя обойти прямым POST — сверяем с БД (F4)
+      if (shopRow.access_code && it.shopAccessCode !== shopRow.access_code) {
+        throw createError({ statusCode: 403, statusMessage: 'Неверный код доступа магазина' })
+      }
       unitPrice = Number(si.price) + Number(si.markup)
       if (!(unitPrice > 0)) throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции магазина' })
       shopId = si.shop_id

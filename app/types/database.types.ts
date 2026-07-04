@@ -152,6 +152,7 @@ export type Database = {
           print_method: string | null
           product_id: string
           quantity: number
+          shop_access_code: string | null
           shop_item_id: string | null
           size: string
           slug: string
@@ -171,6 +172,7 @@ export type Database = {
           print_method?: string | null
           product_id: string
           quantity?: number
+          shop_access_code?: string | null
           shop_item_id?: string | null
           size?: string
           slug: string
@@ -190,6 +192,7 @@ export type Database = {
           print_method?: string | null
           product_id?: string
           quantity?: number
+          shop_access_code?: string | null
           shop_item_id?: string | null
           size?: string
           slug?: string
@@ -761,6 +764,8 @@ export type Database = {
         Row: {
           access_code: string | null
           application_id: string | null
+          claim_email: string | null
+          claim_token: string | null
           contacts: Json
           created_at: string
           hero: Json
@@ -777,6 +782,8 @@ export type Database = {
         Insert: {
           access_code?: string | null
           application_id?: string | null
+          claim_email?: string | null
+          claim_token?: string | null
           contacts?: Json
           created_at?: string
           hero?: Json
@@ -793,6 +800,8 @@ export type Database = {
         Update: {
           access_code?: string | null
           application_id?: string | null
+          claim_email?: string | null
+          claim_token?: string | null
           contacts?: Json
           created_at?: string
           hero?: Json
@@ -1758,6 +1767,7 @@ export type Database = {
         Returns: Json
       }
       claim_designer_invite: { Args: { p_token: string }; Returns: Json }
+      claim_shop: { Args: { p_token: string }; Returns: Json }
       mark_payout_paid: { Args: { p_payout_id: string }; Returns: undefined }
       refund_ai_quota: {
         Args: { p_month: string; p_user_id: string }

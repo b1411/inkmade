@@ -1,6 +1,8 @@
 <script setup lang="ts">
 // Брендинг магазина (Фаза B3): лого, цвета, hero, контакты — с живым превью.
 // Сохраняет «мягкие» поля shops (RLS shops_owner_update; guard пускает их владельцу).
+import { safeCssUrl } from '~/utils/safeUrl'
+
 definePageMeta({ layout: 'shop-admin', middleware: 'shop-owner' })
 const { t } = useI18n()
 useHead({ title: t('shopAdmin.branding.headTitle') })
@@ -37,6 +39,10 @@ watchEffect(() => {
   form.contacts.phone = c.phone || ''
   form.contacts.whatsapp = c.whatsapp || ''
 })
+
+// баннер превью — только безопасный http(s) URL (анти CSS-инъекция, F6)
+const previewBanner = computed(() => safeCssUrl(form.hero.banner_url))
+const hasPreviewBanner = computed(() => !!previewBanner.value)
 
 const saving = ref(false)
 const uploading = ref(false)
@@ -152,13 +158,13 @@ async function save() {
           </div>
           <div
             class="px-5 py-10"
-            :style="form.hero.banner_url ? `background-image:url('${form.hero.banner_url}');background-size:cover;background-position:center` : ''"
+            :style="hasPreviewBanner ? `background-image:url('${previewBanner}');background-size:cover;background-position:center` : ''"
           >
-            <div :style="form.hero.banner_url ? 'background:rgba(0,0,0,.4);margin:-2.5rem -1.25rem;padding:2.5rem 1.25rem' : ''">
-              <h3 class="text-2xl font-bold" :style="{ color: form.hero.banner_url ? '#fff' : form.theme.primary }">
+            <div :style="hasPreviewBanner ? 'background:rgba(0,0,0,.4);margin:-2.5rem -1.25rem;padding:2.5rem 1.25rem' : ''">
+              <h3 class="text-2xl font-bold" :style="{ color: hasPreviewBanner ? '#fff' : form.theme.primary }">
                 {{ form.hero.title || form.name || '—' }}
               </h3>
-              <p class="text-sm mt-2" :class="form.hero.banner_url ? 'text-white/85' : 'text-ink-gray-600'">
+              <p class="text-sm mt-2" :class="hasPreviewBanner ? 'text-white/85' : 'text-ink-gray-600'">
                 {{ form.hero.subtitle || $t('shopAdmin.branding.previewSubtitle') }}
               </p>
             </div>

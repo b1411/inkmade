@@ -63,6 +63,8 @@ const orderItemSchema = z.object({
   quantity: z.number().int().min(1).max(1000),
   // позиция куплена в B2B-магазине: id shop_item → сервер берёт цену/атрибуцию по БД
   shopItemId: z.uuid().nullish(),
+  // код доступа закрытого магазина (сервер сверяет с БД, чтобы код нельзя было обойти)
+  shopAccessCode: z.string().max(128).nullish(),
 })
 
 export const orderCreateSchema = z.object({

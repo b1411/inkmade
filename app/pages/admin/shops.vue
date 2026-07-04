@@ -21,6 +21,18 @@ const notes = reactive<Record<string, string>>({})
 const slugs = reactive<Record<string, string>>({})
 const shares = reactive<Record<string, number>>({})
 const busy = ref<string | null>(null)
+// claim-ссылки для магазинов, чей владелец ещё не зарегистрирован (по id заявки)
+const claimLinks = reactive<Record<string, string>>({})
+const site = computed(() => (import.meta.client ? window.location.origin : ''))
+
+async function copyClaim(id: string) {
+  try {
+    await navigator.clipboard.writeText(claimLinks[id]!)
+    toast.add({ title: t('admin.shops.claimCopied'), color: 'success' })
+  } catch {
+    toast.add({ title: claimLinks[id]!, color: 'info' })
+  }
+}
 
 const list = computed(() => {
   const all = apps.value ?? []
@@ -53,7 +65,13 @@ async function onApprove(a: NonNullable<typeof apps.value>[number]) {
   busy.value = a.id
   try {
     const res = await createShop(a.id, slug, a.org_name, Number(shares[a.id] ?? 15))
-    toast.add({ title: t('admin.shops.shopCreated', { slug: res.slug }), color: 'success' })
+    // владелец ещё не зарегистрирован → выдаём claim-ссылку для отправки заявителю
+    if (res.claim_token) {
+      claimLinks[a.id] = `${site.value}/shop-claim/${res.claim_token}`
+      toast.add({ title: t('admin.shops.shopCreatedClaim', { slug: res.slug }), color: 'success' })
+    } else {
+      toast.add({ title: t('admin.shops.shopCreated', { slug: res.slug }), color: 'success' })
+    }
     await refresh()
   } catch (e) {
     toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
@@ -168,6 +186,17 @@ function statusColor(s: string) {
         <p v-else-if="a.admin_note" class="mt-3 text-caption text-ink-gray-400">
           <UIcon name="i-lucide-sticky-note" class="size-3.5 inline" /> {{ a.admin_note }}
         </p>
+
+        <!-- claim-ссылка: владелец ещё не зарегистрирован, отправьте её заявителю -->
+        <div v-if="claimLinks[a.id]" class="mt-3 rounded-lg bg-ink-cream/50 border border-ink-cream-dark px-3 py-2">
+          <p class="text-caption text-ink-gray-600 mb-1">
+            <UIcon name="i-lucide-link" class="size-3.5 inline" /> {{ $t('admin.shops.claimHint') }}
+          </p>
+          <div class="flex items-center gap-2">
+            <code class="text-xs font-mono break-all flex-1">{{ claimLinks[a.id] }}</code>
+            <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-copy" @click="copyClaim(a.id)">{{ $t('admin.shops.claimCopy') }}</UButton>
+          </div>
+        </div>
       </div>
     </div>
   </div>

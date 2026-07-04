@@ -19,6 +19,7 @@ const LIMITS: { prefix: string; max: number }[] = [
   { prefix: '/api/designs/shared/', max: 30 }, // публичный доступ по токену — отдельный жёсткий лимит от перебора
   { prefix: '/api/designs/', max: 40 }, // импорт/модерация/share
   { prefix: '/api/promo/', max: 30 }, // валидация промокода — от перебора кодов
+  { prefix: '/api/business/', max: 10 }, // публичная форма заявки на B2B-магазин — от спама
 ]
 
 const buckets = new Map<string, Hit>()

@@ -20,6 +20,7 @@ export const useOrder = () => {
         spec: i.spec,
         quantity: i.quantity,
         shopItemId: i.shopItemId ?? undefined,
+        shopAccessCode: i.shopAccessCode ?? undefined,
       })),
       shippingAddr,
       promoCode: promoCode || undefined,

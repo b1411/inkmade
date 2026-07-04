@@ -40,6 +40,8 @@ function reset() { Object.assign(form, blank()) }
 async function onSave() {
   if (!shop.value) return
   if (!form.title.trim()) { toast.add({ title: t('shopAdmin.items.titleRequired'), color: 'warning' }); return }
+  // активная позиция обязана иметь цену > 0 (иначе витрина покажет её, но заказ упрётся в 400)
+  if (form.isActive && !(Number(form.price) > 0)) { toast.add({ title: t('shopAdmin.items.priceRequired'), color: 'warning' }); return }
   saving.value = true
   try {
     const d = (designs.value ?? []).find(x => x.id === form.designId)

@@ -4,6 +4,7 @@
 // Данные — через RPC shop_storefront (аноним не видит access_code). Гейт роута — глобальный
 // feature-flags middleware (404 при выключенном b2bStorefront).
 import type { Json } from '~/types/database.types'
+import { safeCssUrl } from '~/utils/safeUrl'
 
 definePageMeta({ layout: false })
 
@@ -46,11 +47,19 @@ const styleVars = computed(() => ({
 
 const fmtPrice = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
 
+// баннер hero — только безопасный http(s) URL владельца (анти CSS-инъекция, F6)
+const bannerUrl = computed(() => safeCssUrl(shop.value?.hero?.banner_url))
+const hasBanner = computed(() => !!bannerUrl.value)
+
 const unlocking = ref(false)
 async function unlock() {
   if (!code.value.trim()) return
   unlocking.value = true
-  try { await refresh() } finally { unlocking.value = false }
+  try {
+    await refresh()
+    // код не подошёл — магазин всё ещё закрыт: явный фидбэк (F12)
+    if (data.value?.closed) toast.add({ title: t('shop.closed.wrongCode'), color: 'error' })
+  } finally { unlocking.value = false }
 }
 
 // «в корзину»: тянем полную позицию через RPC (product/variant/spec владельца) и кладём
@@ -66,6 +75,7 @@ async function addToCart(it: { id: string; title: string }) {
       variantId: p.variantId, colorName: p.colorName, colorHex: p.colorHex, size: p.size,
       printMethod: p.printMethod, spec: p.spec as Json, unitPrice: p.unitPrice, quantity: 1,
       shopItemId: p.shopItemId,
+      shopAccessCode: code.value || null,
     })
     toast.add({ title: t('shop.buy.added', { title: it.title }), color: 'success' })
   } catch (e) {
@@ -94,21 +104,21 @@ const contacts = computed(() => shop.value?.contacts ?? {})
     <!-- hero -->
     <section
       class="relative overflow-hidden"
-      :style="shop.hero?.banner_url ? `background-image:url('${shop.hero.banner_url}');background-size:cover;background-position:center` : ''"
+      :style="hasBanner ? `background-image:url('${bannerUrl}');background-size:cover;background-position:center` : ''"
     >
-      <div class="absolute inset-0" :style="shop.hero?.banner_url ? 'background:rgba(0,0,0,0.45)' : ''" />
+      <div class="absolute inset-0" :style="hasBanner ? 'background:rgba(0,0,0,0.45)' : ''" />
       <div class="relative mx-auto max-w-(--container-max) px-6 py-16 sm:py-24">
         <h1
           class="text-4xl sm:text-5xl font-bold max-w-2xl"
-          :class="shop.hero?.banner_url ? 'text-white' : ''"
-          :style="shop.hero?.banner_url ? '' : 'color: var(--shop-primary)'"
+          :class="hasBanner ? 'text-white' : ''"
+          :style="hasBanner ? '' : 'color: var(--shop-primary)'"
         >
           {{ shop.hero?.title || shop.name }}
         </h1>
         <p
           v-if="shop.hero?.subtitle"
           class="text-lg mt-4 max-w-xl"
-          :class="shop.hero?.banner_url ? 'text-white/85' : 'text-ink-gray-600'"
+          :class="hasBanner ? 'text-white/85' : 'text-ink-gray-600'"
         >
           {{ shop.hero.subtitle }}
         </p>

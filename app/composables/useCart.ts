@@ -20,6 +20,9 @@ export interface CartItem {
   quantity: number
   // источник позиции из B2B-магазина (для атрибуции заказа магазину); null для обычных
   shopItemId?: string | null
+  // код закрытого магазина (если позиция куплена в закрытом сторе) — сервер сверяет
+  // его при создании заказа, чтобы код нельзя было обойти прямым POST. null для открытых
+  shopAccessCode?: string | null
 }
 
 const STORAGE_KEY = 'inkmade_cart'
@@ -88,6 +91,7 @@ export const useCart = () => {
       slug: i.slug, alias: i.alias, title: i.title, color_name: i.colorName, color_hex: i.colorHex,
       size: i.size, print_method: i.printMethod, spec: i.spec, unit_price: i.unitPrice, quantity: i.quantity,
       shop_item_id: i.shopItemId ?? null,
+      shop_access_code: i.shopAccessCode ?? null,
     }
   }
   function fromRow(r: Row): CartItem {
@@ -96,6 +100,7 @@ export const useCart = () => {
       variantId: r.variant_id ?? '', colorName: r.color_name, colorHex: r.color_hex, size: r.size,
       printMethod: r.print_method, spec: r.spec, unitPrice: Number(r.unit_price), quantity: r.quantity,
       shopItemId: r.shop_item_id ?? null,
+      shopAccessCode: r.shop_access_code ?? null,
     }
   }
 
