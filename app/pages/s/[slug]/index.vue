@@ -6,7 +6,7 @@
 import type { Json } from '~/types/database.types'
 import type { StorefrontItem } from '~/composables/useShops'
 import { safeCssUrl } from '~/utils/safeUrl'
-import { fontStack, radiusValue, heroLayout, cardRatio, heroOverlay } from '~~/shared/config/shop-theme'
+import { resolveTheme, heroLayout, cardRatio, heroOverlay } from '~~/shared/config/shop-theme'
 
 definePageMeta({ layout: false })
 
@@ -40,15 +40,23 @@ useSeoMeta({
   ogImage: () => shop.value?.hero?.banner_url || undefined,
 })
 
-// тема магазина → CSS-переменные (с фолбэком на бренд INKMADE). Конструктор витрины v2:
-// шрифт и скругление резолвятся через shared/config/shop-theme (с безопасным фолбэком).
+// тема магазина → CSS-переменные (резолв свет/тьма в shared/config/shop-theme). Токены
+// text/muted/surface/border/on-primary делают витрину корректной и в тёмной теме.
+const rt = computed(() => resolveTheme(shop.value?.theme))
 const styleVars = computed(() => ({
-  '--shop-primary': shop.value?.theme?.primary || '#6b1e2e',
-  '--shop-accent': shop.value?.theme?.accent || shop.value?.theme?.primary || '#6b1e2e',
-  '--shop-bg': shop.value?.theme?.bg || '#faf7f2',
-  '--shop-font': fontStack(shop.value?.theme?.font),
-  '--shop-radius': radiusValue(shop.value?.theme?.radius),
+  '--shop-primary': rt.value.primary,
+  '--shop-accent': rt.value.accent,
+  '--shop-bg': rt.value.bg,
+  '--shop-on-primary': rt.value.onPrimary,
+  '--shop-text': rt.value.text,
+  '--shop-muted': rt.value.muted,
+  '--shop-surface': rt.value.surface,
+  '--shop-border': rt.value.border,
+  '--shop-font': rt.value.font,
+  '--shop-radius': rt.value.radius,
   'fontFamily': 'var(--shop-font)',
+  'color': 'var(--shop-text)',
+  'background': 'var(--shop-bg)',
 }))
 
 // ── конфиг раскладки/секций/карточек (модули B/C/D) ──────────────────────────
@@ -185,18 +193,18 @@ const contacts = computed(() => shop.value?.contacts ?? {})
 <template>
   <div v-if="shop" :style="styleVars" class="min-h-screen flex flex-col" style="background: var(--shop-bg)">
     <!-- строка-объявление (модуль C) -->
-    <div v-if="announce" class="text-center text-sm font-medium px-4 py-2 text-white" style="background: var(--shop-primary)">
+    <div v-if="announce" class="text-center text-sm font-medium px-4 py-2" style="background: var(--shop-primary); color: var(--shop-on-primary)">
       {{ announce }}
     </div>
 
     <!-- шапка магазина -->
-    <header class="border-b border-black/5">
+    <header class="border-b sf-bord">
       <div class="mx-auto max-w-(--container-max) px-6 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <img v-if="shop.logo_url" :src="shop.logo_url" :alt="shop.name" class="h-9 w-auto object-contain">
           <span class="text-xl font-bold" style="color: var(--shop-primary)">{{ shop.name }}</span>
         </div>
-        <NuxtLink to="/" class="text-caption text-ink-gray-500 hover:text-ink-gray-700">{{ $t('shop.poweredBy') }}</NuxtLink>
+        <NuxtLink to="/" class="text-caption sf-muted hover:opacity-70">{{ $t('shop.poweredBy') }}</NuxtLink>
       </div>
     </header>
 
@@ -228,14 +236,14 @@ const contacts = computed(() => shop.value?.contacts ?? {})
         <p
           v-if="shop.hero?.subtitle"
           class="text-lg mt-4"
-          :class="[heroLay === 'center' ? 'max-w-2xl' : 'max-w-xl', hasBanner ? 'text-white/85' : 'text-ink-gray-600']"
+          :class="[heroLay === 'center' ? 'max-w-2xl' : 'max-w-xl', hasBanner ? 'text-white/85' : 'sf-muted']"
         >
           {{ shop.hero.subtitle }}
         </p>
         <button
           v-if="heroCta"
-          class="mt-6 inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-          :style="{ background: 'var(--shop-primary)', borderRadius: 'var(--shop-radius)' }"
+          class="mt-6 inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90"
+          :style="{ background: 'var(--shop-primary)', color: 'var(--shop-on-primary)', borderRadius: 'var(--shop-radius)' }"
           @click="scrollToItems"
         >
           {{ heroCta }}
@@ -249,9 +257,9 @@ const contacts = computed(() => shop.value?.contacts ?? {})
       <div id="shop-items" class="mx-auto max-w-(--container-max) px-6 py-12">
         <!-- закрытый магазин: запрос кода -->
         <div v-if="isClosed" class="max-w-sm mx-auto text-center py-16">
-          <UIcon name="i-lucide-lock" class="size-10 mx-auto text-ink-gray-400" />
+          <UIcon name="i-lucide-lock" class="size-10 mx-auto sf-muted" />
           <h2 class="text-xl font-bold mt-4">{{ $t('shop.closed.title') }}</h2>
-          <p class="text-ink-gray-600 mt-2">{{ $t('shop.closed.text') }}</p>
+          <p class="sf-muted mt-2">{{ $t('shop.closed.text') }}</p>
           <div class="mt-6 flex gap-2">
             <UInput v-model="code" :placeholder="$t('shop.closed.codePlaceholder')" class="flex-1" @keyup.enter="unlock" />
             <UButton :loading="unlocking" @click="unlock">{{ $t('shop.closed.unlock') }}</UButton>
@@ -265,21 +273,21 @@ const contacts = computed(() => shop.value?.contacts ?? {})
           </div>
 
           <div v-else-if="!items.length" class="text-center py-20">
-            <UIcon name="i-lucide-package-open" class="size-12 mx-auto text-ink-gray-300" />
+            <UIcon name="i-lucide-package-open" class="size-12 mx-auto sf-muted" />
             <h2 class="text-xl font-bold mt-4">{{ $t('shop.empty.title') }}</h2>
-            <p class="text-ink-gray-600 mt-2">{{ $t('shop.empty.text') }}</p>
+            <p class="sf-muted mt-2">{{ $t('shop.empty.text') }}</p>
           </div>
 
           <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <article
               v-for="it in items"
               :key="it.id"
-              class="group overflow-hidden bg-white border border-black/5 flex flex-col"
+              class="group overflow-hidden sf-surface border sf-bord flex flex-col"
               :style="{ borderRadius: 'var(--shop-radius)' }"
             >
               <button
                 type="button"
-                class="bg-ink-cream/40 overflow-hidden block w-full cursor-pointer"
+                class="sf-surface overflow-hidden block w-full cursor-pointer"
                 :style="{ aspectRatio: cardRatioVal }"
                 :aria-label="it.title"
                 @click="openQuick(it)"
@@ -290,13 +298,13 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                   :alt="it.title"
                   class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
                 >
-                <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-300">
+                <div v-else class="w-full h-full flex items-center justify-center sf-muted">
                   <UIcon name="i-lucide-shirt" class="size-10" />
                 </div>
               </button>
               <div class="p-4 flex-1 flex flex-col">
                 <h3 class="font-semibold">{{ it.title }}</h3>
-                <p v-if="it.description && showDesc" class="text-caption text-ink-gray-500 mt-1 line-clamp-2">{{ it.description }}</p>
+                <p v-if="it.description && showDesc" class="text-caption sf-muted mt-1 line-clamp-2">{{ it.description }}</p>
 
                 <!-- выбор цвета/размера (сиблинги того же продукта+материала) -->
                 <div v-if="hasSizes(it)" class="mt-3 space-y-2">
@@ -307,7 +315,7 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                       type="button"
                       :title="c.name"
                       class="size-6 rounded-full border-2 transition-transform hover:scale-110"
-                      :style="{ backgroundColor: c.hex, borderColor: selVariant(it)?.color_hex === c.hex ? 'var(--shop-primary)' : 'rgba(0,0,0,0.12)' }"
+                      :style="{ backgroundColor: c.hex, borderColor: selVariant(it)?.color_hex === c.hex ? 'var(--shop-primary)' : 'var(--shop-border)' }"
                       @click="pickColor(it, c.hex)"
                     />
                   </div>
@@ -320,7 +328,7 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                       class="min-w-8 px-2 py-1 rounded-md border text-xs font-medium transition-colors"
                       :class="!v.in_stock ? 'opacity-40 line-through cursor-not-allowed' : ''"
                       :style="{
-                        borderColor: sel[it.id] === v.id ? 'var(--shop-primary)' : 'rgba(0,0,0,0.12)',
+                        borderColor: sel[it.id] === v.id ? 'var(--shop-primary)' : 'var(--shop-border)',
                         color: sel[it.id] === v.id ? 'var(--shop-primary)' : undefined,
                       }"
                       @click="pickSize(it, v.id)"
@@ -332,8 +340,8 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                   <span v-if="showPrice" class="font-bold" style="color: var(--shop-primary)">{{ fmtPrice(it.price) }}</span>
                   <span v-else />
                   <button
-                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                    :style="{ background: 'var(--shop-primary)', borderRadius: 'var(--shop-radius)' }"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    :style="{ background: 'var(--shop-primary)', color: 'var(--shop-on-primary)', borderRadius: 'var(--shop-radius)' }"
                     :disabled="adding === it.id || !canAdd(it)"
                     @click="addToCart(it)"
                   >
@@ -349,34 +357,34 @@ const contacts = computed(() => shop.value?.contacts ?? {})
     </main>
 
     <!-- блок «О магазине» (модуль C) -->
-    <section v-if="about" class="border-t border-black/5" style="background: color-mix(in srgb, var(--shop-primary) 4%, transparent)">
+    <section v-if="about" class="border-t sf-bord" style="background: color-mix(in srgb, var(--shop-primary) 4%, transparent)">
       <div class="mx-auto max-w-3xl px-6 py-12 text-center">
         <h2 v-if="about.title" class="text-2xl font-bold" style="color: var(--shop-primary)">{{ about.title }}</h2>
-        <p v-if="about.text" class="mt-3 text-ink-gray-600 whitespace-pre-line leading-relaxed">{{ about.text }}</p>
+        <p v-if="about.text" class="mt-3 sf-muted whitespace-pre-line leading-relaxed">{{ about.text }}</p>
       </div>
     </section>
 
     <!-- футер -->
-    <footer class="border-t border-black/5 mt-8">
+    <footer class="border-t sf-bord mt-8">
       <div class="mx-auto max-w-(--container-max) px-6 py-8 flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-4 text-caption text-ink-gray-500">
-          <a v-if="contacts.instagram" :href="`https://instagram.com/${contacts.instagram.replace(/^@/, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
+        <div class="flex items-center gap-4 text-caption sf-muted">
+          <a v-if="contacts.instagram" :href="`https://instagram.com/${contacts.instagram.replace(/^@/, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:opacity-70">
             <UIcon name="i-lucide-instagram" class="size-4" /> {{ contacts.instagram }}
           </a>
-          <a v-if="contacts.phone" :href="`tel:${contacts.phone}`" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
+          <a v-if="contacts.phone" :href="`tel:${contacts.phone}`" class="inline-flex items-center gap-1 hover:opacity-70">
             <UIcon name="i-lucide-phone" class="size-4" /> {{ contacts.phone }}
           </a>
-          <a v-if="contacts.whatsapp" :href="`https://wa.me/${contacts.whatsapp.replace(/\D/g, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
+          <a v-if="contacts.whatsapp" :href="`https://wa.me/${contacts.whatsapp.replace(/\D/g, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:opacity-70">
             <UIcon name="i-lucide-message-circle" class="size-4" /> WhatsApp
           </a>
-          <a v-if="contacts.telegram" :href="`https://t.me/${contacts.telegram.replace(/^@/, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
+          <a v-if="contacts.telegram" :href="`https://t.me/${contacts.telegram.replace(/^@/, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:opacity-70">
             <UIcon name="i-lucide-send" class="size-4" /> {{ contacts.telegram }}
           </a>
-          <a v-if="contacts.tiktok" :href="`https://tiktok.com/@${contacts.tiktok.replace(/^@/, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
+          <a v-if="contacts.tiktok" :href="`https://tiktok.com/@${contacts.tiktok.replace(/^@/, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:opacity-70">
             <UIcon name="i-lucide-music-2" class="size-4" /> TikTok
           </a>
         </div>
-        <NuxtLink :to="site" class="text-caption text-ink-gray-400 hover:text-ink-gray-600">{{ $t('shop.poweredByFull') }}</NuxtLink>
+        <NuxtLink :to="site" class="text-caption sf-muted hover:sf-muted">{{ $t('shop.poweredByFull') }}</NuxtLink>
       </div>
     </footer>
 
@@ -385,18 +393,18 @@ const contacts = computed(() => shop.value?.contacts ?? {})
       <template #content>
         <div v-if="quick" :style="styleVars" class="p-5 sm:p-6" style="background: var(--shop-bg)">
           <div class="flex justify-end -mt-1 -mr-1">
-            <button class="p-1.5 text-ink-gray-400 hover:text-ink-gray-700" :aria-label="$t('shop.quick.close')" @click="quick = null">
+            <button class="p-1.5 sf-muted hover:opacity-70" :aria-label="$t('shop.quick.close')" @click="quick = null">
               <UIcon name="i-lucide-x" class="size-5" />
             </button>
           </div>
           <div class="grid sm:grid-cols-2 gap-5">
-            <div class="aspect-[3/4] rounded-xl overflow-hidden bg-white border border-black/5">
+            <div class="aspect-[3/4] rounded-xl overflow-hidden sf-surface border sf-bord">
               <img v-if="quick.preview_url" :src="quick.preview_url" :alt="quick.title" class="w-full h-full object-contain">
-              <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-300"><UIcon name="i-lucide-shirt" class="size-12" /></div>
+              <div v-else class="w-full h-full flex items-center justify-center sf-muted"><UIcon name="i-lucide-shirt" class="size-12" /></div>
             </div>
             <div class="flex flex-col min-w-0">
               <h2 class="text-xl font-bold" style="color: var(--shop-primary)">{{ quick.title }}</h2>
-              <p v-if="quick.description" class="text-sm text-ink-gray-600 mt-2 whitespace-pre-line">{{ quick.description }}</p>
+              <p v-if="quick.description" class="text-sm sf-muted mt-2 whitespace-pre-line">{{ quick.description }}</p>
 
               <div v-if="hasSizes(quick)" class="mt-4 space-y-2">
                 <div v-if="hasColors(quick)" class="flex flex-wrap gap-1.5">
@@ -406,7 +414,7 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                     type="button"
                     :title="c.name"
                     class="size-7 rounded-full border-2 transition-transform hover:scale-110"
-                    :style="{ backgroundColor: c.hex, borderColor: selVariant(quick)?.color_hex === c.hex ? 'var(--shop-primary)' : 'rgba(0,0,0,0.12)' }"
+                    :style="{ backgroundColor: c.hex, borderColor: selVariant(quick)?.color_hex === c.hex ? 'var(--shop-primary)' : 'var(--shop-border)' }"
                     @click="pickColor(quick, c.hex)"
                   />
                 </div>
@@ -418,7 +426,7 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                     :disabled="!v.in_stock"
                     class="min-w-9 px-2.5 py-1.5 rounded-md border text-sm font-medium transition-colors"
                     :class="!v.in_stock ? 'opacity-40 line-through cursor-not-allowed' : ''"
-                    :style="{ borderColor: sel[quick.id] === v.id ? 'var(--shop-primary)' : 'rgba(0,0,0,0.12)', color: sel[quick.id] === v.id ? 'var(--shop-primary)' : undefined }"
+                    :style="{ borderColor: sel[quick.id] === v.id ? 'var(--shop-primary)' : 'var(--shop-border)', color: sel[quick.id] === v.id ? 'var(--shop-primary)' : undefined }"
                     @click="pickSize(quick, v.id)"
                   >{{ v.size }}</button>
                 </div>
@@ -428,15 +436,15 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                 <span class="text-lg font-bold" style="color: var(--shop-primary)">{{ fmtPrice(quick.price) }}</span>
                 <div class="flex items-center gap-2">
                   <button
-                    class="p-2 rounded-lg border border-black/10 text-ink-gray-500 hover:text-ink-gray-800"
+                    class="p-2 rounded-lg border sf-bord sf-muted hover:opacity-80"
                     :title="$t('shop.buy.share')"
                     @click="shareItem(quick)"
                   >
                     <UIcon name="i-lucide-share-2" class="size-4" />
                   </button>
                   <button
-                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                    :style="{ background: 'var(--shop-primary)', borderRadius: 'var(--shop-radius)' }"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    :style="{ background: 'var(--shop-primary)', color: 'var(--shop-on-primary)', borderRadius: 'var(--shop-radius)' }"
                     :disabled="adding === quick.id || !canAdd(quick)"
                     @click="addFromQuick"
                   >
@@ -452,3 +460,11 @@ const contacts = computed(() => shop.value?.contacts ?? {})
     </UModal>
   </div>
 </template>
+
+<style scoped>
+/* Токены темы витрины (свет/тьма) — заменяют хардкод ink-gray/white/black-границы,
+   чтобы витрина корректно читалась и в тёмной теме. */
+.sf-muted { color: var(--shop-muted); }
+.sf-surface { background: var(--shop-surface); }
+.sf-bord { border-color: var(--shop-border); }
+</style>

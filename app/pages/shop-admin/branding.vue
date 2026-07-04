@@ -6,7 +6,7 @@
 import { safeCssUrl } from '~/utils/safeUrl'
 import {
   THEME_PRESETS, SHOP_FONT_KEYS, SHOP_RADIUS_KEYS, HERO_LAYOUTS,
-  fontStack, radiusValue, cardRatio, type ThemePreset,
+  resolveTheme, cardRatio, type ThemePreset,
 } from '~~/shared/config/shop-theme'
 
 definePageMeta({ layout: 'shop-admin', middleware: 'shop-owner' })
@@ -22,7 +22,7 @@ const { data: shop } = await useAsyncData('my-shop', () => getMine())
 const form = reactive({
   name: '',
   logo_url: null as string | null,
-  theme: { primary: '#6b1e2e', accent: '#6b1e2e', bg: '#faf7f2', font: 'modern', radius: 'soft' },
+  theme: { primary: '#6b1e2e', accent: '#6b1e2e', bg: '#faf7f2', font: 'modern', radius: 'soft', mode: 'light' },
   hero: { title: '', subtitle: '', banner_url: '', layout: 'left', overlay: 45, cta_text: '' },
   contacts: { instagram: '', phone: '', whatsapp: '', telegram: '', tiktok: '' },
   layout: {
@@ -44,6 +44,7 @@ watchEffect(() => {
   form.theme.bg = th.bg || '#faf7f2'
   form.theme.font = th.font || 'modern'
   form.theme.radius = th.radius || 'soft'
+  form.theme.mode = th.mode || 'light'
   const h = (s.hero ?? {}) as Record<string, unknown>
   form.hero.title = (h.title as string) || ''
   form.hero.subtitle = (h.subtitle as string) || ''
@@ -84,18 +85,24 @@ function applyPreset(p: ThemePreset) {
   form.theme.bg = p.bg
   form.theme.font = p.font
   form.theme.radius = p.radius
+  form.theme.mode = p.mode || 'light'
   toast.add({ title: t('shopAdmin.branding.presetApplied', { name: t(`shopAdmin.branding.presetName.${p.key}`) }), color: 'success' })
 }
 
-// живое превью — CSS-переменные из формы
+// живое превью — резолв темы (свет/тьма) как на витрине
 const previewBanner = computed(() => safeCssUrl(form.hero.banner_url))
 const hasPreviewBanner = computed(() => !!previewBanner.value)
+const pt = computed(() => resolveTheme(form.theme))
 const previewVars = computed(() => ({
-  '--p-primary': form.theme.primary,
-  '--p-bg': form.theme.bg,
-  '--p-radius': radiusValue(form.theme.radius),
-  fontFamily: fontStack(form.theme.font),
-  background: form.theme.bg,
+  '--p-primary': pt.value.primary,
+  '--p-on': pt.value.onPrimary,
+  '--p-radius': pt.value.radius,
+  '--p-surface': pt.value.surface,
+  '--p-border': pt.value.border,
+  '--p-muted': pt.value.muted,
+  fontFamily: pt.value.font,
+  background: pt.value.bg,
+  color: pt.value.text,
 }))
 
 const saving = ref(false)
@@ -216,6 +223,22 @@ async function save() {
                 <USelect v-model="form.theme.radius" :items="radiusOptions" class="w-full" />
               </UFormField>
             </div>
+
+            <UFormField :label="$t('shopAdmin.branding.mode')">
+              <div class="flex gap-2">
+                <button
+                  v-for="m in ['light', 'dark']"
+                  :key="m"
+                  type="button"
+                  class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md border text-sm transition-colors"
+                  :class="form.theme.mode === m ? 'border-ink-burgundy bg-ink-burgundy/5 font-semibold' : 'border-ink-gray-200 text-ink-gray-500'"
+                  @click="form.theme.mode = m"
+                >
+                  <UIcon :name="m === 'dark' ? 'i-lucide-moon' : 'i-lucide-sun'" class="size-4" />
+                  {{ $t(`shopAdmin.branding.modeOpt.${m}`) }}
+                </button>
+              </div>
+            </UFormField>
           </div>
         </UiPanel>
 
@@ -322,11 +345,11 @@ async function save() {
         <UiSectionLabel accent>{{ $t('shopAdmin.branding.preview') }}</UiSectionLabel>
         <div class="mt-3 rounded-2xl overflow-hidden border border-ink-gray-200 shadow-sm" :style="previewVars">
           <!-- объявление -->
-          <div v-if="form.layout.announcement.on && form.layout.announcement.text" class="text-center text-xs font-medium px-3 py-1.5 text-white" :style="{ background: form.theme.primary }">
+          <div v-if="form.layout.announcement.on && form.layout.announcement.text" class="text-center text-xs font-medium px-3 py-1.5" :style="{ background: form.theme.primary, color: 'var(--p-on)' }">
             {{ form.layout.announcement.text }}
           </div>
           <!-- шапка -->
-          <div class="h-12 flex items-center px-4 gap-2 border-b border-black/5">
+          <div class="h-12 flex items-center px-4 gap-2 border-b" :style="{ borderColor: 'var(--p-border)' }">
             <img v-if="form.logo_url" :src="form.logo_url" alt="" class="h-6 w-auto object-contain">
             <span class="font-bold text-sm" :style="{ color: form.theme.primary }">{{ form.name || '—' }}</span>
           </div>
@@ -341,30 +364,30 @@ async function save() {
               <h3 class="text-xl font-bold" :style="{ color: hasPreviewBanner ? '#fff' : form.theme.primary }">
                 {{ form.hero.title || form.name || '—' }}
               </h3>
-              <p class="text-xs mt-2" :class="hasPreviewBanner ? 'text-white/85' : 'text-ink-gray-600'">
+              <p class="text-xs mt-2" :class="hasPreviewBanner ? 'text-white/85' : ''" :style="hasPreviewBanner ? undefined : { color: 'var(--p-muted)' }">
                 {{ form.hero.subtitle || $t('shopAdmin.branding.previewSubtitle') }}
               </p>
-              <span v-if="form.hero.cta_text" class="inline-block mt-3 px-3 py-1.5 text-xs font-semibold text-white" :style="{ background: form.theme.primary, borderRadius: 'var(--p-radius)' }">
+              <span v-if="form.hero.cta_text" class="inline-block mt-3 px-3 py-1.5 text-xs font-semibold" :style="{ background: form.theme.primary, color: 'var(--p-on)', borderRadius: 'var(--p-radius)' }">
                 {{ form.hero.cta_text }}
               </span>
             </div>
           </div>
           <!-- карточки -->
           <div class="p-4 grid grid-cols-2 gap-3">
-            <div v-for="n in 2" :key="n" class="overflow-hidden bg-white border border-black/5" :style="{ borderRadius: 'var(--p-radius)' }">
-              <div class="bg-black/5 flex items-center justify-center" :style="{ aspectRatio: cardRatio(form.layout.cards.ratio) }">
-                <UIcon name="i-lucide-shirt" class="size-8 text-black/15" />
+            <div v-for="n in 2" :key="n" class="overflow-hidden border" :style="{ background: 'var(--p-surface)', borderColor: 'var(--p-border)', borderRadius: 'var(--p-radius)' }">
+              <div class="flex items-center justify-center" :style="{ background: 'var(--p-border)', aspectRatio: cardRatio(form.layout.cards.ratio) }">
+                <UIcon name="i-lucide-shirt" class="size-8 opacity-30" :style="{ color: 'var(--p-muted)' }" />
               </div>
               <div class="p-2 space-y-1.5">
-                <div v-if="form.layout.cards.showDesc" class="h-1.5 w-2/3 rounded bg-black/10" />
+                <div v-if="form.layout.cards.showDesc" class="h-1.5 w-2/3 rounded" :style="{ background: 'var(--p-border)' }" />
                 <div v-if="form.layout.cards.showPrice" class="h-3 w-1/3 rounded" :style="{ background: form.theme.primary, opacity: 0.8 }" />
               </div>
             </div>
           </div>
           <!-- о магазине -->
-          <div v-if="form.layout.about.on && (form.layout.about.title || form.layout.about.text)" class="px-5 py-4 border-t border-black/5 text-center">
+          <div v-if="form.layout.about.on && (form.layout.about.title || form.layout.about.text)" class="px-5 py-4 border-t text-center" :style="{ borderColor: 'var(--p-border)' }">
             <p v-if="form.layout.about.title" class="text-sm font-bold" :style="{ color: form.theme.primary }">{{ form.layout.about.title }}</p>
-            <p v-if="form.layout.about.text" class="text-xs text-ink-gray-600 mt-1 line-clamp-3 whitespace-pre-line">{{ form.layout.about.text }}</p>
+            <p v-if="form.layout.about.text" class="text-xs mt-1 line-clamp-3 whitespace-pre-line" :style="{ color: 'var(--p-muted)' }">{{ form.layout.about.text }}</p>
           </div>
         </div>
       </div>
