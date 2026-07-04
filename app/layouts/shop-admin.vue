@@ -5,6 +5,7 @@ const { t } = useI18n()
 const nav = computed(() => [
   { label: t('shopAdmin.nav.dashboard'), to: '/shop-admin', icon: 'i-lucide-layout-dashboard' },
   { label: t('shopAdmin.nav.items'), to: '/shop-admin/items', icon: 'i-lucide-shopping-bag' },
+  { label: t('shopAdmin.nav.promos'), to: '/shop-admin/promos', icon: 'i-lucide-ticket-percent' },
   { label: t('shopAdmin.nav.orders'), to: '/shop-admin/orders', icon: 'i-lucide-receipt' },
   { label: t('shopAdmin.nav.finance'), to: '/shop-admin/finance', icon: 'i-lucide-wallet' },
   { label: t('shopAdmin.nav.branding'), to: '/shop-admin/branding', icon: 'i-lucide-palette' },

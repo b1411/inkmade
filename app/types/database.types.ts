@@ -601,6 +601,7 @@ export type Database = {
         Row: {
           design_id: string | null
           id: string
+          line_discount: number
           order_id: string
           print_id: string | null
           print_method: string | null
@@ -608,12 +609,14 @@ export type Database = {
           quantity: number
           shop_id: string | null
           unit_cost: number
+          unit_markup: number
           unit_price: number
           variant_id: string | null
         }
         Insert: {
           design_id?: string | null
           id?: string
+          line_discount?: number
           order_id: string
           print_id?: string | null
           print_method?: string | null
@@ -621,12 +624,14 @@ export type Database = {
           quantity?: number
           shop_id?: string | null
           unit_cost?: number
+          unit_markup?: number
           unit_price?: number
           variant_id?: string | null
         }
         Update: {
           design_id?: string | null
           id?: string
+          line_discount?: number
           order_id?: string
           print_id?: string | null
           print_method?: string | null
@@ -634,6 +639,7 @@ export type Database = {
           quantity?: number
           shop_id?: string | null
           unit_cost?: number
+          unit_markup?: number
           unit_price?: number
           variant_id?: string | null
         }
@@ -887,6 +893,56 @@ export type Database = {
             columns: ["design_id"]
             isOneToOne: false
             referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_promo_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          max_uses: number | null
+          min_order: number
+          shop_id: string
+          used_count: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          discount_type: string
+          discount_value: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order?: number
+          shop_id: string
+          used_count?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          max_uses?: number | null
+          min_order?: number
+          shop_id?: string
+          used_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_promo_codes_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
             referencedColumns: ["id"]
           },
         ]
@@ -1778,6 +1834,7 @@ export type Database = {
       shop_orders: { Args: { p_shop_id: string }; Returns: Json }
       shop_track: { Args: { p_item_id?: string; p_shop_id: string; p_type: string }; Returns: undefined }
       shop_analytics: { Args: { p_days?: number; p_shop_id: string }; Returns: Json }
+      shop_promo_validate: { Args: { p_code: string; p_shop_id: string; p_subtotal: number }; Returns: Json }
       mark_payout_paid: { Args: { p_payout_id: string }; Returns: undefined }
       refund_ai_quota: {
         Args: { p_month: string; p_user_id: string }

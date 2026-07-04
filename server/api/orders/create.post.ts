@@ -5,6 +5,7 @@ import { METHOD_SURCHARGE } from '~~/shared/config/print-methods'
 import { calcPrice } from '~~/shared/config/pricing'
 import { LEGAL } from '~~/shared/config/legal'
 import { computePromoDiscount } from '~~/server/utils/promo'
+import { resolveShopPromo } from '~~/server/utils/shop-promo'
 import { orderCreateSchema, parseOrThrow } from '~~/server/utils/schemas'
 
 // Создание заказа из корзины НА СЕРВЕРЕ (§9, аудит C7).
@@ -40,7 +41,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── пересчёт каждой позиции по БД ──────────────────────────────
-  interface Priced { item: Item; unitPrice: number; unitCost: number; shopId: string | null }
+  interface Priced { item: Item; unitPrice: number; unitCost: number; shopId: string | null; unitMarkup: number }
   const priced: Priced[] = []
   // Проверка остатка (анти-оверселл): суммируем потребность по варианту и текущий
   // остаток. Это дружелюбный pre-check ДО оплаты — авторитетная атомарная проверка
@@ -89,6 +90,7 @@ export default defineEventHandler(async (event) => {
 
     let unitPrice: number
     let shopId: string | null = null
+    let unitMarkup = 0
 
     if (it.shopItemId) {
       // Позиция куплена в B2B-магазине: розничную цену ставит владелец (shop_items.price).
@@ -105,6 +107,8 @@ export default defineEventHandler(async (event) => {
       unitPrice = Number(si.price) + Number(si.markup)
       if (!(unitPrice > 0)) throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции магазина' })
       shopId = si.shop_id
+      // наценка v2: снапшот наценки владельца — при оплате идёт ему 100% (apply_paid)
+      unitMarkup = Number(si.markup) || 0
     } else {
       // мультизона (§7.1): печать считается по каждой занятой зоне отдельно.
       // Режим берём ТОЛЬКО из материала по БД — клиентскому spec.print_mode
@@ -151,7 +155,7 @@ export default defineEventHandler(async (event) => {
       }
       unitPrice = breakdown.unitPrice
     }
-    priced.push({ item: it, unitPrice, unitCost: Number(variant.blank_cost) || 0, shopId })
+    priced.push({ item: it, unitPrice, unitCost: Number(variant.blank_cost) || 0, shopId, unitMarkup })
   }
 
   // анти-оверселл: ни одна позиция не должна превышать текущий остаток варианта
@@ -167,11 +171,20 @@ export default defineEventHandler(async (event) => {
   // промокод (§6.7): скидка считается по БД read-only (валидность/лимит/срок —
   // в evaluatePromo). Учёт использования (used_count++) НЕ здесь, а при оплате,
   // в apply_paid (миграция 0055) — иначе брошенная корзина «сжигала» код.
+  // Платформенный код — приоритет; иначе пробуем код МАГАЗИНА (расход владельца,
+  // распределяется по позициям как line_discount, база платформы защищена).
   let discount = 0
   let promoCode: string | null = null
+  let shopLineDiscount: Record<string, number> = {}
   if (body.promoCode) {
     const promo = await computePromoDiscount(svc, body.promoCode, subtotal)
-    if (promo) { discount = promo.discount; promoCode = promo.code }
+    if (promo) {
+      discount = promo.discount; promoCode = promo.code
+    } else {
+      const shopLines = items.filter(i => i.shopItemId).map(i => ({ shopItemId: i.shopItemId!, quantity: i.quantity }))
+      const shopPromo = await resolveShopPromo(svc, body.promoCode, shopLines)
+      if (shopPromo) { discount = shopPromo.discount; promoCode = shopPromo.code; shopLineDiscount = shopPromo.byItem }
+    }
   }
   const total = Math.max(0, subtotal - discount)
 
@@ -193,7 +206,7 @@ export default defineEventHandler(async (event) => {
   // order_items) + созданные дизайны. Согласия §24 — с проверкой ошибки (юр. точка).
   const createdDesignIds: string[] = []
   try {
-    for (const { item, unitPrice, unitCost, shopId } of priced) {
+    for (const { item, unitPrice, unitCost, shopId, unitMarkup } of priced) {
       const { data: design, error: dErr } = await svc.from('designs')
         .insert({
           user_id: uid,
@@ -234,6 +247,9 @@ export default defineEventHandler(async (event) => {
         print_id: printId,
         print_owner_id: printOwnerId,
         shop_id: shopId,
+        // наценка v2 + скидка кода магазина (снапшот для авторитетного расчёта доли в apply_paid)
+        unit_markup: unitMarkup,
+        line_discount: (item.shopItemId ? shopLineDiscount[item.shopItemId] : 0) ?? 0,
       })
       if (iErr) throw createError({ statusCode: 500, statusMessage: 'Не удалось сохранить позицию' })
     }

@@ -41,7 +41,14 @@ async function applyPromo() {
   try {
     const res = await $fetch<{ valid: boolean; discount?: number; code?: string }>('/api/promo/validate', {
       method: 'POST',
-      body: { code: promo.code.trim(), subtotal: cart.total.value },
+      body: {
+        code: promo.code.trim(),
+        subtotal: cart.total.value,
+        // позиции магазина — чтобы предпросмотр распознал промокод конкретного магазина
+        items: cart.items.value
+          .filter(i => i.shopItemId)
+          .map(i => ({ shopItemId: i.shopItemId, quantity: i.quantity })),
+      },
     })
     if (res.valid && res.discount) {
       promo.discount = res.discount

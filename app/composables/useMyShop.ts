@@ -6,6 +6,7 @@ import type { Database } from '~/types/database.types'
 // публикует свои сохранённые дизайны как позиции витрины.
 export type Shop = Database['public']['Tables']['shops']['Row']
 export type ShopItem = Database['public']['Tables']['shop_items']['Row']
+export type ShopPromoCode = Database['public']['Tables']['shop_promo_codes']['Row']
 
 // заказ магазина (RPC shop_orders) — только позиции своего магазина + минимум PII
 export interface ShopOrderLine {
@@ -110,6 +111,33 @@ export const useMyShop = () => {
     if (error) throw error
   }
 
+  // ── промокоды магазина (Фаза B5) — владелец заводит свои коды (RLS по владению) ──
+  async function listPromos(shopId: string): Promise<ShopPromoCode[]> {
+    const { data, error } = await supabase
+      .from('shop_promo_codes')
+      .select('*')
+      .eq('shop_id', shopId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data ?? []
+  }
+
+  async function savePromo(promo: Database['public']['Tables']['shop_promo_codes']['Insert'] & { id?: string }) {
+    if (promo.id) {
+      const { id, ...patch } = promo
+      const { error } = await supabase.from('shop_promo_codes').update(patch).eq('id', id)
+      if (error) throw error
+    } else {
+      const { error } = await supabase.from('shop_promo_codes').insert(promo)
+      if (error) throw error
+    }
+  }
+
+  async function deletePromo(id: string) {
+    const { error } = await supabase.from('shop_promo_codes').delete().eq('id', id)
+    if (error) throw error
+  }
+
   // финансы магазина (Фаза B4): баланс + история начислений (RLS owner/admin read)
   async function finance(shopId: string) {
     const [bal, earn] = await Promise.all([
@@ -152,5 +180,5 @@ export const useMyShop = () => {
     return data ?? []
   }
 
-  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, orders, analytics }
+  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, orders, analytics, listPromos, savePromo, deletePromo }
 }

@@ -14,10 +14,16 @@ const { data: designs } = await useAsyncData('my-designs', () => myDesigns())
 
 const fmtPrice = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
 
-const blank = () => ({ id: '', designId: '', title: '', description: '', price: 0, sort: 0, isActive: true, previewUrl: '' as string | null })
+const blank = () => ({ id: '', designId: '', title: '', description: '', price: 0, markup: 0, sort: 0, isActive: true, previewUrl: '' as string | null })
 const form = reactive(blank())
 const saving = ref(false)
 const editing = computed(() => !!form.id)
+
+// наценка v2: покупатель платит price+markup; владелец получает 100% наценки
+// + revenue_share_pct% от базы (price). Живой расчёт для формы.
+const rate = computed(() => Number(shop.value?.revenue_share_pct) || 0)
+const buyerPays = computed(() => (Number(form.price) || 0) + (Number(form.markup) || 0))
+const ownerGets = computed(() => (Number(form.markup) || 0) + Math.round((Number(form.price) || 0) * rate.value / 100))
 
 // при выборе дизайна — подставить превью/название
 watch(() => form.designId, (id) => {
@@ -32,7 +38,7 @@ watch(() => form.designId, (id) => {
 function startEdit(it: NonNullable<typeof items.value>[number]) {
   Object.assign(form, {
     id: it.id, designId: it.design_id ?? '', title: it.title, description: it.description ?? '',
-    price: Number(it.price), sort: it.sort, isActive: it.is_active, previewUrl: it.preview_url,
+    price: Number(it.price), markup: Number(it.markup), sort: it.sort, isActive: it.is_active, previewUrl: it.preview_url,
   })
 }
 function reset() { Object.assign(form, blank()) }
@@ -40,8 +46,8 @@ function reset() { Object.assign(form, blank()) }
 async function onSave() {
   if (!shop.value) return
   if (!form.title.trim()) { toast.add({ title: t('shopAdmin.items.titleRequired'), color: 'warning' }); return }
-  // активная позиция обязана иметь цену > 0 (иначе витрина покажет её, но заказ упрётся в 400)
-  if (form.isActive && !(Number(form.price) > 0)) { toast.add({ title: t('shopAdmin.items.priceRequired'), color: 'warning' }); return }
+  // активная позиция обязана иметь цену > 0 (price+markup; иначе витрина покажет её, но заказ упрётся в 400)
+  if (form.isActive && !(buyerPays.value > 0)) { toast.add({ title: t('shopAdmin.items.priceRequired'), color: 'warning' }); return }
   saving.value = true
   try {
     const d = (designs.value ?? []).find(x => x.id === form.designId)
@@ -55,6 +61,7 @@ async function onSave() {
       description: form.description.trim() || null,
       preview_url: form.previewUrl,
       price: Number(form.price) || 0,
+      markup: Number(form.markup) || 0,
       sort: Number(form.sort) || 0,
       is_active: form.isActive,
     })
@@ -106,7 +113,7 @@ async function onDelete(it: NonNullable<typeof items.value>[number]) {
                   {{ it.is_active ? $t('shopAdmin.items.active') : $t('shopAdmin.items.hidden') }}
                 </UBadge>
               </div>
-              <p class="font-bold text-ink-burgundy">{{ fmtPrice(Number(it.price)) }}</p>
+              <p class="font-bold text-ink-burgundy">{{ fmtPrice(Number(it.price) + Number(it.markup)) }}</p>
               <div class="flex items-center gap-1 pt-1">
                 <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" @click="startEdit(it)" />
                 <UButton size="xs" color="neutral" variant="ghost" :icon="it.is_active ? 'i-lucide-eye-off' : 'i-lucide-eye'" @click="toggleActive(it)" />
@@ -140,11 +147,32 @@ async function onDelete(it: NonNullable<typeof items.value>[number]) {
           <UFormField :label="$t('shopAdmin.items.itemDescription')">
             <UTextarea v-model="form.description" :rows="2" class="w-full" />
           </UFormField>
-          <UFormField :label="$t('shopAdmin.items.price')">
-            <UInput v-model.number="form.price" type="number" min="0" class="w-full">
-              <template #trailing><span class="text-caption text-ink-gray-400">₸</span></template>
-            </UInput>
-          </UFormField>
+          <div class="grid grid-cols-2 gap-3">
+            <UFormField :label="$t('shopAdmin.items.price')" :help="$t('shopAdmin.items.priceHelp')">
+              <UInput v-model.number="form.price" type="number" min="0" class="w-full">
+                <template #trailing><span class="text-caption text-ink-gray-400">₸</span></template>
+              </UInput>
+            </UFormField>
+            <UFormField :label="$t('shopAdmin.items.markup')" :help="$t('shopAdmin.items.markupHelp')">
+              <UInput v-model.number="form.markup" type="number" min="0" class="w-full">
+                <template #trailing><span class="text-caption text-ink-gray-400">₸</span></template>
+              </UInput>
+            </UFormField>
+          </div>
+
+          <!-- наценка v2: живой расчёт что платит покупатель и что получает владелец -->
+          <div class="rounded-lg bg-ink-gray-50 border border-ink-gray-100 p-3 space-y-1.5 text-caption">
+            <div class="flex items-center justify-between">
+              <span class="text-ink-gray-500">{{ $t('shopAdmin.items.buyerPays') }}</span>
+              <span class="font-bold text-ink-black">{{ fmtPrice(buyerPays) }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-ink-gray-500">{{ $t('shopAdmin.items.youGet') }}</span>
+              <span class="font-bold text-ink-success">{{ fmtPrice(ownerGets) }}</span>
+            </div>
+            <p class="text-ink-gray-400 pt-0.5">{{ $t('shopAdmin.items.economicsHint', { rate }) }}</p>
+          </div>
+
           <div class="flex items-center gap-4">
             <UFormField :label="$t('shopAdmin.items.sort')">
               <UInput v-model.number="form.sort" type="number" class="w-24" />

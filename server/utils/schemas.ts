@@ -92,6 +92,11 @@ export const designImportSchema = z.object({
 export const promoValidateSchema = z.object({
   code: z.string().trim().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/).optional(),
   subtotal: z.number().finite().positive({ message: 'Некорректная сумма' }),
+  // позиции магазина в корзине — чтобы предпросмотр распознал промокод магазина
+  items: z.array(z.object({
+    shopItemId: z.uuid(),
+    quantity: z.number().int().min(1).max(1000),
+  })).max(100).optional(),
 })
 
 // ── POST /api/ai/generate ───────────────────────────────────────
