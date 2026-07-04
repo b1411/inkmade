@@ -35,6 +35,7 @@ export interface ShopBrandingPatch {
   theme?: Database['public']['Tables']['shops']['Row']['theme']
   hero?: Database['public']['Tables']['shops']['Row']['hero']
   contacts?: Database['public']['Tables']['shops']['Row']['contacts']
+  layout?: Database['public']['Tables']['shops']['Row']['layout']
   is_public?: boolean
   access_code?: string | null
 }

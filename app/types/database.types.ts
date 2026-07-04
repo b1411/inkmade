@@ -771,6 +771,7 @@ export type Database = {
           hero: Json
           id: string
           is_public: boolean
+          layout: Json
           logo_url: string | null
           name: string
           owner_id: string | null
@@ -789,6 +790,7 @@ export type Database = {
           hero?: Json
           id?: string
           is_public?: boolean
+          layout?: Json
           logo_url?: string | null
           name: string
           owner_id?: string | null
@@ -807,6 +809,7 @@ export type Database = {
           hero?: Json
           id?: string
           is_public?: boolean
+          layout?: Json
           logo_url?: string | null
           name?: string
           owner_id?: string | null
@@ -1730,6 +1733,7 @@ export type Database = {
           hero: Json
           id: string
           is_public: boolean
+          layout: Json
           logo_url: string | null
           name: string
           owner_id: string | null

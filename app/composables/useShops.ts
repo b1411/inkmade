@@ -4,9 +4,16 @@ import type { Database } from '~/types/database.types'
 // SECURITY DEFINER RPC shop_storefront (аноним не видит access_code/приватные поля).
 // Админ создаёт магазин из заявки (admin_create_shop) и видит список (admin_list_shops).
 
-export interface ShopTheme { primary?: string; bg?: string; accent?: string }
-export interface ShopHero { title?: string; subtitle?: string; banner_url?: string }
-export interface ShopContacts { instagram?: string; phone?: string; whatsapp?: string }
+// Конструктор витрины v2 (см. shared/config/shop-theme.ts):
+export interface ShopTheme { primary?: string; bg?: string; accent?: string; font?: string; radius?: string }
+export interface ShopHero { title?: string; subtitle?: string; banner_url?: string; layout?: string; overlay?: number; cta_text?: string }
+export interface ShopContacts { instagram?: string; phone?: string; whatsapp?: string; telegram?: string; tiktok?: string }
+export interface StorefrontLayout {
+  announcement?: { on?: boolean; text?: string }
+  about?: { on?: boolean; title?: string; text?: string }
+  showHero?: boolean
+  cards?: { ratio?: string; showPrice?: boolean; showDesc?: boolean }
+}
 
 export interface StorefrontShop {
   id: string
@@ -16,6 +23,7 @@ export interface StorefrontShop {
   theme: ShopTheme
   hero: ShopHero
   contacts: ShopContacts
+  layout: StorefrontLayout
   closed_mode: boolean
 }
 export interface StorefrontVariant {

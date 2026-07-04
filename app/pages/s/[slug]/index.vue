@@ -6,6 +6,7 @@
 import type { Json } from '~/types/database.types'
 import type { StorefrontItem } from '~/composables/useShops'
 import { safeCssUrl } from '~/utils/safeUrl'
+import { fontStack, radiusValue, heroLayout, cardRatio, heroOverlay } from '~~/shared/config/shop-theme'
 
 definePageMeta({ layout: false })
 
@@ -39,12 +40,39 @@ useSeoMeta({
   ogImage: () => shop.value?.hero?.banner_url || undefined,
 })
 
-// тема магазина → CSS-переменные (с фолбэком на бренд INKMADE)
+// тема магазина → CSS-переменные (с фолбэком на бренд INKMADE). Конструктор витрины v2:
+// шрифт и скругление резолвятся через shared/config/shop-theme (с безопасным фолбэком).
 const styleVars = computed(() => ({
   '--shop-primary': shop.value?.theme?.primary || '#6b1e2e',
   '--shop-accent': shop.value?.theme?.accent || shop.value?.theme?.primary || '#6b1e2e',
   '--shop-bg': shop.value?.theme?.bg || '#faf7f2',
+  '--shop-font': fontStack(shop.value?.theme?.font),
+  '--shop-radius': radiusValue(shop.value?.theme?.radius),
+  'fontFamily': 'var(--shop-font)',
 }))
+
+// ── конфиг раскладки/секций/карточек (модули B/C/D) ──────────────────────────
+const layoutCfg = computed(() => shop.value?.layout ?? {})
+const showHero = computed(() => layoutCfg.value.showHero !== false)
+const heroLay = computed(() => heroLayout(shop.value?.hero?.layout))
+const heroOverlayPct = computed(() => heroOverlay(shop.value?.hero?.overlay))
+const heroCta = computed(() => (shop.value?.hero?.cta_text ?? '').trim())
+const announce = computed(() => {
+  const a = layoutCfg.value.announcement
+  return a?.on && a.text?.trim() ? a.text.trim() : ''
+})
+const about = computed(() => {
+  const a = layoutCfg.value.about
+  return a?.on && (a.title?.trim() || a.text?.trim()) ? a : null
+})
+const cardsCfg = computed(() => layoutCfg.value.cards ?? {})
+const cardRatioVal = computed(() => cardRatio(cardsCfg.value.ratio))
+const showPrice = computed(() => cardsCfg.value.showPrice !== false)
+const showDesc = computed(() => cardsCfg.value.showDesc !== false)
+
+function scrollToItems() {
+  if (import.meta.client) document.getElementById('shop-items')?.scrollIntoView({ behavior: 'smooth' })
+}
 
 const fmtPrice = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
 
@@ -156,6 +184,11 @@ const contacts = computed(() => shop.value?.contacts ?? {})
 
 <template>
   <div v-if="shop" :style="styleVars" class="min-h-screen flex flex-col" style="background: var(--shop-bg)">
+    <!-- строка-объявление (модуль C) -->
+    <div v-if="announce" class="text-center text-sm font-medium px-4 py-2 text-white" style="background: var(--shop-primary)">
+      {{ announce }}
+    </div>
+
     <!-- шапка магазина -->
     <header class="border-b border-black/5">
       <div class="mx-auto max-w-(--container-max) px-6 h-16 flex items-center justify-between">
@@ -167,33 +200,53 @@ const contacts = computed(() => shop.value?.contacts ?? {})
       </div>
     </header>
 
-    <!-- hero -->
+    <!-- hero (модуль B: раскладка/затемнение/CTA; тумблер показа — модуль C) -->
     <section
+      v-if="showHero"
       class="relative overflow-hidden"
       :style="hasBanner ? `background-image:url('${bannerUrl}');background-size:cover;background-position:center` : ''"
     >
-      <div class="absolute inset-0" :style="hasBanner ? 'background:rgba(0,0,0,0.45)' : ''" />
-      <div class="relative mx-auto max-w-(--container-max) px-6 py-16 sm:py-24">
+      <div v-if="hasBanner" class="absolute inset-0" :style="{ background: `rgba(0,0,0,${heroOverlayPct / 100})` }" />
+      <div
+        class="relative mx-auto max-w-(--container-max) px-6"
+        :class="[
+          heroLay === 'compact' ? 'py-10 sm:py-12' : 'py-16 sm:py-24',
+          heroLay === 'center' ? 'text-center flex flex-col items-center' : '',
+        ]"
+      >
         <h1
-          class="text-4xl sm:text-5xl font-bold max-w-2xl"
-          :class="hasBanner ? 'text-white' : ''"
+          class="font-bold"
+          :class="[
+            heroLay === 'compact' ? 'text-3xl sm:text-4xl' : 'text-4xl sm:text-5xl',
+            heroLay === 'center' ? 'max-w-3xl' : 'max-w-2xl',
+            hasBanner ? 'text-white' : '',
+          ]"
           :style="hasBanner ? '' : 'color: var(--shop-primary)'"
         >
           {{ shop.hero?.title || shop.name }}
         </h1>
         <p
           v-if="shop.hero?.subtitle"
-          class="text-lg mt-4 max-w-xl"
-          :class="hasBanner ? 'text-white/85' : 'text-ink-gray-600'"
+          class="text-lg mt-4"
+          :class="[heroLay === 'center' ? 'max-w-2xl' : 'max-w-xl', hasBanner ? 'text-white/85' : 'text-ink-gray-600']"
         >
           {{ shop.hero.subtitle }}
         </p>
+        <button
+          v-if="heroCta"
+          class="mt-6 inline-flex items-center gap-1.5 px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          :style="{ background: 'var(--shop-primary)', borderRadius: 'var(--shop-radius)' }"
+          @click="scrollToItems"
+        >
+          {{ heroCta }}
+          <UIcon name="i-lucide-arrow-down" class="size-4" />
+        </button>
       </div>
     </section>
 
     <!-- контент -->
     <main class="flex-1">
-      <div class="mx-auto max-w-(--container-max) px-6 py-12">
+      <div id="shop-items" class="mx-auto max-w-(--container-max) px-6 py-12">
         <!-- закрытый магазин: запрос кода -->
         <div v-if="isClosed" class="max-w-sm mx-auto text-center py-16">
           <UIcon name="i-lucide-lock" class="size-10 mx-auto text-ink-gray-400" />
@@ -221,11 +274,13 @@ const contacts = computed(() => shop.value?.contacts ?? {})
             <article
               v-for="it in items"
               :key="it.id"
-              class="group rounded-xl overflow-hidden bg-white border border-black/5 flex flex-col"
+              class="group overflow-hidden bg-white border border-black/5 flex flex-col"
+              :style="{ borderRadius: 'var(--shop-radius)' }"
             >
               <button
                 type="button"
-                class="aspect-[3/4] bg-ink-cream/40 overflow-hidden block w-full cursor-pointer"
+                class="bg-ink-cream/40 overflow-hidden block w-full cursor-pointer"
+                :style="{ aspectRatio: cardRatioVal }"
                 :aria-label="it.title"
                 @click="openQuick(it)"
               >
@@ -241,7 +296,7 @@ const contacts = computed(() => shop.value?.contacts ?? {})
               </button>
               <div class="p-4 flex-1 flex flex-col">
                 <h3 class="font-semibold">{{ it.title }}</h3>
-                <p v-if="it.description" class="text-caption text-ink-gray-500 mt-1 line-clamp-2">{{ it.description }}</p>
+                <p v-if="it.description && showDesc" class="text-caption text-ink-gray-500 mt-1 line-clamp-2">{{ it.description }}</p>
 
                 <!-- выбор цвета/размера (сиблинги того же продукта+материала) -->
                 <div v-if="hasSizes(it)" class="mt-3 space-y-2">
@@ -274,10 +329,11 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                 </div>
 
                 <div class="mt-auto pt-3 flex items-center justify-between gap-2">
-                  <span class="font-bold" style="color: var(--shop-primary)">{{ fmtPrice(it.price) }}</span>
+                  <span v-if="showPrice" class="font-bold" style="color: var(--shop-primary)">{{ fmtPrice(it.price) }}</span>
+                  <span v-else />
                   <button
-                    class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                    :style="{ background: 'var(--shop-primary)' }"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    :style="{ background: 'var(--shop-primary)', borderRadius: 'var(--shop-radius)' }"
                     :disabled="adding === it.id || !canAdd(it)"
                     @click="addToCart(it)"
                   >
@@ -292,6 +348,14 @@ const contacts = computed(() => shop.value?.contacts ?? {})
       </div>
     </main>
 
+    <!-- блок «О магазине» (модуль C) -->
+    <section v-if="about" class="border-t border-black/5" style="background: color-mix(in srgb, var(--shop-primary) 4%, transparent)">
+      <div class="mx-auto max-w-3xl px-6 py-12 text-center">
+        <h2 v-if="about.title" class="text-2xl font-bold" style="color: var(--shop-primary)">{{ about.title }}</h2>
+        <p v-if="about.text" class="mt-3 text-ink-gray-600 whitespace-pre-line leading-relaxed">{{ about.text }}</p>
+      </div>
+    </section>
+
     <!-- футер -->
     <footer class="border-t border-black/5 mt-8">
       <div class="mx-auto max-w-(--container-max) px-6 py-8 flex flex-wrap items-center justify-between gap-4">
@@ -301,6 +365,15 @@ const contacts = computed(() => shop.value?.contacts ?? {})
           </a>
           <a v-if="contacts.phone" :href="`tel:${contacts.phone}`" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
             <UIcon name="i-lucide-phone" class="size-4" /> {{ contacts.phone }}
+          </a>
+          <a v-if="contacts.whatsapp" :href="`https://wa.me/${contacts.whatsapp.replace(/\D/g, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
+            <UIcon name="i-lucide-message-circle" class="size-4" /> WhatsApp
+          </a>
+          <a v-if="contacts.telegram" :href="`https://t.me/${contacts.telegram.replace(/^@/, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
+            <UIcon name="i-lucide-send" class="size-4" /> {{ contacts.telegram }}
+          </a>
+          <a v-if="contacts.tiktok" :href="`https://tiktok.com/@${contacts.tiktok.replace(/^@/, '')}`" target="_blank" class="inline-flex items-center gap-1 hover:text-ink-gray-700">
+            <UIcon name="i-lucide-music-2" class="size-4" /> TikTok
           </a>
         </div>
         <NuxtLink :to="site" class="text-caption text-ink-gray-400 hover:text-ink-gray-600">{{ $t('shop.poweredByFull') }}</NuxtLink>
@@ -362,8 +435,8 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                     <UIcon name="i-lucide-share-2" class="size-4" />
                   </button>
                   <button
-                    class="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                    :style="{ background: 'var(--shop-primary)' }"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                    :style="{ background: 'var(--shop-primary)', borderRadius: 'var(--shop-radius)' }"
                     :disabled="adding === quick.id || !canAdd(quick)"
                     @click="addFromQuick"
                   >
