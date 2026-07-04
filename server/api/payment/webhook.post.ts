@@ -1,7 +1,7 @@
 import { serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
 import { applyPaid } from '~~/server/utils/payment'
-import { notifyOrder } from '~~/server/utils/email'
+import { notifyOrder, notifyShopSales } from '~~/server/utils/email'
 import { webhookPayloadSchema, parseOrThrow } from '~~/server/utils/schemas'
 import { verifyWebhookSignature } from '~~/server/utils/webhook-crypto'
 import { logError } from '~~/server/utils/logger'
@@ -35,6 +35,10 @@ export default defineEventHandler(async (event) => {
     throw e
   }
   // письмо «принят в работу» только на первом успешном переходе (не на повторном webhook)
-  if (!result.alreadyPaid) await notifyOrder(svc, payload.orderId, 'paid')
+  if (!result.alreadyPaid) {
+    await notifyOrder(svc, payload.orderId, 'paid')
+    // уведомить владельцев B2B-магазинов о продаже (best-effort, no-op без RESEND-ключа)
+    await notifyShopSales(svc, payload.orderId)
+  }
   return { ok: true, ...result }
 })

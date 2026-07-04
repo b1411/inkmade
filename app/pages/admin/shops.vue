@@ -39,6 +39,17 @@ async function copyClaim(id: string) {
   }
 }
 
+// авто-отправка письма-активации владельцу (Tier2 E). Если RESEND-ключ не настроен —
+// sent:false, ссылка всё равно показана в UI для ручной отправки.
+async function emailClaim(shopId: string) {
+  try {
+    const r = await $fetch<{ sent: boolean; email?: string }>('/api/admin/shops/send-claim', {
+      method: 'POST', body: { shopId },
+    })
+    if (r.sent) toast.add({ title: t('admin.shops.claimEmailed', { email: r.email }), color: 'success' })
+  } catch { /* тихо — ссылка доступна в UI */ }
+}
+
 const list = computed(() => {
   const all = apps.value ?? []
   return tab.value === 'pending' ? all.filter(a => a.status === 'pending') : all
@@ -74,6 +85,7 @@ async function onApprove(a: NonNullable<typeof apps.value>[number]) {
     if (res.claim_token) {
       claimLinks[a.id] = `${site.value}/shop-claim/${res.claim_token}`
       toast.add({ title: t('admin.shops.shopCreatedClaim', { slug: res.slug }), color: 'success' })
+      await emailClaim(res.id) // best-effort авто-письмо владельцу
     } else {
       toast.add({ title: t('admin.shops.shopCreated', { slug: res.slug }), color: 'success' })
     }
@@ -133,6 +145,7 @@ async function onReissue(s: ShopRow) {
     shopClaim[s.id] = `${site.value}/shop-claim/${res.claim_token}`
     try { await navigator.clipboard.writeText(shopClaim[s.id]!); toast.add({ title: t('admin.shops.claimCopied'), color: 'success' }) }
     catch { toast.add({ title: shopClaim[s.id]!, color: 'info' }) }
+    await emailClaim(s.id) // best-effort авто-письмо владельцу
   } catch (e) {
     toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
   } finally { shopBusy.value = null }

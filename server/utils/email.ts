@@ -186,3 +186,59 @@ export async function notifyOrder(
     if (e164) await sendWhatsApp(e164, waText(type, shortId, link))
   }
 }
+
+// ── B2B: письмо-активация магазина владельцу (Tier2 E) ──
+// Отправляется при одобрении заявки, если владелец ещё не зарегистрирован. Ссылка
+// привязана к email заявки (claim_shop проверяет). No-op без RESEND_API_KEY.
+export async function sendShopClaimEmail(to: string, opts: { shopName: string; link: string }): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) return false
+  const html = layout({
+    heading: 'Ваш магазин на INKMADE готов',
+    intro: `Магазин <strong>«${esc(opts.shopName)}»</strong> создан. Чтобы начать управлять витриной, войдите под этим email и откройте ссылку ниже.`,
+    ctaLabel: 'Активировать магазин',
+    ctaUrl: opts.link,
+    note: 'Ссылка привязана к вашему email. Если вы не запрашивали магазин — просто игнорируйте это письмо.',
+  })
+  await sendEmail({ to, subject: 'INKMADE — активация вашего магазина', html })
+  return true
+}
+
+// ── B2B: уведомить владельца(ев) магазина о новой оплаченной продаже (Tier2 E) ──
+// Вызывается из payment-webhook после applyPaid. Для каждого магазина в заказе шлём
+// письмо его владельцу с суммой продажи по этому магазину. Best-effort, no-op без ключа.
+export async function notifyShopSales(svc: SupabaseClient<Database>, orderId: string): Promise<void> {
+  if (!process.env.RESEND_API_KEY) return
+
+  const { data: items } = await svc
+    .from('order_items')
+    .select('shop_id, unit_price, quantity')
+    .eq('order_id', orderId)
+    .not('shop_id', 'is', null)
+  if (!items?.length) return
+
+  const byShop = new Map<string, number>()
+  for (const it of items) {
+    if (!it.shop_id) continue
+    byShop.set(it.shop_id, (byShop.get(it.shop_id) ?? 0) + Number(it.unit_price) * it.quantity)
+  }
+  if (!byShop.size) return
+
+  const site = process.env.NUXT_PUBLIC_SITE_URL || 'https://inkmade-pi.vercel.app'
+  const shortId = orderId.slice(0, 8)
+  const money = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
+
+  for (const [shopId, subtotal] of byShop) {
+    const { data: shop } = await svc.from('shops').select('name, owner_id').eq('id', shopId).maybeSingle()
+    if (!shop?.owner_id) continue
+    const { data: u } = await svc.auth.admin.getUserById(shop.owner_id)
+    const to = u.user?.email
+    if (!to) continue
+    const html = layout({
+      heading: 'Новая продажа! 🎉',
+      intro: `В вашем магазине <strong>«${esc(shop.name)}»</strong> оформлен и оплачен заказ <strong>#${esc(shortId)}</strong> на сумму ${esc(money(subtotal))}.`,
+      ctaLabel: 'Открыть заказы',
+      ctaUrl: `${site}/shop-admin/orders`,
+    })
+    await sendEmail({ to, subject: `INKMADE — продажа в магазине «${shop.name}»`, html })
+  }
+}
