@@ -4,7 +4,7 @@ definePageMeta({ layout: 'shop-admin', middleware: 'shop-owner' })
 const { t } = useI18n()
 useHead({ title: t('shopAdmin.dashboard.headTitle') })
 
-const { getMine, listItems, finance } = useMyShop()
+const { getMine, listItems, finance, analytics } = useMyShop()
 const toast = useToast()
 const { public: { siteUrl } } = useRuntimeConfig()
 const site = (siteUrl as string) || 'https://inkmade-pi.vercel.app'
@@ -16,6 +16,15 @@ const { data: items } = await useAsyncData('my-shop-items', async () => {
 const { data: fin } = await useAsyncData('my-shop-finance', async () =>
   shop.value ? await finance(shop.value.id) : { balance: null, earnings: [] },
 )
+const { data: stats } = await useAsyncData('my-shop-analytics', async () =>
+  shop.value ? await analytics(shop.value.id, 30) : null,
+)
+const conversion = computed(() => {
+  const v = stats.value?.views ?? 0
+  return v > 0 ? Math.round(((stats.value?.orders ?? 0) / v) * 100) : 0
+})
+const maxDaily = computed(() => Math.max(1, ...((stats.value?.daily ?? []).map(d => d.views))))
+const fmt = (n: number | null | undefined) => new Intl.NumberFormat('ru-RU').format(Number(n) || 0)
 
 const storefrontUrl = computed(() => (shop.value ? `${site}/s/${shop.value.slug}` : ''))
 const activeItems = computed(() => (items.value ?? []).filter(i => i.is_active).length)
@@ -88,6 +97,44 @@ async function copyLink() {
       <UiStatCard :label="$t('shopAdmin.dashboard.itemsTotal')" :value="items?.length ?? 0" icon="i-lucide-layers" />
       <UiStatCard :label="$t('shopAdmin.dashboard.share')" :value="`${shop.revenue_share_pct}%`" icon="i-lucide-percent" />
     </div>
+
+    <!-- аналитика витрины (30 дней) -->
+    <UiPanel :title="$t('shopAdmin.dashboard.analytics')" icon="i-lucide-line-chart" class="mb-6">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <UiStatCard :label="$t('shopAdmin.dashboard.views')" :value="fmt(stats?.views)" icon="i-lucide-eye" />
+        <UiStatCard :label="$t('shopAdmin.dashboard.addToCart')" :value="fmt(stats?.addToCart)" icon="i-lucide-shopping-cart" />
+        <UiStatCard :label="$t('shopAdmin.dashboard.sales')" :value="fmt(stats?.orders)" icon="i-lucide-badge-check" />
+        <UiStatCard :label="$t('shopAdmin.dashboard.conversion')" :value="`${conversion}%`" icon="i-lucide-percent" accent />
+      </div>
+
+      <div v-if="stats?.daily?.length" class="mt-5">
+        <p class="text-caption text-ink-gray-500 mb-2">{{ $t('shopAdmin.dashboard.viewsTrend') }}</p>
+        <div class="flex items-end gap-0.5 h-24">
+          <div
+            v-for="d in stats.daily"
+            :key="d.day"
+            class="flex-1 bg-ink-burgundy/70 hover:bg-ink-burgundy rounded-t transition-colors min-h-0.5"
+            :style="{ height: Math.round((d.views / maxDaily) * 100) + '%' }"
+            :title="`${new Date(d.day).toLocaleDateString('ru')}: ${d.views}`"
+          />
+        </div>
+      </div>
+
+      <div v-if="stats?.topItems?.length" class="mt-5">
+        <p class="text-caption text-ink-gray-500 mb-2">{{ $t('shopAdmin.dashboard.topItems') }}</p>
+        <div class="divide-y divide-ink-gray-100">
+          <div v-for="it in stats.topItems" :key="it.id" class="flex items-center justify-between py-2 text-caption">
+            <span class="truncate">{{ it.title }}</span>
+            <span class="flex items-center gap-3 shrink-0 text-ink-gray-500">
+              <span class="inline-flex items-center gap-1"><UIcon name="i-lucide-eye" class="size-3.5" /> {{ it.views }}</span>
+              <span class="inline-flex items-center gap-1"><UIcon name="i-lucide-shopping-cart" class="size-3.5" /> {{ it.adds }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <p v-if="!stats?.views" class="text-caption text-ink-gray-400 mt-4">{{ $t('shopAdmin.dashboard.analyticsEmpty') }}</p>
+    </UiPanel>
 
     <!-- быстрые действия -->
     <div class="flex flex-wrap gap-3">

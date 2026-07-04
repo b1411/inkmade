@@ -141,5 +141,10 @@ export const useShops = () => {
     return (data as unknown as ShopBuyPayload | null) ?? null
   }
 
-  return { storefront, createShop, claimShop, listShops, setShopStatus, setShopShare, reissueClaim, buyPayload }
+  // трекинг события витрины (fire-and-forget; ошибки/дубли не важны для UX)
+  function track(shopId: string, type: 'view' | 'item_view' | 'add_to_cart', itemId?: string) {
+    void supabase.rpc('shop_track', { p_shop_id: shopId, p_type: type, p_item_id: itemId ?? undefined }).then(() => {})
+  }
+
+  return { storefront, createShop, claimShop, listShops, setShopStatus, setShopShare, reissueClaim, buyPayload, track }
 }

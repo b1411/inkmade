@@ -12,7 +12,7 @@ definePageMeta({ layout: false })
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
-const { storefront, buyPayload } = useShops()
+const { storefront, buyPayload, track } = useShops()
 const cart = useCart()
 const toast = useToast()
 const { t } = useI18n()
@@ -164,7 +164,10 @@ async function unlock() {
 // быстрый просмотр товара (Tier2 D): модалка с большим фото/описанием/выбором/шарингом
 const quick = ref<StorefrontItem | null>(null)
 const quickOpen = computed({ get: () => !!quick.value, set: (v: boolean) => { if (!v) quick.value = null } })
-const openQuick = (it: StorefrontItem) => { quick.value = it }
+const openQuick = (it: StorefrontItem) => {
+  quick.value = it
+  if (shop.value) track(shop.value.id, 'item_view', it.id)
+}
 async function addFromQuick() {
   if (!quick.value) return
   if (await addToCart(quick.value)) quick.value = null
@@ -178,10 +181,11 @@ async function shareItem(it: StorefrontItem) {
   } catch { /* пользователь отменил шаринг */ }
 }
 
-// deep-link: /s/<slug>?item=<id> открывает быстрый просмотр товара
+// трекинг просмотра витрины + deep-link (/s/<slug>?item=<id> открывает товар)
 onMounted(() => {
+  if (shop.value) track(shop.value.id, 'view')
   const id = route.query.item
-  if (typeof id === 'string') { const it = items.value.find(x => x.id === id); if (it) quick.value = it }
+  if (typeof id === 'string') { const it = items.value.find(x => x.id === id); if (it) openQuick(it) }
 })
 
 const adding = ref<string | null>(null)
@@ -199,6 +203,7 @@ async function addToCart(it: StorefrontItem): Promise<boolean> {
       shopAccessCode: code.value || null,
     })
     toast.add({ title: t('shop.buy.added', { title: it.title }), color: 'success' })
+    if (shop.value) track(shop.value.id, 'add_to_cart', it.id)
     return true
   } catch (e) {
     toast.add({ title: t('shop.buy.error'), description: (e as Error).message, color: 'error' })

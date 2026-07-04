@@ -28,6 +28,17 @@ export interface ShopOrder {
   items: ShopOrderLine[]
 }
 
+// аналитика витрины (RPC shop_analytics) — события за N дней + продажи
+export interface ShopAnalytics {
+  views: number
+  itemViews: number
+  addToCart: number
+  orders: number
+  revenue: number
+  daily: { day: string; views: number }[]
+  topItems: { id: string; title: string; views: number; adds: number }[]
+}
+
 // поля, которые владелец МОЖЕТ менять (slug/owner/status/revenue_share — только админ, guard-триггер)
 export interface ShopBrandingPatch {
   name?: string
@@ -121,6 +132,13 @@ export const useMyShop = () => {
     return (data as unknown as ShopOrder[]) ?? []
   }
 
+  // аналитика витрины (модуль F): просмотры/в корзину/конверсия/топ за N дней
+  async function analytics(shopId: string, days = 30): Promise<ShopAnalytics | null> {
+    const { data, error } = await supabase.rpc('shop_analytics', { p_shop_id: shopId, p_days: days })
+    if (error) throw error
+    return (data as unknown as ShopAnalytics) ?? null
+  }
+
   // сохранённые дизайны владельца — кандидаты в позиции витрины
   async function myDesigns() {
     if (!user.value) return []
@@ -134,5 +152,5 @@ export const useMyShop = () => {
     return data ?? []
   }
 
-  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, orders }
+  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, orders, analytics }
 }
