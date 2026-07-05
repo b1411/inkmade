@@ -164,13 +164,66 @@ async function unlock() {
 // быстрый просмотр товара (Tier2 D): модалка с большим фото/описанием/выбором/шарингом
 const quick = ref<StorefrontItem | null>(null)
 const quickOpen = computed({ get: () => !!quick.value, set: (v: boolean) => { if (!v) quick.value = null } })
-const openQuick = (it: StorefrontItem) => {
+// режим просмотра: поштучно (single) или на команду (bulk — матрица размер×кол-во)
+const quickMode = ref<'single' | 'bulk'>('single')
+const openQuick = (it: StorefrontItem, mode: 'single' | 'bulk' = 'single') => {
   quick.value = it
+  quickMode.value = mode
+  resetBulk()
   if (shop.value) track(shop.value.id, 'item_view', it.id)
 }
 async function addFromQuick() {
   if (!quick.value) return
   if (await addToCart(quick.value)) quick.value = null
+}
+
+// ── bulk-заказ на команду (Фаза B5): матрица размер×количество, одним добавлением ──
+// Чисто клиентская сборка: для каждого варианта с qty>0 тянем buyPayload и кладём
+// в корзину отдельной строкой (атрибуция магазина сохраняется). Цена — единая
+// владельца на позицию (размер её не меняет). Сток авторитетно проверит checkout.
+const bulkQty = reactive<Record<string, number>>({})
+function resetBulk() { for (const k of Object.keys(bulkQty)) delete bulkQty[k] }
+const bulkGroups = (it: StorefrontItem) => colorsOf(it).map(c => ({
+  ...c,
+  sizes: variantsOf(it).filter(v => v.color_hex === c.hex),
+}))
+const bulkTotalQty = computed(() => Object.values(bulkQty).reduce((s, q) => s + (Number(q) || 0), 0))
+const bulkTotalSum = computed(() => (quick.value ? bulkTotalQty.value * quick.value.price : 0))
+function stepBulk(vid: string, d: number) {
+  bulkQty[vid] = Math.max(0, (Number(bulkQty[vid]) || 0) + d)
+}
+const addingBulk = ref(false)
+async function addBulk() {
+  const it = quick.value
+  if (!it) return
+  const entries = Object.entries(bulkQty).filter(([, q]) => (Number(q) || 0) > 0)
+  if (!entries.length) { toast.add({ title: t('shop.bulk.empty'), color: 'warning' }); return }
+  addingBulk.value = true
+  try {
+    const results = await Promise.all(entries.map(async ([vid, q]) => {
+      const p = await buyPayload(it.id, code.value || undefined, vid)
+      return p ? { p, q: Math.max(1, Math.round(Number(q))) } : null
+    }))
+    let added = 0
+    for (const r of results) {
+      if (!r) continue
+      cart.add({
+        productId: r.p.productId, slug: r.p.slug, alias: r.p.alias, title: r.p.title,
+        variantId: r.p.variantId, colorName: r.p.colorName, colorHex: r.p.colorHex, size: r.p.size,
+        printMethod: r.p.printMethod, spec: r.p.spec as Json, unitPrice: r.p.unitPrice,
+        quantity: r.q, shopItemId: r.p.shopItemId, shopAccessCode: code.value || null,
+      })
+      added += r.q
+    }
+    if (!added) { toast.add({ title: t('shop.buy.unavailable'), color: 'warning' }); return }
+    toast.add({ title: t('shop.bulk.added', { count: added }), color: 'success' })
+    if (shop.value) track(shop.value.id, 'add_to_cart', it.id)
+    quick.value = null
+  } catch (e) {
+    toast.add({ title: t('shop.buy.error'), description: (e as Error).message, color: 'error' })
+  } finally {
+    addingBulk.value = false
+  }
 }
 
 async function shareItem(it: StorefrontItem) {
@@ -377,6 +430,15 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                     {{ canAdd(it) ? $t('shop.buy.add') : $t('shop.buy.soldOut') }}
                   </button>
                 </div>
+                <!-- заказ на команду: открывает быстрый просмотр в режиме матрицы размеров -->
+                <button
+                  v-if="hasSizes(it)"
+                  type="button"
+                  class="mt-2 w-full inline-flex items-center justify-center gap-1 text-xs sf-muted hover:opacity-70"
+                  @click="openQuick(it, 'bulk')"
+                >
+                  <UIcon name="i-lucide-users" class="size-3.5" /> {{ $t('shop.bulk.team') }}
+                </button>
               </div>
             </article>
           </div>
@@ -435,53 +497,130 @@ const contacts = computed(() => shop.value?.contacts ?? {})
               <h2 class="text-xl font-bold" style="color: var(--shop-primary)">{{ quick.title }}</h2>
               <p v-if="quick.description" class="text-sm sf-muted mt-2 whitespace-pre-line">{{ quick.description }}</p>
 
-              <div v-if="hasSizes(quick)" class="mt-4 space-y-2">
-                <div v-if="hasColors(quick)" class="flex flex-wrap gap-1.5">
-                  <button
-                    v-for="c in colorsOf(quick)"
-                    :key="c.hex"
-                    type="button"
-                    :title="c.name"
-                    class="size-7 rounded-full border-2 transition-transform hover:scale-110"
-                    :style="{ backgroundColor: c.hex, borderColor: selVariant(quick)?.color_hex === c.hex ? 'var(--shop-primary)' : 'var(--shop-border)' }"
-                    @click="pickColor(quick, c.hex)"
-                  />
-                </div>
-                <div class="flex flex-wrap gap-1">
-                  <button
-                    v-for="v in sizesOf(quick)"
-                    :key="v.id"
-                    type="button"
-                    :disabled="!v.in_stock"
-                    class="min-w-9 px-2.5 py-1.5 rounded-md border text-sm font-medium transition-colors"
-                    :class="!v.in_stock ? 'opacity-40 line-through cursor-not-allowed' : ''"
-                    :style="{ borderColor: sel[quick.id] === v.id ? 'var(--shop-primary)' : 'var(--shop-border)', color: sel[quick.id] === v.id ? 'var(--shop-primary)' : undefined }"
-                    @click="pickSize(quick, v.id)"
-                  >{{ v.size }}</button>
-                </div>
+              <!-- переключатель поштучно / на команду (только если есть размеры) -->
+              <div v-if="hasSizes(quick)" class="mt-4 inline-flex rounded-lg border sf-bord p-0.5 text-sm self-start">
+                <button
+                  type="button"
+                  class="px-3 py-1 rounded-md font-medium transition-colors"
+                  :style="quickMode === 'single' ? { background: 'var(--shop-primary)', color: 'var(--shop-on-primary)' } : {}"
+                  @click="quickMode = 'single'"
+                >{{ $t('shop.bulk.single') }}</button>
+                <button
+                  type="button"
+                  class="px-3 py-1 rounded-md font-medium inline-flex items-center gap-1 transition-colors"
+                  :style="quickMode === 'bulk' ? { background: 'var(--shop-primary)', color: 'var(--shop-on-primary)' } : {}"
+                  @click="quickMode = 'bulk'"
+                ><UIcon name="i-lucide-users" class="size-3.5" /> {{ $t('shop.bulk.team') }}</button>
               </div>
 
-              <div class="mt-auto pt-5 flex items-center justify-between gap-3">
-                <span class="text-lg font-bold" style="color: var(--shop-primary)">{{ fmtPrice(quick.price) }}</span>
-                <div class="flex items-center gap-2">
-                  <button
-                    class="p-2 rounded-lg border sf-bord sf-muted hover:opacity-80"
-                    :title="$t('shop.buy.share')"
-                    @click="shareItem(quick)"
-                  >
-                    <UIcon name="i-lucide-share-2" class="size-4" />
-                  </button>
-                  <button
-                    class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
-                    :style="{ background: 'var(--shop-primary)', color: 'var(--shop-on-primary)', borderRadius: 'var(--shop-radius)' }"
-                    :disabled="adding === quick.id || !canAdd(quick)"
-                    @click="addFromQuick"
-                  >
-                    <UIcon :name="adding === quick.id ? 'i-lucide-loader-2' : 'i-lucide-shopping-cart'" :class="['size-4', adding === quick.id ? 'animate-spin' : '']" />
-                    {{ canAdd(quick) ? $t('shop.buy.add') : $t('shop.buy.soldOut') }}
-                  </button>
+              <!-- РЕЖИМ ПОШТУЧНО: выбор одного варианта -->
+              <template v-if="quickMode === 'single'">
+                <div v-if="hasSizes(quick)" class="mt-4 space-y-2">
+                  <div v-if="hasColors(quick)" class="flex flex-wrap gap-1.5">
+                    <button
+                      v-for="c in colorsOf(quick)"
+                      :key="c.hex"
+                      type="button"
+                      :title="c.name"
+                      class="size-7 rounded-full border-2 transition-transform hover:scale-110"
+                      :style="{ backgroundColor: c.hex, borderColor: selVariant(quick)?.color_hex === c.hex ? 'var(--shop-primary)' : 'var(--shop-border)' }"
+                      @click="pickColor(quick, c.hex)"
+                    />
+                  </div>
+                  <div class="flex flex-wrap gap-1">
+                    <button
+                      v-for="v in sizesOf(quick)"
+                      :key="v.id"
+                      type="button"
+                      :disabled="!v.in_stock"
+                      class="min-w-9 px-2.5 py-1.5 rounded-md border text-sm font-medium transition-colors"
+                      :class="!v.in_stock ? 'opacity-40 line-through cursor-not-allowed' : ''"
+                      :style="{ borderColor: sel[quick.id] === v.id ? 'var(--shop-primary)' : 'var(--shop-border)', color: sel[quick.id] === v.id ? 'var(--shop-primary)' : undefined }"
+                      @click="pickSize(quick, v.id)"
+                    >{{ v.size }}</button>
+                  </div>
                 </div>
-              </div>
+
+                <div class="mt-auto pt-5 flex items-center justify-between gap-3">
+                  <span class="text-lg font-bold" style="color: var(--shop-primary)">{{ fmtPrice(quick.price) }}</span>
+                  <div class="flex items-center gap-2">
+                    <button
+                      class="p-2 rounded-lg border sf-bord sf-muted hover:opacity-80"
+                      :title="$t('shop.buy.share')"
+                      @click="shareItem(quick)"
+                    >
+                      <UIcon name="i-lucide-share-2" class="size-4" />
+                    </button>
+                    <button
+                      class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed"
+                      :style="{ background: 'var(--shop-primary)', color: 'var(--shop-on-primary)', borderRadius: 'var(--shop-radius)' }"
+                      :disabled="adding === quick.id || !canAdd(quick)"
+                      @click="addFromQuick"
+                    >
+                      <UIcon :name="adding === quick.id ? 'i-lucide-loader-2' : 'i-lucide-shopping-cart'" :class="['size-4', adding === quick.id ? 'animate-spin' : '']" />
+                      {{ canAdd(quick) ? $t('shop.buy.add') : $t('shop.buy.soldOut') }}
+                    </button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- РЕЖИМ НА КОМАНДУ: матрица размер×количество -->
+              <template v-else>
+                <p class="mt-4 text-caption sf-muted">{{ $t('shop.bulk.hint') }}</p>
+                <div class="mt-3 space-y-3 max-h-64 overflow-y-auto pr-1">
+                  <div v-for="g in bulkGroups(quick)" :key="g.hex" class="space-y-1.5">
+                    <div v-if="hasColors(quick)" class="flex items-center gap-2 text-sm">
+                      <span class="size-4 rounded-full border sf-bord shrink-0" :style="{ backgroundColor: g.hex }" />
+                      <span class="sf-muted">{{ g.name }}</span>
+                    </div>
+                    <div
+                      v-for="v in g.sizes"
+                      :key="v.id"
+                      class="flex items-center justify-between gap-3"
+                      :class="!v.in_stock ? 'opacity-40' : ''"
+                    >
+                      <span class="text-sm font-medium">
+                        {{ v.size }}
+                        <span v-if="!v.in_stock" class="ml-1 text-xs sf-muted">· {{ $t('shop.buy.soldOut') }}</span>
+                      </span>
+                      <div class="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          class="size-7 rounded-md border sf-bord inline-flex items-center justify-center disabled:opacity-40"
+                          :disabled="!v.in_stock || !(Number(bulkQty[v.id]) > 0)"
+                          @click="stepBulk(v.id, -1)"
+                        ><UIcon name="i-lucide-minus" class="size-3.5" /></button>
+                        <input
+                          v-model.number="bulkQty[v.id]"
+                          type="number" min="0"
+                          :disabled="!v.in_stock"
+                          class="w-12 text-center text-sm py-1 rounded-md border sf-bord bg-transparent disabled:opacity-40"
+                        >
+                        <button
+                          type="button"
+                          class="size-7 rounded-md border sf-bord inline-flex items-center justify-center disabled:opacity-40"
+                          :disabled="!v.in_stock"
+                          @click="stepBulk(v.id, 1)"
+                        ><UIcon name="i-lucide-plus" class="size-3.5" /></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t sf-bord flex items-center justify-between gap-3">
+                  <span class="text-caption sf-muted">{{ $t('shop.bulk.total', { count: bulkTotalQty }) }}</span>
+                  <span class="text-lg font-bold" style="color: var(--shop-primary)">{{ fmtPrice(bulkTotalSum) }}</span>
+                </div>
+                <button
+                  class="mt-3 w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  :style="{ background: 'var(--shop-primary)', color: 'var(--shop-on-primary)', borderRadius: 'var(--shop-radius)' }"
+                  :disabled="addingBulk || !bulkTotalQty"
+                  @click="addBulk"
+                >
+                  <UIcon :name="addingBulk ? 'i-lucide-loader-2' : 'i-lucide-shopping-cart'" :class="['size-4', addingBulk ? 'animate-spin' : '']" />
+                  {{ $t('shop.bulk.add') }}
+                </button>
+              </template>
             </div>
           </div>
         </div>
