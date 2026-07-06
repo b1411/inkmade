@@ -68,22 +68,29 @@ export async function resolveShopPromo(
     const res = v as { valid?: boolean; code?: string; discount?: number } | null
     if (!res?.valid || !res.discount) continue
 
-    const discount = Math.min(round2(res.discount), agg.grossTotal)
-    if (discount <= 0) continue
+    const capped = Math.min(round2(res.discount), agg.grossTotal)
+    if (capped <= 0) continue
 
-    // распределяем скидку по позициям пропорционально gross; остаток — крупнейшей
+    // Распределяем скидку по позициям пропорционально gross, остаток — на последнюю.
+    // КАЖДАЯ line_discount ограничена своим gross: иначе (при округлении остаток может
+    // на копейку превысить gross строки) apply_paid обнулит долю по этой строке —
+    // greatest(0, gross − line_discount) — и «лишнее» съест базу платформы, а не
+    // владельца (аудит A2/shop-promo). После капа фактически распределённая сумма
+    // становится скидкой покупателя (discount = allocated), чтобы уменьшение total
+    // покупателя точно совпало с уменьшением доли владельца — база платформы нейтральна.
     const byItem: Record<string, number> = {}
     const sorted = [...agg.rows].sort((a, b) => b.gross - a.gross)
     let allocated = 0
     for (let i = 0; i < sorted.length; i++) {
       const row = sorted[i]!
-      const share = i === sorted.length - 1
-        ? round2(discount - allocated)
-        : round2(agg.grossTotal > 0 ? (discount * row.gross) / agg.grossTotal : 0)
+      const raw = i === sorted.length - 1
+        ? round2(capped - allocated)
+        : round2(agg.grossTotal > 0 ? (capped * row.gross) / agg.grossTotal : 0)
+      const share = Math.min(raw, row.gross)
       byItem[row.shopItemId] = share
       allocated = round2(allocated + share)
     }
-    return { shopId, code: res.code ?? code, discount, byItem }
+    return { shopId, code: res.code ?? code, discount: allocated, byItem }
   }
   return null
 }
