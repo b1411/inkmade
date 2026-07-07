@@ -209,7 +209,7 @@ async function onAddToCart() {
     // раньше блок был try/finally без catch: любой сбой ДО cart.add (скриншот,
     // выгрузка, квота localStorage) рвал поток молча — корзина «не наполнялась»
     // без единого сигнала. Теперь сбой виден пользователю.
-    notify.error(t('customize.page.addToCartFailed'), (e as Error)?.message)
+    notify.error(t('customize.page.addToCartFailed'), getFetchMessage(e))
   } finally {
     submitting.value = false
     // освобождаем object URL гарантированно (после анимации улёта), даже при ошибке

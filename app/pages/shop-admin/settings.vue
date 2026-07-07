@@ -22,6 +22,26 @@ watchEffect(() => {
   accessCode.value = s.access_code ?? ''
 })
 
+// Код доступа генерирует система (высокая энтропия против перебора закрытой витрины —
+// см. миграцию 0078 + CHECK длины). Владелец копирует и передаёт участникам, не придумывает.
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789' // без похожих символов (0/O, 1/I/L)
+function genCode(len = 10): string {
+  const a = new Uint32Array(len)
+  crypto.getRandomValues(a)
+  let s = ''
+  for (let i = 0; i < len; i++) s += CODE_ALPHABET.charAt((a[i] ?? 0) % CODE_ALPHABET.length)
+  return s
+}
+function regenerateCode() { accessCode.value = genCode() }
+async function copyCode() {
+  try {
+    await navigator.clipboard.writeText(accessCode.value)
+    toast.add({ title: t('shopAdmin.settings.copied'), color: 'success' })
+  } catch { /* clipboard недоступен — код виден в поле */ }
+}
+// включение закрытого режима без кода → генерируем сразу
+watch(closed, (v) => { if (v && !accessCode.value.trim()) accessCode.value = genCode() })
+
 const saving = ref(false)
 async function save() {
   if (!shop.value) return
@@ -67,8 +87,12 @@ async function save() {
             </div>
             <USwitch v-model="closed" />
           </div>
-          <UFormField v-if="closed" :label="$t('shopAdmin.settings.code')">
-            <UInput v-model="accessCode" :placeholder="$t('shopAdmin.settings.codePlaceholder')" class="w-full" />
+          <UFormField v-if="closed" :label="$t('shopAdmin.settings.code')" :help="$t('shopAdmin.settings.codeHint')">
+            <div class="flex gap-2">
+              <UInput v-model="accessCode" readonly class="w-full font-mono tracking-wider" />
+              <UButton icon="i-lucide-refresh-cw" color="neutral" variant="soft" :aria-label="$t('shopAdmin.settings.regenerate')" @click="regenerateCode" />
+              <UButton icon="i-lucide-copy" color="neutral" variant="soft" :aria-label="$t('shopAdmin.settings.copy')" @click="copyCode" />
+            </div>
           </UFormField>
         </div>
       </UiPanel>

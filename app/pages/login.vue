@@ -15,6 +15,7 @@ const loading = ref(false)
 
 // signIn теперь возвращает путь кабинета напрямую из профиля (не через reactive computed)
 async function onSubmit() {
+  if (loading.value) return // защита от двойного сабмита (Enter до реактивного disable)
   loading.value = true
   try {
     const homePath = await signIn(email.value, password.value)
@@ -44,6 +45,9 @@ async function onSubmit() {
       <UFormField :label="$t('auth.login.passwordLabel')">
         <UInput v-model="password" type="password" size="lg" autocomplete="current-password" icon="i-lucide-lock" required class="w-full" />
       </UFormField>
+      <div class="text-right -mt-1">
+        <NuxtLink to="/forgot" class="text-caption text-ink-burgundy font-semibold hover:underline">{{ $t('auth.login.forgotLink') }}</NuxtLink>
+      </div>
       <UButton type="submit" color="primary" size="lg" block :loading="loading" trailing-icon="i-lucide-arrow-right">{{ $t('auth.login.submit') }}</UButton>
     </form>
 

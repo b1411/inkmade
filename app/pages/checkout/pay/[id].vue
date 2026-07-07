@@ -43,7 +43,7 @@ async function pay() {
     toast.add({ title: t('cart.pay.success'), color: 'success' })
     await navigateTo(`/order/${orderId}`)
   } catch (e) {
-    toast.add({ title: t('cart.pay.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('cart.pay.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     paying.value = false
   }

@@ -6,6 +6,7 @@ import { FEATURES } from '~~/shared/config/features'
 export const useAuth = () => {
   const supabase = useSupabaseClient()
   const user = useSupabaseUser()
+  const config = useRuntimeConfig()
   // профиль кэшируем в общем состоянии, чтобы не дёргать БД на каждый guard
   const profile = useState<Profile | null>('auth_profile', () => null)
 
@@ -95,6 +96,25 @@ export const useAuth = () => {
     profile.value = null
   }
 
+  // Восстановление пароля (§9.1). Шлём письмо со ссылкой на /reset — там пользователь
+  // задаёт новый пароль по recovery-сессии. redirectTo обязан быть абсолютным и входить
+  // в Redirect URLs проекта Supabase. Из соображений анти-энумерации Supabase отвечает
+  // успехом независимо от существования аккаунта — UI показывает нейтральный текст.
+  async function requestPasswordReset(email: string): Promise<void> {
+    const base = (config.public.siteUrl as string) || (import.meta.client ? window.location.origin : '')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${base}/reset`,
+    })
+    if (error) throw error
+  }
+
+  // Смена пароля по активной сессии (recovery ИЛИ обычной). На /reset вызывается после
+  // того, как ссылка из письма установила recovery-сессию (событие PASSWORD_RECOVERY).
+  async function updatePassword(newPassword: string): Promise<void> {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw error
+  }
+
   return {
     user,
     profile,
@@ -108,5 +128,7 @@ export const useAuth = () => {
     signIn,
     signUp,
     signOut,
+    requestPasswordReset,
+    updatePassword,
   }
 }

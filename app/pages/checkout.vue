@@ -98,7 +98,9 @@ async function onPay() {
     if (res.free) useAnalytics().purchase(0, orderId)
     await navigateTo(res.payUrl)
   } catch (e) {
-    toast.add({ title: t('cart.checkout.error.title'), description: (e as Error).message, color: 'error' })
+    // дружелюбный текст сервера (напр. «Недостаточно товара — обновите корзину»)
+    // лежит в e.data.statusMessage, а не в техническом e.message
+    toast.add({ title: t('cart.checkout.error.title'), description: getFetchMessage(e), color: 'error' })
   } finally {
     paying.value = false
   }

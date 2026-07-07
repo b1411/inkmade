@@ -98,11 +98,22 @@ export default defineEventHandler(async (event) => {
       const { data: si } = await svc.from('shop_items')
         .select('id, shop_id, price, markup, is_active').eq('id', it.shopItemId).maybeSingle()
       if (!si || !si.is_active) throw createError({ statusCode: 400, statusMessage: 'Позиция магазина недоступна' })
-      const { data: shopRow } = await svc.from('shops').select('status, is_public, access_code').eq('id', si.shop_id).maybeSingle()
+      const { data: shopRow } = await svc.from('shops').select('status, is_public, access_code, revenue_share_pct').eq('id', si.shop_id).maybeSingle()
       if (!shopRow || shopRow.status !== 'active' || !shopRow.is_public) throw createError({ statusCode: 400, statusMessage: 'Магазин недоступен' })
       // закрытый магазин: код нельзя обойти прямым POST — сверяем с БД (F4)
       if (shopRow.access_code && it.shopAccessCode !== shopRow.access_code) {
         throw createError({ statusCode: 403, statusMessage: 'Неверный код доступа магазина' })
+      }
+      // Ценовой пол при ПРОДАЖЕ (аудит 2026-07-07). guard_shop_item (0076) проверяет пол
+      // только при сохранении товара и только по базовому варианту. Покупатель может
+      // выбрать sibling-вариант с иным blank_cost → ревалидируем пол по ФАКТИЧЕСКОМУ
+      // варианту тем же инвариантом: удерживаемая платформой база (price при доле rate)
+      // покрывает себестоимость заготовки → price*(100−rate) ≥ blank_cost*100. Наценка
+      // (markup) идёт владельцу 100% и в базу платформы не входит, поэтому пол по si.price.
+      const shopRate = Number(shopRow.revenue_share_pct) || 0
+      const blankCost = Number(variant.blank_cost) || 0
+      if (blankCost > 0 && Number(si.price) * (100 - shopRate) < blankCost * 100) {
+        throw createError({ statusCode: 400, statusMessage: 'Позиция магазина недоступна для выбранного варианта' })
       }
       unitPrice = Number(si.price) + Number(si.markup)
       if (!(unitPrice > 0)) throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции магазина' })
