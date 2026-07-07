@@ -1,7 +1,7 @@
 <script setup lang="ts">
-// Политика конфиденциальности. Текст — в shared/legal/documents.ts.
+// Дисклеймеры (сводный документ). Текст — в shared/legal/documents.ts.
 import { getLegalDoc } from '~~/shared/legal/documents'
-const doc = getLegalDoc('privacy')
+const doc = getLegalDoc('disclaimers')
 </script>
 
 <template>

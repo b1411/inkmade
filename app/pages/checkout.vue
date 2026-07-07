@@ -190,6 +190,14 @@ async function onPay() {
         <UIcon name="i-lucide-shield-check" class="shrink-0" />
         {{ $t('cart.checkout.summary.secureNote') }}
       </p>
+      <!-- Акцепт оферты = оплата (см. shared/legal/documents.ts, оферта §3) -->
+      <p class="text-caption text-ink-gray-400 leading-relaxed">
+        {{ $t('cart.checkout.summary.legalPrefix') }}
+        <NuxtLink to="/legal/offer" target="_blank" class="text-ink-burgundy hover:underline">{{ $t('cart.checkout.summary.legalOffer') }}</NuxtLink>,
+        <NuxtLink to="/legal/terms" target="_blank" class="text-ink-burgundy hover:underline">{{ $t('cart.checkout.summary.legalTerms') }}</NuxtLink>
+        {{ $t('cart.checkout.summary.legalAnd') }}
+        <NuxtLink to="/legal/privacy" target="_blank" class="text-ink-burgundy hover:underline">{{ $t('cart.checkout.summary.legalPrivacy') }}</NuxtLink>.
+      </p>
         </div>
       </UiPanel>
     </aside>

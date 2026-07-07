@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Футер (§5.11): тёмный, структурированный — лого+слоган, колонки ссылок,
 // соцсети, копирайт-дисклеймер. grain для фактуры, mono-лейблы колонок.
-import { LEGAL } from '~~/shared/config/legal'
+import { LEGAL, SELLER } from '~~/shared/config/legal'
 // «Личный кабинет» показываем только авторизованным — иначе гостя кидает на логин.
 const { isAuthenticated } = useAuth()
 </script>
@@ -27,8 +27,12 @@ const { isAuthenticated } = useAuth()
       </div>
       <div class="space-y-2">
         <p class="ink-label text-ink-cream/50">{{ $t('footer.infoCol') }}</p>
+        <NuxtLink to="/legal/offer" class="footer-link block text-caption">{{ $t('footer.offer') }}</NuxtLink>
         <NuxtLink to="/legal/terms" class="footer-link block text-caption">{{ $t('footer.terms') }}</NuxtLink>
         <NuxtLink to="/legal/privacy" class="footer-link block text-caption">{{ $t('footer.privacy') }}</NuxtLink>
+        <NuxtLink to="/legal/cookies" class="footer-link block text-caption">{{ $t('footer.cookies') }}</NuxtLink>
+        <NuxtLink to="/legal/delivery" class="footer-link block text-caption">{{ $t('footer.delivery') }}</NuxtLink>
+        <NuxtLink to="/legal" class="footer-link block text-caption">{{ $t('footer.allDocs') }}</NuxtLink>
       </div>
       <div class="space-y-2">
         <p class="ink-label text-ink-cream/50">{{ $t('footer.contactsCol') }}</p>
@@ -56,8 +60,12 @@ const { isAuthenticated } = useAuth()
       </div>
     </div>
     <div class="border-t border-white/10">
-      <div class="mx-auto max-w-(--container-max) px-4 py-4 ink-label text-ink-cream/40">
-        {{ $t('footer.copyright') }}
+      <div class="mx-auto max-w-(--container-max) px-4 py-4 space-y-1">
+        <!-- Реквизиты продавца — показываем, когда заполнены (Закон РК «О защите прав потребителей», ст. 25) -->
+        <p v-if="SELLER.isFilled" class="text-caption text-ink-cream/40">
+          {{ SELLER.entityType }} {{ SELLER.legalName }} · {{ $t('footer.bin') }} {{ SELLER.bin }}
+        </p>
+        <p class="ink-label text-ink-cream/40">{{ $t('footer.copyright') }}</p>
       </div>
     </div>
   </footer>

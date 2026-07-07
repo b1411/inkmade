@@ -23,5 +23,7 @@ useSeoMeta({
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <!-- Cookie/трекинг-согласие (opt-in): пиксели грузятся только после «Принять» -->
+    <LayoutCookieConsent />
   </UApp>
 </template>
