@@ -172,7 +172,7 @@ async function onSubmit() {
                 </UFormField>
               </div>
               <UFormField :label="$t('business.form.slug')" :help="$t('business.form.slugHelp')">
-                <UInput v-model="form.desiredSlug" placeholder="uib" class="w-full">
+                <UInput v-model="form.desiredSlug" placeholder="brand" class="w-full">
                   <template #trailing>
                     <span class="text-caption text-ink-gray-400">.inkmade.kz</span>
                   </template>

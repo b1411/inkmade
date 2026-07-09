@@ -20,7 +20,7 @@ test.describe('B2B — лендинг и заявка на магазин', () =
     expect(res?.ok(), 'HTTP-статус /business').toBeTruthy()
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     // поля формы заявки (по плейсхолдерам — устойчиво к вёрстке UFormField)
-    await expect(page.getByPlaceholder('Университет UIB')).toBeVisible()
+    await expect(page.getByPlaceholder('Ваша команда или бренд')).toBeVisible()
     await expect(page.getByPlaceholder('team@company.kz')).toBeVisible()
     await expect(page.getByRole('button', { name: /Отправить заявку/ })).toBeVisible()
   })
@@ -45,12 +45,11 @@ test.describe('B2B — лендинг и заявка на магазин', () =
     await page.route('**/api/business/apply', route =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }))
 
-    await page.getByPlaceholder('Университет UIB').fill('E2E Тестовая команда')
+    await page.getByPlaceholder('Ваша команда или бренд').fill('E2E Тестовая команда')
     await page.getByPlaceholder('Имя и фамилия').fill('Тест Тестов')
     await page.getByPlaceholder('+7 (700) 000-00-00').fill('+7 700 123 45 67')
     await page.getByPlaceholder('team@company.kz').fill('e2e-team@example.kz')
-    // exact: иначе плейсхолдер «Университет UIB» тоже матчит подстроку «uib»
-    await page.getByPlaceholder('uib', { exact: true }).fill('e2e-shop')
+    await page.getByPlaceholder('brand', { exact: true }).fill('e2e-shop')
 
     const [req] = await Promise.all([
       page.waitForRequest(r => r.url().includes('/api/business/apply') && r.method() === 'POST'),
