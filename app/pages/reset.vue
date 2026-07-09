@@ -52,7 +52,7 @@ async function onSubmit() {
     toast.add({ title: t('auth.reset.successTitle'), color: 'success' })
     await navigateTo('/account')
   } catch (e) {
-    toast.add({ title: t('auth.reset.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('auth.reset.errorTitle'), description: getFetchMessage(e), color: 'error' })
   } finally {
     loading.value = false
   }

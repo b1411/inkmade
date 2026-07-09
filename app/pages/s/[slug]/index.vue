@@ -38,6 +38,10 @@ useSeoMeta({
   description: () => shop.value?.hero?.subtitle || t('shop.metaDescription', { name: shop.value?.name ?? '' }),
   ogTitle: () => shop.value?.name ?? 'INKMADE',
   ogImage: () => shop.value?.hero?.banner_url || undefined,
+  // Витрины магазинов не индексируем (тонкий/дублирующий контент, часть — под access_code).
+  // noindex,follow — не в индекс, но link equity внутренних ссылок сохраняется. Реверсивно,
+  // если решим открыть витрины для поиска: убрать эту строку + добавить их в sitemap.xml.
+  robots: 'noindex, follow',
 })
 
 // тема магазина → CSS-переменные (резолв свет/тьма в shared/config/shop-theme). Токены
@@ -182,6 +186,7 @@ async function addFromQuick() {
 // в корзину отдельной строкой (атрибуция магазина сохраняется). Цена — единая
 // владельца на позицию (размер её не меняет). Сток авторитетно проверит checkout.
 const bulkQty = reactive<Record<string, number>>({})
+// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- очищаем reactive-запись
 function resetBulk() { for (const k of Object.keys(bulkQty)) delete bulkQty[k] }
 const bulkGroups = (it: StorefrontItem) => colorsOf(it).map(c => ({
   ...c,
@@ -220,7 +225,7 @@ async function addBulk() {
     if (shop.value) track(shop.value.id, 'add_to_cart', it.id)
     quick.value = null
   } catch (e) {
-    toast.add({ title: t('shop.buy.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('shop.buy.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     addingBulk.value = false
   }
@@ -259,7 +264,7 @@ async function addToCart(it: StorefrontItem): Promise<boolean> {
     if (shop.value) track(shop.value.id, 'add_to_cart', it.id)
     return true
   } catch (e) {
-    toast.add({ title: t('shop.buy.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('shop.buy.error'), description: getFetchMessage(e), color: 'error' })
     return false
   } finally {
     adding.value = null

@@ -32,7 +32,7 @@ async function onEvidencePick(e: Event) {
     await loadEvidence()
     toast.add({ title: t('admin.order.toast.photoAdded'), color: 'success' })
   } catch (err) {
-    toast.add({ title: t('admin.order.toast.uploadError'), description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('admin.order.toast.uploadError'), description: getFetchMessage(err), color: 'error' })
   } finally { evUploading.value = false }
 }
 
@@ -65,7 +65,7 @@ async function perform(to: OrderStatus, opts?: { note?: string; trackingNo?: str
     modal.open = false
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.order.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.order.toast.error'), description: getFetchMessage(e), color: 'error' })
   } finally { busy.value = false }
 }
 

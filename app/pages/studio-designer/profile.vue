@@ -41,7 +41,7 @@ async function onAvatarPick(e: Event) {
     await refresh()
     toast.add({ title: t('studio.designer.profile.toast.avatarUpdated'), color: 'success' })
   } catch (err) {
-    toast.add({ title: t('studio.designer.profile.toast.uploadError'), description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('studio.designer.profile.toast.uploadError'), description: getFetchMessage(err), color: 'error' })
   } finally {
     avatarUploading.value = false
     if (avatarInput.value) avatarInput.value.value = ''
@@ -60,7 +60,7 @@ async function save() {
     await refresh()
     toast.add({ title: t('studio.designer.profile.toast.saved'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('studio.designer.profile.toast.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.designer.profile.toast.error'), description: getFetchMessage(e), color: 'error' })
   } finally { saving.value = false }
 }
 </script>

@@ -49,7 +49,7 @@ async function onAdd() {
     form.surcharge = 0
     emit('changed')
   } catch (e) {
-    toast.add({ title: t('admin.wizard.materials.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.materials.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -60,7 +60,7 @@ async function onDelete(id: string) {
     await deleteMaterial(id)
     emit('changed')
   } catch (e) {
-    toast.add({ title: t('admin.wizard.materials.deleteError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.materials.deleteError'), description: getFetchMessage(e), color: 'error' })
   }
 }
 </script>

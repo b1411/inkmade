@@ -45,7 +45,7 @@ async function onSubmit() {
     reset()
     refresh()
   } catch (e) {
-    toast.add({ title: t('admin.categories.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.categories.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -53,7 +53,7 @@ async function onSubmit() {
 
 async function toggleActive(c: NonNullable<typeof cats.value>[number]) {
   try { await update(c.id, { is_active: !c.is_active }); refresh() }
-  catch (e) { toast.add({ title: t('admin.categories.error'), description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('admin.categories.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
 async function onDelete(id: string, title: string) {

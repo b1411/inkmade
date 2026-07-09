@@ -26,7 +26,7 @@ onMounted(async () => {
     }
   } catch (e) {
     state.value = 'error'
-    message.value = (e as { data?: { message?: string } }).data?.message ?? (e as Error).message
+    message.value = getFetchMessage(e)
   }
 })
 </script>

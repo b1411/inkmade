@@ -20,7 +20,7 @@ async function rm(id: string) {
     await remove(id)
     await Promise.all([refreshP(), refreshPr()])
   } catch (e) {
-    toast.add({ title: t('account.favorites.removeError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.favorites.removeError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     removingId.value = null
   }

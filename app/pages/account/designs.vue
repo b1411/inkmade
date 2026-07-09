@@ -35,7 +35,7 @@ async function share(id: string) {
       else { await navigator.clipboard.writeText(url); notify.linkCopied() }
     } catch { /* пользователь отменил системный шэр — не ошибка */ }
   } catch (e) {
-    notify.error(t('account.designs.shareErrorTitle'), (e as Error).message)
+    notify.error(t('account.designs.shareErrorTitle'), getFetchMessage(e))
   } finally {
     sharingId.value = null
   }
@@ -55,7 +55,7 @@ async function saveRename() {
     rename.open = false
     await refresh()
   } catch (e) {
-    notify.error(t('account.designs.actionError'), (e as Error).message)
+    notify.error(t('account.designs.actionError'), getFetchMessage(e))
   } finally {
     rename.busy = false
   }
@@ -76,7 +76,7 @@ async function confirmDelete() {
     del.open = false
     await refresh()
   } catch (e) {
-    notify.error(t('account.designs.actionError'), (e as Error).message)
+    notify.error(t('account.designs.actionError'), getFetchMessage(e))
   } finally {
     del.busy = false
   }

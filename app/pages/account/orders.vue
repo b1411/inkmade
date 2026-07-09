@@ -60,7 +60,7 @@ async function onReorder(orderId: string) {
     else notify.success(t('account.orders.reorderSuccess', { count: added }))
     await navigateTo('/cart')
   } catch (e) {
-    notify.error(t('account.orders.reorderErrorTitle'), (e as Error).message)
+    notify.error(t('account.orders.reorderErrorTitle'), getFetchMessage(e))
   } finally {
     reordering.value = null
   }

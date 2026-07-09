@@ -54,7 +54,7 @@ async function onSubmit() {
     }
     done.value = true
   } catch (e) {
-    toast.add({ title: t('auth.register.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('auth.register.errorTitle'), description: getFetchMessage(e), color: 'error' })
   } finally {
     loading.value = false
   }

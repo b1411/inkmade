@@ -31,7 +31,7 @@ async function togglePublish() {
     toast.add({ title: props.product.is_active ? t('admin.wizard.publish.unpublished') : t('admin.wizard.publish.published'), color: 'success' })
     emit('changed')
   } catch (e) {
-    toast.add({ title: t('admin.wizard.publish.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.publish.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     busy.value = false
   }

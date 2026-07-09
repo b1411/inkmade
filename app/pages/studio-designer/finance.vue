@@ -28,7 +28,7 @@ async function requestPayout() {
     await refresh()
     toast.add({ title: t('studio.designer.finance.toast.payoutRequested'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('studio.designer.finance.toast.error'), description: (e as { message?: string }).message ?? t('studio.designer.finance.toast.failed'), color: 'error' })
+    toast.add({ title: t('studio.designer.finance.toast.error'), description: getFetchMessage(e, t('studio.designer.finance.toast.failed')), color: 'error' })
   } finally { requesting.value = false }
 }
 const payoutColor = (s: string) => s === 'paid' ? 'success' : s === 'rejected' ? 'error' : 'neutral'

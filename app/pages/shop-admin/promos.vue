@@ -63,7 +63,7 @@ async function onSave() {
     await refresh()
   } catch (e) {
     // уникальность кода в пределах магазина — на БД (индекс), покажем понятную ошибку
-    const msg = /duplicate|unique/i.test((e as Error).message) ? t('shopAdmin.promos.codeTaken') : (e as Error).message
+    const msg = /duplicate|unique/i.test(getFetchMessage(e)) ? t('shopAdmin.promos.codeTaken') : getFetchMessage(e)
     toast.add({ title: t('shopAdmin.promos.error'), description: msg, color: 'error' })
   } finally {
     saving.value = false
@@ -72,13 +72,13 @@ async function onSave() {
 
 async function toggleActive(p: NonNullable<typeof promos.value>[number]) {
   try { await savePromo({ id: p.id, shop_id: p.shop_id, code: p.code, discount_type: p.discount_type, discount_value: p.discount_value, active: !p.active }); await refresh() }
-  catch (e) { toast.add({ title: t('shopAdmin.promos.error'), description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('shopAdmin.promos.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
 async function onDelete(p: NonNullable<typeof promos.value>[number]) {
   if (!confirm(t('shopAdmin.promos.deleteConfirm', { code: p.code }))) return
   try { await deletePromo(p.id); toast.add({ title: t('shopAdmin.promos.deleted'), color: 'success' }); await refresh() }
-  catch (e) { toast.add({ title: t('shopAdmin.promos.error'), description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('shopAdmin.promos.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
 function isExhausted(p: NonNullable<typeof promos.value>[number]) {

@@ -28,7 +28,7 @@ async function reload() {
   try {
     product.value = (await getProduct(productId.value)) as ProductWithRelations
   } catch (e) {
-    toast.add({ title: t('admin.wizard.loadError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.loadError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     loading.value = false
   }

@@ -115,7 +115,7 @@ async function removeBg(p: Placement) {
     }
     toast.add({ title: t('customize.inspector.bgDone'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('customize.inspector.bgFailed'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('customize.inspector.bgFailed'), description: getFetchMessage(e), color: 'error' })
   } finally {
     bgBusy.value = false
   }

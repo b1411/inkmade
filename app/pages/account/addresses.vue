@@ -37,7 +37,7 @@ async function onSubmit() {
     resetForm()
     await refresh()
   } catch (e) {
-    toast.add({ title: t('account.addresses.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.addresses.errorTitle'), description: getFetchMessage(e), color: 'error' })
   } finally { adding.value = false }
 }
 async function onRemove(id: string) {
@@ -47,7 +47,7 @@ async function onRemove(id: string) {
     if (editingId.value === id) resetForm()
     await refresh()
   } catch (e) {
-    toast.add({ title: t('account.addresses.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.addresses.errorTitle'), description: getFetchMessage(e), color: 'error' })
   }
 }
 async function onDefault(id: string) {
@@ -55,7 +55,7 @@ async function onDefault(id: string) {
     await setDefault(id)
     await refresh()
   } catch (e) {
-    toast.add({ title: t('account.addresses.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.addresses.errorTitle'), description: getFetchMessage(e), color: 'error' })
     await refresh() // вернуть UI к фактическому состоянию (setDefault неатомарен)
   }
 }

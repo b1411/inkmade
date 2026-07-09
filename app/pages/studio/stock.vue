@@ -53,7 +53,7 @@ async function confirmDefect() {
     toast.add({ title: t('studio.stock.toast.defectWrittenOff', { n: qty }), color: 'success' })
     defect.open = false
   } catch (e) {
-    toast.add({ title: t('studio.stock.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.stock.toast.error'), description: getFetchMessage(e), color: 'error' })
   } finally { defect.busy = false }
 }
 
@@ -73,7 +73,7 @@ async function openHistory(variantId: string, label: string) {
   try {
     history.rows = await listMovements(variantId)
   } catch (e) {
-    toast.add({ title: t('studio.stock.toast.historyError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.stock.toast.historyError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     history.loading = false
   }

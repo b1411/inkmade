@@ -4,6 +4,7 @@
 const { t } = useI18n()
 const route = useRoute()
 const category = route.params.category as string
+const site = String(useRuntimeConfig().public.siteUrl || '').replace(/\/$/, '')
 const { listByCategory } = useCatalog()
 const { listActive } = useCategories()
 
@@ -18,6 +19,22 @@ useSeoMeta({
   description: t('catalog.category.metaDescription', { label }),
   ogTitle: t('catalog.category.metaTitle', { label }),
   ogDescription: t('catalog.category.ogDescription', { label }),
+})
+
+// BreadcrumbList JSON-LD (P2 SEO): Главная → Каталог → Категория.
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'INKMADE', item: `${site}/` },
+        { '@type': 'ListItem', position: 2, name: t('catalog.pageTitle'), item: `${site}/catalog` },
+        { '@type': 'ListItem', position: 3, name: label, item: `${site}/catalog/${category}` },
+      ],
+    }),
+  }],
 })
 
 const { data: products, pending } = await useAsyncData(

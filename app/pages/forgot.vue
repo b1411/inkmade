@@ -20,7 +20,7 @@ async function onSubmit() {
     await requestPasswordReset(email.value)
     done.value = true
   } catch (e) {
-    toast.add({ title: t('auth.forgot.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('auth.forgot.errorTitle'), description: getFetchMessage(e), color: 'error' })
   } finally {
     loading.value = false
   }

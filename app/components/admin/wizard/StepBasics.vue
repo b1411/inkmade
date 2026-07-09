@@ -29,7 +29,7 @@ async function onCreateFromTemplate() {
     toast.add({ title: t('admin.wizard.basics.templateCreated'), description: t('admin.wizard.basics.templateCreatedText'), color: 'success' })
     emit('saved', id)
   } catch (e) {
-    toast.add({ title: t('admin.wizard.basics.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.basics.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     creatingTpl.value = false
   }
@@ -90,7 +90,7 @@ async function onSubmit() {
     toast.add({ title: t('admin.wizard.basics.saved'), color: 'success' })
     emit('saved', saved.id)
   } catch (e) {
-    toast.add({ title: t('admin.wizard.basics.saveError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.basics.saveError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }

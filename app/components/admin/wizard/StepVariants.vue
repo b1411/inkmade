@@ -79,7 +79,7 @@ async function onGenerate() {
     form.sizes = []
     emit('changed')
   } catch (e) {
-    toast.add({ title: t('admin.wizard.variants.generateError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.variants.generateError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     generating.value = false
   }
@@ -87,7 +87,7 @@ async function onGenerate() {
 
 async function onDelete(id: string) {
   try { await deleteVariant(id); emit('changed') } catch (e) {
-    toast.add({ title: t('admin.wizard.variants.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.variants.error'), description: getFetchMessage(e), color: 'error' })
   }
 }
 </script>

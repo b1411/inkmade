@@ -28,7 +28,7 @@ async function saveRate() {
     await refresh()
     toast.add({ title: t('admin.designers.rateUpdated', { rate: newRate.value }), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('admin.designers.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.designers.error'), description: getFetchMessage(e), color: 'error' })
   } finally { savingRate.value = false }
 }
 </script>

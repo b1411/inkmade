@@ -45,7 +45,7 @@ async function onReorder() {
     else notify.success(t('cart.order.reorderSuccess', { count: added }))
     await navigateTo('/cart')
   } catch (e) {
-    notify.error(t('cart.order.reorderError'), (e as Error).message)
+    notify.error(t('cart.order.reorderError'), getFetchMessage(e))
   } finally {
     reordering.value = false
   }
@@ -153,7 +153,7 @@ async function submitRequest() {
     reqModal.open = false
     await loadRequests()
   } catch (e) {
-    notify.error(t('cart.order.request.error'), (e as Error).message)
+    notify.error(t('cart.order.request.error'), getFetchMessage(e))
   } finally {
     reqModal.busy = false
   }

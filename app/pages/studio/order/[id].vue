@@ -26,7 +26,7 @@ async function moderate(designId: string | undefined, status: 'approved' | 'reje
     toast.add({ title: t('studio.production.order.toast.designModerated', { status: MODERATION_LABELS.value[status] }), color: status === 'approved' ? 'success' : 'warning' })
     await refresh()
   } catch (e) {
-    toast.add({ title: t('studio.production.order.toast.moderationError'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.production.order.toast.moderationError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     moderatingId.value = null
   }
@@ -57,7 +57,7 @@ async function saveNotes() {
     toast.add({ title: t('studio.production.order.notes.saved'), color: 'success' })
     await refresh()
   } catch (e) {
-    toast.add({ title: t('studio.production.order.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.production.order.toast.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     savingNotes.value = false
   }
@@ -80,7 +80,7 @@ async function resolveReq(status: 'approved' | 'rejected') {
     toast.add({ title: t('studio.production.order.request.resolved'), color: 'success' })
     await loadOrderRequests()
   } catch (e) {
-    toast.add({ title: t('studio.production.order.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.production.order.toast.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     resolvingReq.value = false
   }
@@ -117,7 +117,7 @@ async function perform(to: OrderStatus, opts?: { note?: string; trackingNo?: str
     modal.open = false
     await refresh()
   } catch (e) {
-    toast.add({ title: t('studio.production.order.toast.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.production.order.toast.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     busy.value = false
   }
@@ -158,7 +158,7 @@ async function onEvidencePick(e: Event) {
     await loadEvidence()
     toast.add({ title: t('studio.production.order.toast.photoAdded'), color: 'success' })
   } catch (err) {
-    toast.add({ title: t('studio.production.order.toast.uploadError'), description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('studio.production.order.toast.uploadError'), description: getFetchMessage(err), color: 'error' })
   } finally {
     evUploading.value = false
   }

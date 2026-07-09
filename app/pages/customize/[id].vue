@@ -138,7 +138,7 @@ async function onSaveDesign() {
       toast.add({ title: t('customize.page.saved'), description: t('customize.page.savedGuestHint'), color: 'success' })
     }
   } catch (e) {
-    toast.add({ title: t('customize.page.saveFailed'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('customize.page.saveFailed'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }

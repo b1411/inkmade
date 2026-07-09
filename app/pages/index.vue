@@ -15,17 +15,33 @@ useSeoMeta({
   ogUrl: site,
 })
 
-// JSON-LD (P3.20): организация для поисковой выдачи и соцпревью.
+// JSON-LD (P3.20): организация + сайт для поисковой выдачи и соцпревью.
+// @graph связывает Organization и WebSite (publisher ссылается на @id организации) —
+// так Google понимает бренд и сайт как единую сущность.
 useHead({
   script: [{
     type: 'application/ld+json',
     innerHTML: JSON.stringify({
       '@context': 'https://schema.org',
-      '@type': 'Organization',
-      name: 'INKMADE',
-      url: site,
-      description: 'Платформа кастомизации одежды с печатью по требованию. Казахстан.',
-      areaServed: 'KZ',
+      '@graph': [
+        {
+          '@type': 'Organization',
+          '@id': `${site}/#organization`,
+          name: 'INKMADE',
+          url: site,
+          logo: `${site}/og-default.jpg`,
+          description: 'Платформа кастомизации одежды с печатью по требованию. Казахстан.',
+          areaServed: 'KZ',
+        },
+        {
+          '@type': 'WebSite',
+          '@id': `${site}/#website`,
+          name: 'INKMADE',
+          url: site,
+          inLanguage: 'ru-RU',
+          publisher: { '@id': `${site}/#organization` },
+        },
+      ],
     }),
   }],
 })

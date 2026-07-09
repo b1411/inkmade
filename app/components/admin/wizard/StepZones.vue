@@ -39,7 +39,7 @@ async function saveEdit(id: string) {
     editingId.value = null
     emit('changed')
   } catch (e) {
-    toast.add({ title: t('admin.wizard.zones.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.error'), description: getFetchMessage(e), color: 'error' })
   }
 }
 
@@ -71,7 +71,7 @@ async function addFromPreset(presetName: string) {
     })
     emit('changed')
   } catch (e) {
-    toast.add({ title: t('admin.wizard.zones.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -79,7 +79,7 @@ async function addFromPreset(presetName: string) {
 
 async function onDelete(id: string) {
   try { await deleteZone(id); emit('changed') } catch (e) {
-    toast.add({ title: t('admin.wizard.zones.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.error'), description: getFetchMessage(e), color: 'error' })
   }
 }
 
@@ -109,7 +109,7 @@ async function onVisualSave(payload: { bounds_mm: BoundsMm; max_width_mm: number
     emit('changed')
     toast.add({ title: t('admin.wizard.zones.zoneSaved'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('admin.wizard.zones.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.error'), description: getFetchMessage(e), color: 'error' })
   }
 }
 
@@ -123,7 +123,7 @@ async function onMockup(zoneId: string, e: Event) {
     await updateZone(zoneId, { mockup_url: url })
     emit('changed')
   } catch (err) {
-    toast.add({ title: t('admin.wizard.zones.mockupUploadError'), description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.zones.mockupUploadError'), description: getFetchMessage(err), color: 'error' })
   } finally {
     uploadingFor.value = null
   }

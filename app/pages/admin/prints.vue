@@ -68,7 +68,7 @@ async function onSubmit() {
     resetForm()
     refresh()
   } catch (e) {
-    toast.add({ title: t('admin.prints.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.prints.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -76,13 +76,13 @@ async function onSubmit() {
 
 async function toggleActive(p: NonNullable<typeof prints.value>[number]) {
   try { await update(p.id, { is_active: !p.is_active }); refresh() }
-  catch (e) { toast.add({ title: t('admin.prints.error'), description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('admin.prints.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
 async function onDelete(id: string, title: string) {
   if (!confirm(t('admin.prints.deleteConfirm', { title }))) return
   try { await remove(id); toast.add({ title: t('admin.prints.deleted'), color: 'success' }); refresh() }
-  catch (e) { toast.add({ title: t('admin.prints.error'), description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('admin.prints.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 </script>
 

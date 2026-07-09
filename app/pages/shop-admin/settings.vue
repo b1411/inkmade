@@ -54,7 +54,7 @@ async function save() {
     })
     toast.add({ title: t('shopAdmin.settings.saved'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('shopAdmin.settings.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('shopAdmin.settings.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }

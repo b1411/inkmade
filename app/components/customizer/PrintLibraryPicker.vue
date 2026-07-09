@@ -21,7 +21,7 @@ const visiblePrints = computed(() => {
 async function load() {
   loading.value = true
   try { prints.value = await listActive() } catch (e) {
-    toast.add({ title: t('customize.library.loadFailed'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('customize.library.loadFailed'), description: getFetchMessage(e), color: 'error' })
   } finally { loading.value = false }
 }
 

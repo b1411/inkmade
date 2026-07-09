@@ -69,7 +69,7 @@ async function onSave() {
     reset()
     await refresh()
   } catch (e) {
-    toast.add({ title: t('shopAdmin.items.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('shopAdmin.items.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -77,13 +77,13 @@ async function onSave() {
 
 async function toggleActive(it: NonNullable<typeof items.value>[number]) {
   try { await saveItem({ id: it.id, shop_id: it.shop_id, title: it.title, is_active: !it.is_active }); await refresh() }
-  catch (e) { toast.add({ title: t('shopAdmin.items.error'), description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('shopAdmin.items.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
 async function onDelete(it: NonNullable<typeof items.value>[number]) {
   if (!confirm(t('shopAdmin.items.deleteConfirm', { title: it.title }))) return
   try { await deleteItem(it.id); toast.add({ title: t('shopAdmin.items.deleted'), color: 'success' }); await refresh() }
-  catch (e) { toast.add({ title: t('shopAdmin.items.error'), description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('shopAdmin.items.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 </script>
 

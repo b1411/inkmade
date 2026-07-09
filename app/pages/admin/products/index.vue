@@ -39,7 +39,7 @@ async function onDelete(id: string, title: string) {
     toast.add({ title: t('admin.products.deleted'), color: 'success' })
     refresh()
   } catch (e) {
-    toast.add({ title: t('admin.products.deleteError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.products.deleteError'), description: getFetchMessage(e), color: 'error' })
   }
 }
 
@@ -53,7 +53,7 @@ async function bulkPublish(isActive: boolean) {
     clearSelection()
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.products.bulkError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.products.bulkError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     busy.value = false
   }
@@ -70,7 +70,7 @@ async function bulkDelete() {
     clearSelection()
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.products.bulkError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.products.bulkError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     busy.value = false
   }

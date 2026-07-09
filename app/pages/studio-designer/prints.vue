@@ -86,7 +86,7 @@ async function onUpload() {
     await refresh()
     toast.add({ title: t('studio.designer.prints.toast.submitted'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('studio.designer.prints.toast.uploadError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('studio.designer.prints.toast.uploadError'), description: getFetchMessage(e), color: 'error' })
   } finally { uploading.value = false }
 }
 

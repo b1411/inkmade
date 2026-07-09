@@ -86,7 +86,7 @@ async function create() {
     toast.add({ title: t('admin.orders.new.created'), color: 'success' })
     await navigateTo(`/admin/orders/${res.orderId}`)
   } catch (e) {
-    toast.add({ title: t('admin.orders.new.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.orders.new.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     creating.value = false
   }

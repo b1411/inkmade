@@ -67,7 +67,7 @@ async function onResolve(id: string, status: 'approved' | 'rejected') {
     notes[id] = ''
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.shops.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     busy.value = null
   }
@@ -91,7 +91,7 @@ async function onApprove(a: NonNullable<typeof apps.value>[number]) {
     }
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.shops.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     busy.value = null
   }
@@ -121,7 +121,7 @@ async function toggleShopStatus(s: ShopRow) {
     toast.add({ title: next === 'active' ? t('admin.shops.reactivated') : t('admin.shops.suspended'), color: 'success' })
     await refreshShops()
   } catch (e) {
-    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.shops.error'), description: getFetchMessage(e), color: 'error' })
   } finally { shopBusy.value = null }
 }
 
@@ -134,7 +134,7 @@ async function saveShare(s: ShopRow) {
     toast.add({ title: t('admin.shops.shareSaved'), color: 'success' })
     await refreshShops()
   } catch (e) {
-    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.shops.error'), description: getFetchMessage(e), color: 'error' })
   } finally { shopBusy.value = null }
 }
 
@@ -147,7 +147,7 @@ async function onReissue(s: ShopRow) {
     catch { toast.add({ title: shopClaim[s.id]!, color: 'info' }) }
     await emailClaim(s.id) // best-effort авто-письмо владельцу
   } catch (e) {
-    toast.add({ title: t('admin.shops.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.shops.error'), description: getFetchMessage(e), color: 'error' })
   } finally { shopBusy.value = null }
 }
 

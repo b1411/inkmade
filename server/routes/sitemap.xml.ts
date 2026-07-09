@@ -18,8 +18,12 @@ export default defineEventHandler(async (event) => {
     { loc: '/', priority: '1.0' },
     { loc: '/catalog', priority: '0.7' },
     { loc: '/business', priority: '0.6' },
+    { loc: '/legal', priority: '0.3' },
+    { loc: '/legal/offer', priority: '0.3' },
     { loc: '/legal/terms', priority: '0.3' },
     { loc: '/legal/privacy', priority: '0.3' },
+    { loc: '/legal/delivery', priority: '0.3' },
+    { loc: '/legal/cookies', priority: '0.3' },
   ]
   for (const c of cats ?? []) {
     if (c.slug) urls.push({ loc: `/catalog/${c.slug}`, priority: '0.6' })

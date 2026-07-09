@@ -164,7 +164,7 @@ async function onLogoPick(e: Event) {
     form.logo_url = await uploadLogo(shop.value.id, file)
     toast.add({ title: t('shopAdmin.branding.logoUploaded'), color: 'success' })
   } catch (err) {
-    toast.add({ title: t('shopAdmin.branding.error'), description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('shopAdmin.branding.error'), description: getFetchMessage(err), color: 'error' })
   } finally {
     uploading.value = false
   }
@@ -197,7 +197,7 @@ async function save() {
     })
     toast.add({ title: t('shopAdmin.branding.saved'), color: 'success' })
   } catch (err) {
-    toast.add({ title: t('shopAdmin.branding.error'), description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('shopAdmin.branding.error'), description: getFetchMessage(err), color: 'error' })
   } finally {
     saving.value = false
   }

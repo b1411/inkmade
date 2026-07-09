@@ -1,7 +1,15 @@
 <script setup lang="ts">
 // Каталог категорий плитками (§6). Публичная страница, SSR. Категории — из БД.
 const { t } = useI18n()
-useHead({ title: t('catalog.pageTitle') })
+// SEO: индексируемая публичная страница — заголовок + описание + OG (P2 SEO).
+// Переиспользуем существующий подзаголовок каталога как meta-description, чтобы не
+// плодить i18n-ключи. Canonical/og:url ставятся глобально в app.vue.
+useSeoMeta({
+  title: t('catalog.pageTitle'),
+  description: t('catalog.index.subtitle'),
+  ogTitle: t('catalog.pageTitle'),
+  ogDescription: t('catalog.index.subtitle'),
+})
 
 const { listActive } = useCategories()
 const { data: categories } = await useAsyncData('catalog-categories', () => listActive())

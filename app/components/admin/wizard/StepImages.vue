@@ -66,7 +66,7 @@ async function uploadFiles(files: FileList, ctx: { colorHex: string | null; kind
     }
     emit('changed')
   } catch (err) {
-    toast.add({ title: t('admin.wizard.images.uploadError'), description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.images.uploadError'), description: getFetchMessage(err), color: 'error' })
   } finally {
     uploadingKey.value = null
   }
@@ -99,14 +99,14 @@ async function onCardDrop(groupKey: string, targetId: string, groupImages: Image
   if (from < 0 || to < 0) return
   ids.splice(to, 0, ids.splice(from, 1)[0]!)
   try { await reorderImages(ids); emit('changed') } catch (e) {
-    toast.add({ title: t('admin.wizard.images.reorderError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.images.reorderError'), description: getFetchMessage(e), color: 'error' })
   }
 }
 
 // ── действия с фото (от MediaCard) ────────────────────────────────
 async function run(p: Promise<unknown>) {
   try { await p; emit('changed') } catch (e) {
-    toast.add({ title: t('admin.wizard.images.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.wizard.images.error'), description: getFetchMessage(e), color: 'error' })
   }
 }
 const onPrimary = (id: string) => run(setPrimaryImage(props.product.id, id))

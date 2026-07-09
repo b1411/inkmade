@@ -20,7 +20,7 @@ async function saveCost(variantId: string) {
     toast.add({ title: t('admin.stock.costSaved'), color: 'success' })
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.stock.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.stock.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     costSaving.value = null
   }
@@ -46,7 +46,7 @@ async function onSubmit() {
     form.delta = 1
     refresh()
   } catch (e) {
-    toast.add({ title: t('admin.stock.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.stock.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -75,7 +75,7 @@ async function openHistory(variantId: string, label: string) {
   try {
     history.rows = await listMovements(variantId)
   } catch (e) {
-    toast.add({ title: t('admin.stock.historyLoadError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.stock.historyLoadError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     history.loading = false
   }

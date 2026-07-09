@@ -24,7 +24,7 @@ async function saveProfile() {
     await fetchProfile(true)
     toast.add({ title: t('account.overview.savedTitle'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('account.overview.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.overview.errorTitle'), description: getFetchMessage(e), color: 'error' })
   } finally {
     saving.value = false
   }
@@ -63,7 +63,7 @@ async function onAvatarPick(e: Event) {
     avatarUrl.value = url
     toast.add({ title: t('account.overview.avatar.updated'), color: 'success' })
   } catch (err) {
-    toast.add({ title: t('account.overview.errorTitle'), description: (err as Error).message, color: 'error' })
+    toast.add({ title: t('account.overview.errorTitle'), description: getFetchMessage(err), color: 'error' })
   } finally {
     uploadingAvatar.value = false
     if (avatarInput.value) avatarInput.value.value = ''
@@ -77,7 +77,7 @@ async function saveNotifications() {
     if (error) throw error
     toast.add({ title: t('account.overview.notif.saved'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('account.overview.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.overview.errorTitle'), description: getFetchMessage(e), color: 'error' })
   } finally {
     savingNotif.value = false
   }
@@ -92,7 +92,7 @@ async function deleteAccount() {
     await signOut()
     await navigateTo('/')
   } catch (e) {
-    toast.add({ title: t('account.overview.errorTitle'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.overview.errorTitle'), description: getFetchMessage(e), color: 'error' })
     del.busy = false
   }
 }
@@ -108,7 +108,7 @@ async function changePassword() {
     pwd.value = ''
     toast.add({ title: t('account.overview.passwordChangedTitle'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('account.overview.errorTitle'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('account.overview.errorTitle'), description: getFetchMessage(e), color: 'error' })
   } finally {
     changingPwd.value = false
   }

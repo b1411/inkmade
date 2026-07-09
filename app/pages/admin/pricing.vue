@@ -28,7 +28,7 @@ async function addPromo() {
     await refresh()
     toast.add({ title: t('admin.pricing.promoCreated'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('admin.pricing.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.pricing.error'), description: getFetchMessage(e), color: 'error' })
   } finally { saving.value = false }
 }
 async function onToggle(id: string, active: boolean) { await togglePromo(id, active); await refresh() }

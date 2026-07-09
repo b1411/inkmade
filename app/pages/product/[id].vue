@@ -4,6 +4,7 @@
 const { t } = useI18n()
 const route = useRoute()
 const slug = route.params.id as string
+const site = String(useRuntimeConfig().public.siteUrl || '').replace(/\/$/, '')
 const { getBySlug } = useCatalog()
 
 const { data: product, error } = await useAsyncData(`product-${slug}`, () => getBySlug(slug))
@@ -19,6 +20,7 @@ useSeoMeta({
   ogTitle: t('product.metaTitle', { title: product.value.title }),
   ogDescription: product.value.description || t('product.ogDescriptionFallback', { title: product.value.title }),
   ogImage,
+  ogType: 'product',
 })
 
 // Product JSON-LD (P3.20) — структурированные данные для поиска/соцпревью.
@@ -35,13 +37,34 @@ useHead({
       description: product.value!.description || t('product.ogDescriptionFallback', { title: product.value!.title }),
       image: ogImage ? [ogImage] : undefined,
       brand: { '@type': 'Brand', name: 'INKMADE' },
+      productID: product.value!.id,
+      url: `${site}/product/${slug}`,
       offers: {
         '@type': 'Offer',
+        url: `${site}/product/${slug}`,
         price: priceFromLd.value,
         priceCurrency: 'KZT',
-        availability: 'https://schema.org/InStock',
+        availability: (product.value!.variants ?? []).some(v => v.stock > 0)
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
       },
     })),
+  }],
+})
+
+// BreadcrumbList JSON-LD (P2 SEO): хлебные крошки в поисковой выдаче.
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'INKMADE', item: `${site}/` },
+        { '@type': 'ListItem', position: 2, name: t('catalog.pageTitle'), item: `${site}/catalog` },
+        { '@type': 'ListItem', position: 3, name: product.value!.title, item: `${site}/product/${slug}` },
+      ],
+    }),
   }],
 })
 
@@ -65,7 +88,7 @@ async function onToggleFav() {
     // храним реальный id строки избранного (не плейсхолдер) — на случай будущей логики
     favId.value = added ? await isProductFav(product.value!.id) : null
   } catch (e) {
-    toast.add({ title: t('product.favError'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('product.favError'), description: getFetchMessage(e), color: 'error' })
   } finally { favBusy.value = false }
 }
 

@@ -32,7 +32,7 @@ async function act(orderId: string, to: OrderStatus) {
     await refresh()
     toast.add({ title: t('admin.returns.statusChanged', { status: t(`domain.orderStatus.${to}`) }), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('admin.returns.error'), description: (e as { data?: { message?: string } }).data?.message ?? (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.returns.error'), description: getFetchMessage(e), color: 'error' })
   } finally { busy.value = null }
 }
 const shortId = (s: string) => s.slice(0, 8)

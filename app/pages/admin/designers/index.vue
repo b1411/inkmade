@@ -29,7 +29,7 @@ async function sendInvite() {
     await refresh()
     toast.add({ title: t('admin.designers.inviteCreated'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('admin.designers.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.designers.error'), description: getFetchMessage(e), color: 'error' })
   } finally { inviting.value = false }
 }
 async function copyLink(token: string) {
@@ -42,7 +42,7 @@ async function copyLink(token: string) {
 }
 async function revoke(id: string) {
   try { await fin.revokeInvite(id); await refresh() }
-  catch (e) { toast.add({ title: t('admin.designers.error'), description: (e as Error).message, color: 'error' }) }
+  catch (e) { toast.add({ title: t('admin.designers.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 const inviteBadge = (s: string) => s === 'joined' ? 'success' : s === 'revoked' ? 'error' : 'warning'
 const inviteLabel = computed<Record<string, string>>(() => ({
@@ -61,7 +61,7 @@ async function moderate(id: string, status: 'approved' | 'rejected') {
     await refresh()
     toast.add({ title: status === 'approved' ? t('admin.designers.printApproved') : t('admin.designers.printRejected'), color: status === 'approved' ? 'success' : 'warning' })
   } catch (e) {
-    toast.add({ title: t('admin.designers.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.designers.error'), description: getFetchMessage(e), color: 'error' })
   } finally { busy.value = null }
 }
 async function payout(id: string) {
@@ -71,7 +71,7 @@ async function payout(id: string) {
     await refresh()
     toast.add({ title: t('admin.designers.payoutMarked'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('admin.designers.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.designers.error'), description: getFetchMessage(e), color: 'error' })
   } finally { busy.value = null }
 }
 </script>

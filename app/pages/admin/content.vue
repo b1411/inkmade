@@ -26,7 +26,7 @@ async function save() {
     ])
     toast.add({ title: t('admin.content.saved'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('admin.content.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.content.error'), description: getFetchMessage(e), color: 'error' })
   } finally { saving.value = false }
 }
 const { public: pub } = useRuntimeConfig()

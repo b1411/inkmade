@@ -33,7 +33,7 @@ async function save(userId: string) {
     toast.add({ title: t('admin.users.roleUpdated'), color: 'success' })
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.users.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.users.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     savingId.value = null
   }
@@ -54,7 +54,7 @@ async function toggleBan(u: { id: string; email: string; banned_until?: string |
     toast.add({ title: ban ? t('admin.users.banToast') : t('admin.users.unbanToast'), color: ban ? 'warning' : 'success' })
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.users.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.users.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     banningId.value = null
   }
@@ -73,7 +73,7 @@ async function sendInvite() {
     invite.role = 'customer'
     await refresh()
   } catch (e) {
-    toast.add({ title: t('admin.users.invite.error'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('admin.users.invite.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     inviting.value = false
   }

@@ -61,7 +61,7 @@ async function onSubmit() {
     done.value = true
     toast.add({ title: t('business.form.successToast'), color: 'success' })
   } catch (e) {
-    toast.add({ title: t('business.form.errSend'), description: (e as Error).message, color: 'error' })
+    toast.add({ title: t('business.form.errSend'), description: getFetchMessage(e), color: 'error' })
   } finally {
     sending.value = false
   }
