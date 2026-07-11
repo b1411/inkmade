@@ -25,7 +25,7 @@ async function onSubmit() {
     const isSafeRedirect = raw && raw.startsWith('/') && !raw.startsWith('//') && !cabinets.some(c => raw.startsWith(c))
     await navigateTo(isSafeRedirect ? raw : homePath)
   } catch (e) {
-    toast.add({ title: t('auth.login.errorTitle'), description: getFetchMessage(e), color: 'error' })
+    toast.add({ title: t('auth.login.errorTitle'), description: t(authErrorKey(e)), color: 'error' })
   } finally {
     loading.value = false
   }
