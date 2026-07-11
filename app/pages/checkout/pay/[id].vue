@@ -11,6 +11,9 @@ const orderId = route.params.id as string
 const supabase = useSupabaseClient<Database>()
 const cart = useCart()
 const toast = useToast()
+// Демо-провайдер (кнопка «Оплатить») доступен только в dev — в проде реального
+// платёжного провайдера ещё нет, показываем аккуратный экран «оплата подключается».
+const isDev = import.meta.dev
 
 const { data: order } = await useAsyncData(`pay-${orderId}`, async () => {
   const { data } = await supabase.from('orders').select('id, total, status').eq('id', orderId).single()
@@ -61,14 +64,34 @@ async function pay() {
         <p class="ink-label text-ink-gray-600">{{ $t('cart.pay.amountLabel') }}</p>
         <p class="text-h1 ink-display text-ink-burgundy mt-1">{{ order?.total }} {{ $t('units.currency') }}</p>
       </div>
-      <UButton color="primary" size="xl" block icon="i-lucide-check" :loading="paying" @click="pay">
-        {{ $t('cart.pay.submit') }}
-      </UButton>
-      <UButton to="/cart" color="neutral" variant="ghost" block>{{ $t('cart.pay.cancel') }}</UButton>
-      <p class="text-caption text-ink-gray-400 flex items-center justify-center gap-1.5">
-        <UIcon name="i-lucide-shield-check" class="shrink-0" />
-        {{ $t('cart.pay.note') }}
-      </p>
+      <!-- DEV: демо-провайдер для сквозного теста потока (в проде /api/payment/mock-confirm отдаёт 404) -->
+      <template v-if="isDev">
+        <UButton color="primary" size="xl" block icon="i-lucide-check" :loading="paying" @click="pay">
+          {{ $t('cart.pay.submit') }}
+        </UButton>
+        <UButton to="/cart" color="neutral" variant="ghost" block>{{ $t('cart.pay.cancel') }}</UButton>
+        <p class="text-caption text-ink-gray-400 flex items-center justify-center gap-1.5">
+          <UIcon name="i-lucide-shield-check" class="shrink-0" />
+          {{ $t('cart.pay.note') }}
+        </p>
+      </template>
+
+      <!-- ПРОД: реальный платёжный провайдер ещё не подключён — вместо нерабочей кнопки показываем статус -->
+      <template v-else>
+        <div class="border border-ink-gray-200 rounded-lg bg-ink-gray-50 p-6 text-left space-y-2">
+          <p class="ink-label text-ink-gray-700 flex items-center gap-1.5">
+            <UIcon name="i-lucide-clock" class="shrink-0" /> {{ $t('cart.pay.pendingTitle') }}
+          </p>
+          <p class="text-caption text-ink-gray-600">{{ $t('cart.pay.pendingText') }}</p>
+        </div>
+        <UButton :to="`/order/${orderId}`" color="primary" size="xl" block icon="i-lucide-package">
+          {{ $t('cart.pay.viewOrder') }}
+        </UButton>
+        <p class="text-caption text-ink-gray-400 flex items-center justify-center gap-1.5">
+          <UIcon name="i-lucide-shield-check" class="shrink-0" />
+          {{ $t('cart.pay.methods') }}
+        </p>
+      </template>
     </template>
 
     <!-- Заказ уже оплачен / в производстве -->

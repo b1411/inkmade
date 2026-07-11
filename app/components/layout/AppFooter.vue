@@ -37,6 +37,7 @@ const { isAuthenticated } = useAuth()
       <div class="space-y-2">
         <p class="ink-label text-ink-cream/50">{{ $t('footer.contactsCol') }}</p>
         <a :href="`mailto:${LEGAL.supportEmail}`" class="footer-link block text-caption">{{ LEGAL.supportEmail }}</a>
+        <a v-if="SELLER.isFilled" :href="`tel:${SELLER.phone.replace(/\s/g, '')}`" class="footer-link block text-caption">{{ SELLER.phone }}</a>
         <div class="flex items-center gap-3 pt-1">
           <a
             href="https://instagram.com/inkmade"
@@ -63,8 +64,9 @@ const { isAuthenticated } = useAuth()
       <div class="mx-auto max-w-(--container-max) px-4 py-4 space-y-1">
         <!-- Реквизиты продавца — показываем, когда заполнены (Закон РК «О защите прав потребителей», ст. 25) -->
         <p v-if="SELLER.isFilled" class="text-caption text-ink-cream/40">
-          {{ SELLER.entityType }} {{ SELLER.legalName }} · {{ $t('footer.bin') }} {{ SELLER.bin }}
+          {{ SELLER.entityType }} {{ SELLER.legalName }} · {{ $t('footer.bin') }} {{ SELLER.bin }} · {{ SELLER.address }} · {{ SELLER.phone }}
         </p>
+        <p v-if="SELLER.isFilled" class="text-caption text-ink-cream/40">{{ $t('footer.payment') }}</p>
         <p class="ink-label text-ink-cream/40">{{ $t('footer.copyright') }}</p>
       </div>
     </div>

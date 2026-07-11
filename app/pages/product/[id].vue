@@ -20,7 +20,6 @@ useSeoMeta({
   ogTitle: t('product.metaTitle', { title: product.value.title }),
   ogDescription: product.value.description || t('product.ogDescriptionFallback', { title: product.value.title }),
   ogImage,
-  ogType: 'product',
 })
 
 // Product JSON-LD (P3.20) — структурированные данные для поиска/соцпревью.
@@ -28,6 +27,9 @@ const priceFromLd = computed(() =>
   product.value!.base_price + (product.value!.materials[0]?.surcharge ?? 0),
 )
 useHead({
+  // og:type=product — валидный тип OpenGraph, но не входит в типовой union useSeoMeta,
+  // поэтому задаём через meta (P3.20 SEO/соцпревью карточки товара).
+  meta: [{ property: 'og:type', content: 'product' }],
   script: [{
     type: 'application/ld+json',
     innerHTML: computed(() => JSON.stringify({
