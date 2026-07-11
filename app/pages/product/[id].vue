@@ -19,13 +19,24 @@ const { data: related } = await useAsyncData(`related-${slug}`, async () => {
   return (list ?? []).filter(p => p.id !== product.value!.id).slice(0, 4)
 })
 
-const ogImage = product.value.product_images?.find(i => i.is_primary)?.url ?? product.value.product_images?.[0]?.url
+// og:image ОБЯЗАН быть растром: SVG-мокапы краулеры соцсетей (WhatsApp/Telegram/FB)
+// не рендерят → битое превью. Берём primary если он растровый, иначе первый растровый
+// снимок, иначе брендовый дефолт сайта (аудит 2026-07-12 #6). twitterImage тоже
+// переопределяем per-page — иначе X показывает общий og-default вместо фото товара.
+const productImgs = product.value.product_images ?? []
+const isRaster = (u?: string | null): u is string => !!u && !u.toLowerCase().endsWith('.svg')
+const primaryImg = productImgs.find(i => i.is_primary)?.url ?? productImgs[0]?.url
+const ogImage = isRaster(primaryImg)
+  ? primaryImg
+  : (productImgs.map(i => i.url).find(isRaster) ?? `${site}/og-default.jpg`)
 useSeoMeta({
   title: t('product.metaTitle', { title: product.value.title }),
   description: product.value.description || t('product.metaDescription', { title: product.value.title }),
   ogTitle: t('product.metaTitle', { title: product.value.title }),
   ogDescription: product.value.description || t('product.ogDescriptionFallback', { title: product.value.title }),
   ogImage,
+  twitterImage: ogImage,
+  twitterCard: 'summary_large_image',
 })
 
 // Product JSON-LD (P3.20) — структурированные данные для поиска/соцпревью.

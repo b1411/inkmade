@@ -25,6 +25,13 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, statusMessage: 'Только производство/админ' })
   }
 
+  // Возврат средств НЕ проходит через change_order_status (у него нет реверса
+  // роялти/доли магазина) — только через refund_order (админ, финансовый модуль).
+  // Отмену оплаченного (cancelled) change_order_status реверсирует корректно (0084).
+  if (to === 'refunded') {
+    throw createError({ statusCode: 400, statusMessage: 'Возврат средств оформляется в финансовом модуле' })
+  }
+
   const { data: order, error } = await svc.from('orders').select('*').eq('id', orderId).single()
   if (error || !order) throw createError({ statusCode: 404, statusMessage: 'Заказ не найден' })
 

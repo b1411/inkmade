@@ -20,6 +20,7 @@ const LIMITS: { prefix: string; max: number }[] = [
   { prefix: '/api/designs/', max: 40 }, // импорт/модерация/share
   { prefix: '/api/promo/', max: 30 }, // валидация промокода — от перебора кодов
   { prefix: '/api/business/', max: 10 }, // публичная форма заявки на B2B-магазин — от спама
+  { prefix: '/api/telemetry/', max: 30 }, // клиентские ошибки — публичный приём, кэп от спама
 ]
 
 const buckets = new Map<string, Hit>()

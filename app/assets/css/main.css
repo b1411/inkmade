@@ -32,7 +32,7 @@
   /* Нейтральные тёплые (UI-каркас, §2.1) */
   --color-ink-gray-900: #1a1a1a;
   --color-ink-gray-600: #555555;
-  --color-ink-gray-400: #9a9a9a;
+  --color-ink-gray-400: #6f6f6f; /* AA-контраст ≥4.5:1 на тёплом белом #fbf8f2 (было #9a9a9a ~2.6:1) */
   --color-ink-gray-200: #e5e0d8;
   --color-ink-gray-50: #f4f1ea;
   --color-ink-white: #fbf8f2;

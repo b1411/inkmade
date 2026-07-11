@@ -92,6 +92,7 @@ function exportTaxCsv() {
     [t('admin.finance.taxCsv.turnover'), Math.round(turnover)],
     [t('admin.finance.taxCsv.cogs'), Math.round(Number(s.cogs) || 0)],
     [t('admin.finance.taxCsv.royalty'), Math.round(Number(s.royalty) || 0)],
+    [t('admin.finance.taxCsv.shopShare'), Math.round(Number(s.shop_share) || 0)],
     [t('admin.finance.taxCsv.profit'), Math.round(Number(s.profit) || 0)],
     [t('admin.finance.taxCsv.estTax'), tax],
   ]
@@ -109,8 +110,8 @@ function exportTaxCsv() {
       </template>
     </UiPageHeader>
 
-    <div v-if="pending" class="grid grid-cols-2 md:grid-cols-5 gap-4">
-      <UiSkeleton v-for="n in 5" :key="n" rounded="rounded-lg" class="h-24" />
+    <div v-if="pending" class="grid grid-cols-2 md:grid-cols-6 gap-4">
+      <UiSkeleton v-for="n in 6" :key="n" rounded="rounded-lg" class="h-24" />
     </div>
     <!-- ошибка загрузки: НЕ показываем дашборд из нулей (ложные 0 ₸ на денежной странице) -->
     <UiEmptyState
@@ -122,10 +123,11 @@ function exportTaxCsv() {
     <template v-else>
       <div class="space-y-8">
         <!-- KPI -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
           <UiStatCard :label="$t('admin.finance.kpi.revenue')" :value="money(data?.stats?.revenue)" icon="i-lucide-trending-up" />
           <UiStatCard :label="$t('admin.finance.kpi.cogs')" :value="`−${money(data?.stats?.cogs)}`" icon="i-lucide-factory" />
           <UiStatCard :label="$t('admin.finance.kpi.royalty')" :value="`−${money(data?.stats?.royalty)}`" icon="i-lucide-palette" />
+          <UiStatCard :label="$t('admin.finance.kpi.shopShare')" :value="`−${money(data?.stats?.shop_share)}`" icon="i-lucide-store" />
           <UiStatCard :label="$t('admin.finance.kpi.refund')" :value="`−${money(data?.stats?.refund)}`" icon="i-lucide-rotate-ccw" />
           <UiStatCard :label="$t('admin.finance.kpi.profit')" :value="money(data?.stats?.profit)" icon="i-lucide-wallet" accent />
         </div>

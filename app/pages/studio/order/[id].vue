@@ -105,6 +105,10 @@ async function resolveReq(status: 'approved' | 'rejected') {
 }
 
 const nextStates = computed<OrderStatus[]>(() => TRANSITIONS[(order.value?.status as OrderStatus) ?? 'paid'] ?? [])
+// Возврат средств (refunded) — админ-действие через финансовый модуль (refund_order
+// реверсирует роялти + долю магазина). Оператору на доске его не предлагаем; отмену
+// (cancelled) оставляем — change_order_status реверсирует её корректно (миграция 0084).
+const operatorStates = computed<OrderStatus[]>(() => nextStates.value.filter(s => s !== 'refunded'))
 
 // Гейт модерации (P2.14, §24) — дублируем серверную проверку в UI, чтобы оператор
 // не упирался в ошибку: в печать нельзя, пока хоть один дизайн не одобрен.
@@ -399,7 +403,7 @@ function printPackingSlip() {
           {{ $t('studio.production.order.tracking', { tracking: order.tracking_no, carrier: order.carrier }) }}
         </div>
         <UButton
-          v-for="to in nextStates"
+          v-for="to in operatorStates"
           :key="to"
           :color="to === 'reprint' || to === 'cancelled' ? 'error' : to === 'on_hold' ? 'warning' : 'primary'"
           variant="subtle"
@@ -414,7 +418,7 @@ function printPackingSlip() {
           <UIcon name="i-lucide-alert-triangle" class="shrink-0 mt-0.5" />
           {{ $t('studio.production.order.approveAllHint') }}
         </p>
-        <p v-if="!nextStates.length" class="text-caption text-ink-gray-400">{{ $t('studio.production.order.finalStatus') }}</p>
+        <p v-if="!operatorStates.length" class="text-caption text-ink-gray-400">{{ $t('studio.production.order.finalStatus') }}</p>
       </aside>
     </div>
 

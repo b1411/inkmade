@@ -17,7 +17,7 @@ interface Stats {
 }
 
 const supabase = useSupabaseClient<Database>()
-const { data: stats, pending } = await useAsyncData('admin-stats', async () => {
+const { data: stats, pending, error: statsError } = await useAsyncData('admin-stats', async () => {
   const { data, error } = await supabase.rpc('admin_stats')
   if (error) throw error
   return data as unknown as Stats
@@ -82,6 +82,14 @@ const { number: fmt, date } = useFormat()
     <div v-if="pending" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-24" />
     </div>
+
+    <!-- ошибка загрузки: НЕ показываем фейковые ₸0 KPI на денежном дашборде (аудит #7) -->
+    <UiEmptyState
+      v-else-if="statsError"
+      icon="i-lucide-alert-triangle"
+      :title="$t('admin.dashboard.loadError.title')"
+      :text="$t('admin.dashboard.loadError.text')"
+    />
 
     <template v-else>
       <div class="space-y-8">

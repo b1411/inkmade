@@ -486,6 +486,13 @@ async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
       .map(p => ({ id: p.id, url: p.assetUrl! })),
   )
 
+  // Печатный файл ОБЯЗАН содержать все размещённые принты. Если ассет так и не
+  // загрузился (удалён из Storage / сеть / CORS), НЕ отдаём молча пустой/неполный
+  // слой — падаем явно: generatePrintFiles вернёт [], а add-to-cart-гард заблокирует
+  // заказ, вместо отправки в цех валидного, но прозрачного PNG (аудит 2026-07-12 #2).
+  const failedAssets = placements.value.filter(p => p.kind === 'image' && p.assetUrl && !images[p.id])
+  if (failedAssets.length) throw new Error(`print-assets-not-loaded:${failedAssets.length}`)
+
   const zones = [...new Set(placements.value.map(p => p.zone))]
   const out: ZoneBlob[] = []
   for (const zn of zones) {
@@ -526,6 +533,9 @@ async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
           layer.add(new Konva.Text({ text: p.text ?? '', x: lx, y: ly, width: lw, fontSize: (p.fontSize ?? 48) * outScale, fontFamily: p.fontFamily, fill: p.fill, rotation: p.rotation, align: p.align ?? 'center', opacity: p.opacity ?? 1, stroke: p.stroke || undefined, strokeWidth: p.stroke ? (p.strokeWidth ?? 0) * outScale : 0, letterSpacing: (p.letterSpacing ?? 0) * outScale, lineHeight: p.lineHeight ?? 1 }))
         }
       }
+      // доп. защита: пустой слой (все размещения зоны не отрисовались) → не отдаём
+      // прозрачный PNG в цех. В норме недостижимо из-за upfront-проверки ассетов выше.
+      if (!layer.getChildren().length) continue
       layer.draw()
       const blob = await new Promise<Blob | null>((resolve) => {
         try { st.toBlob({ mimeType: 'image/png', callback: b => resolve(b as Blob | null) }) } catch { resolve(null) }
