@@ -303,6 +303,7 @@
         "addButton": "Добавить материал",
         "validationName": "Укажите название материала",
         "error": "Ошибка",
+        "deleteConfirm": "Удалить материал? Действие необратимо.",
         "deleteError": "Ошибка удаления"
       },
       "variants": {
@@ -328,12 +329,14 @@
         "selectColorSize": "Добавьте хотя бы один цвет и размер",
         "variantsCreated": "Создано вариантов: {count}",
         "generateError": "Ошибка генерации",
+        "deleteConfirm": "Удалить вариант?",
         "error": "Ошибка"
       },
       "zones": {
         "noMaterialsTitle": "Нет материалов",
         "noMaterialsText": "Режим зон определяется материалом — добавьте материал на шаге 2.",
         "zonesTitle": "Зоны товара",
+        "deleteConfirm": "Удалить зону печати?",
         "sizeDpi": "до {w}×{h} мм · min {dpi} DPI",
         "mockupMark": " · мокап ✓",
         "visualEditor": "Визуальный редактор",

@@ -1,9 +1,20 @@
 <script setup lang="ts">
 // Товары категории (§6.1). SSR для SEO. Категория проверяется по БД.
 // Единая карточка CatalogProductCard, скелетоны при загрузке, auto-animate сетки.
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const category = route.params.category as string
+
+// Русское склонение существительного после числа: 1 → «изделие», 2-4 → «изделия»,
+// 0/5-20 → «изделий» (было: всегда countMany → «2 изделий»). В казахском форма не
+// меняется после числительного — всегда countMany.
+function categoryCountKey(n: number): string {
+  if (locale.value !== 'ru') return 'catalog.category.countMany'
+  const m10 = n % 10, m100 = n % 100
+  if (m10 === 1 && m100 !== 11) return 'catalog.category.countOne'
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return 'catalog.category.countFew'
+  return 'catalog.category.countMany'
+}
 const site = String(useRuntimeConfig().public.siteUrl || '').replace(/\/$/, '')
 const { listByCategory } = useCatalog()
 const { listActive } = useCategories()
@@ -73,7 +84,7 @@ const filtered = computed(() => {
         <UiSectionLabel accent>{{ $t('catalog.label') }}</UiSectionLabel>
         <h1 class="ink-display text-h1 mt-2">{{ label }}</h1>
         <p v-if="!pending" class="ink-label text-ink-gray-600 mt-2">
-          {{ count === 1 ? $t('catalog.category.countOne', { n: count }) : $t('catalog.category.countMany', { n: count }) }}
+          {{ $t(categoryCountKey(count), { n: count }) }}
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">

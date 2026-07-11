@@ -3,7 +3,9 @@ import type { ShapeType } from '~/composables/useDesign'
 
 // Фигуры как элементы дизайна (§7.1): выбор цвета + режим «заливка/контур»,
 // затем клик по фигуре добавляет её на активную зону. Линия всегда рисуется штрихом.
-const { addShape } = useDesign()
+const { addShape, atPlacementLimit } = useDesign()
+const { t } = useI18n()
+const toast = useToast()
 
 const SHAPES: Array<{ type: ShapeType; icon: string }> = [
   { type: 'rect', icon: 'i-lucide-square' },
@@ -26,6 +28,7 @@ const mode = ref<'fill' | 'outline'>('fill')
 const color = ref('#7A1F28')
 
 function add(type: ShapeType) {
+  if (atPlacementLimit.value) { toast.add({ title: t('customize.tools.limitReached'), color: 'warning' }); return }
   // линия — всегда штрих (заливка контура нулевой площади невидима)
   if (type === 'line') {
     addShape(type, { fill: 'transparent', stroke: color.value, strokeWidth: 6 })

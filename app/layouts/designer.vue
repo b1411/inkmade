@@ -13,6 +13,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
 
 <template>
   <div class="min-h-screen bg-ink-white text-ink-black">
+    <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
     <header class="border-b border-ink-gray-200">
       <div class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -24,7 +25,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
     </header>
 
     <div class="mx-auto max-w-(--container-max) px-4 py-8 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
-      <aside class="space-y-1 md:sticky md:top-8 md:self-start">
+      <nav class="space-y-1 md:sticky md:top-8 md:self-start" :aria-label="$t('studio.nav.designerStudio')">
         <NuxtLink
           v-for="item in nav"
           :key="item.to"
@@ -35,9 +36,9 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
           <UIcon :name="item.icon" class="size-4" />
           {{ item.label }}
         </NuxtLink>
-      </aside>
+      </nav>
 
-      <main class="min-w-0">
+      <main id="main-content" tabindex="-1" class="min-w-0 focus:outline-none">
         <slot />
       </main>
     </div>

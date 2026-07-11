@@ -77,7 +77,10 @@ async function addFromPreset(presetName: string) {
   }
 }
 
+const { confirm } = useConfirm()
 async function onDelete(id: string) {
+  const ok = await confirm({ title: t('admin.wizard.zones.deleteConfirm'), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   try { await deleteZone(id); emit('changed') } catch (e) {
     toast.add({ title: t('admin.wizard.zones.error'), description: getFetchMessage(e), color: 'error' })
   }

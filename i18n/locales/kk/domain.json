@@ -35,9 +35,9 @@
     "printMethod": {
       "dtg": "DTG (тікелей цифрлық)",
       "dtf": "DTF (термотасымал)",
-      "silkscreen": "Шелкография (трафарет)",
+      "silkscreen": "Трафареттік басу (шелкография)",
       "embroidery": "Кесте",
-      "sublimation": "Сублимация (full-print)"
+      "sublimation": "Сублимациялық басу (full-print)"
     },
     "printMode": {
       "zonal": "Аймақтық басу",

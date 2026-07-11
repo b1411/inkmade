@@ -42,7 +42,8 @@
       "print": "Принт",
       "text": "Текст",
       "shape": "Фигуры",
-      "ai": "AI"
+      "ai": "AI",
+      "limitReached": "Достигнут лимит элементов в дизайне (20). Удалите лишние, чтобы добавить новые."
     },
     "aiPanel": {
       "title": "AI-генератор принтов",
@@ -103,6 +104,11 @@
       "button": "Загрузить принт",
       "hint": "PNG, JPG, WEBP, GIF, AVIF, HEIC или PDF · до {maxMb} МБ. Принимаем любое разрешение — для идеальной печати желательно от {dpiTarget} DPI.",
       "rejected": "Файл отклонён",
+      "errors": {
+        "empty": "Файл пустой",
+        "tooBig": "Файл слишком большой. Лимит {maxMb} МБ.",
+        "badFormat": "Недопустимый формат. Разрешены PNG, JPG, WEBP, GIF, AVIF, HEIC или PDF."
+      },
       "pdfProcessing": "Обрабатываю PDF…",
       "pdfFailed": "Не удалось обработать PDF",
       "heicProcessing": "Конвертирую фото (HEIC)…",

@@ -201,7 +201,13 @@ export const useDesign = () => {
   let seq = 0
   function nextId() { return `pl_${Date.now()}_${seq++}` }
 
-  function addImage(assetUrl: string, naturalW: number, naturalH: number, source: 'upload' | 'library' | 'ai', printId?: string, vector = false, sourceFileUrl?: string): Placement {
+  // Серверный предел — designSpecSchema.placements.max(20). Дублируем на клиенте, чтобы
+  // не дать собрать >20 элементов и упереться в ошибку только на checkout (аудит 2026-07-12).
+  const MAX_PLACEMENTS = 20
+  const atPlacementLimit = computed(() => placements.value.length >= MAX_PLACEMENTS)
+
+  function addImage(assetUrl: string, naturalW: number, naturalH: number, source: 'upload' | 'library' | 'ai', printId?: string, vector = false, sourceFileUrl?: string): Placement | null {
+    if (placements.value.length >= MAX_PLACEMENTS) return null
     const r = zoneRect.value
     // защита от деления на ноль: некорректные размеры → 1:1 квадрат (иначе NaN-геометрия)
     const nW = naturalW > 0 ? naturalW : 1
@@ -242,6 +248,7 @@ export const useDesign = () => {
   }
 
   function addText(text: string, fontFamily: string, fill: string, fontSize = 48, opts: Partial<Placement> = {}) {
+    if (placements.value.length >= MAX_PLACEMENTS) return
     const r = zoneRect.value
     const pl: Placement = {
       id: nextId(), kind: 'text', zone: zoneName.value, text, fontFamily, fill, fontSize,
@@ -257,6 +264,7 @@ export const useDesign = () => {
   }
 
   function addShape(shapeType: ShapeType, opts?: { fill?: string; stroke?: string; strokeWidth?: number }) {
+    if (placements.value.length >= MAX_PLACEMENTS) return
     const r = zoneRect.value
     const side = Math.min(r.width, r.height) * 0.4
     const pl: Placement = {
@@ -517,7 +525,7 @@ export const useDesign = () => {
   return {
     product, materialId, zoneName, productColorHex, placements, selectedId, colorCount,
     material, printMode, validZones, zone, zoneRect, pxPerMm, hasText, compositionUrl, printFiles,
-    activePlacements, zonesWithPlacements, pxPerMmForZone,
+    activePlacements, zonesWithPlacements, pxPerMmForZone, atPlacementLimit, MAX_PLACEMENTS,
     canUndo, canRedo, undo, redo,
     init, loadSpec, addImage, addText, addShape, updatePlacement, removePlacement,
     duplicatePlacement, reorder, replaceImageAsset, alignInZone, sizeCm, dpiOf, toMm, toSpec,

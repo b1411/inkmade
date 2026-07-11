@@ -65,7 +65,13 @@ async function onFile(e: Event) {
     try {
       guard = await assertSafeUpload(file, { maxMb: MAX_FILE_MB })
     } catch (err) {
-      toast.add({ title: t('customize.upload.rejected'), description: err instanceof Error ? err.message : '', color: 'error' })
+      // локализуем по стабильному code (RU-message остаётся фолбэком для прочих мест)
+      const code = (err as { code?: string })?.code
+      const maxMb = (err as { maxMb?: number })?.maxMb
+      const desc = code
+        ? t(`customize.upload.errors.${code}`, { maxMb: maxMb ?? MAX_FILE_MB })
+        : (err instanceof Error ? err.message : '')
+      toast.add({ title: t('customize.upload.rejected'), description: desc, color: 'error' })
       return
     }
 
@@ -88,6 +94,7 @@ async function onFile(e: Event) {
       const pngUrl = await uploadToStorage(pngFile, 'image/png')
       // vector=true только если сохранили оригинал PDF (иначе исходник для печати — PNG)
       const pl = addImage(pngUrl, raster.width, raster.height, 'upload', undefined, !!pdfUrl, pdfUrl)
+      if (!pl) { toast.add({ title: t('customize.tools.limitReached'), color: 'warning' }); return }
       notifyAdded(pl)
       return
     }
@@ -117,6 +124,7 @@ async function onFile(e: Event) {
     // по реальному размеру на холсте (notifyAdded → dpiOf), а не worst-case.
     const url = await uploadToStorage(rasterFile, rasterContentType)
     const pl = addImage(url, w, h, 'upload')
+    if (!pl) { toast.add({ title: t('customize.tools.limitReached'), color: 'warning' }); return }
     notifyAdded(pl)
   } catch {
     toast.add({ title: t('customize.upload.processFailed'), color: 'error' })

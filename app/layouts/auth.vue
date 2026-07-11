@@ -11,6 +11,7 @@ const benefits = computed(() => [
 
 <template>
   <div class="min-h-screen grid lg:grid-cols-2 bg-ink-white text-ink-black">
+    <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
     <!-- брендовая панель (десктоп) -->
     <aside class="hidden lg:flex flex-col justify-between bg-ink-burgundy text-ink-cream p-12 ink-grain relative overflow-hidden">
       <!-- фоновый визуал (фото/петля) — под бордо-вуалью для читаемости текста.
@@ -46,7 +47,7 @@ const benefits = computed(() => [
     </aside>
 
     <!-- форма -->
-    <main class="flex flex-col justify-center items-center px-6 py-10 sm:px-12">
+    <main id="main-content" tabindex="-1" class="flex flex-col justify-center items-center px-6 py-10 sm:px-12 focus:outline-none">
       <div class="w-full max-w-sm">
         <NuxtLink to="/" class="lg:hidden ink-logo text-2xl block mb-10 text-ink-burgundy">INKMADE</NuxtLink>
         <slot />

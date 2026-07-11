@@ -1,6 +1,7 @@
 import { serverSupabaseUser, serverSupabaseServiceRole } from '#supabase/server'
 import type { Database } from '~/types/database.types'
 import { getPaymentProvider } from '~~/server/utils/payment'
+import { notifyOrder, notifyShopSales } from '~~/server/utils/email'
 import { requireUuid } from '~~/server/utils/validation'
 
 // Инициация платежа (§9, шаг 2). Ставит order → pending, возвращает URL оплаты.
@@ -30,13 +31,20 @@ export default defineEventHandler(async (event) => {
   if (total === 0) {
     // .rpc() не бросает — ошибку надо проверять руками, иначе клиент получит
     // {free:true} при неподтверждённом заказе (напр. сток разобрали в гонке).
-    const { error: paidErr } = await svc.rpc('apply_paid', {
+    const { data: paidRes, error: paidErr } = await svc.rpc('apply_paid', {
       p_order_id: order.id,
       p_provider_txn: `free_${order.id}`,
       p_raw: { free: true },
     })
     if (paidErr) {
       throw createError({ statusCode: 409, statusMessage: 'Не удалось подтвердить бесплатный заказ' })
+    }
+    // Уведомления как в webhook (best-effort, no-op без RESEND-ключа): письмо «принят
+    // в работу» + оповещение владельцев B2B-магазинов — только на ПЕРВОМ переходе.
+    // Раньше free-order (100% промо) шёл мимо webhook и не слал их вовсе.
+    if ((paidRes as { already_paid?: boolean } | null)?.already_paid !== true) {
+      await notifyOrder(svc, order.id, 'paid')
+      await notifyShopSales(svc, order.id)
     }
     return { payUrl: `/order/${order.id}`, paymentId: `free_${order.id}`, free: true }
   }

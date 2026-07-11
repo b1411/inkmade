@@ -3,7 +3,7 @@
 import { PRINT_FONTS, isCyrillicFont } from '~~/shared/config/print-fonts'
 
 const { t } = useI18n()
-const { addText } = useDesign()
+const { addText, atPlacementLimit } = useDesign()
 const { load: loadFont } = useFontLoader()
 const toast = useToast()
 
@@ -24,6 +24,7 @@ watch(() => form.fontFamily, (f) => { if (f) loadFont(f) })
 async function onAdd() {
   const value = form.text.trim()
   if (!value) { toast.add({ title: t('customize.text.enterText'), color: 'warning' }); return }
+  if (atPlacementLimit.value) { toast.add({ title: t('customize.tools.limitReached'), color: 'warning' }); return }
   // кириллица шрифтом без кириллических глифов нечитаема (§2.3) — подсказка
   if (!isCyrillicFont(form.fontFamily) && /[а-яё]/i.test(value)) {
     toast.add({ title: t('customize.text.noCyrillic'), description: t('customize.text.noCyrillicHint', { font: form.fontFamily }), color: 'warning' })

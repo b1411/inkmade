@@ -61,21 +61,32 @@ export interface GuardResult {
   contentType: string
 }
 
+// Ошибка проверки со стабильным `code` для локализации на границе UI (i18n),
+// с русским сообщением как fallback для мест, где перевода нет (админ/дизайнер).
+export type UploadErrorCode = 'empty' | 'tooBig' | 'badFormat'
+export interface UploadGuardError extends Error {
+  code: UploadErrorCode
+  maxMb?: number
+}
+function uploadError(code: UploadErrorCode, message: string, maxMb?: number): UploadGuardError {
+  return Object.assign(new Error(message), { code, maxMb })
+}
+
 /**
- * Провалидировать файл: размер + сигнатура из белого списка. Бросает Error
- * с человекочитаемым сообщением (для тоста). По умолчанию SVG запрещён.
+ * Провалидировать файл: размер + сигнатура из белого списка. Бросает UploadGuardError
+ * с `code` (для i18n) и русским message-фолбэком. По умолчанию SVG запрещён.
  */
 export async function assertSafeUpload(file: File, opts: GuardOptions = {}): Promise<GuardResult> {
   const maxMb = opts.maxMb ?? DEFAULT_MAX_MB
   const allow = opts.allow ?? ['png', 'jpeg', 'webp', 'gif', 'avif', 'heic', 'pdf']
 
-  if (file.size === 0) throw new Error('Файл пустой')
-  if (file.size > maxMb * 1024 * 1024) throw new Error(`Файл слишком большой. Лимит ${maxMb} МБ.`)
+  if (file.size === 0) throw uploadError('empty', 'Файл пустой')
+  if (file.size > maxMb * 1024 * 1024) throw uploadError('tooBig', `Файл слишком большой. Лимит ${maxMb} МБ.`, maxMb)
 
   const head = new Uint8Array(await file.slice(0, 16).arrayBuffer())
   const kind = detectKind(head)
   if (!kind || !allow.includes(kind)) {
-    throw new Error('Недопустимый формат файла. Разрешены PNG, JPG, WEBP, GIF, AVIF, HEIC или PDF.')
+    throw uploadError('badFormat', 'Недопустимый формат файла. Разрешены PNG, JPG, WEBP, GIF, AVIF, HEIC или PDF.')
   }
   return { kind, contentType: MIME[kind] }
 }

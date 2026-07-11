@@ -303,6 +303,7 @@
         "addButton": "Материал қосу",
         "validationName": "Материал атауын көрсетіңіз",
         "error": "Қате",
+        "deleteConfirm": "Материалды жою керек пе? Әрекет қайтарылмайды.",
         "deleteError": "Жою қатесі"
       },
       "variants": {
@@ -328,12 +329,14 @@
         "selectColorSize": "Кемінде бір түс пен өлшем қосыңыз",
         "variantsCreated": "Жасалған нұсқалар: {count}",
         "generateError": "Генерация қатесі",
+        "deleteConfirm": "Нұсқаны жою керек пе?",
         "error": "Қате"
       },
       "zones": {
         "noMaterialsTitle": "Материалдар жоқ",
         "noMaterialsText": "Аймақ режимі материалмен анықталады — 2-қадамда материал қосыңыз.",
         "zonesTitle": "Тауар аймақтары",
+        "deleteConfirm": "Басу аймағын жою керек пе?",
         "sizeDpi": "{w}×{h} мм дейін · min {dpi} DPI",
         "mockupMark": " · мокап ✓",
         "visualEditor": "Визуалды редактор",

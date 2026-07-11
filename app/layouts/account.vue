@@ -30,7 +30,7 @@ watchEffect(() => {
     </header>
 
     <div class="mx-auto max-w-(--container-max) px-4 py-8 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-8">
-      <aside class="space-y-1 md:sticky md:top-8 md:self-start">
+      <nav class="space-y-1 md:sticky md:top-8 md:self-start" :aria-label="$t('account.title')">
         <NuxtLink
           v-for="item in nav"
           :key="item.to"
@@ -41,7 +41,7 @@ watchEffect(() => {
           <UIcon :name="item.icon" class="size-4" />
           {{ item.label }}
         </NuxtLink>
-      </aside>
+      </nav>
 
       <main id="main-content" tabindex="-1" class="min-w-0 focus:outline-none">
         <slot />

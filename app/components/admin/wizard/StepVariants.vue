@@ -85,7 +85,10 @@ async function onGenerate() {
   }
 }
 
+const { confirm } = useConfirm()
 async function onDelete(id: string) {
+  const ok = await confirm({ title: t('admin.wizard.variants.deleteConfirm'), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   try { await deleteVariant(id); emit('changed') } catch (e) {
     toast.add({ title: t('admin.wizard.variants.error'), description: getFetchMessage(e), color: 'error' })
   }

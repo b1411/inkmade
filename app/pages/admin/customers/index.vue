@@ -9,7 +9,7 @@ const { dateShort } = useFormat()
 useHead({ title: t('admin.customers.headTitle') })
 
 const { list } = useCustomers()
-const { data: customers, pending } = await useAsyncData('admin-customers', () => list())
+const { data: customers, pending, error: custError } = await useAsyncData('admin-customers', () => list())
 
 const search = ref('')
 const sort = ref<'recent' | 'spent' | 'orders'>('recent')
@@ -55,6 +55,14 @@ const totals = computed(() => {
       </div>
       <UiSkeleton v-for="n in 6" :key="`r${n}`" rounded="rounded-lg" class="h-12" />
     </div>
+
+    <!-- ошибка загрузки: НЕ показываем «нет клиентов» вместо сбоя (аудит) -->
+    <UiEmptyState
+      v-else-if="custError"
+      icon="i-lucide-alert-triangle"
+      :title="$t('admin.customers.loadError.title')"
+      :text="$t('admin.customers.loadError.text')"
+    />
 
     <template v-else>
       <!-- сводка -->

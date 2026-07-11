@@ -13,6 +13,7 @@ useHead({ title: t('admin.shops.headTitle') })
 const { listApplications, resolve } = useBusiness()
 const { createShop, listShops, setShopStatus, setShopShare, reissueClaim } = useShops()
 const toast = useToast()
+const { confirm } = useConfirm()
 
 const { data: apps, pending, refresh } = await useAsyncData('admin-shop-apps', () => listApplications())
 // список созданных магазинов (только при включённой витрине)
@@ -60,6 +61,12 @@ const greeting = t('admin.shops.greeting')
 
 // reject (и approve без storefront-флага) — просто смена статуса
 async function onResolve(id: string, status: 'approved' | 'rejected') {
+  const ok = await confirm({
+    title: status === 'approved' ? t('admin.shops.approveConfirm') : t('admin.shops.rejectConfirm'),
+    description: status === 'rejected' ? t('admin.shops.rejectConfirmHint') : undefined,
+    tone: status === 'rejected' ? 'danger' : 'default',
+  })
+  if (!ok) return
   busy.value = id
   try {
     await resolve(id, status, notes[id])
@@ -78,6 +85,11 @@ async function onApprove(a: NonNullable<typeof apps.value>[number]) {
   if (!FEATURES.b2bStorefront) { await onResolve(a.id, 'approved'); return }
   const slug = (slugs[a.id] || a.desired_slug || '').trim().toLowerCase()
   if (!slug) { toast.add({ title: t('admin.shops.slugRequired'), color: 'warning' }); return }
+  const ok = await confirm({
+    title: t('admin.shops.createShopConfirm', { slug }),
+    description: t('admin.shops.createShopHint'),
+  })
+  if (!ok) return
   busy.value = a.id
   try {
     const res = await createShop(a.id, slug, a.org_name, Number(shares[a.id] ?? 15))

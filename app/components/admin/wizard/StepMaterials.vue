@@ -13,6 +13,7 @@ const emit = defineEmits<{ changed: [] }>()
 const { t } = useI18n()
 const { addMaterial, deleteMaterial } = useAdmin()
 const toast = useToast()
+const { confirm } = useConfirm()
 
 const fabricItems = Object.values(FABRIC_RULES).map(r => ({ label: r.label, value: r.fabric }))
 
@@ -56,6 +57,8 @@ async function onAdd() {
 }
 
 async function onDelete(id: string) {
+  const ok = await confirm({ title: t('admin.wizard.materials.deleteConfirm'), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   try {
     await deleteMaterial(id)
     emit('changed')
