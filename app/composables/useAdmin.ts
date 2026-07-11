@@ -75,9 +75,19 @@ export const useAdmin = () => {
     if (error) throw error
   }
 
-  /** Массовое удаление: по очереди через deleteProduct, чтобы каждому подчистить Storage (H11). */
+  /**
+   * Массовое удаление: собираем файлы ДО удаления, затем ОДИН DELETE по списку id —
+   * атомарно на уровне БД (не частичное удаление при сбое в середине цикла), после —
+   * чистим Storage разом (H11). Раньше был последовательный цикл: при ошибке на N-м
+   * товаре первые N−1 уже удалены, а батч «наполовину».
+   */
   async function deleteProductsBulk(ids: string[]) {
-    for (const id of ids) await deleteProduct(id)
+    if (!ids.length) return
+    const { data: imgs } = await supabase.from('product_images').select('url').in('product_id', ids)
+    const { data: zones } = await supabase.from('print_zones').select('mockup_url').in('product_id', ids)
+    const { error } = await supabase.from('products').delete().in('id', ids)
+    if (error) throw error
+    await removeCatalogObjects([...(imgs ?? []).map(i => i.url), ...(zones ?? []).map(z => z.mockup_url)])
   }
 
   /**

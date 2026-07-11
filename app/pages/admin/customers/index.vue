@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { formatPrice, formatDate } from '~/utils/format'
+import { formatPrice } from '~/utils/format'
 import { formatKzPhone } from '~~/shared/config/phone'
 
 // CRM: список клиентов с агрегатами (заказы, LTV, последний заказ). Только admin.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
+const { dateShort } = useFormat()
 useHead({ title: t('admin.customers.headTitle') })
 
 const { list } = useCustomers()
@@ -94,7 +95,7 @@ const totals = computed(() => {
                 <td class="px-6 py-3 font-mono text-sm">{{ c.phone ? formatKzPhone(c.phone) : '—' }}</td>
                 <td class="px-6 py-3 text-right">{{ c.orders_count }}</td>
                 <td class="px-6 py-3 text-right font-semibold">{{ formatPrice(Number(c.total_spent)) }}</td>
-                <td class="px-6 py-3 text-caption text-ink-gray-600">{{ c.last_order_at ? formatDate(c.last_order_at) : '—' }}</td>
+                <td class="px-6 py-3 text-caption text-ink-gray-600">{{ c.last_order_at ? dateShort(c.last_order_at) : '—' }}</td>
                 <td class="px-6 py-3">
                   <UBadge v-if="c.marketing_consent" color="success" variant="subtle" size="xs">{{ $t('admin.customers.consent') }}</UBadge>
                   <span v-else class="text-caption text-ink-gray-400">—</span>

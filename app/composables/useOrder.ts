@@ -10,7 +10,7 @@ export const useOrder = () => {
 
   interface GiftInput { recipient?: string; message?: string; hidePrice?: boolean }
   async function createFromCart(
-    items: CartItem[], shippingAddr: Json, promoCode?: string, gift?: GiftInput,
+    items: CartItem[], shippingAddr: Json, promoCode?: string, gift?: GiftInput, idempotencyKey?: string,
   ): Promise<{ orderId: string; total: number }> {
     const payload = {
       items: items.map(i => ({
@@ -25,6 +25,8 @@ export const useOrder = () => {
       shippingAddr,
       promoCode: promoCode || undefined,
       gift: gift && (gift.recipient || gift.message) ? gift : undefined,
+      // идемпотентность: ретрай/двойной сабмит с тем же ключом не создаст дубль заказа
+      idempotencyKey: idempotencyKey || undefined,
     }
     return await $fetch<{ orderId: string; total: number }>('/api/orders/create', {
       method: 'POST',

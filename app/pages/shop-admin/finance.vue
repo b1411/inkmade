@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { formatDate } from '~/utils/format'
 
 // Финансы магазина (Фаза B4): баланс и история начислений доли с продаж.
 // Начисление идёт в apply_paid по order_items.shop_id (revenue_share_pct% от продажи).
@@ -14,7 +13,7 @@ const { data: fin } = await useAsyncData('my-shop-finance', async () =>
   shop.value ? finance(shop.value.id) : { balance: null, earnings: [] },
 )
 
-const money = (n: number | null | undefined) => `${new Intl.NumberFormat('ru-RU').format(Math.round(Number(n) || 0))} ₸`
+const { money, dateShort } = useFormat()
 const balance = computed(() => fin.value?.balance)
 const earnings = computed(() => fin.value?.earnings ?? [])
 </script>
@@ -38,7 +37,7 @@ const earnings = computed(() => fin.value?.earnings ?? [])
       <div v-if="earnings.length" class="divide-y divide-ink-gray-200">
         <div v-for="e in earnings" :key="e.id" class="flex items-center justify-between px-6 py-3 text-caption">
           <div>
-            <span class="text-ink-gray-600">{{ formatDate(e.created_at) }}</span>
+            <span class="text-ink-gray-600">{{ dateShort(e.created_at) }}</span>
             <span class="text-ink-gray-400 ml-2">{{ $t('shopAdmin.finance.fromSale', { base: money(e.sale_base), rate: e.rate_pct }) }}</span>
           </div>
           <div class="flex items-center gap-3">

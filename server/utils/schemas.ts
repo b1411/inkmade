@@ -71,6 +71,9 @@ export const orderCreateSchema = z.object({
   items: z.array(orderItemSchema).min(1, { message: 'Корзина пуста' }).max(100),
   shippingAddr: shippingAddrSchema,
   promoCode: z.string().trim().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/).optional(),
+  // идемпотентность: клиент шлёт стабильный ключ на попытку оформления — повторный
+  // сабмит/ретрай с тем же ключом вернёт уже созданный заказ, а не создаст дубль.
+  idempotencyKey: z.uuid().optional(),
   gift: z.object({
     recipient: z.string().max(200).optional(),
     message: z.string().max(1000).optional(),

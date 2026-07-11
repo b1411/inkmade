@@ -6,6 +6,7 @@
 import { FEATURES } from '~~/shared/config/features'
 
 const { t, locale } = useI18n()
+const { number: fmtNum } = useFormat()
 const supabase = useSupabaseClient()
 const { get } = useSettings()
 
@@ -56,7 +57,7 @@ const createTo = computed(() => (featured.value?.alias ? `/customize/${featured.
 // «от N ₸» — пусто, если в БД ещё нет цен (тогда note показывает только логистику).
 const priceFrom = computed(() =>
   minPrice.value
-    ? t('landing.hero.priceFrom', { price: new Intl.NumberFormat('ru-RU').format(minPrice.value) })
+    ? t('landing.hero.priceFrom', { price: fmtNum(minPrice.value) })
     : '',
 )
 
@@ -113,12 +114,17 @@ onBeforeUnmount(() => ctx?.revert())
     <!-- фоновое фото-лукбук: размыто и приглушено, поверх бордо-фона — атмосфера улицы.
          scale-105 убирает прозрачные края от blur, mix-blend-luminosity тонирует кадр
          под бордо (бренд сохраняется). aria-hidden — чисто декоративный слой. -->
-    <img
+    <NuxtImg
       src="/media/hero/hero-bg.jpg"
       alt=""
       aria-hidden="true"
+      format="webp"
+      quality="70"
+      sizes="100vw"
+      preload
+      fetchpriority="high"
       class="absolute inset-0 size-full scale-100 object-cover object-[50%_25%] opacity-75 blur-[3px] mix-blend-luminosity pointer-events-none select-none"
-    >
+    />
     <!-- бордо-тинт + затемнение слева под заголовок/CTA (контраст текста) -->
     <div class="absolute inset-0 bg-linear-to-r from-ink-burgundy/70 via-ink-burgundy/25 to-ink-burgundy-dark/50" />
     <div class="absolute -top-24 -right-24 size-96 rounded-full bg-ink-burgundy-light/30 blur-3xl ink-ambient-a" />
@@ -147,8 +153,8 @@ onBeforeUnmount(() => ctx?.revert())
             {{ $t('landing.hero.catalogCta') }}
           </UiAppButton>
         </div>
-        <p data-hero="note" class="ink-label text-ink-cream/55 mt-6">
-          <span v-if="priceFrom" class="text-ink-cream/80">{{ priceFrom }} · </span>{{ $t('landing.hero.note') }}
+        <p data-hero="note" class="ink-label text-ink-cream/75 mt-6">
+          <span v-if="priceFrom" class="text-ink-cream/90">{{ priceFrom }} · </span>{{ $t('landing.hero.note') }}
         </p>
       </div>
 

@@ -250,6 +250,9 @@
     },
     "wizard": {
       "loadError": "Жүктеу қатесі",
+      "notFound": "Тауар табылмады",
+      "notFoundText": "Ол жойылған болуы мүмкін немесе сілтеме қате.",
+      "backToList": "Тауарларға",
       "stepBasics": "Негізгі",
       "stepMaterials": "Материалдар",
       "stepVariants": "Нұсқалар",

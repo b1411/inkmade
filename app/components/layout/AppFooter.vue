@@ -18,7 +18,7 @@ const { isAuthenticated } = useAuth()
         <p class="text-caption mt-3">{{ $t('footer.about') }}</p>
       </div>
       <div class="space-y-2">
-        <p class="ink-label text-ink-cream/50">{{ $t('footer.catalogCol') }}</p>
+        <p class="ink-label text-ink-cream/60">{{ $t('footer.catalogCol') }}</p>
         <NuxtLink to="/catalog" class="footer-link block text-caption">{{ $t('footer.allCategories') }}</NuxtLink>
         <NuxtLink to="/cart" class="footer-link block text-caption">{{ $t('footer.cart') }}</NuxtLink>
         <ClientOnly>
@@ -26,7 +26,7 @@ const { isAuthenticated } = useAuth()
         </ClientOnly>
       </div>
       <div class="space-y-2">
-        <p class="ink-label text-ink-cream/50">{{ $t('footer.infoCol') }}</p>
+        <p class="ink-label text-ink-cream/60">{{ $t('footer.infoCol') }}</p>
         <NuxtLink to="/legal/offer" class="footer-link block text-caption">{{ $t('footer.offer') }}</NuxtLink>
         <NuxtLink to="/legal/terms" class="footer-link block text-caption">{{ $t('footer.terms') }}</NuxtLink>
         <NuxtLink to="/legal/privacy" class="footer-link block text-caption">{{ $t('footer.privacy') }}</NuxtLink>
@@ -35,7 +35,7 @@ const { isAuthenticated } = useAuth()
         <NuxtLink to="/legal" class="footer-link block text-caption">{{ $t('footer.allDocs') }}</NuxtLink>
       </div>
       <div class="space-y-2">
-        <p class="ink-label text-ink-cream/50">{{ $t('footer.contactsCol') }}</p>
+        <p class="ink-label text-ink-cream/60">{{ $t('footer.contactsCol') }}</p>
         <a :href="`mailto:${LEGAL.supportEmail}`" class="footer-link block text-caption">{{ LEGAL.supportEmail }}</a>
         <a v-if="SELLER.isFilled" :href="`tel:${SELLER.phone.replace(/\s/g, '')}`" class="footer-link block text-caption">{{ SELLER.phone }}</a>
         <div class="flex items-center gap-3 pt-1">
@@ -63,11 +63,11 @@ const { isAuthenticated } = useAuth()
     <div class="border-t border-white/10">
       <div class="mx-auto max-w-(--container-max) px-4 py-4 space-y-1">
         <!-- Реквизиты продавца — показываем, когда заполнены (Закон РК «О защите прав потребителей», ст. 25) -->
-        <p v-if="SELLER.isFilled" class="text-caption text-ink-cream/40">
+        <p v-if="SELLER.isFilled" class="text-caption text-ink-cream/60">
           {{ SELLER.entityType }} {{ SELLER.legalName }} · {{ $t('footer.bin') }} {{ SELLER.bin }} · {{ SELLER.address }} · {{ SELLER.phone }}
         </p>
-        <p v-if="SELLER.isFilled" class="text-caption text-ink-cream/40">{{ $t('footer.payment') }}</p>
-        <p class="ink-label text-ink-cream/40">{{ $t('footer.copyright') }}</p>
+        <p v-if="SELLER.isFilled" class="text-caption text-ink-cream/60">{{ $t('footer.payment') }}</p>
+        <p class="ink-label text-ink-cream/60">{{ $t('footer.copyright') }}</p>
       </div>
     </div>
   </footer>

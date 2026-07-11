@@ -12,7 +12,7 @@ const { data: shop } = await useAsyncData('my-shop', () => getMine())
 const { data: items, refresh } = await useAsyncData('my-shop-items', async () => (shop.value ? listItems(shop.value.id) : []))
 const { data: designs } = await useAsyncData('my-designs', () => myDesigns())
 
-const fmtPrice = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
+const { money: fmtPrice } = useFormat()
 
 const blank = () => ({ id: '', designId: '', title: '', description: '', price: 0, markup: 0, sort: 0, isActive: true, previewUrl: '' as string | null })
 const form = reactive(blank())
@@ -76,12 +76,17 @@ async function onSave() {
 }
 
 async function toggleActive(it: NonNullable<typeof items.value>[number]) {
-  try { await saveItem({ id: it.id, shop_id: it.shop_id, title: it.title, is_active: !it.is_active }); await refresh() }
-  catch (e) { toast.add({ title: t('shopAdmin.items.error'), description: getFetchMessage(e), color: 'error' }) }
+  try {
+    await saveItem({ id: it.id, shop_id: it.shop_id, title: it.title, is_active: !it.is_active })
+    await refresh()
+    toast.add({ title: t('states.saved'), color: 'success' })
+  } catch (e) { toast.add({ title: t('shopAdmin.items.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
+const { confirm } = useConfirm()
 async function onDelete(it: NonNullable<typeof items.value>[number]) {
-  if (!confirm(t('shopAdmin.items.deleteConfirm', { title: it.title }))) return
+  const ok = await confirm({ title: t('shopAdmin.items.deleteConfirm', { title: it.title }), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   try { await deleteItem(it.id); toast.add({ title: t('shopAdmin.items.deleted'), color: 'success' }); await refresh() }
   catch (e) { toast.add({ title: t('shopAdmin.items.error'), description: getFetchMessage(e), color: 'error' }) }
 }

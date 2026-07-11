@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { formatKzPhone, whatsAppLink, telLink } from '~~/shared/config/phone'
-import { formatDate } from '~/utils/format'
 import { FEATURES } from '~~/shared/config/features'
 
 // Очередь заявок на B2B-магазины (Фаза B1/B2). Только admin. Reject/связь с заявителем.
@@ -8,6 +7,7 @@ import { FEATURES } from '~~/shared/config/features'
 // на витрину; без флага — просто помечает статус (поведение B1).
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
+const { dateShort } = useFormat()
 useHead({ title: t('admin.shops.headTitle') })
 
 const { listApplications, resolve } = useBusiness()
@@ -235,7 +235,7 @@ async function copyShopClaim(id: string) {
               <UIcon name="i-lucide-globe" class="size-3.5 inline" /> {{ a.desired_slug }}.inkmade.kz
             </p>
           </div>
-          <span class="text-caption text-ink-gray-400 shrink-0">{{ formatDate(a.created_at) }}</span>
+          <span class="text-caption text-ink-gray-400 shrink-0">{{ dateShort(a.created_at) }}</span>
         </div>
 
         <div v-if="a.audience || a.comment" class="mt-3 space-y-1">
@@ -328,7 +328,7 @@ async function copyShopClaim(id: string) {
                 <span v-if="s.claim_email"> · {{ s.claim_email }}</span>
               </p>
             </div>
-            <span class="text-caption text-ink-gray-400 shrink-0">{{ formatDate(s.created_at) }}</span>
+            <span class="text-caption text-ink-gray-400 shrink-0">{{ dateShort(s.created_at) }}</span>
           </div>
 
           <div class="mt-4 flex flex-wrap items-center gap-2">

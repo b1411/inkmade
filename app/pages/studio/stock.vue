@@ -6,6 +6,7 @@ definePageMeta({ layout: 'studio', middleware: 'studio-role' })
 const { listStock, addMovement, listMovements } = useStock()
 const toast = useToast()
 const { t } = useI18n()
+const { dateTime } = useFormat()
 
 const { data: stock, refresh, pending } = await useAsyncData('studio-stock', () => listStock())
 
@@ -154,7 +155,7 @@ async function openHistory(variantId: string, label: string) {
         <table v-else class="w-full text-caption">
           <tbody>
             <tr v-for="m in history.rows" :key="m.id" class="border-b border-ink-gray-200/60">
-              <td class="py-2 text-ink-gray-500">{{ new Date(m.created_at).toLocaleString('ru') }}</td>
+              <td class="py-2 text-ink-gray-500">{{ dateTime(m.created_at) }}</td>
               <td>{{ REASON_LABELS[m.reason] ?? m.reason }}</td>
               <td class="text-right font-semibold" :class="m.delta > 0 ? 'text-ink-success' : 'text-ink-error'">{{ m.delta > 0 ? '+' : '' }}{{ m.delta }}</td>
             </tr>

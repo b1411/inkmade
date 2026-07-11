@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { formatPrice, formatDate } from '~/utils/format'
+import { formatPrice } from '~/utils/format'
 import { formatKzPhone, whatsAppLink, telLink } from '~~/shared/config/phone'
 
 // CRM: карточка клиента 360° — контакты, заказы, LTV, адреса. Только admin.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
+const { dateShort } = useFormat()
 
 const route = useRoute()
 const id = route.params.id as string
@@ -35,7 +36,7 @@ const greeting = t('admin.customer.greeting')
     <div class="grid sm:grid-cols-3 gap-4 mb-6">
       <UiStatCard :label="$t('admin.customer.kpi.orders')" :value="data.stats.orders_count" icon="i-lucide-package" />
       <UiStatCard :label="$t('admin.customer.kpi.ltv')" :value="formatPrice(Number(data.stats.total_spent))" icon="i-lucide-wallet" accent />
-      <UiStatCard :label="$t('admin.customer.kpi.lastOrder')" :value="data.stats.last_order_at ? formatDate(data.stats.last_order_at) : '—'" icon="i-lucide-clock" />
+      <UiStatCard :label="$t('admin.customer.kpi.lastOrder')" :value="data.stats.last_order_at ? dateShort(data.stats.last_order_at) : '—'" icon="i-lucide-clock" />
     </div>
 
     <div class="grid lg:grid-cols-[320px_1fr] gap-6">
@@ -63,7 +64,7 @@ const greeting = t('admin.customer.greeting')
             </div>
             <div>
               <p class="ink-label text-ink-gray-500">{{ $t('admin.customer.contacts.registered') }}</p>
-              <p>{{ formatDate(profile.created_at) }}</p>
+              <p>{{ dateShort(profile.created_at) }}</p>
             </div>
           </div>
         </UiPanel>
@@ -100,7 +101,7 @@ const greeting = t('admin.customer.greeting')
                 <td class="px-6 py-3">
                   <NuxtLink :to="`/admin/orders/${o.id}`" class="ink-label hover:text-ink-burgundy">#{{ shortId(o.id) }}</NuxtLink>
                 </td>
-                <td class="px-6 py-3 text-caption">{{ formatDate(o.created_at) }}</td>
+                <td class="px-6 py-3 text-caption">{{ dateShort(o.created_at) }}</td>
                 <td class="px-6 py-3 text-right font-semibold">{{ formatPrice(o.total) }}</td>
                 <td class="px-6 py-3"><UBadge :color="badgeColor(o.status)" variant="subtle">{{ $t(`domain.orderStatus.${o.status}`) }}</UBadge></td>
                 <td class="px-6 py-3 text-caption">

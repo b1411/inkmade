@@ -20,7 +20,9 @@ const STEPS = computed(() => [
 const step = ref(1)
 const productId = ref<string | null>(props.initialId ?? null)
 const product = ref<ProductWithRelations | null>(null)
-const loading = ref(false)
+// в режиме редактирования стартуем в loading, чтобы не мигнуть формой «создать» до reload
+const loading = ref(!!props.initialId)
+const isEdit = computed(() => !!props.initialId)
 
 async function reload() {
   if (!productId.value) return
@@ -65,6 +67,16 @@ const canStep = (n: number) => n === 1 || !!productId.value
     </nav>
 
     <div v-if="loading" class="py-10 text-center text-ink-gray-600">{{ $t('states.loading') }}</div>
+
+    <!-- редактирование: товар не загрузился → НЕ показываем форму «создать» (иначе выглядит как новый товар) -->
+    <UiEmptyState
+      v-else-if="isEdit && !product"
+      icon="i-lucide-package-x"
+      :title="$t('admin.wizard.notFound')"
+      :text="$t('admin.wizard.notFoundText')"
+    >
+      <UButton to="/admin/products" color="neutral" variant="subtle" icon="i-lucide-arrow-left">{{ $t('admin.wizard.backToList') }}</UButton>
+    </UiEmptyState>
 
     <template v-else>
       <AdminWizardStepBasics v-if="step === 1" :product="product" @saved="onBasicsSaved" />

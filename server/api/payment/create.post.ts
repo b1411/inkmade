@@ -28,7 +28,16 @@ export default defineEventHandler(async (event) => {
   // шлюзу amount=0 слать нельзя. Подтверждаем сервером напрямую через apply_paid
   // (service_role) — §10 не нарушается: paid ставит серверная RPC, а не клиент/клиентская сумма.
   if (total === 0) {
-    await svc.rpc('apply_paid', { p_order_id: order.id, p_provider_txn: `free_${order.id}`, p_raw: { free: true } })
+    // .rpc() не бросает — ошибку надо проверять руками, иначе клиент получит
+    // {free:true} при неподтверждённом заказе (напр. сток разобрали в гонке).
+    const { error: paidErr } = await svc.rpc('apply_paid', {
+      p_order_id: order.id,
+      p_provider_txn: `free_${order.id}`,
+      p_raw: { free: true },
+    })
+    if (paidErr) {
+      throw createError({ statusCode: 409, statusMessage: 'Не удалось подтвердить бесплатный заказ' })
+    }
     return { payUrl: `/order/${order.id}`, paymentId: `free_${order.id}`, free: true }
   }
 

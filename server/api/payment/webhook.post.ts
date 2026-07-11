@@ -28,7 +28,8 @@ export default defineEventHandler(async (event) => {
   const svc = serverSupabaseServiceRole<Database>(event)
   let result: Awaited<ReturnType<typeof applyPaid>>
   try {
-    result = await applyPaid(svc, payload.orderId, payload.providerTxn || 'unknown', payload)
+    // fallback уникален per-order: общий 'unknown' коллизил бы на payments_provider_txn_uniq
+    result = await applyPaid(svc, payload.orderId, payload.providerTxn || `webhook_${payload.orderId}`, payload)
   } catch (e) {
     // критичный денежный путь: фиксируем orderId явно (Nitro-hook не знает его из path)
     await logError('payment/webhook', e, { orderId: payload.orderId, providerTxn: payload.providerTxn })

@@ -32,9 +32,15 @@ async function addPromo() {
   } finally { saving.value = false }
 }
 async function onToggle(id: string, active: boolean) { await togglePromo(id, active); await refresh() }
+const { confirm } = useConfirm()
 async function onDelete(id: string) {
-  if (!confirm(t('admin.pricing.deleteConfirm'))) return
-  await deletePromo(id); await refresh()
+  const ok = await confirm({ title: t('admin.pricing.deleteConfirm'), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
+  try {
+    await deletePromo(id); await refresh()
+  } catch (e) {
+    toast.add({ title: t('admin.pricing.error'), description: getFetchMessage(e), color: 'error' })
+  }
 }
 const fmtVal = (p: { discount_type: string; discount_value: number }) =>
   p.discount_type === 'percent' ? `${p.discount_value}%` : `${p.discount_value} ₸`

@@ -465,6 +465,29 @@
     outline-color: var(--color-ink-burgundy);
   }
 
+  /* Skip-to-content (a11y): первый фокусируемый элемент, виден только с клавиатуры.
+     Общий класс для всех лейаутов (reduced-motion гасит переход глобальным правилом ниже). */
+  .skip-link {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    transform: translateY(-130%);
+    background: var(--color-ink-burgundy);
+    color: var(--color-ink-cream);
+    padding: 10px 16px;
+    border-radius: 0 0 8px 0;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .skip-link:focus,
+  .skip-link:focus-visible {
+    transform: translateY(0);
+    outline: 2px solid var(--color-ink-cream);
+    outline-offset: 2px;
+  }
+
   /* Доступность (P3.19): уважаем системную настройку «меньше движения» —
      отключаем анимации/переходы/плавный скролл для вестибулярного комфорта. */
   @media (prefers-reduced-motion: reduce) {

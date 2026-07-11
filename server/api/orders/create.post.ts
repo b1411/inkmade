@@ -27,6 +27,17 @@ export default defineEventHandler(async (event) => {
   const svc = serverSupabaseServiceRole<Database>(event)
   const uid = user.id
 
+  // Идемпотентность (§9): повторный сабмит/ретрай с тем же ключом возвращает уже
+  // созданный заказ, а не создаёт дубль. Ранняя проверка закрывает частый случай
+  // (первый запрос успел завершиться); гонку двух параллельных ловит UNIQUE-индекс
+  // (миграция 0083) — на 23505 ниже мы тоже возвращаем существующий заказ.
+  const idemKey = body.idempotencyKey ?? null
+  if (idemKey) {
+    const { data: existing } = await svc.from('orders')
+      .select('id, total').eq('user_id', uid).eq('idempotency_key', idemKey).maybeSingle()
+    if (existing) return { orderId: existing.id, total: Number(existing.total) }
+  }
+
   // Файлы дизайна (превью, печатные файлы, ассеты принтов) должны лежать в нашем
   // Storage — иначе в designs попадёт произвольный URL, который покажется оператору
   // (anti-SSRF / защита от подмены §17.3). Проверяем префикс публичного бакета.
@@ -204,13 +215,22 @@ export default defineEventHandler(async (event) => {
   const { data: order, error: oErr } = await svc.from('orders')
     .insert({
       user_id: uid, status: 'created', total, discount, promo_code: promoCode, shipping_addr: shippingAddr as unknown as Json,
+      idempotency_key: idemKey,
       is_gift: isGift,
       gift_recipient: isGift ? (gift?.recipient ?? null) : null,
       gift_message: isGift ? (gift?.message ?? null) : null,
       gift_hide_price: isGift ? !!gift?.hidePrice : false,
     })
-    .select('id').single()
-  if (oErr || !order) throw createError({ statusCode: 500, statusMessage: 'Не удалось создать заказ' })
+    .select('id, total').single()
+  if (oErr || !order) {
+    // гонка: параллельный запрос с тем же ключом уже создал заказ → вернём его (23505)
+    if (idemKey && (oErr as { code?: string } | null)?.code === '23505') {
+      const { data: dup } = await svc.from('orders')
+        .select('id, total').eq('user_id', uid).eq('idempotency_key', idemKey).maybeSingle()
+      if (dup) return { orderId: dup.id, total: Number(dup.total) }
+    }
+    throw createError({ statusCode: 500, statusMessage: 'Не удалось создать заказ' })
+  }
 
   // Нет транзакции через PostgREST → полу-успех оставил бы заказ-сироту. Пишем
   // designs/order_items/consents в try; при любом сбое откатываем заказ (каскад

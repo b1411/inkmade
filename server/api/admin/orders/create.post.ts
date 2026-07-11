@@ -35,19 +35,33 @@ export default defineEventHandler(async (event) => {
   if (!variantIds.every(isUuid)) throw createError({ statusCode: 400, statusMessage: 'Некорректный вариант в позиции' })
 
   const { data: variants } = await svc.from('variants')
-    .select('id, blank_cost, product_id, products(is_active)')
+    .select('id, blank_cost, stock, product_id, products(is_active)')
     .in('id', variantIds as string[])
   const vMap = new Map((variants ?? []).map(v => [v.id, v]))
 
   interface Priced { variantId: string; quantity: number; unitPrice: number; unitCost: number }
   const priced: Priced[] = []
+  const need = new Map<string, number>() // суммарная потребность по варианту (позиции могут повторяться)
   for (const it of items) {
     const v = vMap.get(it.variantId as string)
     if (!v) throw createError({ statusCode: 400, statusMessage: 'Вариант не найден' })
+    // товар снят с продажи — ручной заказ по нему не создаём (раньше is_active было мёртвым кодом)
+    const prod = v.products as { is_active?: boolean } | { is_active?: boolean }[] | null
+    const isActive = Array.isArray(prod) ? prod[0]?.is_active : prod?.is_active
+    if (isActive === false) throw createError({ statusCode: 409, statusMessage: 'Товар снят с продажи' })
     const qty = Math.round(Number(it.quantity) || 0)
     if (!Number.isInteger(qty) || qty < 1) throw createError({ statusCode: 400, statusMessage: 'Некорректное количество' })
     if (!isFiniteNonNeg(it.unitPrice, 100_000_000)) throw createError({ statusCode: 400, statusMessage: 'Некорректная цена позиции' })
+    need.set(v.id, (need.get(v.id) ?? 0) + qty)
     priced.push({ variantId: v.id, quantity: qty, unitPrice: it.unitPrice as number, unitCost: Number(v.blank_cost) || 0 })
+  }
+
+  // предпроверка остатка (дружелюбная): не создаём заказ, который нельзя выполнить.
+  // Авторитетное списание — при оплате в apply_paid (row-lock); здесь только ранний отказ.
+  for (const [variantId, qtyNeeded] of need) {
+    if (Number(vMap.get(variantId)?.stock ?? 0) < qtyNeeded) {
+      throw createError({ statusCode: 409, statusMessage: 'Недостаточно на складе' })
+    }
   }
 
   const total = priced.reduce((s, p) => s + p.unitPrice * p.quantity, 0)

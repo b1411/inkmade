@@ -40,8 +40,14 @@ async function onSubmit() {
     toast.add({ title: t('account.addresses.errorTitle'), description: getFetchMessage(e), color: 'error' })
   } finally { adding.value = false }
 }
+const { confirm } = useConfirm()
 async function onRemove(id: string) {
-  if (!confirm(t('account.addresses.removeConfirm'))) return
+  const ok = await confirm({
+    title: t('account.addresses.removeConfirm'),
+    confirmLabel: t('actions.delete'),
+    tone: 'danger',
+  })
+  if (!ok) return
   try {
     await remove(id)
     if (editingId.value === id) resetForm()

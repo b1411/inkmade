@@ -107,7 +107,7 @@ const heroStyle = computed(() => {
   return s
 })
 
-const fmtPrice = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
+const { money: fmtPrice } = useFormat()
 
 // ── выбор размера/цвета на карточке: itemId → выбранный variantId ──────────────
 // Варианты = сиблинги того же продукта+материала (метод печати валиден). Сервер

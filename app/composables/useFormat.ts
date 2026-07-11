@@ -7,8 +7,18 @@ export const useFormat = () => {
 
   const date = (d: string | number | Date) => new Date(d).toLocaleDateString(intlLocale.value)
   const dateTime = (d: string | number | Date) => new Date(d).toLocaleString(intlLocale.value)
-  const money = (amount: number | string, currency = '₸') =>
-    `${new Intl.NumberFormat(intlLocale.value).format(Math.round(Number(amount) || 0))} ${currency}`
+  // короткий формат с названием месяца по локали («13 июн 2026» / «13 мау 2026»),
+  // с защитой от пустого/битого значения → «—» (drop-in для utils/format.formatDate).
+  const dateShort = (d: string | number | Date | null | undefined) => {
+    if (!d) return '—'
+    const dd = new Date(d)
+    return Number.isNaN(dd.getTime())
+      ? '—'
+      : dd.toLocaleDateString(intlLocale.value, { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+  const number = (n: number | string | null | undefined) =>
+    new Intl.NumberFormat(intlLocale.value).format(Math.round(Number(n) || 0))
+  const money = (amount: number | string | null | undefined, currency = '₸') => `${number(amount)} ${currency}`
 
-  return { date, dateTime, money }
+  return { date, dateTime, dateShort, number, money }
 }

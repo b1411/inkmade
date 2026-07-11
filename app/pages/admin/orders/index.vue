@@ -2,12 +2,13 @@
 import type { Database } from '~/types/database.types'
 import type { OrderStatus } from '~~/shared/config/order-status'
 import { STATUS_LABELS } from '~~/shared/config/order-status'
-import { formatPrice, formatDate } from '~/utils/format'
+import { formatPrice } from '~/utils/format'
 
 // Обзор всех заказов (§8.2.3). Admin видит все (RLS). Поиск, фильтр по статусу/периоду,
 // сводка и экспорт CSV.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
+const { dateShort } = useFormat()
 
 const supabase = useSupabaseClient<Database>()
 const { data: orders, pending } = await useAsyncData('admin-orders', async () => {
@@ -62,7 +63,7 @@ function exportCsv() {
     t('admin.orders.csv.paid'),
   ]
   const lines = rows.map(o => [
-    esc(shortId(o.id)), esc(formatDate(o.created_at)), esc(o.order_items?.length ?? 0),
+    esc(shortId(o.id)), esc(dateShort(o.created_at)), esc(o.order_items?.length ?? 0),
     esc(o.total), esc(o.currency), esc(t(`domain.orderStatus.${o.status}`)),
     esc(o.paid_at ? t('admin.orders.csv.yes') : t('admin.orders.csv.no')),
   ].join(','))
@@ -123,7 +124,7 @@ function exportCsv() {
                 <td class="px-6 py-3">
                   <NuxtLink :to="`/admin/orders/${o.id}`" class="ink-label hover:text-ink-burgundy">#{{ shortId(o.id) }}</NuxtLink>
                 </td>
-                <td class="px-6 py-3 text-caption">{{ formatDate(o.created_at) }}</td>
+                <td class="px-6 py-3 text-caption">{{ dateShort(o.created_at) }}</td>
                 <td class="px-6 py-3">{{ o.order_items?.length ?? 0 }}</td>
                 <td class="px-6 py-3 text-right font-semibold">{{ formatPrice(o.total) }}</td>
                 <td class="px-6 py-3 text-caption">

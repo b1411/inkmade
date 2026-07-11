@@ -1,6 +1,6 @@
-// Единое форматирование значений для всего интерфейса (русская локаль, рынок KZ).
-// Раньше цены форматировались по-разному в 20+ местах (toLocaleString/toFixed/без формата) —
-// это давало визуальную несогласованность. Используем эти хелперы вместо ad-hoc форматирования.
+// Форматирование ЧИСЕЛ/ЦЕН для интерфейса. Локаль-безопасно для рынка KZ: ru-RU и kk-KZ
+// дают идентичную группировку разрядов (пробел) и один символ ₸ → строковый вывод не зависит
+// от активной локали. Для ДАТ используйте useFormat() (там формат зависит от локали).
 
 // Цена в тенге с разделителями разрядов и символом валюты. Дробную часть отбрасываем —
 // цены в проекте целые. Невалидное значение → «0 ₸», чтобы интерфейс не показывал NaN.
@@ -16,18 +16,5 @@ export function formatNumber(value: number | null | undefined): string {
   return (Number.isFinite(n) ? n : 0).toLocaleString('ru-RU')
 }
 
-// Дата в коротком русском формате (например «13 июн 2026»). Пустое/битое значение → «—».
-export function formatDate(value: string | number | Date | null | undefined): string {
-  if (!value) return '—'
-  const d = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
-}
-
-// Дата и время (для админ-таблиц, логов).
-export function formatDateTime(value: string | number | Date | null | undefined): string {
-  if (!value) return '—'
-  const d = value instanceof Date ? value : new Date(value)
-  if (Number.isNaN(d.getTime())) return '—'
-  return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
+// Даты вынесены в useFormat() (composables/useFormat.ts): их формат зависит от активной
+// локали (названия месяцев на KK отличаются от RU), а плоская util-функция локаль не видит.

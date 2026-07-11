@@ -24,7 +24,7 @@ const conversion = computed(() => {
   return v > 0 ? Math.round(((stats.value?.orders ?? 0) / v) * 100) : 0
 })
 const maxDaily = computed(() => Math.max(1, ...((stats.value?.daily ?? []).map(d => d.views))))
-const fmt = (n: number | null | undefined) => new Intl.NumberFormat('ru-RU').format(Number(n) || 0)
+const { number: fmt, date } = useFormat()
 
 const storefrontUrl = computed(() => (shop.value ? `${site}/s/${shop.value.slug}` : ''))
 const activeItems = computed(() => (items.value ?? []).filter(i => i.is_active).length)
@@ -43,7 +43,7 @@ const steps = computed(() => {
 })
 const doneCount = computed(() => steps.value.filter(s => s.done).length)
 const allDone = computed(() => doneCount.value === steps.value.length)
-const money = (n: number | null | undefined) => `${new Intl.NumberFormat('ru-RU').format(Math.round(Number(n) || 0))} ₸`
+const { money } = useFormat()
 
 async function copyLink() {
   try {
@@ -115,7 +115,7 @@ async function copyLink() {
             :key="d.day"
             class="flex-1 bg-ink-burgundy/70 hover:bg-ink-burgundy rounded-t transition-colors min-h-0.5"
             :style="{ height: Math.round((d.views / maxDaily) * 100) + '%' }"
-            :title="`${new Date(d.day).toLocaleDateString('ru')}: ${d.views}`"
+            :title="`${date(d.day)}: ${d.views}`"
           />
         </div>
       </div>

@@ -9,6 +9,7 @@ const supabase = useSupabaseClient<Database>()
 const { changeStatus } = useStudio()
 const { refundOrder } = useFinance()
 const toast = useToast()
+const { date, money } = useFormat()
 
 const PROBLEM = ['on_hold', 'reprint', 'refunded', 'cancelled']
 const { data: orders, refresh, pending } = await useAsyncData('admin-returns', async () => {
@@ -21,8 +22,14 @@ const { data: orders, refresh, pending } = await useAsyncData('admin-returns', a
 })
 
 const busy = ref<string | null>(null)
+const { prompt } = useConfirm()
 async function act(orderId: string, to: OrderStatus) {
-  const note = window.prompt(t('admin.returns.reasonPrompt', { status: t(`domain.orderStatus.${to}`) })) ?? ''
+  const note = await prompt({
+    title: t('admin.returns.reasonPrompt', { status: t(`domain.orderStatus.${to}`) }),
+    required: true,
+    multiline: true,
+    tone: to === 'refunded' || to === 'cancelled' ? 'danger' : 'default',
+  })
   if (!note) return
   busy.value = orderId
   try {
@@ -54,7 +61,7 @@ const badge = (s: string) => s === 'refunded' || s === 'cancelled' ? 'error' : '
         <div v-for="o in orders" :key="o.id" class="flex items-center justify-between px-6 py-3">
           <div>
             <NuxtLink :to="`/admin/orders/${o.id}`" class="ink-label text-ink-burgundy">#{{ shortId(o.id) }}</NuxtLink>
-            <p class="text-caption text-ink-gray-600">{{ new Date(o.created_at).toLocaleDateString('ru') }} · {{ o.total }} {{ o.currency }}</p>
+            <p class="text-caption text-ink-gray-600">{{ date(o.created_at) }} · {{ money(o.total) }}</p>
           </div>
           <div class="flex items-center gap-2">
             <UBadge :color="badge(o.status)" variant="subtle">{{ $t(`domain.orderStatus.${o.status}`) }}</UBadge>

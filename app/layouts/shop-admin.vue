@@ -13,10 +13,15 @@ const nav = computed(() => [
 ])
 const { signOut } = useAuth()
 async function onSignOut() { await signOut(); await navigateTo('/') }
+// подсветка пункта: дашборд (/shop-admin) — только точное совпадение, иначе он бы
+// «горел» на всех подстраницах; остальные — по префиксу.
+const route = useRoute()
+const isActive = (to: string) => (to === '/shop-admin' ? route.path === to : route.path.startsWith(to))
 </script>
 
 <template>
   <div class="min-h-screen bg-ink-white text-ink-black">
+    <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
     <header class="border-b border-ink-gray-200">
       <div class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -36,15 +41,15 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
           v-for="item in nav"
           :key="item.to"
           :to="item.to"
-          class="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-body text-ink-gray-600 hover:bg-ink-gray-50 hover:text-ink-black transition-colors"
-          active-class="!bg-ink-burgundy !text-ink-cream font-semibold shadow-sm"
+          class="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-body transition-colors"
+          :class="isActive(item.to) ? 'bg-ink-burgundy text-ink-cream font-semibold shadow-sm' : 'text-ink-gray-600 hover:bg-ink-gray-50 hover:text-ink-black'"
         >
           <UIcon :name="item.icon" class="size-4" />
           {{ item.label }}
         </NuxtLink>
       </aside>
 
-      <main class="min-w-0">
+      <main id="main-content" tabindex="-1" class="min-w-0 focus:outline-none">
         <slot />
       </main>
     </div>

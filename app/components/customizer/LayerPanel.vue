@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Placement } from '~/composables/useDesign'
 import { DPI_MIN, DPI_TARGET } from '~~/shared/config/zones'
+import { PRINT_FONTS } from '~~/shared/config/print-fonts'
 
 // Панель слоёв + инспектор выбранного элемента (§7.1). Управление порядком слоёв,
 // дублирование/удаление, тонкая настройка текста (выравнивание/обводка/дуга/прозрачность)
@@ -63,6 +64,16 @@ function layerIcon(p: Placement): string {
 // ── инспектор: правки свойств без записи в историю (не засоряем undo) ──
 function patch(p: Placement, patchObj: Partial<Placement>) {
   updatePlacement(p.id, patchObj, false)
+}
+
+// смена шрифта у уже размещённого текста (раньше шрифт фиксировался при создании).
+const { load: loadFont } = useFontLoader()
+const fontItems = PRINT_FONTS.map(f => f.name)
+async function setFont(fam: string) {
+  const sel = selected.value
+  if (!sel || !fam) return
+  await loadFont(fam) // грузим шрифт ДО применения, иначе Konva нарисует fallback
+  patch(sel, { fontFamily: fam })
 }
 function setFilter(p: Placement, key: keyof NonNullable<Placement['filters']>, val: number | boolean | undefined) {
   patch(p, { filters: { ...(p.filters ?? {}), [key]: val } })
@@ -201,12 +212,27 @@ async function removeBg(p: Placement) {
 
       <!-- текст -->
       <template v-if="selected.kind === 'text'">
-        <UInput
+        <UTextarea
           :model-value="selected.text"
           :placeholder="$t('customize.text.placeholder')"
-          size="sm" class="w-full"
+          :rows="2" autoresize size="sm" class="w-full"
           @update:model-value="patch(selected, { text: String($event) })"
         />
+        <USelectMenu
+          :model-value="selected.fontFamily"
+          :items="fontItems"
+          :search-input="{ placeholder: $t('customize.text.fontSearch') }"
+          size="sm" class="w-full"
+          @update:model-value="setFont(String($event))"
+        />
+        <label class="block text-caption text-ink-gray-600">
+          {{ $t('customize.inspector.fontSize') }}
+          <input
+            type="range" min="8" max="160" step="1" class="w-full accent-ink-burgundy"
+            :value="selected.fontSize ?? 48"
+            @input="patch(selected, { fontSize: Number(($event.target as HTMLInputElement).value), height: Number(($event.target as HTMLInputElement).value) * 1.3 })"
+          >
+        </label>
         <div class="flex items-center gap-2">
           <span class="text-caption text-ink-gray-600">{{ $t('customize.inspector.align') }}</span>
           <UButton
@@ -238,13 +264,41 @@ async function removeBg(p: Placement) {
             @input="patch(selected, { curve: Number(($event.target as HTMLInputElement).value) })"
           >
         </label>
+        <label class="block text-caption text-ink-gray-600">
+          {{ $t('customize.inspector.letterSpacing') }}
+          <input
+            type="range" min="-5" max="30" step="0.5" class="w-full accent-ink-burgundy"
+            :value="selected.letterSpacing ?? 0"
+            @input="patch(selected, { letterSpacing: Number(($event.target as HTMLInputElement).value) })"
+          >
+        </label>
+        <label class="block text-caption text-ink-gray-600">
+          {{ $t('customize.inspector.lineHeight') }}
+          <input
+            type="range" min="0.8" max="2.5" step="0.1" class="w-full accent-ink-burgundy"
+            :value="selected.lineHeight ?? 1"
+            @input="patch(selected, { lineHeight: Number(($event.target as HTMLInputElement).value) })"
+          >
+        </label>
       </template>
 
-      <!-- фигура -->
+      <!-- фигура: заливка + контур (обводка) -->
       <template v-else-if="selected.kind === 'shape'">
-        <div class="flex items-center gap-2">
+        <div v-if="selected.shapeType !== 'line'" class="flex items-center gap-2">
           <span class="text-caption text-ink-gray-600">{{ $t('customize.inspector.fill') }}</span>
           <UInput :model-value="selected.fill" type="color" size="xs" class="w-9 p-0.5" @update:model-value="patch(selected, { fill: String($event) })" />
+        </div>
+        <div class="flex items-center gap-2">
+          <USwitch v-model="outlineOn" size="sm" />
+          <span class="text-caption text-ink-gray-600">{{ $t('customize.inspector.outline') }}</span>
+          <template v-if="outlineOn">
+            <UInput :model-value="selected.stroke" type="color" size="xs" class="w-9 p-0.5" @update:model-value="patch(selected, { stroke: String($event) })" />
+            <input
+              type="range" min="0.5" max="12" step="0.5" class="flex-1 accent-ink-burgundy"
+              :value="selected.strokeWidth ?? 2"
+              @input="patch(selected, { strokeWidth: Number(($event.target as HTMLInputElement).value) })"
+            >
+          </template>
         </div>
       </template>
 

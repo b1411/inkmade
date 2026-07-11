@@ -70,7 +70,7 @@ const preview = [
               <div class="flex items-center justify-between border-b border-black/5 px-4 py-3" style="background:#f5f8ff">
                 <div class="flex items-center gap-2">
                   <span class="size-6 rounded-md" style="background:#1f6feb" />
-                  <span class="font-bold text-sm" style="color:#1f6feb">Ваш бренд</span>
+                  <span class="font-bold text-sm" style="color:#1f6feb">{{ $t('business.cta.mockBrand') }}</span>
                 </div>
                 <span class="text-[10px] text-ink-gray-400">на INKMADE</span>
               </div>

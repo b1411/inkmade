@@ -19,7 +19,7 @@ function rangeFor(days: number): { from?: string; to?: string } {
   return { from: from.toISOString(), to: to.toISOString() }
 }
 
-const { data, pending } = await useAsyncData('admin-finance', async () => {
+const { data, pending, error } = await useAsyncData('admin-finance', async () => {
   const { from, to } = rangeFor(period.value)
   const [stats, series, margin, entries] = await Promise.all([
     fin.stats(from, to), fin.series(from, to), fin.marginBreakdown(), fin.entries(300),
@@ -27,7 +27,7 @@ const { data, pending } = await useAsyncData('admin-finance', async () => {
   return { stats, series, margin, entries }
 }, { watch: [period] })
 
-const money = (n: number | null | undefined) => `${Math.round(Number(n) || 0).toLocaleString('ru')} ₸`
+const { money } = useFormat()
 const { te } = useI18n()
 const { date } = useFormat()
 const typeLabel = (type: string) => te(`admin.finance.type.${type}`) ? t(`admin.finance.type.${type}`) : type
@@ -59,11 +59,22 @@ function downloadCsv(csv: string, name: string) {
   URL.revokeObjectURL(a.href)
 }
 
-function exportCsv() {
-  const rows = data.value?.entries ?? []
-  const head = 'date,type,amount,currency,note,order_id'
-  const body = rows.map(e => [e.created_at, e.entry_type, e.amount, e.currency, (e.note ?? '').replace(/,/g, ' '), e.order_id ?? ''].join(','))
-  downloadCsv([head, ...body].join('\n'), 'inkmade-finance.csv')
+const toast = useToast()
+// экранирование CSV: поля с запятой/кавычкой/переводом строки — в кавычках (иначе строки бьются)
+const csvCell = (v: unknown) => {
+  const s = String(v ?? '')
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+async function exportCsv() {
+  try {
+    // экспорт шире витрины (леджер на экране ограничен 300 строк)
+    const rows = await fin.entries(5000)
+    const head = 'date,type,amount,currency,note,order_id'
+    const body = (rows ?? []).map(e => [e.created_at, e.entry_type, e.amount, e.currency, e.note ?? '', e.order_id ?? ''].map(csvCell).join(','))
+    downloadCsv([head, ...body].join('\n'), 'inkmade-finance.csv')
+  } catch (err) {
+    toast.add({ title: t('admin.finance.exportError'), description: getFetchMessage(err), color: 'error' })
+  }
 }
 
 // налоговый экспорт для бухгалтера (§6.2): сводка оборота и P&L за период.
@@ -84,7 +95,7 @@ function exportTaxCsv() {
     [t('admin.finance.taxCsv.profit'), Math.round(Number(s.profit) || 0)],
     [t('admin.finance.taxCsv.estTax'), tax],
   ]
-  downloadCsv(rows.map(r => `${r[0]},${r[1]}`).join('\n'), 'inkmade-tax.csv')
+  downloadCsv(rows.map(r => `${csvCell(r[0])},${csvCell(r[1])}`).join('\n'), 'inkmade-tax.csv')
 }
 </script>
 
@@ -101,6 +112,13 @@ function exportTaxCsv() {
     <div v-if="pending" class="grid grid-cols-2 md:grid-cols-5 gap-4">
       <UiSkeleton v-for="n in 5" :key="n" rounded="rounded-lg" class="h-24" />
     </div>
+    <!-- ошибка загрузки: НЕ показываем дашборд из нулей (ложные 0 ₸ на денежной странице) -->
+    <UiEmptyState
+      v-else-if="error"
+      icon="i-lucide-alert-triangle"
+      :title="$t('admin.finance.loadError.title')"
+      :text="$t('admin.finance.loadError.text')"
+    />
     <template v-else>
       <div class="space-y-8">
         <!-- KPI -->

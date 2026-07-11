@@ -14,7 +14,7 @@ const design = useDesign()
 const {
   product, zoneRect, placements, activePlacements, selectedId, productColorHex,
   updatePlacement, removePlacement, duplicatePlacement, undo, redo, zone,
-  registerStage, registerExporter, pxPerMmForZone,
+  registerStage, registerExporter, registerResetView, pxPerMmForZone,
 } = design
 const { load: loadFont } = useFontLoader()
 
@@ -233,6 +233,15 @@ function clampPos(x: number, y: number, width: number, height: number, rotation:
     y: Math.max(minY, Math.min(y, Math.max(minY, maxY))),
   }
 }
+// не даём масштабировать элемент больше зоны: AABB повёрнутого bbox не должен
+// превышать зону, иначе принт молча кропится при экспорте печатного файла (§13.2).
+function fitSizeToZone(width: number, height: number, rotation: number) {
+  const r = zoneRect.value
+  const e = extentOf(width, height, rotation)
+  const aabbW = e.maxX - e.minX, aabbH = e.maxY - e.minY
+  const s = Math.min(1, aabbW > 0 ? r.width / aabbW : 1, aabbH > 0 ? r.height / aabbH : 1)
+  return { width: width * s, height: height * s, scale: s }
+}
 const SNAP = 6
 function targetsX(excludeId: string): number[] {
   const r = zoneRect.value
@@ -296,15 +305,18 @@ function onTransformEnd(p: Placement, e: any) {
   const sx = node.scaleX(), sy = node.scaleY()
   node.scaleX(1); node.scaleY(1)
   if (p.kind === 'text') {
-    const width = Math.max(20, node.width() * sx)
-    const height = Math.max(8, (p.fontSize ?? 48) * sy) * 1.3
-    const pos = clampPos(node.x(), node.y(), width, height, node.rotation())
-    updatePlacement(p.id, { x: pos.x, y: pos.y, rotation: node.rotation(), width, fontSize: Math.max(8, (p.fontSize ?? 48) * sy) })
+    const rawFont = Math.max(8, (p.fontSize ?? 48) * sy)
+    const rawW = Math.max(20, node.width() * sx)
+    const fit = fitSizeToZone(rawW, rawFont * 1.3, node.rotation())
+    const fontSize = Math.max(8, rawFont * fit.scale)
+    const pos = clampPos(node.x(), node.y(), fit.width, fontSize * 1.3, node.rotation())
+    updatePlacement(p.id, { x: pos.x, y: pos.y, rotation: node.rotation(), width: fit.width, fontSize })
   } else {
-    const width = Math.max(10, node.width() * sx)
-    const height = Math.max(10, node.height() * sy)
-    const pos = clampPos(node.x(), node.y(), width, height, node.rotation())
-    updatePlacement(p.id, { x: pos.x, y: pos.y, rotation: node.rotation(), width, height })
+    const rawW = Math.max(10, node.width() * sx)
+    const rawH = Math.max(10, node.height() * sy)
+    const fit = fitSizeToZone(rawW, rawH, node.rotation())
+    const pos = clampPos(node.x(), node.y(), fit.width, fit.height, node.rotation())
+    updatePlacement(p.id, { x: pos.x, y: pos.y, rotation: node.rotation(), width: fit.width, height: fit.height })
   }
 }
 
@@ -452,8 +464,9 @@ onMounted(() => {
     stage.on('touchend', onTouchEnd)
   }
   registerExporter(exportPrintBlobs)
+  registerResetView(zoomReset)
 })
-onBeforeUnmount(() => { registerStage(null); registerExporter(null) })
+onBeforeUnmount(() => { registerStage(null); registerExporter(null); registerResetView(null) })
 
 // ── offscreen-экспорт печатного файла на зону (§13.2, «для печати») ──
 // Только слой дизайна, прозрачный фон, целевой DPI, кроп по зоне. Текст

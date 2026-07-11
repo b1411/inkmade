@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Единая карточка товара (§6.1): фото на нейтральном фоне (NuxtImg WebP/lazy),
 // смена ракурса front→back по hover (crossfade), подъём (AppCard), «от N ₸»,
-// проявляющаяся подсказка «Кастомизировать». Переиспользуется в каталоге и кабинете.
+// проявляющаяся подсказка «Открыть» (карточка ведёт на страницу товара, не в конструктор).
+// Переиспользуется в каталоге и кабинете.
 interface ProductImage {
   url: string
   is_primary: boolean
@@ -65,7 +66,7 @@ const badgeLabel = computed(() => props.badge ?? (isNew.value ? t('catalog.card.
         class="absolute inset-x-3 bottom-3 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
       >
         <span class="block w-full text-center rounded-full bg-ink-burgundy text-ink-cream text-sm font-semibold py-2.5">
-          {{ $t('catalog.card.customize') }}
+          {{ $t('catalog.card.open') }}
         </span>
       </div>
     </div>

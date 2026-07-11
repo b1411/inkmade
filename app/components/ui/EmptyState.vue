@@ -5,8 +5,11 @@ interface Props {
   icon?: string
   title: string
   text?: string
+  // алиас text — часть страниц (leads/shops) передаёт :description; раньше он молча терялся
+  description?: string
 }
-withDefaults(defineProps<Props>(), { icon: 'i-lucide-inbox' })
+const props = withDefaults(defineProps<Props>(), { icon: 'i-lucide-inbox' })
+const subtitle = computed(() => props.text || props.description)
 </script>
 
 <template>
@@ -20,7 +23,7 @@ withDefaults(defineProps<Props>(), { icon: 'i-lucide-inbox' })
       <span class="pointer-events-none absolute -inset-5 rounded-full border border-ink-burgundy/8" aria-hidden="true" />
     </div>
     <h3 class="ink-display text-h3 mt-7">{{ title }}</h3>
-    <p v-if="text" class="text-ink-gray-600 mt-2 max-w-md">{{ text }}</p>
+    <p v-if="subtitle" class="text-ink-gray-600 mt-2 max-w-md">{{ subtitle }}</p>
     <div v-if="$slots.default" class="mt-6"><slot /></div>
   </div>
 </template>

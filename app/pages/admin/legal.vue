@@ -5,6 +5,7 @@ import type { Database } from '~/types/database.types'
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
 const supabase = useSupabaseClient<Database>()
+const { dateTime } = useFormat()
 
 const { data: consents } = await useAsyncData('admin-consents', async () => {
   const { data } = await supabase
@@ -50,7 +51,7 @@ const typeLabel = computed<Record<string, string>>(() => ({
       <UiPanel v-else :title="$t('admin.legalAdmin.consentsLogTitle')" :padded="false">
         <div class="divide-y divide-ink-gray-200 text-caption">
           <div v-for="c in consents" :key="c.id" class="flex items-center justify-between px-6 py-3">
-            <span class="text-ink-gray-500">{{ new Date(c.accepted_at).toLocaleString('ru') }}</span>
+            <span class="text-ink-gray-500">{{ dateTime(c.accepted_at) }}</span>
             <span>{{ typeLabel[c.consent_type] ?? c.consent_type }} · v{{ c.doc_version }}</span>
             <span class="font-mono text-ink-gray-400">{{ c.ip ?? '—' }}</span>
           </div>

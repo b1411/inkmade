@@ -56,8 +56,10 @@ async function toggleActive(c: NonNullable<typeof cats.value>[number]) {
   catch (e) { toast.add({ title: t('admin.categories.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
+const { confirm } = useConfirm()
 async function onDelete(id: string, title: string) {
-  if (!confirm(t('admin.categories.deleteConfirm', { title }))) return
+  const ok = await confirm({ title: t('admin.categories.deleteConfirm', { title }), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   try { await remove(id); toast.add({ title: t('admin.categories.deleted'), color: 'success' }); refresh() }
   catch {
     toast.add({ title: t('admin.categories.deleteForbidden'), description: t('admin.categories.deleteForbiddenText'), color: 'error' })

@@ -17,9 +17,14 @@ function decrement(id: string, qty: number) {
   if (qty > 1) cart.updateQty(id, qty - 1)
   else cart.remove(id)
 }
-function clearCart() {
-  if (import.meta.client && !confirm(t('cart.cart.clearConfirm'))) return
-  cart.clear()
+const { confirm } = useConfirm()
+async function clearCart() {
+  const ok = await confirm({
+    title: t('cart.cart.clearConfirm'),
+    confirmLabel: t('cart.cart.clear'),
+    tone: 'danger',
+  })
+  if (ok) cart.clear()
 }
 </script>
 

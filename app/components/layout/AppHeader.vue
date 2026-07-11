@@ -42,15 +42,44 @@ watch(cartCount, (next, prev) => {
 
 // ── Мобильное меню ──
 const menuOpen = ref(false)
+const menuEl = ref<HTMLElement | null>(null)
+let menuTrigger: HTMLElement | null = null
 function closeMenu() {
   menuOpen.value = false
 }
-// Блокировка скролла body при открытом меню
-watch(menuOpen, (open) => {
-  if (import.meta.client) {
-    document.documentElement.style.overflow = open ? 'hidden' : ''
+// Блокировка скролла body + управление фокусом (a11y): при открытии переносим фокус
+// в меню, при закрытии возвращаем на кнопку-триггер (иначе фокус «терялся» за оверлеем).
+watch(menuOpen, async (open) => {
+  if (!import.meta.client) return
+  document.documentElement.style.overflow = open ? 'hidden' : ''
+  if (open) {
+    menuTrigger = document.activeElement as HTMLElement | null
+    await nextTick()
+    menuFocusables()[0]?.focus()
+  } else if (menuTrigger) {
+    menuTrigger.focus()
+    menuTrigger = null
   }
 })
+function menuFocusables(): HTMLElement[] {
+  const el = menuEl.value
+  if (!el) return []
+  return Array.from(
+    el.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+  ).filter(n => n.offsetParent !== null)
+}
+// Фокус-трап: Tab/Shift+Tab циклит внутри открытого меню, не выпуская за оверлей.
+function onMenuKeydown(e: KeyboardEvent) {
+  if (e.key !== 'Tab') return
+  const items = menuFocusables()
+  if (!items.length) return
+  const first = items[0]!
+  const last = items[items.length - 1]!
+  const active = document.activeElement as HTMLElement | null
+  const inside = !!menuEl.value?.contains(active)
+  if (e.shiftKey && (active === first || !inside)) { e.preventDefault(); last.focus() }
+  else if (!e.shiftKey && (active === last || !inside)) { e.preventDefault(); first.focus() }
+}
 // Закрытие по смене маршрута и Esc
 watch(() => route.fullPath, closeMenu)
 onMounted(() => {
@@ -140,7 +169,12 @@ onMounted(() => {
       <Transition name="menu">
         <div
           v-if="menuOpen"
+          ref="menuEl"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="$t('header.menu')"
           class="fixed inset-0 z-[60] bg-ink-burgundy text-ink-cream flex flex-col md:hidden"
+          @keydown="onMenuKeydown"
         >
           <div class="flex items-center justify-between h-16 px-4">
             <span class="ink-logo text-2xl">INKMADE</span>

@@ -12,10 +12,14 @@ const isLanding = computed(() => route.path === '/')
        скролл. clip обрезает лишний overhang фоновых полос, не создавая scroll-контейнер
        (fixed-хедер и вертикальный скролл не затронуты; контент — в центрированном max-w). -->
   <div class="min-h-screen flex flex-col bg-ink-white text-ink-black overflow-x-clip">
+    <!-- Skip-to-content (a11y): первый фокусируемый элемент, виден только с клавиатуры -->
+    <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
     <LayoutAppHeader />
 
     <main
-      class="flex-1 mx-auto w-full max-w-(--container-max) px-4 pb-8"
+      id="main-content"
+      tabindex="-1"
+      class="flex-1 mx-auto w-full max-w-(--container-max) px-4 pb-8 focus:outline-none"
       :class="isLanding ? 'pt-0' : 'pt-20'"
     >
       <slot />

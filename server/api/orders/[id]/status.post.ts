@@ -5,6 +5,7 @@ import { isValidTransition, REASON_REQUIRED } from '~~/shared/config/order-statu
 import { notifyOrder } from '~~/server/utils/email'
 import { requireUuid } from '~~/server/utils/validation'
 import { orderStatusSchema, parseOrThrow } from '~~/server/utils/schemas'
+import { logError } from '~~/server/utils/logger'
 
 // Серверная смена статуса (§8.5): проверка роли, валидация перехода по автомату (§5.3),
 // запись orders.status + order_status_log. Недопустимые переходы невозможны.
@@ -62,9 +63,12 @@ export default defineEventHandler(async (event) => {
     p_note: body.note ?? '',
     p_tracking: body.trackingNo ?? '',
     p_carrier: body.carrier ?? '',
+    // TOCTOU-гард: статус, против которого мы валидировали переход; RPC отклонит,
+    // если под локом заказ уже в другом статусе (миграция 0082). Требует накат 0082.
+    p_expected_from: from,
   })
   if (rpcErr) {
-    console.error('[order-status] change_order_status failed:', rpcErr.message)
+    await logError('order-status', rpcErr.message, { orderId, from, to })
     throw createError({ statusCode: 500, statusMessage: 'Не удалось сменить статус заказа' })
   }
 

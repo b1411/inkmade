@@ -18,6 +18,7 @@ watchEffect(() => {
 
 <template>
   <div class="min-h-screen bg-ink-white text-ink-black">
+    <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
     <header class="border-b border-ink-gray-200">
       <div class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between">
         <UiAppLogo :subtitle="false" />
@@ -42,7 +43,7 @@ watchEffect(() => {
         </NuxtLink>
       </aside>
 
-      <main class="min-w-0">
+      <main id="main-content" tabindex="-1" class="min-w-0 focus:outline-none">
         <slot />
       </main>
     </div>

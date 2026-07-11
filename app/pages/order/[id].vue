@@ -171,6 +171,13 @@ async function submitRequest() {
     <OrderStatusTracker v-if="!isSpecial" :stages="STAGES" :current="current" />
     <UAlert v-else color="warning" variant="subtle" :title="customerStatus" />
 
+    <!-- оплата неоплаченного заказа (re-pay): вход обратно на страницу оплаты, чтобы
+         заказ не «терялся» между созданием и оплатой (корзина к этому моменту очищена) -->
+    <UiPanel v-if="!order.paid_at && ['created', 'pending'].includes(order.status)" :title="$t('cart.order.pay.title')" icon="i-lucide-credit-card">
+      <p class="text-caption text-ink-gray-600 mb-3">{{ $t('cart.order.pay.hint') }}</p>
+      <UiAppButton :to="`/checkout/pay/${order.id}`" variant="primary" icon="i-lucide-credit-card">{{ $t('cart.order.pay.cta') }}</UiAppButton>
+    </UiPanel>
+
     <!-- трек -->
     <UiPanel v-if="order.tracking_no" :title="$t('cart.order.tracking.title')" icon="i-lucide-truck">
       <p class="font-semibold">{{ order.tracking_no }} <span class="text-ink-gray-600 font-normal">· {{ order.carrier }}</span></p>

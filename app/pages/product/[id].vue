@@ -5,13 +5,19 @@ const { t } = useI18n()
 const route = useRoute()
 const slug = route.params.id as string
 const site = String(useRuntimeConfig().public.siteUrl || '').replace(/\/$/, '')
-const { getBySlug } = useCatalog()
+const { getBySlug, listByCategory } = useCatalog()
 
 const { data: product, error } = await useAsyncData(`product-${slug}`, () => getBySlug(slug))
 
 if (error.value || !product.value) {
   throw createError({ statusCode: 404, statusMessage: t('product.notFound') })
 }
+
+// похожие товары той же категории (кроме текущего), до 4 штук
+const { data: related } = await useAsyncData(`related-${slug}`, async () => {
+  const list = await listByCategory(product.value!.category)
+  return (list ?? []).filter(p => p.id !== product.value!.id).slice(0, 4)
+})
 
 const ogImage = product.value.product_images?.find(i => i.is_primary)?.url ?? product.value.product_images?.[0]?.url
 useSeoMeta({
@@ -124,6 +130,19 @@ const priceFrom = computed(() =>
   product.value!.base_price + (selectedMaterial.value?.surcharge ?? 0),
 )
 
+// ссылка в конструктор с выбранным вариантом (§7.1): материал/цвет/размер едут
+// в query, чтобы конструктор открылся на выбранном варианте, а не в дефолте.
+// URLSearchParams кодирует '#' цвета как %23 — фрагмент URL не ломается.
+const customizeTo = computed(() => {
+  if (!product.value?.alias) return ''
+  const q = new URLSearchParams()
+  if (selectedMaterialId.value) q.set('material', selectedMaterialId.value)
+  if (selectedColor.value) q.set('color', selectedColor.value)
+  if (selectedSize.value) q.set('size', selectedSize.value)
+  const qs = q.toString()
+  return `/customize/${product.value.alias}${qs ? `?${qs}` : ''}`
+})
+
 // Галерея по выбранному цвету (фото-слоты, миграция 0044):
 // mockup выбранного цвета + общие mockup; fallback на все фото для старых товаров.
 const byPrimary = (a: { is_primary: boolean; sort_order: number }, b: { is_primary: boolean; sort_order: number }) =>
@@ -167,7 +186,8 @@ function onZoomMove(e: MouseEvent) {
 </script>
 
 <template>
-  <section v-if="product" class="grid md:grid-cols-2 gap-10 items-start">
+  <div v-if="product" class="space-y-16">
+    <section class="grid md:grid-cols-2 gap-10 items-start">
     <!-- галерея (§6.2): крупное фото с зум-лупой к курсору + crossfade при смене -->
     <div class="space-y-3">
       <div
@@ -235,6 +255,11 @@ function onZoomMove(e: MouseEvent) {
     <!-- инфо + выбор (липнет на десктопе при прокрутке галереи) -->
     <div class="space-y-6 md:sticky md:top-24">
       <div>
+        <nav class="flex items-center gap-1.5 text-caption text-ink-gray-500 mb-2" :aria-label="$t('product.breadcrumb')">
+          <NuxtLink to="/catalog" class="hover:text-ink-burgundy transition-colors">{{ $t('catalog.pageTitle') }}</NuxtLink>
+          <span aria-hidden="true">/</span>
+          <span class="text-ink-gray-700 truncate">{{ product.title }}</span>
+        </nav>
         <UiSectionLabel accent>{{ product.category }}</UiSectionLabel>
         <h1 class="ink-display text-h1 mt-2">{{ product.title }}</h1>
         <p class="text-h3 mt-2 text-ink-burgundy font-bold">{{ $t('product.priceFrom', { price: formatPrice(priceFrom) }) }}</p>
@@ -280,7 +305,10 @@ function onZoomMove(e: MouseEvent) {
 
       <!-- размер -->
       <div v-if="sizes.length">
-        <UiSectionLabel>{{ $t('product.size') }}</UiSectionLabel>
+        <div class="flex items-center justify-between gap-2">
+          <UiSectionLabel>{{ $t('product.size') }}</UiSectionLabel>
+          <CatalogSizeGuide />
+        </div>
         <div class="flex flex-wrap gap-2 mt-2">
           <button
             v-for="s in sizes"
@@ -308,7 +336,7 @@ function onZoomMove(e: MouseEvent) {
         <div class="flex-1">
           <UiAppButton
             v-if="product.alias"
-            :to="`/customize/${product.alias}`"
+            :to="customizeTo"
             variant="primary"
             size="xl"
             icon="i-lucide-brush"
@@ -342,7 +370,16 @@ function onZoomMove(e: MouseEvent) {
         :description="$t('product.colorNote.description')"
       />
     </div>
-  </section>
+    </section>
+
+    <!-- похожие товары той же категории -->
+    <section v-if="related?.length">
+      <h2 class="ink-display text-h3 mb-6">{{ $t('product.related') }}</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <CatalogProductCard v-for="p in related" :key="p.id" :product="p" />
+      </div>
+    </section>
+  </div>
 </template>
 
 <style scoped>

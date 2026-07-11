@@ -8,12 +8,22 @@ export function shapeData(type: ShapeType, w: number, h: number): string {
   switch (type) {
     case 'rect':
       return `M0,0 H${round(w)} V${round(h)} H0 Z`
+    case 'roundrect':
+      return roundRectPath(w, h)
     case 'circle': {
       const rx = w / 2, ry = h / 2, cy = h / 2
       return `M0,${round(cy)} A${round(rx)},${round(ry)} 0 1,0 ${round(w)},${round(cy)} A${round(rx)},${round(ry)} 0 1,0 0,${round(cy)} Z`
     }
     case 'triangle':
       return `M${round(w / 2)},0 L${round(w)},${round(h)} L0,${round(h)} Z`
+    case 'diamond':
+      return `M${round(w / 2)},0 L${round(w)},${round(h / 2)} L${round(w / 2)},${round(h)} L0,${round(h / 2)} Z`
+    case 'pentagon':
+      return regularPolygon(w, h, 5)
+    case 'hexagon':
+      return regularPolygon(w, h, 6)
+    case 'arrow':
+      return arrowPath(w, h)
     case 'line':
       return `M0,${round(h / 2)} H${round(w)}`
     case 'star':
@@ -23,6 +33,37 @@ export function shapeData(type: ShapeType, w: number, h: number): string {
     default:
       return `M0,0 H${round(w)} V${round(h)} H0 Z`
   }
+}
+
+// прямоугольник со скруглёнными углами (радиус ~18% меньшей стороны)
+function roundRectPath(w: number, h: number): string {
+  const rd = (n: number) => +n.toFixed(2)
+  const r = Math.min(w, h) * 0.18
+  return `M${rd(r)},0 H${rd(w - r)} A${rd(r)},${rd(r)} 0 0 1 ${rd(w)},${rd(r)} `
+    + `V${rd(h - r)} A${rd(r)},${rd(r)} 0 0 1 ${rd(w - r)},${rd(h)} `
+    + `H${rd(r)} A${rd(r)},${rd(r)} 0 0 1 0,${rd(h - r)} `
+    + `V${rd(r)} A${rd(r)},${rd(r)} 0 0 1 ${rd(r)},0 Z`
+}
+
+// правильный N-угольник, вписанный в bbox, вершиной вверх
+function regularPolygon(w: number, h: number, sides: number): string {
+  const cx = w / 2, cy = h / 2, rx = w / 2, ry = h / 2
+  let d = ''
+  for (let i = 0; i < sides; i++) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / sides
+    const x = cx + rx * Math.cos(a)
+    const y = cy + ry * Math.sin(a)
+    d += `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)} `
+  }
+  return d + 'Z'
+}
+
+// блок-стрелка вправо в пределах bbox
+function arrowPath(w: number, h: number): string {
+  const rd = (n: number) => +n.toFixed(2)
+  const head = w * 0.6
+  return `M0,${rd(h * 0.3)} H${rd(head)} V${rd(h * 0.1)} L${rd(w)},${rd(h / 2)} `
+    + `L${rd(head)},${rd(h * 0.9)} V${rd(h * 0.7)} H0 Z`
 }
 
 function starPath(w: number, h: number, points = 5): string {

@@ -26,7 +26,14 @@ watchEffect(() => {
 })
 
 const savingId = ref<string | null>(null)
+const { confirm } = useConfirm()
 async function save(userId: string) {
+  const u = users.value?.find(x => x.id === userId)
+  // выдача роли admin — полный доступ ко всему: требуем явного подтверждения
+  if (draft[userId] === 'admin' && u?.role !== 'admin') {
+    const ok = await confirm({ title: t('admin.users.grantAdminConfirm', { email: u?.email ?? '' }), confirmLabel: t('admin.users.roles.admin'), tone: 'danger' })
+    if (!ok) return
+  }
   savingId.value = userId
   try {
     await setUserRole(userId, draft[userId]!)
@@ -47,7 +54,10 @@ const isBanned = (u: { banned_until?: string | null }) =>
 const banningId = ref<string | null>(null)
 async function toggleBan(u: { id: string; email: string; banned_until?: string | null }) {
   const ban = !isBanned(u)
-  if (ban && !confirm(t('admin.users.banConfirm', { email: u.email }))) return
+  if (ban) {
+    const ok = await confirm({ title: t('admin.users.banConfirm', { email: u.email }), tone: 'danger' })
+    if (!ok) return
+  }
   banningId.value = u.id
   try {
     await setUserBanned(u.id, ban)

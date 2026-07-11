@@ -5,6 +5,7 @@ const { t } = useI18n()
 const { listStockWithCost, addMovement, listMovements } = useStock()
 const { setVariantCost } = useAdmin()
 const toast = useToast()
+const { dateTime } = useFormat()
 
 const { data: rows, refresh, pending } = await useAsyncData('admin-stock', () => listStockWithCost())
 
@@ -171,7 +172,7 @@ async function openHistory(variantId: string, label: string) {
         <table v-else class="w-full text-caption">
           <tbody>
             <tr v-for="m in history.rows" :key="m.id" class="border-b border-ink-gray-200/60">
-              <td class="py-2 text-ink-gray-500">{{ new Date(m.created_at).toLocaleString('ru') }}</td>
+              <td class="py-2 text-ink-gray-500">{{ dateTime(m.created_at) }}</td>
               <td>{{ REASON_LABELS[m.reason] ?? m.reason }}</td><!-- REASON_LABELS — computed -->
               <td class="text-right font-semibold" :class="m.delta > 0 ? 'text-ink-success' : 'text-ink-error'">{{ m.delta > 0 ? '+' : '' }}{{ m.delta }}</td>
             </tr>

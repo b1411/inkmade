@@ -9,6 +9,9 @@ export default withNuxt(
     rules: {
       // имена страниц/лейаутов часто односложные (index.vue, cart.vue) — это нормально
       'vue/multi-word-component-names': 'off',
+      // избыточно с <script setup lang="ts">: optional-проп уже типизирован как T|undefined,
+      // а `default: undefined` — no-op. Правило давало только шум на UI-компонентах.
+      'vue/require-default-prop': 'off',
       // Konva/canvas-обработчики и сторонние типы прагматично используют any — предупреждение, не блок
       '@typescript-eslint/no-explicit-any': 'warn',
       // паттерн `cond && fn()` в обработчиках — допустим, понижаем до предупреждения

@@ -250,6 +250,9 @@
     },
     "wizard": {
       "loadError": "Ошибка загрузки",
+      "notFound": "Товар не найден",
+      "notFoundText": "Возможно, он был удалён или ссылка неверна.",
+      "backToList": "К товарам",
       "stepBasics": "Основное",
       "stepMaterials": "Материалы",
       "stepVariants": "Варианты",

@@ -79,8 +79,10 @@ async function toggleActive(p: NonNullable<typeof prints.value>[number]) {
   catch (e) { toast.add({ title: t('admin.prints.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
+const { confirm } = useConfirm()
 async function onDelete(id: string, title: string) {
-  if (!confirm(t('admin.prints.deleteConfirm', { title }))) return
+  const ok = await confirm({ title: t('admin.prints.deleteConfirm', { title }), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   try { await remove(id); toast.add({ title: t('admin.prints.deleted'), color: 'success' }); refresh() }
   catch (e) { toast.add({ title: t('admin.prints.error'), description: getFetchMessage(e), color: 'error' }) }
 }

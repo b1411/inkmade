@@ -40,7 +40,13 @@ const editCartId = computed(() => (route.query.cart as string) || null)
 // инициализация состояния на клиенте (canvas + Image — клиент)
 onMounted(async () => {
   if (!product.value) return
-  design.init(product.value)
+  // из карточки товара приходят выбранные материал/цвет/размер (?material&color&size) —
+  // прокидываем их в init, чтобы не сбрасывать выбор пользователя в дефолт
+  // (раньше «Чёрный / XL» терялся при переходе в конструктор).
+  design.init(product.value, {
+    materialId: (route.query.material as string) || undefined,
+    colorHex: (route.query.color as string) || undefined,
+  })
   useAnalytics().viewContent(product.value.id) // первое звено воронки (§3.5.1)
   if (editCartId.value) {
     // доработка позиции корзины: spec лежит локально, не в БД
@@ -63,6 +69,11 @@ onMounted(async () => {
         toast.add({ title: t('customize.page.loadedForRework'), color: 'success' })
       }
     } catch { /* если дизайн недоступен — начинаем с чистого листа */ }
+  } else if (route.query.size) {
+    // свежий вход из карточки товара: восстановить выбранный размер
+    await nextTick() // дать sizeVariants пересчитаться под переданные материал/цвет
+    const sz = route.query.size as string
+    if (sizeVariants.value.some(v => v.size === sz)) selectedSize.value = sz
   }
 })
 
@@ -91,11 +102,12 @@ const quantity = ref(1)
 const paramsOpen = ref(false)
 
 // ── 3-зонный редактор: левый тулбар выбирает активный инструмент ──
-type ToolKey = 'print' | 'text' | 'ai'
+type ToolKey = 'print' | 'text' | 'shape' | 'ai'
 const activeTool = ref<ToolKey>('print')
 const TOOLS: Array<{ key: ToolKey; icon: string }> = [
   { key: 'print', icon: 'i-lucide-image' },
   { key: 'text', icon: 'i-lucide-type' },
+  { key: 'shape', icon: 'i-lucide-shapes' },
   // вкладка AI-генерации — только при включённом флаге aiDesign
   ...(FEATURES.aiDesign ? [{ key: 'ai' as const, icon: 'i-lucide-sparkles' }] : []),
 ]
@@ -176,8 +188,16 @@ async function onAddToCart() {
       try { design.setCompositionUrl(await uploadComposition(blob)) }
       catch { /* скриншот не критичен для печати — оригинал уже в Storage */ }
     }
-    // печатные файлы на зону (300 DPI, прозрачный фон) — закрывает проблему шрифтов в цеху
-    try { await generatePrintFiles() } catch { /* не блокируем заказ */ }
+    // печатные файлы на зону (300 DPI, прозрачный фон) — артефакт «для печати».
+    // Если для НЕПУСТОГО дизайна не удалось получить ни одного файла — НЕ пускаем
+    // позицию в заказ: иначе она уйдёт в цех без печатного артефакта, а брак
+    // вскроется уже после продажи. (Пустой дизайн сюда не доходит — guard выше.)
+    let files: import('~/composables/useDesign').PrintFile[] = []
+    try { files = await generatePrintFiles() } catch { files = [] }
+    if (!files.length) {
+      notify.error(t('customize.page.printFilesFailed'))
+      return
+    }
     const v = selectedVariant.value
     const item = {
       productId: product.value!.id,
@@ -264,6 +284,7 @@ async function onAddToCart() {
             <CustomizerPrintLibraryPicker />
           </template>
           <CustomizerTextTool v-else-if="activeTool === 'text'" />
+          <CustomizerShapePicker v-else-if="activeTool === 'shape'" />
           <CustomizerAIGenerator v-else-if="activeTool === 'ai'" />
         </div>
       </div>

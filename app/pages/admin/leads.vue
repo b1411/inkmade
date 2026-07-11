@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { formatKzPhone, whatsAppLink, telLink } from '~~/shared/config/phone'
-import { formatDate } from '~/utils/format'
 
 // Лиды (§CRM): контакты клиентов для связи в WhatsApp/звонком. Только admin.
 // Источник — admin_list_users (phone + marketing_consent). Полноценной phone-OTP
 // авторизации нет; телефон собирается как поле профиля при регистрации.
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
+const { dateShort } = useFormat()
 useHead({ title: t('admin.leads.headTitle') })
 
 const { listUsers } = useUsers()
@@ -49,7 +49,7 @@ function exportCsv() {
     esc(formatKzPhone(u.phone)),
     esc(u.email ?? ''),
     esc(u.marketing_consent ? t('admin.leads.csv.yes') : t('admin.leads.csv.no')),
-    esc(formatDate(u.created_at)),
+    esc(dateShort(u.created_at)),
   ].join(','))
   // BOM для корректной кириллицы в Excel
   const csv = '﻿' + [header.map(esc).join(','), ...lines].join('\r\n')
@@ -105,7 +105,7 @@ function exportCsv() {
             <UBadge v-if="u.marketing_consent" color="success" variant="subtle" size="sm">{{ $t('admin.leads.yes') }}</UBadge>
             <UBadge v-else color="neutral" variant="subtle" size="sm">{{ $t('admin.leads.no') }}</UBadge>
           </td>
-          <td class="py-3 pr-4 text-ink-gray-600 text-sm">{{ formatDate(u.created_at) }}</td>
+          <td class="py-3 pr-4 text-ink-gray-600 text-sm">{{ dateShort(u.created_at) }}</td>
           <td class="py-3 text-right whitespace-nowrap">
             <UButton
               v-if="whatsAppLink(u.phone)"

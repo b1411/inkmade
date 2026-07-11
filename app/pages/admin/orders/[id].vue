@@ -36,10 +36,10 @@ async function onEvidencePick(e: Event) {
   } finally { evUploading.value = false }
 }
 
-const { data: order, refresh } = await useAsyncData(`admin-order-${id}`, () => getOrderAdmin(id))
+const { data: order, refresh, pending } = await useAsyncData(`admin-order-${id}`, () => getOrderAdmin(id))
 
 // маржа по заказу (§6.2): выручка позиций − себестоимость позиций
-const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(Math.round(n))
+const { number: fmt, dateTime } = useFormat()
 const margin = computed(() => {
   const items = order.value?.order_items ?? []
   const revenue = items.reduce((s, it) => s + Number(it.unit_price) * it.quantity, 0)
@@ -74,7 +74,14 @@ const shortId = (s: string) => s.slice(0, 8)
 </script>
 
 <template>
-  <div v-if="order">
+  <div v-if="pending" class="space-y-6">
+    <UiSkeleton rounded="rounded" class="h-9 w-72" />
+    <div class="grid lg:grid-cols-[1fr_300px] gap-8">
+      <UiSkeleton rounded="rounded-lg" class="h-96" />
+      <UiSkeleton rounded="rounded-lg" class="h-64" />
+    </div>
+  </div>
+  <div v-else-if="order">
     <UiPageHeader :label="$t('admin.order.label', { id: shortId(order.id) })" :title="$t(`domain.orderStatus.${order.status}`)">
       <template #actions>
         <UButton to="/admin/orders" color="neutral" variant="ghost" icon="i-lucide-arrow-left">{{ $t('admin.order.backToList') }}</UButton>
@@ -125,7 +132,7 @@ const shortId = (s: string) => s.slice(0, 8)
             <p v-if="addr?.full_name">{{ addr.full_name }}, {{ addr.phone }} — {{ addr.city }}, {{ addr.address }}</p>
             <p v-if="addr?.source === 'admin_manual'" class="text-ink-gray-500">{{ $t('admin.order.manualOrder') }}<span v-if="addr.note"> — {{ addr.note }}</span></p>
             <p v-if="order.tracking_no">{{ $t('admin.order.delivery.tracking', { no: order.tracking_no, carrier: order.carrier }) }}</p>
-            <p>{{ $t('admin.order.delivery.payment', { value: order.paid_at ? new Date(order.paid_at).toLocaleString('ru') : $t('admin.order.delivery.notPaid') }) }}</p>
+            <p>{{ $t('admin.order.delivery.payment', { value: order.paid_at ? dateTime(order.paid_at) : $t('admin.order.delivery.notPaid') }) }}</p>
           </div>
         </UiPanel>
 
@@ -133,7 +140,7 @@ const shortId = (s: string) => s.slice(0, 8)
         <UiPanel :title="$t('admin.order.log.title')" icon="i-lucide-history">
           <ul class="space-y-1 text-caption">
             <li v-for="l in (order.order_status_log ?? []).slice().reverse()" :key="l.id" class="flex gap-2">
-              <span class="text-ink-gray-400">{{ new Date(l.created_at).toLocaleString('ru') }}</span>
+              <span class="text-ink-gray-400">{{ dateTime(l.created_at) }}</span>
               <span>{{ l.from_status }} → <strong>{{ l.to_status }}</strong></span>
               <span v-if="l.note" class="text-ink-gray-600">— {{ l.note }}</span>
             </li>
@@ -183,4 +190,8 @@ const shortId = (s: string) => s.slice(0, 8)
       </template>
     </UModal>
   </div>
+
+  <UiEmptyState v-else icon="i-lucide-package-x" :title="$t('admin.order.notFound')" :text="$t('admin.order.notFoundText')">
+    <UButton to="/admin/orders" color="neutral" variant="subtle" icon="i-lucide-arrow-left">{{ $t('admin.order.backToList') }}</UButton>
+  </UiEmptyState>
 </template>

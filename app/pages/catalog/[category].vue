@@ -57,6 +57,13 @@ const sorted = computed(() => {
   else if (sort.value === 'price-desc') list.sort((a, b) => b.base_price - a.base_price)
   return list
 })
+
+// поиск по названию внутри категории (данные уже на клиенте)
+const query = ref('')
+const filtered = computed(() => {
+  const q = query.value.trim().toLowerCase()
+  return q ? sorted.value.filter(p => p.title.toLowerCase().includes(q)) : sorted.value
+})
 </script>
 
 <template>
@@ -70,6 +77,15 @@ const sorted = computed(() => {
         </p>
       </div>
       <div class="flex items-center gap-2 shrink-0">
+        <UInput
+          v-if="!pending && count > 1"
+          v-model="query"
+          size="sm"
+          icon="i-lucide-search"
+          :placeholder="$t('catalog.searchPlaceholder')"
+          :aria-label="$t('catalog.searchPlaceholder')"
+          class="w-32 sm:w-40"
+        />
         <USelect
           v-if="!pending && count > 1"
           v-model="sort"
@@ -104,9 +120,19 @@ const sorted = computed(() => {
       <UiAppButton to="/catalog" variant="primary" size="md">{{ $t('catalog.category.toCatalog') }}</UiAppButton>
     </UiEmptyState>
 
+    <!-- Ничего не найдено по поиску -->
+    <UiEmptyState
+      v-else-if="!filtered.length"
+      icon="i-lucide-search-x"
+      :title="$t('catalog.category.noMatchTitle')"
+      :text="$t('catalog.category.noMatchText', { query })"
+    >
+      <UButton color="neutral" variant="subtle" icon="i-lucide-x" @click="query = ''">{{ $t('catalog.category.clearSearch') }}</UButton>
+    </UiEmptyState>
+
     <!-- Сетка товаров -->
     <div v-else v-auto-animate class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      <UiReveal v-for="(p, i) in sorted" :key="p.id" :delay="Math.min(i * 50, 400)">
+      <UiReveal v-for="(p, i) in filtered" :key="p.id" :delay="Math.min(i * 50, 400)">
         <CatalogProductCard :product="p" />
       </UiReveal>
     </div>

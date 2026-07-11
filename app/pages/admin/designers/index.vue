@@ -52,11 +52,17 @@ const inviteLabel = computed<Record<string, string>>(() => ({
 }))
 
 const busy = ref<string | null>(null)
+const { prompt } = useConfirm()
 async function moderate(id: string, status: 'approved' | 'rejected') {
+  let note: string | undefined
+  if (status === 'rejected') {
+    // отмена промпта = не отклонять (раньше Cancel всё равно отклонял с note=undefined)
+    const r = await prompt({ title: t('admin.designers.rejectReason'), multiline: true })
+    if (r === null) return
+    note = r || undefined
+  }
   busy.value = id
   try {
-    let note: string | undefined
-    if (status === 'rejected') { note = window.prompt(t('admin.designers.rejectReason')) ?? undefined }
     await fin.moderatePrint(id, status, note)
     await refresh()
     toast.add({ title: status === 'approved' ? t('admin.designers.printApproved') : t('admin.designers.printRejected'), color: status === 'approved' ? 'success' : 'warning' })

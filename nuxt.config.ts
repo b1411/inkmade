@@ -162,10 +162,14 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        // Тон системного UI мобильных браузеров — бренд-бордо (§2.2)
+        { name: 'theme-color', content: '#7A1F28' },
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        // PWA-манифест: устанавливаемость + имя/тема на Android
+        { rel: 'manifest', href: '/site.webmanifest' },
       ],
     },
   },

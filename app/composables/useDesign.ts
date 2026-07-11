@@ -13,7 +13,9 @@ export const CANVAS = { width: 460, height: 540 }
 const ZONE_PAD = 36 // отступ зоны от краёв холста, px
 const HISTORY_LIMIT = 60
 
-export type ShapeType = 'rect' | 'circle' | 'triangle' | 'star' | 'heart' | 'line'
+export type ShapeType =
+  | 'rect' | 'roundrect' | 'circle' | 'triangle' | 'diamond'
+  | 'pentagon' | 'hexagon' | 'star' | 'heart' | 'arrow' | 'line'
 
 export interface ImageFilters {
   brightness?: number // -1..1
@@ -108,13 +110,23 @@ export const useDesign = () => {
   const canRedo = computed(() => future.value.length > 0)
   function resetHistory() { past.value = []; future.value = [] }
 
-  function init(p: ProductWithRelations) {
+  function init(p: ProductWithRelations, opts?: { materialId?: string; colorHex?: string }) {
     product.value = p
-    materialId.value = p.materials[0]?.id ?? ''
-    zoneName.value = p.print_zones[0]?.name ?? ''
-    // дефолтный цвет — первый В НАЛИЧИИ (скрытые stock=0 варианты игнорируем,
-    // иначе холст стартовал бы в недоступном цвете, рассинхрон с пикером)
-    productColorHex.value = (p.variants.find(v => v.stock > 0) ?? p.variants[0])?.color_hex ?? '#111111'
+    // материал: переданный из карточки товара (если валиден) → первый
+    const mId = opts?.materialId && p.materials.some(m => m.id === opts.materialId)
+      ? opts.materialId
+      : (p.materials[0]?.id ?? '')
+    materialId.value = mId
+    // активная зона — первая ВАЛИДНАЯ для режима выбранного материала (а не слепо [0]):
+    // иначе на мультиматериальном товаре рамка зоны и zoneName рассинхронятся.
+    const mode = (p.materials.find(m => m.id === mId)?.print_mode as PrintMode) ?? 'zonal'
+    zoneName.value = (p.print_zones.find(z => z.print_mode === mode) ?? p.print_zones[0])?.name ?? ''
+    // дефолтный цвет: переданный из карточки (если В НАЛИЧИИ) → первый в наличии → первый
+    // (скрытые stock=0 игнорируем, иначе холст стартовал бы в недоступном цвете)
+    const wantColor = opts?.colorHex && p.variants.some(v => v.color_hex === opts.colorHex && v.stock > 0)
+      ? opts.colorHex
+      : null
+    productColorHex.value = wantColor ?? (p.variants.find(v => v.stock > 0) ?? p.variants[0])?.color_hex ?? '#111111'
     placements.value = []
     selectedId.value = null
     colorCount.value = 1
@@ -244,11 +256,12 @@ export const useDesign = () => {
     selectedId.value = pl.id
   }
 
-  function addShape(shapeType: ShapeType, fill = '#7A1F28') {
+  function addShape(shapeType: ShapeType, opts?: { fill?: string; stroke?: string; strokeWidth?: number }) {
     const r = zoneRect.value
     const side = Math.min(r.width, r.height) * 0.4
     const pl: Placement = {
-      id: nextId(), kind: 'shape', zone: zoneName.value, shapeType, fill, opacity: 1,
+      id: nextId(), kind: 'shape', zone: zoneName.value, shapeType,
+      fill: opts?.fill ?? '#7A1F28', stroke: opts?.stroke, strokeWidth: opts?.strokeWidth, opacity: 1,
       x: r.x + (r.width - side) / 2,
       y: r.y + (r.height - side) / 2,
       width: side, height: shapeType === 'line' ? Math.max(6, side * 0.06) : side, rotation: 0,
@@ -454,8 +467,14 @@ export const useDesign = () => {
   const compositionUrl = useState<string | null>('design_composition_url', () => null)
   function registerStage(node: unknown) { stageNode.value = node }
   function setCompositionUrl(url: string | null) { compositionUrl.value = url }
+  // сброс зума/пана сцены — регистрируется холстом (у него локальный zoom-стейт)
+  const resetViewFn = useState<(() => void) | null>('design_reset_view', () => null)
+  function registerResetView(fn: (() => void) | null) { resetViewFn.value = fn }
 
   function captureComposition(): Promise<Blob | null> {
+    // сбрасываем зум/пан перед снимком, иначе превью-миниатюра (корзина, галерея,
+    // шаринг) снимется как увеличенный кроп текущего вида, а не всё изделие.
+    resetViewFn.value?.()
     const st = stageNode.value as { toBlob?: (o: { pixelRatio?: number; mimeType?: string; callback: (b: Blob | null) => void }) => void } | null
     if (!st?.toBlob) return Promise.resolve(null)
     return new Promise((resolve) => {
@@ -502,6 +521,6 @@ export const useDesign = () => {
     canUndo, canRedo, undo, redo,
     init, loadSpec, addImage, addText, addShape, updatePlacement, removePlacement,
     duplicatePlacement, reorder, replaceImageAsset, alignInZone, sizeCm, dpiOf, toMm, toSpec,
-    registerStage, captureComposition, setCompositionUrl, registerExporter, generatePrintFiles,
+    registerStage, captureComposition, setCompositionUrl, registerExporter, registerResetView, generatePrintFiles,
   }
 }

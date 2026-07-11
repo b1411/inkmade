@@ -20,8 +20,12 @@ export function useFontLoader() {
       linked.add(family)
     }
     try {
-      await document.fonts.load(`48px "${family}"`)
-      await document.fonts.load(`bold 48px "${family}"`)
+      // sample с кириллицей: Google отдаёт кириллицу отдельным unicode-range —
+      // без образца грузится только латиница, и печатный экспорт кириллицы падал
+      // на fallback-глиф (основной язык магазина — RU/KK). Триггерим оба подмножества.
+      const sample = 'AaЯяӘ0'
+      await document.fonts.load(`48px "${family}"`, sample)
+      await document.fonts.load(`bold 48px "${family}"`, sample)
     } catch { /* swap-фолбэк допустим, если CDN недоступен */ }
   }
   return { load }

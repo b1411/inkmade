@@ -32,8 +32,10 @@ function clearSelection() {
   selected.value = new Set()
 }
 
+const { confirm } = useConfirm()
 async function onDelete(id: string, title: string) {
-  if (!confirm(t('admin.products.deleteConfirm', { title }))) return
+  const ok = await confirm({ title: t('admin.products.deleteConfirm', { title }), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   try {
     await deleteProduct(id)
     toast.add({ title: t('admin.products.deleted'), color: 'success' })
@@ -62,7 +64,8 @@ async function bulkPublish(isActive: boolean) {
 async function bulkDelete() {
   const ids = [...selected.value]
   if (!ids.length) return
-  if (!confirm(t('admin.products.bulkDeleteConfirm', { count: ids.length }))) return
+  const ok = await confirm({ title: t('admin.products.bulkDeleteConfirm', { count: ids.length }), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   busy.value = true
   try {
     await deleteProductsBulk(ids)

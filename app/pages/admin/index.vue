@@ -72,7 +72,7 @@ const defectRate = computed(() => {
   const paid = stats.value?.paid_orders ?? 0
   return paid > 0 ? Math.round(((stats.value?.reprints ?? 0) / paid) * 100) : 0
 })
-const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(n)
+const { number: fmt, date } = useFormat()
 </script>
 
 <template>
@@ -124,7 +124,7 @@ const fmt = (n: number) => new Intl.NumberFormat('ru-RU').format(n)
               :key="d.day"
               class="flex-1 bg-ink-burgundy/70 hover:bg-ink-burgundy rounded-t transition-colors min-h-0.5"
               :style="{ height: Math.round((d.revenue / maxRev) * 100) + '%' }"
-              :title="$t('admin.dashboard.trend.tooltip', { date: new Date(d.day).toLocaleDateString('ru'), amount: fmt(d.revenue) })"
+              :title="$t('admin.dashboard.trend.tooltip', { date: date(d.day), amount: fmt(d.revenue) })"
             />
           </div>
           <p v-else class="text-caption text-ink-gray-400">{{ $t('admin.dashboard.trend.empty') }}</p>

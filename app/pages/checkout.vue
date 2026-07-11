@@ -12,6 +12,16 @@ const toast = useToast()
 const form = reactive({ full_name: '', email: '', phone: '', city: 'Алматы', address: '' })
 const paying = ref(false)
 
+// идемпотентность оформления: стабильный ключ на сессию checkout — ретрай после сбоя
+// сети вернёт уже созданный заказ, а не создаст второй. Генерим лениво на клиенте.
+const idempotencyKey = ref<string | undefined>(undefined)
+function ensureIdemKey(): string | undefined {
+  if (!idempotencyKey.value && import.meta.client && typeof crypto !== 'undefined' && crypto.randomUUID) {
+    idempotencyKey.value = crypto.randomUUID()
+  }
+  return idempotencyKey.value
+}
+
 const { list: listAddresses } = useAddresses()
 onMounted(async () => {
   cart.load()
@@ -86,7 +96,7 @@ async function onPay() {
   try {
     useAnalytics().initiateCheckout(cart.total.value)
     const giftPayload = gift.on ? { recipient: gift.recipient.trim(), message: gift.message.trim(), hidePrice: gift.hidePrice } : undefined
-    const { orderId } = await createFromCart(cart.items.value, { ...form }, promo.applied || undefined, giftPayload)
+    const { orderId } = await createFromCart(cart.items.value, { ...form }, promo.applied || undefined, giftPayload, ensureIdemKey())
     // Заказ создан (источник истины для оплаты — сама запись orders, не корзина).
     // Чистим корзину СРАЗУ: иначе «Назад» со страницы оплаты → повторный onPay →
     // второй заказ (анти-дубль). Оплата остаётся доступной из /account/orders.

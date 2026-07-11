@@ -34,5 +34,7 @@ useSeoMeta({
     </NuxtLayout>
     <!-- Cookie/трекинг-согласие (opt-in): пиксели грузятся только после «Принять» -->
     <LayoutCookieConsent />
+    <!-- Глобальный confirm-модал (useConfirm) — вместо нативного window.confirm() -->
+    <UiConfirmDialog />
   </UApp>
 </template>

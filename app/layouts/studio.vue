@@ -12,6 +12,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
 
 <template>
   <div class="min-h-screen bg-ink-white text-ink-black">
+    <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
     <header class="bg-ink-black text-ink-cream">
       <div class="mx-auto max-w-(--container-max) px-4 h-14 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -38,7 +39,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
       </div>
     </header>
 
-    <main class="mx-auto max-w-(--container-max) px-4 py-6">
+    <main id="main-content" tabindex="-1" class="mx-auto max-w-(--container-max) px-4 py-6 focus:outline-none">
       <slot />
     </main>
   </div>

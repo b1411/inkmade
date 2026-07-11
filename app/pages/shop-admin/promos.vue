@@ -12,7 +12,7 @@ const toast = useToast()
 const { data: shop } = await useAsyncData('my-shop', () => getMine())
 const { data: promos, refresh } = await useAsyncData('my-shop-promos', async () => (shop.value ? listPromos(shop.value.id) : []))
 
-const fmtPrice = (n: number) => `${new Intl.NumberFormat('ru-RU').format(Math.round(n))} ₸`
+const { money: fmtPrice } = useFormat()
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString(locale.value === 'kk' ? 'kk' : 'ru') : '')
 
 const typeOptions = computed(() => [
@@ -71,12 +71,17 @@ async function onSave() {
 }
 
 async function toggleActive(p: NonNullable<typeof promos.value>[number]) {
-  try { await savePromo({ id: p.id, shop_id: p.shop_id, code: p.code, discount_type: p.discount_type, discount_value: p.discount_value, active: !p.active }); await refresh() }
-  catch (e) { toast.add({ title: t('shopAdmin.promos.error'), description: getFetchMessage(e), color: 'error' }) }
+  try {
+    await savePromo({ id: p.id, shop_id: p.shop_id, code: p.code, discount_type: p.discount_type, discount_value: p.discount_value, active: !p.active })
+    await refresh()
+    toast.add({ title: t('states.saved'), color: 'success' })
+  } catch (e) { toast.add({ title: t('shopAdmin.promos.error'), description: getFetchMessage(e), color: 'error' }) }
 }
 
+const { confirm } = useConfirm()
 async function onDelete(p: NonNullable<typeof promos.value>[number]) {
-  if (!confirm(t('shopAdmin.promos.deleteConfirm', { code: p.code }))) return
+  const ok = await confirm({ title: t('shopAdmin.promos.deleteConfirm', { code: p.code }), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   try { await deletePromo(p.id); toast.add({ title: t('shopAdmin.promos.deleted'), color: 'success' }); await refresh() }
   catch (e) { toast.add({ title: t('shopAdmin.promos.error'), description: getFetchMessage(e), color: 'error' }) }
 }

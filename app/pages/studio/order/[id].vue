@@ -10,6 +10,7 @@ const id = route.params.id as string
 const { getOrder, changeStatus, moderateDesign, setInternalNotes } = useStudio()
 const toast = useToast()
 const { t } = useI18n()
+const { dateTime } = useFormat()
 
 const MODERATION_LABELS = computed<Record<string, string>>(() => ({
   pending: t('studio.production.order.moderation.pending'),
@@ -74,11 +75,28 @@ async function loadOrderRequests() {
 onMounted(loadOrderRequests)
 async function resolveReq(status: 'approved' | 'rejected') {
   if (!pendingReq.value) return
+  const req = pendingReq.value
   resolvingReq.value = true
   try {
-    await resolveRequest(pendingReq.value.id, status)
+    await resolveRequest(req.id, status)
+    // Одобрение заявки должно ДВИГАТЬ заказ, а не только флипать статус заявки —
+    // иначе оператор думает, что отмена выполнена, а заказ уходит в производство.
+    if (status === 'approved') {
+      // отмену исполняем через FSM (восстанавливает сток, пишет причину), но только
+      // если переход валиден для текущего статуса; уже отгруженный заказ не отменить.
+      // «был оплачен» выводим из статуса (paid_at нет в типе StudioOrder): всё, кроме
+      // created/pending, — уже после оплаты.
+      const wasPaid = !(['created', 'pending'] as OrderStatus[]).includes((order.value?.status ?? 'created') as OrderStatus)
+      if (req.kind === 'cancel' && nextStates.value.includes('cancelled')) {
+        await changeStatus(id, 'cancelled', { note: t('studio.production.order.request.cancelNote', { id: shortId(req.id) }) })
+      }
+      // деньги: реальный возврат на карту не автоматизирован (§ платёж) — напоминаем
+      // оператору оформить возврат вручную, чтобы «одобрено» не создавало ложной уверенности.
+      if (wasPaid) toast.add({ title: t('studio.production.order.request.refundReminder'), color: 'warning' })
+    }
     toast.add({ title: t('studio.production.order.request.resolved'), color: 'success' })
     await loadOrderRequests()
+    await refresh()
   } catch (e) {
     toast.add({ title: t('studio.production.order.toast.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
@@ -350,7 +368,7 @@ function printPackingSlip() {
           <p class="ink-label text-ink-gray-600 mb-2">{{ $t('studio.production.order.statusLog') }}</p>
           <ul class="space-y-1 text-caption">
             <li v-for="l in (order.order_status_log ?? []).slice().reverse()" :key="l.id" class="flex gap-2">
-              <span class="text-ink-gray-400">{{ new Date(l.created_at).toLocaleString('ru') }}</span>
+              <span class="text-ink-gray-400">{{ dateTime(l.created_at) }}</span>
               <span>{{ l.from_status }} → <strong>{{ l.to_status }}</strong></span>
               <span v-if="l.note" class="text-ink-gray-600">— {{ l.note }}</span>
             </li>

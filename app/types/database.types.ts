@@ -1067,6 +1067,7 @@ export type Database = {
           gift_message: string | null
           gift_recipient: string | null
           id: string
+          idempotency_key: string | null
           internal_notes: string | null
           is_gift: boolean
           paid_at: string | null
@@ -1089,6 +1090,7 @@ export type Database = {
           gift_message?: string | null
           gift_recipient?: string | null
           id?: string
+          idempotency_key?: string | null
           internal_notes?: string | null
           is_gift?: boolean
           paid_at?: string | null
@@ -1111,6 +1113,7 @@ export type Database = {
           gift_message?: string | null
           gift_recipient?: string | null
           id?: string
+          idempotency_key?: string | null
           internal_notes?: string | null
           is_gift?: boolean
           paid_at?: string | null
@@ -1822,6 +1825,7 @@ export type Database = {
         Args: {
           p_actor: string
           p_carrier: string
+          p_expected_from?: string
           p_note: string
           p_order_id: string
           p_to: string

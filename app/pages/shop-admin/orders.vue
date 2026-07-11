@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { formatDate } from '~/utils/format'
 
 // Заказы магазина (Tier1 B): продажи с атрибуцией order_items.shop_id. Владелец видит
 // только позиции своего магазина + минимум PII покупателя (имя/город) — данные отдаёт
@@ -14,7 +13,7 @@ const { data: list, pending } = await useAsyncData('my-shop-orders', async () =>
   shop.value ? orders(shop.value.id) : [],
 )
 
-const money = (n: number | null | undefined) => `${new Intl.NumberFormat('ru-RU').format(Math.round(Number(n) || 0))} ₸`
+const { money, dateShort } = useFormat()
 const rows = computed(() => list.value ?? [])
 const statusLabel = (s: string) => (te(`admin.dashboard.status.${s}`) ? t(`admin.dashboard.status.${s}`) : s)
 const statusColor = (s: string) =>
@@ -59,7 +58,7 @@ const soldSum = computed(() => rows.value.filter(o => o.paid).reduce((s, o) => s
               <UBadge :color="statusColor(o.status)" variant="subtle" size="sm">{{ statusLabel(o.status) }}</UBadge>
             </div>
             <p class="text-caption text-ink-gray-500 mt-1">
-              {{ formatDate(o.created_at) }}
+              {{ dateShort(o.created_at) }}
               <template v-if="o.buyer_name"> · {{ o.buyer_name }}</template>
               <template v-if="o.city"> · {{ o.city }}</template>
             </p>

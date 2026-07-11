@@ -115,8 +115,10 @@ const onLabel = (id: string, value: string) => run(updateImage(id, { label: valu
 const onAlt = (id: string, value: string) => run(updateImage(id, { alt: value.trim() || null }))
 const onMoveColor = (id: string, hex: string | null) => run(updateImage(id, { color_hex: hex }))
 const onSetKind = (id: string, kind: 'mockup' | 'lifestyle') => run(updateImage(id, { kind }))
+const { confirm } = useConfirm()
 async function onDelete(id: string) {
-  if (!confirm(t('admin.wizard.images.deleteConfirm'))) return
+  const ok = await confirm({ title: t('admin.wizard.images.deleteConfirm'), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   await run(deleteImage(id))
 }
 
@@ -160,7 +162,8 @@ async function bulkHide(hidden: boolean) {
 }
 async function bulkDelete() {
   if (!selected.value.size) return
-  if (!confirm(t('admin.wizard.images.bulkDeleteConfirm', { count: selected.value.size }))) return
+  const ok = await confirm({ title: t('admin.wizard.images.bulkDeleteConfirm', { count: selected.value.size }), confirmLabel: t('actions.delete'), tone: 'danger' })
+  if (!ok) return
   await run(Promise.all([...selected.value].map(id => deleteImage(id))))
   exitSelection()
 }
