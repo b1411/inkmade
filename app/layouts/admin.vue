@@ -33,7 +33,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
     <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
     <aside class="bg-ink-black-soft text-ink-cream md:min-h-screen">
       <div class="px-4 h-16 flex items-center gap-2 border-b border-white/10">
-        <UiAppLogo :subtitle="false" />
+        <UiAppLogo :subtitle="false" tone="light" />
         <UBadge color="primary" variant="solid" size="sm">ADMIN</UBadge>
       </div>
       <nav class="p-3 space-y-1">

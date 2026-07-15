@@ -26,7 +26,9 @@ const benefits = computed(() => [
       <div class="absolute -top-24 -right-24 size-96 rounded-full bg-ink-burgundy-light/30 blur-3xl z-0" />
       <div class="absolute -bottom-32 -left-16 size-80 rounded-full bg-ink-black/20 blur-3xl z-0" />
 
-      <NuxtLink to="/" class="ink-logo text-3xl tracking-wide relative z-10">INKMADE</NuxtLink>
+      <NuxtLink to="/" class="relative z-10 self-start">
+        <img src="/logo-light.svg" alt="INKMADE" width="1328" height="305" class="h-10 w-auto">
+      </NuxtLink>
 
       <div class="relative z-10">
         <h2 class="ink-display text-5xl leading-[1.05]">{{ $t('auth.layout.headline') }}</h2>
@@ -49,7 +51,9 @@ const benefits = computed(() => [
     <!-- форма -->
     <main id="main-content" tabindex="-1" class="flex flex-col justify-center items-center px-6 py-10 sm:px-12 focus:outline-none">
       <div class="w-full max-w-sm">
-        <NuxtLink to="/" class="lg:hidden ink-logo text-2xl block mb-10 text-ink-burgundy">INKMADE</NuxtLink>
+        <NuxtLink to="/" class="lg:hidden block mb-10">
+          <img src="/logo-dark.svg" alt="INKMADE" width="1328" height="305" class="h-8 w-auto">
+        </NuxtLink>
         <slot />
       </div>
     </main>

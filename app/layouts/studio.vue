@@ -16,7 +16,7 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
     <header class="bg-ink-black text-ink-cream">
       <div class="mx-auto max-w-(--container-max) px-4 h-14 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <UiAppLogo :subtitle="false" />
+          <UiAppLogo :subtitle="false" tone="light" />
           <UBadge color="primary" variant="solid" size="sm">{{ $t('studio.nav.badge') }}</UBadge>
         </div>
         <nav class="flex gap-1">

@@ -13,7 +13,7 @@ const { isAuthenticated } = useAuth()
       style="padding-block: var(--section-pad)"
     >
       <div>
-        <p class="ink-logo text-xl text-ink-cream">INKMADE</p>
+        <img src="/logo-light.svg" alt="INKMADE" width="1328" height="305" class="h-7 w-auto">
         <p class="ink-label mt-2 text-ink-cream/50">{{ $t('footer.tagline') }}</p>
         <p class="text-caption mt-3">{{ $t('footer.about') }}</p>
       </div>

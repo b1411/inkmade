@@ -13,8 +13,6 @@
   /* Дисплейный заголовочный гротеск — Unbounded (латиница + полная кириллица).
      Сдвигает ощущение от «подростковая печать» к «современный бренд» (§1.2 ТЗ). */
   --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
-  /* Граффити-акцент — ТОЛЬКО логотип (латиница). */
-  --font-display-graffiti: "Permanent Marker", "Bebas Neue", cursive;
   /* Основной текст и весь UI. Полная кириллица. */
   --font-sans: "Manrope", "Inter", system-ui, sans-serif;
   /* Лейблы/табы/бейджи — разреженный uppercase. */
@@ -176,12 +174,6 @@
     font-weight: 800;
     line-height: 0.95;
     letter-spacing: -0.02em;
-  }
-
-  /* Логотип — граффити-акцент бренда (единственное место, §4.1) */
-  .ink-logo {
-    font-family: var(--font-display-graffiti);
-    line-height: 1;
   }
 
   /* Зерно/grain на тёмных секциях — лёгкая фактура (§4.6, §9.11).

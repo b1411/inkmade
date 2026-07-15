@@ -105,8 +105,32 @@ onMounted(() => {
       class="mx-auto max-w-(--container-max) px-4 flex items-center justify-between transition-all duration-300"
       :class="scrolled ? 'h-14' : 'h-16'"
     >
-      <NuxtLink to="/" class="ink-logo text-2xl tracking-wide" :aria-label="$t('header.toHome')">
-        INKMADE
+      <!-- Лого. Оба варианта держим в DOM и кросс-фейдим: подложка шапки едет с тёмного
+           hero на светлое стекло, надпись обязана перекраситься вместе с ней и в тот же
+           такт (--dur 300ms). Подмена src моргнула бы белым на первом скролле. Кадры у
+           вариантов идентичные (см. scripts/gen-logo.mjs), поэтому буквы не «прыгают». -->
+      <NuxtLink
+        to="/"
+        class="relative block shrink-0 transition-all duration-300"
+        :class="scrolled ? 'h-7' : 'h-8'"
+        :aria-label="$t('header.toHome')"
+      >
+        <img
+          src="/logo-light.svg"
+          alt=""
+          width="1328"
+          height="305"
+          class="h-full w-auto transition-opacity duration-300"
+          :class="glass ? 'opacity-0' : 'opacity-100'"
+        >
+        <img
+          src="/logo-dark.svg"
+          alt=""
+          width="1328"
+          height="305"
+          class="absolute left-0 top-0 h-full w-auto transition-opacity duration-300"
+          :class="glass ? 'opacity-100' : 'opacity-0'"
+        >
       </NuxtLink>
 
       <!-- Десктоп-навигация -->
@@ -177,7 +201,7 @@ onMounted(() => {
           @keydown="onMenuKeydown"
         >
           <div class="flex items-center justify-between h-16 px-4">
-            <span class="ink-logo text-2xl">INKMADE</span>
+            <img src="/logo-light.svg" alt="INKMADE" width="1328" height="305" class="h-8 w-auto">
             <button :aria-label="$t('header.closeMenu')" @click="closeMenu">
               <UIcon name="i-lucide-x" class="size-6" />
             </button>

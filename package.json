@@ -11,6 +11,7 @@
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "icons": "node scripts/gen-icons.mjs",
+    "logo": "node scripts/gen-logo.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

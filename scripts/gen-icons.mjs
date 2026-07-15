@@ -14,13 +14,15 @@
 //  2. apple-touch — ПЛАШКА БЕЗ АЛЬФЫ. iOS игнорирует прозрачность и заливает её чёрным,
 //     поэтому круг кладём на кремовый квадрат. Скруглит iOS сам.
 //
-//  3. maskable — знак УЖИМАЕТСЯ. В мастере буквы занимают 89% ширины и вылезают за
-//     safe zone Android (⌀80%): маска срезала бы «INK» по бокам. Считаем реальный радиус
-//     самого дальнего пикселя букв и масштабируем круг так, чтобы буквы гарантированно
-//     сели внутрь safe zone.
+//  3. maskable — знак УЖИМАЕТСЯ. Буквы вылезают за safe zone Android (⌀80%): маска
+//     срезала бы «INK» по бокам. Считаем реальный радиус самого дальнего пикселя букв и
+//     масштабируем круг так, чтобы буквы гарантированно сели внутрь safe zone.
+//
+// Мастер = экспорт дизайнера, его НЕ правим руками. Единственная правка — воздух вокруг
+// букв (ниже) — живёт здесь параметром, чтобы её можно было крутить и откатывать.
 
 import sharp from 'sharp'
-import { writeFileSync, copyFileSync, statSync } from 'node:fs'
+import { writeFileSync, readFileSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
@@ -37,9 +39,39 @@ const SAFE_MARGIN = 0.96
 // Кремовые поля вокруг круга на плитке iOS.
 const APPLE_DISC = 0.88
 
+// ── Воздух вокруг букв ───────────────────────────────────────────────────────
+// В экспорте буквы упираются в обод: зазор 4% справа, на 16px это 0.63px. «K» сливается
+// с ободом, и знак читается обрезанным, хотя не обрезан. Плюс буквы смещены на 21 ед.
+// вправо от центра. Даём воздух и центруем — трансформом вокруг центра холста; круг,
+// обод и цвета не трогаем. 0.88 = буквы 79% ширины, зазор 10.7% (вариант B).
+// Крутить тут: 0.92 — теснее, 0.84 — просторнее.
+const LETTER_SCALE = 0.88
+// Группа букв в экспорте — единственная с этим transform (круг лежит группой выше).
+const LETTERS_GROUP = '<g transform="matrix(1, 0, 0, 1, 84, 278)">'
+const VIEWBOX = 1536
+// Замеренный центр букв в координатах viewBox (не центр холста — буквы смещены).
+const LETTERS_CX = 789.0
+const LETTERS_CY = 760.9
+
+function withLetterAir(svgText) {
+  if (!svgText.includes(LETTERS_GROUP)) {
+    throw new Error(
+      'gen-icons: группа букв не найдена в ink.svg. Похоже, знак переэкспортирован и структура ' +
+        'изменилась — перепроверь LETTERS_GROUP и замеры LETTERS_CX/CY.',
+    )
+  }
+  const c = VIEWBOX / 2
+  return svgText.replace(
+    LETTERS_GROUP,
+    `<g transform="translate(${c}, ${c}) scale(${LETTER_SCALE}) translate(${-LETTERS_CX}, ${-LETTERS_CY}) matrix(1, 0, 0, 1, 84, 278)">`,
+  )
+}
+
+const svgFixed = withLetterAir(readFileSync(SRC, 'utf8'))
+
 // Вектор растеризуем один раз в мастер-буфер, дальше режем из него: даёт те же чёткие
 // края, что и рендер под каждый размер, но без десятка проходов librsvg.
-const master = await sharp(SRC, { density: 300 })
+const master = await sharp(Buffer.from(svgFixed), { density: 300 })
   .resize(MASTER, MASTER, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
   .png()
   .toBuffer()
@@ -56,6 +88,8 @@ const { data, info } = await sharp(master).ensureAlpha().raw().toBuffer({ resolv
 const { width: W, channels: C } = info
 const c = W / 2
 let maxLetterR = 0
+let letMinX = W
+let letMaxX = 0
 for (let y = 0; y < W; y++) {
   for (let x = 0; x < W; x++) {
     const i = (y * W + x) * C
@@ -65,11 +99,19 @@ for (let y = 0; y < W; y++) {
       Math.abs(data[i + 1] - CREAM.g) < 40 &&
       Math.abs(data[i + 2] - CREAM.b) < 46
     if (!isCream) continue
+    if (x < letMinX) letMinX = x
+    if (x > letMaxX) letMaxX = x
     const r = Math.hypot(x - c, y - c)
     if (r > maxLetterR) maxLetterR = r
   }
 }
 const letterPct = ((maxLetterR / c) * 100).toFixed(1)
+// Зазор до обода печатаем в лог: если знак переэкспортируют и буквы снова прилипнут,
+// это видно сразу здесь, а не через полгода в табе.
+const gapPct = ((Math.min(letMinX, W - 1 - letMaxX) / W) * 100).toFixed(1)
+console.log(
+  `воздух: буквы ${(((letMaxX - letMinX) / W) * 100).toFixed(0)}% ширины · зазор до обода ${gapPct}% · на 16px ${((gapPct / 100) * 16).toFixed(1)}px`,
+)
 // Во сколько ужать круг, чтобы самый дальний пиксель букв сел в safe zone.
 const fit = Math.min(1, (MASTER * SAFE * SAFE_MARGIN) / 2 / maxLetterR)
 console.log(
@@ -87,7 +129,8 @@ async function plate(size, discFraction) {
 }
 
 // 1. Фавиконка-вектор — главный источник для таба: чёткая на любом размере.
-copyFileSync(SRC, join(OUT, 'favicon.svg'))
+// Отдаём версию с воздухом, а не сырой мастер: иначе в табе буквы липнут к ободу.
+writeFileSync(join(OUT, 'favicon.svg'), svgFixed)
 const svgKb = Math.round(statSync(join(OUT, 'favicon.svg')).size / 102.4) / 10
 console.log(
   `  ${'favicon.svg'.padEnd(24)} ${String(svgKb).padStart(6)} KB  (вектор, круг во весь кадр)`,

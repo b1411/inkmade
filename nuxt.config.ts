@@ -137,7 +137,8 @@ export default defineNuxtConfig({
   },
 
   // §2.3 фирменные шрифты. Дисплейный заголовочный шрифт — Unbounded (характерный
-  // гротеск с полной кириллицей, §1.2 ТЗ). Permanent Marker — только логотип (латиница).
+  // гротеск с полной кириллицей, §1.2 ТЗ). Логотип шрифтом НЕ набирается — это
+  // векторная надпись (public/logo-*.svg, режется npm run logo).
   fonts: {
     // только каркас UI/бренда. ~200 шрифтов принта грузятся по требованию
     // (app/composables/useFontLoader.ts) — предзагрузка всех убила бы страницу.
@@ -147,8 +148,6 @@ export default defineNuxtConfig({
       { name: 'Space Mono', provider: 'google' },
       // дисплейный заголовочный гротеск — латиница + кириллица, веса 500–800
       { name: 'Unbounded', provider: 'google', weights: [500, 600, 700, 800] },
-      // граффити-акцент бренда — только логотип (латиница)
-      { name: 'Permanent Marker', provider: 'google' },
     ],
   },
 
