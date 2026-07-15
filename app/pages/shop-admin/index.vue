@@ -4,7 +4,7 @@ definePageMeta({ layout: 'shop-admin', middleware: 'shop-owner' })
 const { t } = useI18n()
 useHead({ title: t('shopAdmin.dashboard.headTitle') })
 
-const { getMine, listItems, finance, analytics } = useMyShop()
+const { getMine, listItems, finance, analytics, myDesigns } = useMyShop()
 const toast = useToast()
 const { public: { siteUrl } } = useRuntimeConfig()
 const site = (siteUrl as string) || 'https://inkmade-pi.vercel.app'
@@ -29,16 +29,23 @@ const { number: fmt, date } = useFormat()
 const storefrontUrl = computed(() => (shop.value ? `${site}/s/${shop.value.slug}` : ''))
 const activeItems = computed(() => (items.value ?? []).filter(i => i.is_active).length)
 
-// онбординг владельца (Tier2 F): чеклист настройки из имеющихся данных, без новой инфры
+// сохранённые дизайны владельца — позиция витрины собирается ТОЛЬКО из них
+const { data: designs } = await useAsyncData('my-shop-designs', () => myDesigns())
+
+// Онбординг владельца: чеклист настройки из имеющихся данных, без новой инфры.
+// Шаг «дизайн» обязателен и раньше в чеклисте отсутствовал: позицию витрины можно
+// собрать только из своего сохранённого дизайна (shop_items.design_id ← конструктор),
+// поэтому владелец упирался в пустой список товаров без единой подсказки, куда идти.
+// Шага «опубликовать витрину» больше нет: is_public по умолчанию true (0066), и он вёл
+// в настройки щёлкать уже включённый тумблер — реальным условием была активная позиция.
 const steps = computed(() => {
   const s = shop.value
   const hero = (s?.hero ?? {}) as { title?: string; subtitle?: string; banner_url?: string }
-  const its = items.value ?? []
   return [
     { key: 'logo', done: !!s?.logo_url, to: '/shop-admin/branding' },
     { key: 'branding', done: !!(hero.title || hero.subtitle || hero.banner_url), to: '/shop-admin/branding' },
-    { key: 'item', done: its.length > 0, to: '/shop-admin/items' },
-    { key: 'publish', done: !!s?.is_public && activeItems.value > 0, to: '/shop-admin/settings' },
+    { key: 'design', done: (designs.value ?? []).length > 0, to: '/catalog' },
+    { key: 'item', done: activeItems.value > 0, to: '/shop-admin/items' },
   ]
 })
 const doneCount = computed(() => steps.value.filter(s => s.done).length)

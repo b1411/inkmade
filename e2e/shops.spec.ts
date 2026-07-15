@@ -2,8 +2,10 @@ import { test, expect } from '@playwright/test'
 import { ADMIN, login } from './helpers/auth'
 
 // E2E фичи «B2B-магазин мерча» в path-режиме /s/<slug> (субдомены — фаза B6, не в коде).
-// PROD-SAFE: preview смотрит в прод-Supabase, поэтому ЛЮБАЯ мутация (заявка, создание
-// магазина, аналитика) перехватывается route.fulfill и до прод-БД не доходит.
+// PROD-SAFE: preview смотрит в прод-Supabase, поэтому ЛЮБАЯ мутация (создание магазина,
+// аналитика) перехватывается route.fulfill и до прод-БД не доходит. Само создание
+// магазина (RPC create_my_shop) требует сессии владельца и здесь НЕ гоняется — проверяем
+// маршрут до формы (гость → логин → регистрация с сохранением цели).
 // Ограничение: витрина и админ-очередь читают данные на SSR (useAsyncData) — эти запросы
 // идут из Nitro и page.route их НЕ перехватывает. Поэтому:
 //   • публичное (лендинг, форма, гарды, 404) — детерминировано, без данных;
@@ -12,51 +14,35 @@ import { ADMIN, login } from './helpers/auth'
 const SHOP_SLUG = process.env.E2E_SHOP_SLUG
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 1. Посадочная /business + форма заявки
+// 1. Посадочная /business + вход в self-serve открытие магазина (миграция 0086)
 // ─────────────────────────────────────────────────────────────────────────────
-test.describe('B2B — лендинг и заявка на магазин', () => {
-  test('/business открывается (фича b2bShops включена): hero + форма', async ({ page }) => {
+test.describe('B2B — лендинг и открытие магазина', () => {
+  test('/business открывается (фича b2bShops включена): hero + CTA открытия', async ({ page }) => {
     const res = await page.goto('/business')
     expect(res?.ok(), 'HTTP-статус /business').toBeTruthy()
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    // поля формы заявки (по плейсхолдерам — устойчиво к вёрстке UFormField)
-    await expect(page.getByPlaceholder('Ваша команда или бренд')).toBeVisible()
-    await expect(page.getByPlaceholder('team@company.kz')).toBeVisible()
-    await expect(page.getByRole('button', { name: /Отправить заявку/ })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Открыть магазин бесплатно/ })).toBeVisible()
   })
 
-  test('клиентская валидация: пустая форма не отправляется (POST не уходит)', async ({ page }) => {
+  test('лендинг больше не обещает заявку и ручное одобрение', async ({ page }) => {
     await page.goto('/business')
-    let posted = false
-    await page.route('**/api/business/apply', (route) => {
-      posted = true
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) })
-    })
-    await page.getByRole('button', { name: /Отправить заявку/ }).click()
-    // validate() возвращает ошибку организации → тост-предупреждение, запрос НЕ уходит
-    // (.first(): текст есть и в aria-live обёртке тоста, и в его заголовке)
-    await expect(page.getByText('Укажите название организации').first()).toBeVisible()
-    expect(posted, 'POST /api/business/apply не должен уйти').toBe(false)
+    // старая воронка (заявка → менеджер перезвонит) заменена self-serve — текста быть не должно
+    await expect(page.getByRole('button', { name: /Отправить заявку/ })).toHaveCount(0)
+    await expect(page.getByText(/свяжемся с вами в течение рабочего дня/i)).toHaveCount(0)
   })
 
-  test('успешная заявка: серверный приём мокается, показывается экран «Заявка принята»', async ({ page }) => {
+  test('гость: CTA ведёт на вход с возвратом на /shop-new', async ({ page }) => {
     await page.goto('/business')
-    // мок серверного приёма — реальной вставки в shop_applications НЕ делаем
-    await page.route('**/api/business/apply', route =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true }) }))
+    const cta = page.getByRole('link', { name: /Открыть магазин бесплатно/ })
+    await expect(cta).toHaveAttribute('href', /\/login\?redirect=/)
+    await cta.click()
+    await expect(page).toHaveURL(/\/login\?redirect=.*shop-new/)
+  })
 
-    await page.getByPlaceholder('Ваша команда или бренд').fill('E2E Тестовая команда')
-    await page.getByPlaceholder('Имя и фамилия').fill('Тест Тестов')
-    await page.getByPlaceholder('+7 (700) 000-00-00').fill('+7 700 123 45 67')
-    await page.getByPlaceholder('team@company.kz').fill('e2e-team@example.kz')
-    await page.getByPlaceholder('brand', { exact: true }).fill('e2e-shop')
-
-    const [req] = await Promise.all([
-      page.waitForRequest(r => r.url().includes('/api/business/apply') && r.method() === 'POST'),
-      page.getByRole('button', { name: /Отправить заявку/ }).click(),
-    ])
-    expect(req).toBeTruthy()
-    await expect(page.getByText('Заявка принята')).toBeVisible()
+  test('вход доносит ?redirect до регистрации (иначе цель терялась)', async ({ page }) => {
+    await page.goto('/login?redirect=/shop-new')
+    const reg = page.getByRole('link', { name: /Зарегистрироваться|Регистрация/ })
+    await expect(reg).toHaveAttribute('href', /\/register\?redirect=.*shop-new/)
   })
 })
 
@@ -64,7 +50,7 @@ test.describe('B2B — лендинг и заявка на магазин', () =
 // 2. Гарды доступа: гостя не пускает в кабинеты магазина
 // ─────────────────────────────────────────────────────────────────────────────
 test.describe('B2B — гарды доступа (гость → вход)', () => {
-  const GUARDED = ['/shop-admin', '/shop-claim/e2e-fake-token', '/admin/shops']
+  const GUARDED = ['/shop-admin', '/shop-new', '/shop-claim/e2e-fake-token', '/admin/shops']
   for (const path of GUARDED) {
     test(`гость с ${path} уводится на /login`, async ({ page }) => {
       await page.goto(path)

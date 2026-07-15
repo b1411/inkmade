@@ -69,6 +69,22 @@ export const useMyShop = () => {
     return data
   }
 
+  // self-serve создание магазина (0086): владелец заводит магазин сам, без админ-approve.
+  // Возвращает {id, slug}; человекочитаемые ошибки приходят из RPC (адрес занят/зарезервирован,
+  // «у вас уже есть магазин») и показываются формой через getFetchMessage.
+  async function createMine(name: string, slug: string): Promise<{ id: string; slug: string }> {
+    const { data, error } = await supabase.rpc('create_my_shop', { p_name: name, p_slug: slug })
+    if (error) throw error
+    return data as unknown as { id: string; slug: string }
+  }
+
+  // живая проверка адреса витрины: {ok, reason: invalid|reserved|taken|ok}
+  async function checkSlug(slug: string): Promise<{ ok: boolean; reason: string }> {
+    const { data, error } = await supabase.rpc('shop_slug_available', { p_slug: slug })
+    if (error) throw error
+    return data as unknown as { ok: boolean; reason: string }
+  }
+
   async function update(id: string, patch: ShopBrandingPatch) {
     const { error } = await supabase.from('shops').update(patch).eq('id', id)
     if (error) throw error
@@ -180,5 +196,5 @@ export const useMyShop = () => {
     return data ?? []
   }
 
-  return { getMine, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, orders, analytics, listPromos, savePromo, deletePromo }
+  return { getMine, createMine, checkSlug, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, orders, analytics, listPromos, savePromo, deletePromo }
 }

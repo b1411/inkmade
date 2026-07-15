@@ -13,17 +13,21 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 
+// «Зарегистрироваться» обязан унести ?redirect дальше — иначе цель входа (например
+// /shop-new) теряется на регистрации и человек упирается в тупик.
+const registerTo = computed(() => {
+  const r = safeRedirectPath(route.query.redirect)
+  return r ? `/register?redirect=${encodeURIComponent(r)}` : '/register'
+})
+
 // signIn теперь возвращает путь кабинета напрямую из профиля (не через reactive computed)
 async function onSubmit() {
   if (loading.value) return // защита от двойного сабмита (Enter до реактивного disable)
   loading.value = true
   try {
     const homePath = await signIn(email.value, password.value)
-    const raw = route.query.redirect as string | undefined
-    // Используем ?redirect только если это НЕ кабинет (чтобы не застрять в чужом кабинете)
-    const cabinets = ['/admin', '/studio', '/studio-designer', '/account']
-    const isSafeRedirect = raw && raw.startsWith('/') && !raw.startsWith('//') && !cabinets.some(c => raw.startsWith(c))
-    await navigateTo(isSafeRedirect ? raw : homePath)
+    // ?redirect используем, только если это безопасный НЕ-кабинетный путь (safeRedirectPath)
+    await navigateTo(safeRedirectPath(route.query.redirect) ?? homePath)
   } catch (e) {
     toast.add({ title: t('auth.login.errorTitle'), description: t(authErrorKey(e)), color: 'error' })
   } finally {
@@ -53,7 +57,7 @@ async function onSubmit() {
 
     <p class="text-caption text-ink-gray-600 mt-8 text-center">
       {{ $t('auth.login.noAccount') }}
-      <NuxtLink to="/register" class="text-ink-burgundy font-semibold">{{ $t('auth.login.registerLink') }}</NuxtLink>
+      <NuxtLink :to="registerTo" class="text-ink-burgundy font-semibold">{{ $t('auth.login.registerLink') }}</NuxtLink>
     </p>
   </div>
 </template>

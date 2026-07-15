@@ -1804,6 +1804,8 @@ export type Database = {
       }
       admin_reissue_shop_claim: { Args: { p_shop_id: string }; Returns: Json }
       is_reserved_shop_slug: { Args: { p_slug: string }; Returns: boolean }
+      shop_slug_available: { Args: { p_slug: string }; Returns: Json }
+      create_my_shop: { Args: { p_name: string; p_slug: string }; Returns: Json }
       shop_storefront: {
         Args: { p_code?: string; p_slug: string }
         Returns: Json

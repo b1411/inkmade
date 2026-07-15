@@ -10,7 +10,16 @@ useHead({ title: () => `${t('auth.register.label')} — INKMADE` })
 
 const { signUp } = useAuth()
 const supabase = useSupabaseClient()
+const route = useRoute()
 const toast = useToast()
+
+// Цель, ради которой человек пришёл регистрироваться (например /shop-new). Раньше
+// ?redirect здесь не читался вовсе: после регистрации показывался алерт без единой
+// ссылки — сценарий обрывался, и цель терялась.
+const redirect = computed(() => safeRedirectPath(route.query.redirect))
+const loginTo = computed(() =>
+  redirect.value ? `/login?redirect=${encodeURIComponent(redirect.value)}` : '/login',
+)
 
 const fullName = ref('')
 const email = ref('')
@@ -51,7 +60,12 @@ async function onSubmit() {
         { user_id: user.id, consent_type: 'tos', doc_version: LEGAL.tosVersion },
         { user_id: user.id, consent_type: 'privacy', doc_version: LEGAL.privacyVersion },
       ])
+      // сессия уже есть → ведём туда, зачем пришли (или в свой кабинет), а не в алерт
+      await navigateTo(redirect.value ?? '/account')
+      return
     }
+    // email-подтверждение включено: сессии нет, показываем алерт со ссылкой на вход,
+    // который донесёт ?redirect до цели после подтверждения почты.
     done.value = true
   } catch (e) {
     toast.add({ title: t('auth.register.errorTitle'), description: t(authErrorKey(e)), color: 'error' })
@@ -67,13 +81,17 @@ async function onSubmit() {
     <h1 class="ink-display text-3xl mt-2">{{ $t('auth.register.title') }}</h1>
     <p class="text-ink-gray-600 mt-2 mb-8">{{ $t('auth.register.subtitle') }}</p>
 
-    <UAlert
-      v-if="done"
-      color="success"
-      icon="i-lucide-mail-check"
-      :title="$t('auth.register.doneTitle')"
-      :description="$t('auth.register.doneDescription')"
-    />
+    <div v-if="done" class="space-y-4">
+      <UAlert
+        color="success"
+        icon="i-lucide-mail-check"
+        :title="$t('auth.register.doneTitle')"
+        :description="$t('auth.register.doneDescription')"
+      />
+      <UButton :to="loginTo" color="primary" size="lg" block trailing-icon="i-lucide-arrow-right">
+        {{ $t('auth.register.doneAction') }}
+      </UButton>
+    </div>
 
     <form v-else class="space-y-4" @submit.prevent="onSubmit">
       <UFormField :label="$t('auth.register.nameLabel')">
@@ -106,7 +124,7 @@ async function onSubmit() {
 
     <p class="text-caption text-ink-gray-600 mt-8 text-center">
       {{ $t('auth.register.haveAccount') }}
-      <NuxtLink to="/login" class="text-ink-burgundy font-semibold">{{ $t('auth.register.loginLink') }}</NuxtLink>
+      <NuxtLink :to="loginTo" class="text-ink-burgundy font-semibold">{{ $t('auth.register.loginLink') }}</NuxtLink>
     </p>
   </div>
 </template>

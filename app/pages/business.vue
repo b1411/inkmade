@@ -1,17 +1,23 @@
 <script setup lang="ts">
-// Посадочная B2B «INKMADE для команд» (Фаза B1). Расширенная подача + FAQ + форма
-// заявки на открытие магазина мерча. Публичная; гейт роута — feature-flags middleware
-// (404 при выключенном b2bShops). Заявка уходит в shop_applications через server-API.
-import { isValidKzPhone } from '~~/shared/config/phone'
-
-// email-валидация на клиенте — лёгкий регэксп (server-утилиту не тянем в браузерный бандл)
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
+// Посадочная B2B «INKMADE для команд». Расширенная подача + FAQ + вход в self-serve
+// открытие магазина. Публичная; гейт роута — feature-flags middleware (404 при
+// выключенном b2bShops). Форма заявки (shop_applications + админ-approve + claim-ссылка)
+// заменена прямым созданием магазина владельцем: /shop-new → RPC create_my_shop (0086).
 const { t, locale } = useI18n()
-const { apply } = useBusiness()
-const toast = useToast()
+const user = useSupabaseUser()
 const { public: { siteUrl } } = useRuntimeConfig()
-const site = (siteUrl as string) || 'https://inkmade-pi.vercel.app'
+const site = (siteUrl as string) || 'https://inkmade.kz'
+
+// гость → логин с возвратом на форму создания (login/register пробрасывают ?redirect)
+const startTo = computed(() => (user.value ? '/shop-new' : '/login?redirect=/shop-new'))
+
+// у вошедшего владельца магазин уже может быть — тогда ведём в кабинет, а не на создание
+const { getMine } = useMyShop()
+const { data: myShop } = await useAsyncData(
+  'business-my-shop',
+  () => (user.value ? getMine() : Promise.resolve(null)),
+  { watch: [user] },
+)
 
 useSeoMeta({
   title: t('business.seo.title'),
@@ -39,33 +45,7 @@ const faq = computed(() => [0, 1, 2, 3, 4].map(i => ({
   a: t(`business.faq.items[${i}].a`),
 })))
 
-// ── Форма заявки ──────────────────────────────────────────────────────────
-const form = reactive({ orgName: '', contactName: '', phone: '', email: '', desiredSlug: '', audience: '', comment: '' })
-const sending = ref(false)
-const done = ref(false)
-
-function validate(): string | null {
-  if (!form.orgName.trim()) return t('business.form.errOrg')
-  if (!form.contactName.trim()) return t('business.form.errContact')
-  if (!isValidKzPhone(form.phone)) return t('business.form.errPhone')
-  if (!EMAIL_RE.test(form.email.trim())) return t('business.form.errEmail')
-  return null
-}
-
-async function onSubmit() {
-  const err = validate()
-  if (err) { toast.add({ title: err, color: 'warning' }); return }
-  sending.value = true
-  try {
-    await apply({ ...form })
-    done.value = true
-    toast.add({ title: t('business.form.successToast'), color: 'success' })
-  } catch (e) {
-    toast.add({ title: t('business.form.errSend'), description: getFetchMessage(e), color: 'error' })
-  } finally {
-    sending.value = false
-  }
-}
+const startPoints = computed(() => [0, 1, 2].map(i => t(`business.start.points[${i}]`)))
 </script>
 
 <template>
@@ -122,16 +102,15 @@ async function onSubmit() {
       </div>
     </section>
 
-    <!-- Форма заявки -->
+    <!-- Открытие магазина (self-serve) + FAQ -->
     <section id="apply" class="w-screen ml-[calc(50%-50vw)] bg-ink-cream/40" style="scroll-margin-top: 80px">
       <div class="mx-auto max-w-(--container-max) px-4 grid gap-12 lg:grid-cols-2 items-start" style="padding-block: var(--section-pad)">
         <UiReveal>
           <div>
-            <UiSectionLabel accent>{{ $t('business.form.label') }}</UiSectionLabel>
-            <h2 class="ink-display text-h2 mt-2">{{ $t('business.form.title') }}</h2>
-            <p class="text-lead text-ink-gray-600 mt-4">{{ $t('business.form.subtitle') }}</p>
+            <UiSectionLabel accent>{{ $t('business.start.label') }}</UiSectionLabel>
+            <h2 class="ink-display text-h2 mt-2">{{ $t('business.start.title') }}</h2>
+            <p class="text-lead text-ink-gray-600 mt-4">{{ $t('business.start.subtitle') }}</p>
 
-            <!-- FAQ рядом с формой -->
             <div class="mt-10 space-y-3">
               <details v-for="(f, i) in faq" :key="i" class="group rounded-xl border border-ink-cream-dark bg-ink-white px-5 py-4">
                 <summary class="flex cursor-pointer items-center justify-between gap-3 font-semibold list-none">
@@ -146,49 +125,30 @@ async function onSubmit() {
 
         <UiReveal :delay="80">
           <div class="rounded-2xl border border-ink-cream-dark bg-ink-white p-6 sm:p-8">
-            <!-- success -->
-            <div v-if="done" class="text-center py-8">
-              <span class="mx-auto flex size-16 items-center justify-center rounded-full bg-ink-success/10 text-ink-success">
-                <UIcon name="i-lucide-check" class="size-8" />
-              </span>
-              <h3 class="ink-display text-h2 mt-5">{{ $t('business.form.successTitle') }}</h3>
-              <p class="text-ink-gray-600 mt-3">{{ $t('business.form.successText') }}</p>
-              <UiAppButton to="/" variant="ghost" class="mt-6">{{ $t('business.form.backHome') }}</UiAppButton>
-            </div>
+            <span class="flex size-14 items-center justify-center rounded-full bg-ink-burgundy text-ink-cream">
+              <UIcon name="i-lucide-store" class="size-7" />
+            </span>
+            <h3 class="ink-display text-h2 mt-5">{{ $t('business.cta.title') }}</h3>
 
-            <form v-else class="space-y-4" @submit.prevent="onSubmit">
-              <div class="grid gap-4 sm:grid-cols-2">
-                <UFormField :label="$t('business.form.org')" required>
-                  <UInput v-model="form.orgName" :placeholder="$t('business.form.orgPh')" class="w-full" />
-                </UFormField>
-                <UFormField :label="$t('business.form.contact')" required>
-                  <UInput v-model="form.contactName" :placeholder="$t('business.form.contactPh')" class="w-full" />
-                </UFormField>
-                <UFormField :label="$t('business.form.phone')" required>
-                  <UInput v-model="form.phone" type="tel" placeholder="+7 (700) 000-00-00" class="w-full" />
-                </UFormField>
-                <UFormField :label="$t('business.form.email')" required>
-                  <UInput v-model="form.email" type="email" placeholder="team@company.kz" class="w-full" />
-                </UFormField>
-              </div>
-              <UFormField :label="$t('business.form.slug')" :help="$t('business.form.slugHelp')">
-                <UInput v-model="form.desiredSlug" placeholder="brand" class="w-full">
-                  <template #trailing>
-                    <span class="text-caption text-ink-gray-400">.inkmade.kz</span>
-                  </template>
-                </UInput>
-              </UFormField>
-              <UFormField :label="$t('business.form.audience')">
-                <UInput v-model="form.audience" :placeholder="$t('business.form.audiencePh')" class="w-full" />
-              </UFormField>
-              <UFormField :label="$t('business.form.comment')">
-                <UTextarea v-model="form.comment" :rows="3" :placeholder="$t('business.form.commentPh')" class="w-full" />
-              </UFormField>
-              <UiAppButton type="submit" variant="primary" size="lg" block :loading="sending">
-                {{ $t('business.form.submit') }}
+            <ul class="mt-6 space-y-3">
+              <li v-for="(p, i) in startPoints" :key="i" class="flex items-start gap-3">
+                <UIcon name="i-lucide-check-circle-2" class="size-5 shrink-0 text-ink-success mt-0.5" />
+                <span class="text-ink-gray-600">{{ p }}</span>
+              </li>
+            </ul>
+
+            <!-- владелец с магазином → в кабинет; остальные → создание (гость через логин) -->
+            <template v-if="myShop">
+              <p class="text-ink-gray-600 mt-6">{{ $t('business.start.hasShop') }}</p>
+              <UiAppButton to="/shop-admin" variant="primary" size="lg" block class="mt-3">
+                {{ $t('business.start.toCabinet') }}
               </UiAppButton>
-              <p class="text-caption text-ink-gray-400 text-center">{{ $t('business.form.privacy') }}</p>
-            </form>
+            </template>
+            <UiAppButton v-else :to="startTo" variant="primary" size="lg" block class="mt-8">
+              {{ $t('business.start.action') }}
+            </UiAppButton>
+
+            <p class="text-caption text-ink-gray-400 text-center mt-4">{{ $t('business.cta.note') }}</p>
           </div>
         </UiReveal>
       </div>

@@ -9,17 +9,6 @@ const toast = useToast()
 
 const { data: cats, refresh, pending } = await useAsyncData('admin-categories', () => listAll())
 
-// транслитерация для slug из русского названия
-const TRANSLIT: Record<string, string> = {
-  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y',
-  к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f',
-  х: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya',
-}
-function slugify(s: string): string {
-  return s.toLowerCase().split('').map(ch => TRANSLIT[ch] ?? ch).join('')
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-}
-
 const blank = () => ({ id: '', title: '', slug: '', icon: 'i-lucide-shirt', sort_order: 0, is_active: true })
 const form = reactive(blank())
 const editing = computed(() => !!form.id)
