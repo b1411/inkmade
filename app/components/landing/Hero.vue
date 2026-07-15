@@ -1,8 +1,24 @@
 <script setup lang="ts">
-// Hero (§5.1): тёмный бордо-фон + grain, двухколоночно — слева заголовок и CTA,
-// справа крупное медиа. GSAP timeline входа (§8): лейбл → заголовок по строкам →
-// подзаголовок → кнопки (overshoot) → медиа (scale 1.06→1). Параллакс медиа при
-// скролле. Всё под гейтом reduced-motion; начальное скрытие — класс .hero-anim.
+// Hero — спека §10. Среда Ink Black, высота артборда 480 (§10.1) вместо прежней
+// «на сколько хватит контента». Бордо осталось ТОЛЬКО в primary CTA (§10.3):
+// заливка бордо во весь экран нарушала главное правило §3.3 (акцент ≤8–12%).
+//
+// ФОТО. Кадры сняты по §10.4 и режутся из мастеров скриптом `npm run hero`
+// (scripts/gen-hero.mjs): мастера в design/ вне репозитория, отдаются AVIF+WebP
+// из public/media/hero. Мастер desktop — 1672×941 против 2560×1440 по §10.4, то
+// есть на retina-экране кадр будет мягковат; исправляется только перегенерацией
+// мастера в большем размере, код тут ни при чём.
+//
+// Desktop и mobile — РАЗНЫЕ файлы, а не один кадр с разным object-position: этого
+// прямо требует §27, и композиции у них правда разные (§10.4). Отсюда нативный
+// <picture> с media-условиями: браузер грузит ровно один кадр, что и просит §29.
+//
+// Кадр занимает правые ~72%, а не всю ширину: по §10.2 фото живёт в колонках 5–12.
+// Левым краем он уходит под непрозрачную часть --ink-overlay-hero, а так как в самой
+// фотографии левая треть тёмная (§10.4), стык с Ink Black не виден.
+//
+// GSAP timeline входа (§8): лейбл → заголовок по строкам → подзаголовок → кнопки
+// (overshoot) → координаты. Под гейтом reduced-motion; начальное скрытие — .hero-anim.
 import { FEATURES } from '~~/shared/config/features'
 
 const { t, locale } = useI18n()
@@ -68,6 +84,16 @@ let ctx: { revert: () => void } | null = null
 
 onMounted(() => {
   if (prefersReduced.value) return
+
+  // Гейт по времени гидрации. SSR отдаёт hero уже видимым (класса .hero-anim на
+  // сервере нет), а вход прячет контент в opacity 0 и проявляет заново. Если
+  // гидрация пришла поздно — на медленной сети или слабом устройстве — пользователь
+  // успел увидеть заголовок и CTA, и вход выглядит как моргание готовой страницы
+  // в пустоту. §21 запрещает вход, отделяющий пользователя от CTA, поэтому после
+  // порога просто не анимируем: контент остаётся на месте. Порог с запасом к
+  // типичной гидрации (~300–800 мс от старта навигации).
+  if (performance.now() > 1200) return
+
   const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
   // template-ref выводится vue-tsc структурно (конфликт CSSOM) — приводим к HTMLElement.
   const el = root.value as HTMLElement | null
@@ -78,7 +104,6 @@ onMounted(() => {
   ctx = gsap.context(() => {
     const q = (s: string) => Array.from(el.querySelectorAll(s)) as HTMLElement[]
     gsap.set(q('[data-hero-y]'), { y: 24 })
-    gsap.set(q('[data-hero-media]'), { scale: 1.04 })
 
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
     tl.to(q('[data-hero="label"]'), { opacity: 1, y: 0, duration: 0.5 })
@@ -86,16 +111,7 @@ onMounted(() => {
       .to(q('[data-hero="sub"]'), { opacity: 1, y: 0, duration: 0.5 }, '-=0.35')
       .to(q('[data-hero="cta"]'), { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(1.6)' }, '-=0.25')
       .to(q('[data-hero="note"]'), { opacity: 1, duration: 0.4 }, '-=0.2')
-      .to(q('[data-hero-media]'), { opacity: 1, scale: 1, duration: 0.9 }, 0.15)
-
-    // Лёгкий параллакс медиа при скролле — только на не-тач (§5.1, §10).
-    if (window.matchMedia('(pointer: fine)').matches) {
-      gsap.to(q('[data-hero-media]'), {
-        yPercent: -6,
-        ease: 'none',
-        scrollTrigger: { trigger: el, start: 'top top', end: 'bottom top', scrub: true },
-      })
-    }
+    // Параллакс снят вместе с фото — двигать было нечего. Вернуть вместе со слоем кадра.
   }, el)
 })
 onBeforeUnmount(() => ctx?.revert())
@@ -104,77 +120,91 @@ onBeforeUnmount(() => ctx?.revert())
 <template>
   <section
     ref="root"
-    class="ink-grain w-screen ml-[calc(50%-50vw)] bg-ink-burgundy text-ink-cream relative overflow-hidden"
+    class="hero-artboard ink-grain w-screen ml-[calc(50%-50vw)] bg-ink-black text-ink-text relative overflow-hidden flex items-end lg:items-center"
     :class="{ 'hero-anim': animate }"
   >
-    <!-- мягкий градиент глубины (фолбэк, если WebGL недоступен) -->
-    <div class="absolute inset-0 bg-linear-to-br from-ink-burgundy via-ink-burgundy to-ink-burgundy-dark opacity-80" />
-    <!-- WebGL «текучий» бордо-фон (Tier 3) — рисуется поверх фолбэка только на десктопе -->
-    <UiShaderBackdrop />
-    <!-- фоновое фото-лукбук: размыто и приглушено, поверх бордо-фона — атмосфера улицы.
-         scale-105 убирает прозрачные края от blur, mix-blend-luminosity тонирует кадр
-         под бордо (бренд сохраняется). aria-hidden — чисто декоративный слой. -->
-    <NuxtImg
-      src="/media/hero/hero-bg.jpg"
-      alt=""
-      aria-hidden="true"
-      format="webp"
-      quality="70"
-      sizes="100vw"
-      preload
-      fetchpriority="high"
-      class="absolute inset-0 size-full scale-100 object-cover object-[50%_25%] opacity-75 blur-[3px] mix-blend-luminosity pointer-events-none select-none"
-    />
-    <!-- бордо-тинт + затемнение слева под заголовок/CTA (контраст текста) -->
-    <div class="absolute inset-0 bg-linear-to-r from-ink-burgundy/70 via-ink-burgundy/25 to-ink-burgundy-dark/50" />
-    <div class="absolute -top-24 -right-24 size-96 rounded-full bg-ink-burgundy-light/30 blur-3xl ink-ambient-a" />
-    <div class="absolute -bottom-32 -left-20 size-80 rounded-full bg-ink-black/30 blur-3xl ink-ambient-b" />
+    <!-- Кадр. На мобильном — во всю ширину (текст уходит вниз под вертикальный
+         градиент), с lg — правые 72% под колонки 5–12 (§10.2). -->
+    <div class="absolute inset-y-0 right-0 w-full lg:w-[72%] pointer-events-none select-none">
+      <picture>
+        <source
+          media="(min-width: 1024px)"
+          type="image/avif"
+          srcset="/media/hero/hero-home-desktop-v01.avif"
+        >
+        <source
+          media="(min-width: 1024px)"
+          type="image/webp"
+          srcset="/media/hero/hero-home-desktop-v01.webp"
+        >
+        <source type="image/avif" srcset="/media/hero/hero-home-mobile-v01.avif">
+        <source type="image/webp" srcset="/media/hero/hero-home-mobile-v01.webp">
+        <!-- object-position: на десктопе кадр 16:9 в полосе 3:1 режется по высоте
+             сильно — держим верх, иначе отрезает лица. Кадр декоративный: смысл
+             несёт H1 рядом, поэтому alt пустой + aria-hidden (§28: alt описывает
+             изделие, а не маркетинговую картинку). -->
+        <img
+          src="/media/hero/hero-home-desktop-v01.webp"
+          alt=""
+          aria-hidden="true"
+          fetchpriority="high"
+          decoding="async"
+          class="size-full object-cover object-[50%_18%] lg:object-[50%_14%]"
+        >
+      </picture>
+    </div>
 
-    <div
-      class="relative mx-auto max-w-(--container-max) px-4 grid lg:grid-cols-2 gap-10 lg:gap-12 items-center"
-      style="padding-block: clamp(56px, 7vw, 96px)"
-    >
-      <!-- Левая колонка: текст + CTA -->
-      <div>
-        <p data-hero="label" data-hero-y class="ink-label text-ink-cream/70">
+    <!-- Затемнение §10.4 -->
+    <div class="hero-overlay absolute inset-0 pointer-events-none" />
+
+    <!-- pt-16 на десктопе = высота фикс-шапки (64px, §9): она лежит ПОВЕРХ hero,
+         и без компенсации flex-центрирование считает её площадь своей — лейбл и
+         верх H1 уезжали под шапку. -->
+    <!-- Мобильный: pb маленький, чтобы текстовый блок сел ниже и отдал верх кадру
+         (§10.4 хочет модели в верхних 58–62%). Полностью норму этим не выбрать —
+         упирается в длину копирайта, а не в отступы: у §10.2 hero куда короче. -->
+    <div class="relative w-full mx-auto max-w-(--container-max) px-4 pt-10 pb-6 lg:pt-16 lg:pb-0">
+      <!-- Текст — max-width 520px (§10.2). Жёсткой доли в 5 колонок нет намеренно:
+           на 1024 она давала колонку 413px, H1 66px рвался на лишние строки и
+           артборд разбухал до 574 вместо 420–470 (§10.1). max-width решает ту же
+           задачу — держит текст вне правой зоны под будущее фото — но не сжимает
+           колонку там, где ширины и так мало. -->
+      <div class="max-w-[520px]">
+        <p data-hero="label" data-hero-y class="ink-label text-ink-text-soft">
           {{ $t('landing.hero.label') }}
         </p>
         <h1 data-hero="line" data-hero-y class="ink-hero text-hero mt-4">
           {{ heroTitle }}
         </h1>
-        <p data-hero="sub" data-hero-y class="text-lead mt-6 max-w-xl text-ink-cream/85">
+        <p data-hero="sub" data-hero-y class="text-lead mt-5 text-ink-text-soft">
           {{ heroSubtitle }}
         </p>
-        <div data-hero="cta" data-hero-y class="flex flex-wrap gap-3 mt-8">
-          <UiAppButton :to="createTo" variant="primary" size="xl" on-dark magnetic>
+        <div data-hero="cta" data-hero-y class="flex flex-wrap gap-3 mt-7">
+          <!-- primary БЕЗ on-dark: §10.3 требует здесь бордо. on-dark залил бы
+               кнопку bone, и единственный акцент экрана исчез бы. -->
+          <UiAppButton :to="createTo" variant="primary" size="lg" magnetic>
             {{ $t('landing.hero.createCta') }}
           </UiAppButton>
-          <UiAppButton to="/catalog" variant="secondary" size="xl" on-dark>
+          <UiAppButton to="/catalog" variant="secondary" size="lg" on-dark>
             {{ $t('landing.hero.catalogCta') }}
           </UiAppButton>
         </div>
-        <p data-hero="note" class="ink-label text-ink-cream/75 mt-6">
-          <span v-if="priceFrom" class="text-ink-cream/90">{{ priceFrom }} · </span>{{ $t('landing.hero.note') }}
+        <p data-hero="note" class="ink-label text-ink-text-muted mt-6">
+          <span v-if="priceFrom" class="text-ink-text-soft">{{ priceFrom }} · </span>{{ $t('landing.hero.note') }}
         </p>
       </div>
-
-      <!-- Правая колонка: одно медиа в премиальной «галерейной» рамке -->
-      <div
-        data-hero="media"
-        data-hero-media
-        class="relative w-full rounded-2xl bg-white/5 ring-1 ring-white/10 p-2.5 shadow-[0_24px_80px_rgba(0,0,0,0.4)] backdrop-blur-[2px] max-w-[460px] lg:ml-auto"
-      >
-        <UiMediaSlot
-          name="hero.main"
-          ratio="4/5"
-          :alt="$t('landing.hero.imageAlt')"
-          :priority="true"
-          loading="eager"
-          sizes="(max-width: 1024px) 90vw, 440px"
-          rounded="rounded-xl"
-          class="max-h-[54vh] lg:max-h-[60vh]"
-        />
-      </div>
     </div>
+
+    <!-- Координаты — INK SYSTEM (§36.2). Один набор на экран (§36.3), Bone 58% (§10.3).
+         text-right обязателен: текстовый блок при высоте 480 достаёт низом почти до
+         края артборда, и по центру координаты печатались ровно поверх строки с ценой.
+         Правый край свободен — фото там нет. Прячем на мобильном: 390px ширины на
+         две микроподписи не хватает, они бы снова столкнулись. -->
+    <p
+      data-hero="note"
+      class="ink-label hidden lg:block absolute bottom-5 left-1/2 -translate-x-1/2 w-full max-w-(--container-max) px-4 text-right text-ink-bone/58 pointer-events-none"
+    >
+      43.2389° N, 76.8897° E · ALMATY, KAZAKHSTAN
+    </p>
   </section>
 </template>

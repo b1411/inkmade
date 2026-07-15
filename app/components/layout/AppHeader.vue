@@ -1,10 +1,12 @@
 <script setup lang="ts">
-// Шапка (§4.1): прозрачная поверх тёмного hero (только лендинг), при скролле —
-// стекло + backdrop-blur, уменьшение высоты. Магнитная навигация (десктоп),
-// бейдж корзины с «отскоком», полноэкранное мобильное меню со stagger.
+// Шапка — спека §9. Высота 64px (постоянная: прежнее сжатие до 56px при скролле
+// дёргало layout и в спеке его нет), подложка Ink Black 96% + blur 12px, снизу
+// Light Line. Прозрачна только поверх hero лендинга. Магнитная навигация (десктоп),
+// бейдж корзины с «отскоком», полноэкранное мобильное меню со stagger (§9, Ink Black).
 import { useWindowScroll } from '@vueuse/core'
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { LEGAL } from '~~/shared/config/legal'
+import { FEATURES } from '~~/shared/config/features'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -22,12 +24,31 @@ const scrolled = computed(() => y.value > 40)
 // Прозрачный режим — только над тёмным hero лендинга и пока не проскроллено.
 const overHero = computed(() => route.path === '/' && !scrolled.value)
 
+// Высота верхней инфо-полосы (§8). Должна совпадать с .top-bar-text в
+// layout/TopInfoBar.vue — рассинхрон даст щель или перекрытие.
+const TOP_BAR_H = 30
+
+// §8: полоса не sticky и уходит вверх при скролле, шапка «садится» на top: 0
+// только после неё. Шапка у нас fixed, поэтому считаем смещение сами. Ступенька
+// по флагу `scrolled` тут не годится: между 0 и 40px полоса уже уползала, а шапка
+// ещё стояла на 30px — в щели просвечивал hero. max(0, H - y) отслеживает полосу
+// пиксель в пиксель и упирается в 0.
+const headerTop = computed(() => `${Math.max(0, TOP_BAR_H - y.value)}px`)
+
 // Стекло включаем когда не overHero (проскроллено ИЛИ внутренняя страница).
 const glass = computed(() => !overHero.value)
 
 const navLinks = computed(() => [
   { label: t('nav.catalog'), to: '/catalog' },
   { label: t('nav.howItWorks'), to: '/#how' },
+])
+
+// Мобильное меню = список крупных ссылок, кнопке там негде выделиться, поэтому
+// «Для компаний» идёт обычным пунктом; на десктопе тот же вход — кнопка справа.
+// Отдельный массив (а не navLinks), чтобы в десктоп-nav ссылка не задвоилась.
+const menuLinks = computed(() => [
+  ...navLinks.value,
+  ...(FEATURES.b2bShops ? [{ label: t('nav.business'), to: '/business' }] : []),
 ])
 
 // ── Бейдж корзины: «отскок» при увеличении количества ──
@@ -94,25 +115,24 @@ onMounted(() => {
 
 <template>
   <header
-    class="fixed top-0 inset-x-0 z-50 transition-all duration-300"
+    class="fixed inset-x-0 z-50 transition-colors duration-300 text-ink-text"
+    :style="{ top: headerTop }"
     :class="[
       glass
-        ? 'bg-[var(--color-ink-glass)] backdrop-blur-md border-b border-black/5 shadow-sm text-ink-black'
-        : 'bg-transparent text-ink-cream',
+        ? 'bg-[var(--color-ink-glass)] backdrop-blur-[12px] border-b border-[var(--ink-line)]'
+        : 'bg-transparent',
     ]"
   >
     <div
-      class="mx-auto max-w-(--container-max) px-4 flex items-center justify-between transition-all duration-300"
-      :class="scrolled ? 'h-14' : 'h-16'"
+      class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between"
     >
-      <!-- Лого. Оба варианта держим в DOM и кросс-фейдим: подложка шапки едет с тёмного
-           hero на светлое стекло, надпись обязана перекраситься вместе с ней и в тот же
-           такт (--dur 300ms). Подмена src моргнула бы белым на первом скролле. Кадры у
-           вариантов идентичные (см. scripts/gen-logo.mjs), поэтому буквы не «прыгают». -->
+      <!-- Лого — всегда светлый вариант: подложка шапки теперь Ink Black в обоих
+           состояниях (прозрачно над тёмным hero → Ink Black 96% при скролле), тёмная
+           надпись на ней нечитаема. Прежний кросс-фейд logo-light/logo-dark обслуживал
+           переход на СВЕТЛОЕ стекло, которого больше нет — второй кадр снят. -->
       <NuxtLink
         to="/"
-        class="relative block shrink-0 transition-all duration-300"
-        :class="scrolled ? 'h-7' : 'h-8'"
+        class="block shrink-0 h-8"
         :aria-label="$t('header.toHome')"
       >
         <img
@@ -120,16 +140,7 @@ onMounted(() => {
           alt=""
           width="1328"
           height="305"
-          class="h-full w-auto transition-opacity duration-300"
-          :class="glass ? 'opacity-0' : 'opacity-100'"
-        >
-        <img
-          src="/logo-dark.svg"
-          alt=""
-          width="1328"
-          height="305"
-          class="absolute left-0 top-0 h-full w-auto transition-opacity duration-300"
-          :class="glass ? 'opacity-100' : 'opacity-0'"
+          class="h-full w-auto"
         >
       </NuxtLink>
 
@@ -148,6 +159,16 @@ onMounted(() => {
 
       <!-- Иконки справа -->
       <div class="flex items-center gap-4">
+        <!-- Вход в B2B-воронку (§B1). Кнопкой, а не пунктом nav: секция «для команд»
+             снята с лендинга, и это единственная точка входа — текстовой ссылкой она
+             бы потерялась. on-dark теперь постоянный, а не завязан на overHero:
+             подложка шапки тёмная в ОБОИХ состояниях, и светлый вариант secondary
+             рисовал бы тёмную обводку по тёмному фону. -->
+        <div v-if="FEATURES.b2bShops" class="hidden md:block">
+          <UiAppButton to="/business" variant="secondary" size="sm" on-dark>
+            {{ $t('nav.business') }}
+          </UiAppButton>
+        </div>
         <UiLangSwitcher class="hidden sm:inline-flex" />
         <NuxtLink to="/cart" data-cart-icon class="relative inline-flex items-center" :aria-label="$t('header.cart')">
           <UIcon name="i-lucide-shopping-cart" class="size-5" />
@@ -197,7 +218,7 @@ onMounted(() => {
           role="dialog"
           aria-modal="true"
           :aria-label="$t('header.menu')"
-          class="fixed inset-0 z-[60] bg-ink-burgundy text-ink-cream flex flex-col md:hidden"
+          class="fixed inset-0 z-[60] bg-ink-black text-ink-text flex flex-col md:hidden"
           @keydown="onMenuKeydown"
         >
           <div class="flex items-center justify-between h-16 px-4">
@@ -208,7 +229,7 @@ onMounted(() => {
           </div>
           <nav class="flex-1 flex flex-col justify-center gap-2 px-6" :aria-label="$t('header.mobileNav')">
             <NuxtLink
-              v-for="(l, i) in navLinks"
+              v-for="(l, i) in menuLinks"
               :key="l.to"
               v-motion
               :initial="{ opacity: 0, y: 24 }"
@@ -222,7 +243,7 @@ onMounted(() => {
             <NuxtLink
               v-motion
               :initial="{ opacity: 0, y: 24 }"
-              :enter="{ opacity: 1, y: 0, transition: { delay: 100 + navLinks.length * 80 } }"
+              :enter="{ opacity: 1, y: 0, transition: { delay: 100 + menuLinks.length * 80 } }"
               :to="cabinetTo"
               class="ink-display text-4xl py-2"
               @click="closeMenu"

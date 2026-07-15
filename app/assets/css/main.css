@@ -2,76 +2,124 @@
 @import "@nuxt/ui";
 
 /*
-  INKMADE — фирменные токены (паспорт §2).
-  Палитра в двух контекстах (§2.2): тёмный (бордо-фон + кремовый текст) и
-  светлый (кремовый/белый фон + чёрный текст). Бордо — акцент/CTA, не заливка
-  рабочих экранов. Холст кастомайзера всегда нейтральный.
+  INKMADE — фирменные токены.
+  Источник истины: INKMADE_UI_UX_FRONTEND_SPEC_v1.2_STRATEGIC.md §3 (каноническая
+  палитра). Направление — dark editorial: Ink Black как среда, Bone как светлая
+  среда и текст, Burgundy — единственный акцент (≤8–12% площади экрана, §3.3).
+  Бордо не является заливкой рабочих экранов и hero. Холст кастомайзера нейтральный.
+
+  Легаси-имена (ink-cream / ink-white / ink-gray-*) сохранены как алиасы на
+  канонические значения: на них завязано ~700 мест в 122 файлах, и переименование
+  в один заход не пережил бы ни один ревью. Алиасы — мост, а не постоянный слой:
+  новый код пишем на канонических токенах (§3.2), легаси вымывается по зонам.
 */
 
 @theme static {
-  /* ── Шрифты (§2.3) ───────────────────────────────────────────── */
-  /* Дисплейный заголовочный гротеск — Unbounded (латиница + полная кириллица).
-     Сдвигает ощущение от «подростковая печать» к «современный бренд» (§1.2 ТЗ). */
-  --font-display: "Unbounded", "Manrope", system-ui, sans-serif;
-  /* Основной текст и весь UI. Полная кириллица. */
-  --font-sans: "Manrope", "Inter", system-ui, sans-serif;
-  /* Лейблы/табы/бейджи — разреженный uppercase. */
+  /* ── Шрифты (спека §4.1) ─────────────────────────────────────── */
+  /* Дисплейный — Inter Tight (плотный гротеск, трекинг до -0.045em, вес 900).
+     Даёт «сжатую» редакционную типографику макета. Unbounded в фолбэк не ставим:
+     он больше не грузится, и упоминание подхватило бы локально установленную
+     копию у части пользователей — разъехалась бы вёрстка заголовков. */
+  --font-display: "Inter Tight", "Arial Narrow", Arial, sans-serif;
+  /* Основной текст и весь UI. Полная кириллица + казахские знаки. */
+  --font-sans: "Inter", "Manrope", system-ui, sans-serif;
+  /* Технические лейблы INK SYSTEM (Design ID, координаты, placement) — §36.2. */
   --font-mono: "Space Mono", "JetBrains Mono", monospace;
 
-  /* ── Базовая палитра бренда (точные HEX из логотипа, §2.1) ────── */
-  --color-ink-burgundy: #7a1f28;
-  --color-ink-burgundy-dark: #5e1820;
-  --color-ink-burgundy-light: #9a3540;
-  --color-ink-black: #111111;
-  --color-ink-black-soft: #1e1e1e;
-  --color-ink-cream: #efe0c1;
-  --color-ink-cream-dark: #d7c9a6;
+  /* ── Канонические токены (спека §3.1–3.2) ────────────────────── */
+  /* Тёмная среда */
+  --color-ink-black: #080b0d;        /* body, header, hero, footer */
+  --color-ink-surface: #111214;      /* тёмные секции, карточные зоны */
+  --color-ink-raised: #17181b;       /* конструктор, B2B, поднятые секции */
+  --color-ink-panel: #1d1f22;        /* панели управления, inputs, control cards */
+  --color-ink-panel-hover: #24262a;  /* hover тёмных карточек и controls */
 
-  /* Нейтральные тёплые (UI-каркас, §2.1) */
-  --color-ink-gray-900: #1a1a1a;
-  --color-ink-gray-600: #555555;
-  --color-ink-gray-400: #6f6f6f; /* AA-контраст ≥4.5:1 на тёплом белом #fbf8f2 (было #9a9a9a ~2.6:1) */
-  --color-ink-gray-200: #e5e0d8;
-  --color-ink-gray-50: #f4f1ea;
-  --color-ink-white: #fbf8f2;
+  /* Светлая среда */
+  --color-ink-bone: #f3f0eb;         /* главный светлый фон и светлый текст */
+  --color-ink-card: #eee9e1;         /* фон карточек товара (не чистый белый!) */
+  --color-ink-paper: #f8f6f2;        /* таблицы, документы, самые светлые поверхности */
 
-  /* Заливки/эффекты (§2.1) */
-  --color-ink-overlay: rgba(17, 17, 17, 0.6); /* затемнение на фото */
-  --color-ink-glass: rgba(251, 248, 242, 0.7); /* стекло на светлом (header при скролле) */
+  /* Акцент */
+  --color-ink-burgundy: #7e1f2d;
+  --color-ink-burgundy-hover: #96283a;
+  --color-ink-burgundy-active: #651823;
+  --color-ink-burgundy-muted: #48151d;
 
-  /* Семантические (§2.1) */
-  --color-ink-success: #3e7c5a;
-  --color-ink-warning: #c8922a;
-  --color-ink-error: #b23a3a;
+  /* Текст */
+  --color-ink-text: #f3f1ed;         /* H1/H2 и главный UI на тёмном */
+  --color-ink-text-soft: #c6c2bc;    /* body и пояснения на тёмном */
+  --color-ink-text-muted: #8e8a84;   /* микротекст, inactive */
+  --color-ink-text-dark: #0b0d0e;    /* H2 и карточки на светлом */
+  --color-ink-text-dark-soft: #4d4a46; /* body на светлом */
 
-  /* ── Шкала бордо для Nuxt UI primary (50–950 вокруг #7A1F28) ──── */
+  /* Семантические — приглушённые, чтобы не спорить с бордо (§3.1) */
+  --color-ink-success: #6b9278;
+  --color-ink-warning: #c89a4b;
+  --color-ink-error: #bc4b56;
+
+  /* ── Легаси-алиасы → канонические значения ───────────────────── */
+  /* cream #EFE0C1 (тёплый жёлтый) → bone #F3F0EB (нейтральный костяной).
+     Это осознанный сдвиг бренда: кремовый читался как «ретро/крафт», bone —
+     как fashion-editorial. Меняет вид везде, где был ink-cream. */
+  --color-ink-cream: var(--color-ink-bone);
+  --color-ink-cream-dark: var(--color-ink-card);
+  --color-ink-black-soft: var(--color-ink-raised);
+  --color-ink-burgundy-dark: var(--color-ink-burgundy-active);
+  --color-ink-burgundy-light: var(--color-ink-burgundy-hover);
+
+  /* Нейтральные тёплые (UI-каркас светлых зон: кабинеты, документы, checkout) */
+  --color-ink-gray-900: var(--color-ink-text-dark);
+  --color-ink-gray-600: var(--color-ink-text-dark-soft);
+  --color-ink-gray-400: #6e6b66; /* AA ≥4.5:1 на paper #F8F6F2 — не осветлять */
+  --color-ink-gray-200: #e3e0da;
+  --color-ink-gray-50: var(--color-ink-bone);
+  --color-ink-white: var(--color-ink-paper);
+
+  /* Заливки/эффекты */
+  --color-ink-overlay: rgba(8, 11, 13, 0.6); /* затемнение на фото */
+  --color-ink-glass: rgba(8, 11, 13, 0.96);  /* подложка header при скролле — спека §9 */
+
+  /* ── Шкала бордо для Nuxt UI primary (50–950 вокруг #7E1F2D) ──── */
   --color-burgundy-50: #fbf1f2;
-  --color-burgundy-100: #f6dee0;
-  --color-burgundy-200: #ebbcc0;
-  --color-burgundy-300: #dd929a;
-  --color-burgundy-400: #c5616c;
-  --color-burgundy-500: #9a3540;
-  --color-burgundy-600: #7a1f28;
-  --color-burgundy-700: #5e1820;
-  --color-burgundy-800: #4a1219;
-  --color-burgundy-900: #3a0e13;
+  --color-burgundy-100: #f6dee1;
+  --color-burgundy-200: #ecbcc2;
+  --color-burgundy-300: #de929b;
+  --color-burgundy-400: #c6616e;
+  --color-burgundy-500: #96283a;
+  --color-burgundy-600: #7e1f2d;
+  --color-burgundy-700: #651823;
+  --color-burgundy-800: #48151d;
+  --color-burgundy-900: #380f16;
   --color-burgundy-950: #24080b;
 
-  /* ── Радиусы (§2.3) — мягче для «дорогого» вида ──────────────── */
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  /* ── Радиусы — спека §5.5. Минимальные скругления (§2.1): именно они,
+       а не палитра, отделяют fashion-editorial от «дружелюбного SaaS».
+       Шкала сжата на месте, чтобы не править ~100 мест с rounded-*:
+         xs=2  кнопки (§6.1/6.2)
+         sm=4  карточка товара (§6.3)
+         md=8  тёмная панель, canvas конструктора
+         lg=12 модалка
+         xl=20 верх мобильного bottom sheet
+       rounded-full оставлен: аватары, свотчи цвета, бейджи и блобы круглые
+       по существу, а не по моде. Hero — 0. ──────────────────────── */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
   --radius-full: 9999px;
 
-  /* ── Тени (§2.3) — мягкие многослойные, не резкие ────────────── */
-  --shadow-sm: 0 1px 2px rgba(17, 17, 17, 0.04), 0 2px 6px rgba(17, 17, 17, 0.06);
-  --shadow-md: 0 4px 12px rgba(17, 17, 17, 0.08), 0 12px 28px rgba(17, 17, 17, 0.1);
-  --shadow-lg: 0 8px 24px rgba(17, 17, 17, 0.1), 0 24px 60px rgba(17, 17, 17, 0.14);
-  --shadow-burgundy: 0 8px 24px rgba(122, 31, 40, 0.28); /* свечение под бордо-CTA */
+  /* ── Тени — мягкие многослойные, не резкие. RGB привязаны к канону:
+       8,11,13 = Ink Black; 126,31,45 = Burgundy. ────────────────── */
+  --shadow-sm: 0 1px 2px rgba(8, 11, 13, 0.04), 0 2px 6px rgba(8, 11, 13, 0.06);
+  --shadow-md: 0 4px 12px rgba(8, 11, 13, 0.08), 0 12px 28px rgba(8, 11, 13, 0.1);
+  --shadow-lg: 0 8px 24px rgba(8, 11, 13, 0.1), 0 24px 60px rgba(8, 11, 13, 0.14);
+  --shadow-burgundy: 0 8px 24px rgba(126, 31, 45, 0.28); /* свечение под бордо-CTA */
 
-  /* ── Контейнер ───────────────────────────────────────────────── */
-  --container-max: 1280px;
+  /* ── Контейнер — спека §5.2 ──────────────────────────────────── */
+  --container-max: 1440px;
 
   /* ── Шкала отступов (§2.3, кратна 4) + крупный паддинг секций ─── */
   --space-2: 8px;
@@ -95,17 +143,22 @@
   --dur-slow: 520ms;
   --dur-reveal: 700ms;
 
-  /* ── Типошкала (§2.3, база 16px) → утилиты text-hero … text-label.
-       Дисплейный шрифт применять дозированно (hero/H1/H2). ──────── */
-  --text-hero: clamp(2.25rem, 5vw, 4rem); /* H1 hero, line-height 0.95 */
-  --text-h1: clamp(1.75rem, 3.5vw, 3rem); /* display */
-  --text-h2: clamp(1.35rem, 2.4vw, 2rem); /* display */
-  --text-h3: clamp(1.2rem, 1rem + 1vw, 1.4rem); /* font-sans 700, адаптив как вся шкала */
-  --text-lead: clamp(1rem, 1.4vw, 1.125rem); /* подзаголовки */
-  --text-body-lg: 1.125rem;
-  --text-body: 1.0625rem;
-  --text-caption: 0.875rem;
-  --text-label: 0.75rem; /* font-mono uppercase 0.18em */
+  /* ── Типошкала — спека §4.2. Логика редакционная: заголовки крупные и
+       плотные, body мелкий. Прежняя шкала была ровно наоборот (hero до 64,
+       body 17) — оттого макет и читался «как обычный сайт».
+       Кривые clamp подобраны под все брейкпоинты §4.2/§20, проверь при
+       правке: hero на 390→42, 768→50, 1024→67, ≥1230→80. ──────────── */
+  --text-hero: clamp(2.625rem, 6.5vw, 5rem); /* 42→80, line-height 0.92 */
+  --text-h1: clamp(1.75rem, 3.2vw, 2.75rem); /* 28→44, display */
+  --text-h2: clamp(1.6875rem, 2.9vw, 2.625rem); /* 27→42, display */
+  --text-h3: clamp(1.2rem, 1rem + 1vw, 1.4rem); /* card/sub-heading, font-sans 700 — не «compact H2», роль другая */
+  --text-lead: clamp(1rem, 1.1vw, 1.0625rem); /* body large 16→17 */
+  --text-body-lg: 1.0625rem; /* 17 */
+  --text-body: 0.9375rem; /* 15 — спека «Body 14–15» */
+  --text-caption: 0.875rem; /* 14 */
+  --text-label: 0.75rem; /* 12, font-mono uppercase — «UI label» 11–13 */
+  --text-micro: 0.6875rem; /* 11 — Design ID, координаты, technical marks (§36.2) */
+  --text-price: clamp(1.625rem, 2vw, 1.875rem); /* 26→30, «Price large» */
 }
 
 /*
@@ -116,6 +169,36 @@
 :root,
 .dark {
   color-scheme: light;
+
+  /* ── Разделители (спека §3.1) — rgba, поэтому вне @theme ──────── */
+  --ink-line: rgba(255, 255, 255, 0.1);         /* обычные разделители на тёмном */
+  --ink-line-strong: rgba(255, 255, 255, 0.18); /* контролы, secondary borders */
+  --ink-line-dark: rgba(8, 11, 13, 0.14);       /* разделители на светлом */
+
+  /* Градиент hero (§3.2): слева непрозрачный Ink Black под H1/CTA, справа
+     раскрывается фото. Ширина тёмной зоны рассчитана на текст в колонках 1–5. */
+  --ink-overlay-hero: linear-gradient(
+    90deg,
+    #080b0d 0%,
+    rgba(8, 11, 13, 0.97) 25%,
+    rgba(8, 11, 13, 0.76) 43%,
+    rgba(8, 11, 13, 0.2) 70%,
+    rgba(8, 11, 13, 0.04) 100%
+  );
+
+  /* Мобильный hero (§10.4): композиция другая — модели в верхних 58–62%, нижние
+     38–42% затемнены под H1 и кнопки. Затемнение вертикальное: боковой
+     --ink-overlay-hero на 390px съел бы кадр целиком. */
+  --ink-overlay-hero-mobile: linear-gradient(
+    180deg,
+    rgba(8, 11, 13, 0.15) 0%,
+    rgba(8, 11, 13, 0.35) 40%,
+    rgba(8, 11, 13, 0.88) 62%,
+    #080b0d 82%
+  );
+
+  /* Верхняя инфо-полоса (§8): бордо темнеет к краям. */
+  --ink-topbar-gradient: linear-gradient(90deg, #651823 0%, #7e1f2d 48%, #651823 100%);
 
   /* Фоны */
   --ui-bg:          var(--color-ink-white);       /* #fbf8f2 тёплый белый */
@@ -140,10 +223,14 @@
 }
 
 @layer base {
+  /* Среда — Ink Black (спека §3.3). Видна только при overscroll-отскоке и в щелях:
+     каждый layout объявляет свой фон на min-h-screen сам (кабинеты — светлые).
+     Светлый body давал белую вспышку при «резиновом» скролле тёмного лендинга —
+     на главной поверхности это заметнее, чем тёмный отскок в кабинете. */
   body {
     font-family: var(--font-sans);
-    background-color: var(--color-ink-white);
-    color: var(--color-ink-black);
+    background-color: var(--color-ink-black);
+    color: var(--color-ink-text);
   }
 
   /* Бренд-деталь: выделение текста бордо/кремовый (§4.6) */
@@ -160,20 +247,28 @@
     font-size: var(--text-label);
   }
 
-  /* Дисплейный заголовок — гротеск, плотный трекинг (дорого, §2.3) */
+  /* Section H2 — спека §4.2: вес 800, line-height 0.98, трекинг -0.035em.
+     Прежние 700/1.05/-0.02em давали «просто жирный текст»; плотный трекинг
+     и line-height <1 — это и есть editorial-заголовок. */
   .ink-display {
     font-family: var(--font-display);
-    font-weight: 700;
-    line-height: 1.05;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
   }
 
-  /* Hero-заголовок — крупнейший кегль, line-height 0.95 (§2.3) */
+  /* Hero H1 — спека §4.2: вес 900, line-height 0.92, трекинг -0.045em. */
   .ink-hero {
     font-family: var(--font-display);
-    font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.02em;
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+  }
+
+  /* H1/H2 — uppercase (§4.3). Body в uppercase не переводим. */
+  .ink-hero,
+  .ink-display {
+    text-transform: uppercase;
   }
 
   /* Зерно/grain на тёмных секциях — лёгкая фактура (§4.6, §9.11).
@@ -245,9 +340,11 @@
       color var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out);
   }
+  /* Фокус — спека §6.4. Кольцо берёт burgundy-hover, а не базовый бордо:
+     #7E1F2D на Ink Black даёт ~2:1 и на тёмных секциях фокус просто теряется. */
   .app-btn:focus-visible {
-    outline: 2px solid var(--color-ink-burgundy);
-    outline-offset: 2px;
+    outline: 2px solid var(--color-ink-burgundy-hover);
+    outline-offset: 3px;
   }
   .app-btn:active {
     transform: translateY(0) scale(0.98);
@@ -258,14 +355,16 @@
     pointer-events: none;
   }
 
-  /* Primary — заливка бордо, кремовый текст, свечение, пилюля */
+  /* Primary — заливка бордо, bone-текст, радиус 2px (спека §6.1).
+     Пилюля убрана: скруглённая капсула — самый громкий сигнал «SaaS-шаблон»,
+     а §5.5 задаёт кнопке 2px. Свечение оставлено как бренд-деталь. */
   .app-btn--primary {
     position: relative;
     overflow: hidden;
     background: var(--color-ink-burgundy);
-    color: var(--color-ink-cream);
+    color: var(--color-ink-bone);
     box-shadow: var(--shadow-burgundy);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-xs);
   }
   /* Блик-свип: диагональная световая полоса проходит по кнопке при наведении (§4.2) */
   .app-btn--primary::before {
@@ -285,42 +384,46 @@
   .app-btn--primary:hover::before {
     transform: translateX(130%);
   }
+  /* Hover — burgundy-hover (§6.1), не -active: активнее, а не темнее. */
   .app-btn--primary:hover {
-    background: var(--color-ink-burgundy-dark);
+    background: var(--color-ink-burgundy-hover);
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(122, 31, 40, 0.36);
+    box-shadow: 0 12px 32px rgba(126, 31, 45, 0.36);
   }
-  /* Primary на тёмном/бордовом фоне (hero) — кремовая заливка для контраста */
+  .app-btn--primary:active {
+    background: var(--color-ink-burgundy-active);
+  }
+  /* Primary на тёмном фоне — bone-заливка для контраста */
   .app-btn--primary.on-dark {
-    background: var(--color-ink-cream);
-    color: var(--color-ink-black);
+    background: var(--color-ink-bone);
+    color: var(--color-ink-text-dark);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   }
   .app-btn--primary.on-dark:hover {
-    background: var(--color-ink-cream-dark);
+    background: var(--color-ink-card);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.34);
   }
 
-  /* Secondary — обводка, инверсия по hover */
+  /* Secondary — обводка 1px, радиус 2px (спека §6.2) */
   .app-btn--secondary {
     background: transparent;
-    color: var(--color-ink-black);
-    border: 1.5px solid var(--color-ink-black);
-    border-radius: var(--radius-full);
+    color: var(--color-ink-text-dark);
+    border: 1px solid var(--color-ink-text-dark);
+    border-radius: var(--radius-xs);
   }
   .app-btn--secondary:hover {
-    background: var(--color-ink-black);
-    color: var(--color-ink-cream);
+    background: var(--color-ink-text-dark);
+    color: var(--color-ink-bone);
   }
-  /* Secondary на тёмном фоне (hero) — кремовая обводка */
+  /* Secondary на тёмном фоне — спека §6.2: заливка bone 5%, граница bone. */
   .app-btn--secondary.on-dark {
-    color: var(--color-ink-cream);
-    border-color: rgba(239, 224, 193, 0.4);
+    color: var(--color-ink-bone);
+    border-color: rgba(243, 240, 235, 0.46);
   }
   .app-btn--secondary.on-dark:hover {
-    background: var(--color-ink-cream);
-    color: var(--color-ink-black);
-    border-color: var(--color-ink-cream);
+    background: rgba(243, 240, 235, 0.05);
+    color: var(--color-ink-bone);
+    border-color: var(--color-ink-bone);
   }
 
   /* Ghost — текст + подчёркивание, раскрывающееся слева-направо */
@@ -350,6 +453,39 @@
       opacity: 1;
     }
   }
+
+  /* Hero artboard — спека §10.1. Единственная секция с управляемой высотой:
+     §45.3 разрешает её именно для hero. Диапазоны: mobile 560–640 (цель 600),
+     laptop 420–470, desktop ≥1280 — 460–520 (цель 480). Выше 540 не поднимать
+     без отдельного согласования: растянутый на весь экран hero — ровно то, что
+     §2.2 запрещает. min-height, а не height: контент не должен обрезаться. */
+  .hero-artboard {
+    min-height: 600px;
+  }
+  @media (min-width: 1024px) {
+    .hero-artboard {
+      min-height: 450px;
+    }
+  }
+  @media (min-width: 1280px) {
+    .hero-artboard {
+      min-height: 480px;
+    }
+  }
+
+  /* Затемнение hero (§10.4): вертикальное на мобильном, боковое с десктопа.
+     На десктопе кадр стоит справа и заходит под градиент своим левым краем,
+     который в самой фотографии уже тёмный (§10.4 требует левые 34–38% кадра
+     спокойными) — поэтому стык фото с Ink Black не читается вовсе. */
+  .hero-overlay {
+    background: var(--ink-overlay-hero-mobile);
+  }
+  @media (min-width: 1024px) {
+    .hero-overlay {
+      background: var(--ink-overlay-hero);
+    }
+  }
+
 
   /* ── Навигация (§4.1) — пункт с раскрывающимся подчёркиванием ─── */
   .nav-link {
@@ -384,29 +520,35 @@
     animation: badge-pop var(--dur-slow) var(--ease-spring);
   }
 
-  /* ── Карточки (§4.3) — единый компонент ui/AppCard ───────────── */
+  /* ── Карточки — спека §6.3. Единый компонент ui/AppCard.
+       Радиус 4px, прозрачная граница в состоянии покоя (резервирует место —
+       hover-граница не двигает layout), hover — бордо 45%. */
   .app-card {
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-sm);
     background: var(--color-ink-white);
+    border: 1px solid transparent;
     box-shadow: var(--shadow-sm);
     overflow: hidden;
-    transition: transform var(--dur-base) var(--ease-out),
-      box-shadow var(--dur-base) var(--ease-out),
-      border-color var(--dur-base) var(--ease-out);
+    transition: transform 240ms var(--ease-out),
+      box-shadow 240ms var(--ease-out),
+      border-color 240ms var(--ease-out);
   }
+  /* Подъём -3px, а не -8px: §6.3. Восьмёрка читалась как «карточка отрывается»,
+     трёшка — как отклик материала. */
   .app-card--hover:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
+    border-color: rgba(126, 31, 45, 0.45);
+    box-shadow: var(--shadow-md);
   }
   /* Внутреннее медиа — лёгкий zoom при hover карточки (overflow скрыт у .app-card) */
   .app-card-media {
     overflow: hidden;
   }
   .app-card-media :where(img) {
-    transition: transform var(--dur-base) var(--ease-out);
+    transition: transform 240ms var(--ease-out);
   }
   .app-card--hover:hover .app-card-media :where(img) {
-    transform: scale(1.04);
+    transform: scale(1.025);
   }
 
   /* ── Скелетоны (§4.4) — мерцающие плейсхолдеры формы контента ──── */
@@ -452,9 +594,10 @@
     color: var(--color-ink-gray-400);
   }
 
-  /* Фокус нативных элементов — бордо-акцент бренда (Nuxt UI ставит свой ring). */
+  /* Фокус нативных элементов — спека §6.4 (Nuxt UI ставит свой ring). */
   :where(input, select, textarea, button, a):focus-visible {
-    outline-color: var(--color-ink-burgundy);
+    outline-color: var(--color-ink-burgundy-hover);
+    outline-offset: 3px;
   }
 
   /* Skip-to-content (a11y): первый фокусируемый элемент, виден только с клавиатуры.

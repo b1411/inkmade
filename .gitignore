@@ -44,3 +44,8 @@ blob-report/
 # Исходники фото/баннеров в корне — заливаются в Supabase Storage, в репо не нужны
 /IMG*-orig.jpg
 /баннер.jpg
+
+# Мастера кадров для npm run hero (PNG в десятки МБ). В public их класть нельзя —
+# Nuxt отдал бы их наружу; в git — тоже, он их не сожмёт. Отдаваемые AVIF/WebP
+# в public/media/hero коммитятся, их и видит сайт.
+/design/

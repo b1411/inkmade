@@ -3,7 +3,7 @@ import { computed, type ComputedRef } from 'vue'
 
 /**
  * Единый гейт движения (§11, §3.4 ТЗ). Реактивно отражает системную настройку
- * `prefers-reduced-motion`. Каждый JS-эффект (Lenis, GSAP, count-up, магнит,
+ * `prefers-reduced-motion`. Каждый JS-эффект (GSAP, count-up, магнит,
  * курсор, 3D) импортирует этот флаг и раньше выходит при `true`.
  *
  * CSS-гейт (отключение transition/animation/scroll) уже глобально в main.css —

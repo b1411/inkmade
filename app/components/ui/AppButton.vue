@@ -26,13 +26,16 @@ const props = withDefaults(defineProps<Props>(), {
   type: 'button',
 })
 
+// Высоты — спека §6.1/§6.2: CTA бренда 50px, паддинг 22–26px, min-width 184px.
+// lg = дефолтный размер компонента и есть тот самый CTA. Базовый min-height 44px
+// в .app-btn остаётся полом тач-цели (§28) для sm/md.
 const sizeClass = computed(
   () =>
     ({
       sm: 'px-4 text-sm',
       md: 'px-5 text-sm',
-      lg: 'px-6 text-base',
-      xl: 'px-8 py-4 text-lg',
+      lg: 'min-h-[50px] px-6 text-base',
+      xl: 'min-h-[50px] px-8 py-4 text-lg',
     })[props.size],
 )
 

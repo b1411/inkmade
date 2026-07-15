@@ -47,7 +47,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <section ref="root" class="ink-grain w-screen ml-[calc(50%-50vw)] bg-ink-black text-ink-cream relative overflow-hidden">
+  <!-- Raised Surface (§3.4): секция должна отделяться от Ink Black-среды, а не
+       сливаться с ней — на этом и держится глубина тёмного ритма. -->
+  <section ref="root" class="ink-grain w-screen ml-[calc(50%-50vw)] bg-ink-raised text-ink-text relative overflow-hidden">
     <!-- Бордо-«блобы» дают фирменное свечение на чёрном (контраст с бордо-hero выше). -->
     <div class="absolute -top-24 -left-24 size-96 rounded-full bg-ink-burgundy-light/25 blur-3xl ink-ambient-a" />
     <div class="absolute -bottom-32 -right-20 size-80 rounded-full bg-ink-burgundy/20 blur-3xl ink-ambient-b" />

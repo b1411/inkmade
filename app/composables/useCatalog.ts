@@ -17,11 +17,11 @@ export const useCatalog = () => {
     return data
   }
 
-  /** Все опубликованные товары (для главной ленты). */
+  /** Все опубликованные товары (для блока «Выбери основу» на главной). */
   async function listAll() {
     const { data, error } = await supabase
       .from('products')
-      .select('id, slug, alias, title, base_price, category, created_at, product_images(url, is_primary)')
+      .select('id, slug, alias, title, base_price, category, is_featured, created_at, product_images(url, is_primary)')
       .eq('is_active', true)
       .order('created_at', { ascending: false })
     if (error) throw error

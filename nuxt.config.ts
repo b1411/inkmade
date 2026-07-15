@@ -136,18 +136,22 @@ export default defineNuxtConfig({
     },
   },
 
-  // §2.3 фирменные шрифты. Дисплейный заголовочный шрифт — Unbounded (характерный
-  // гротеск с полной кириллицей, §1.2 ТЗ). Логотип шрифтом НЕ набирается — это
-  // векторная надпись (public/logo-*.svg, режется npm run logo).
+  // Фирменные шрифты — спека §4.1 (production default).
+  // Логотип шрифтом НЕ набирается — это векторная надпись (public/logo-*.svg,
+  // режется npm run logo), поэтому смена гарнитуры его не затрагивает.
   fonts: {
     // только каркас UI/бренда. ~200 шрифтов принта грузятся по требованию
     // (app/composables/useFontLoader.ts) — предзагрузка всех убила бы страницу.
     defaults: { subsets: ['latin', 'cyrillic'] },
     families: [
-      { name: 'Manrope', provider: 'google' },
+      // Дисплейный: Inter Tight — плотный гротеск под трекинг -0.045em и вес 900
+      // (спека §4.2). Заменил Unbounded: у того широкая геометрическая проводка,
+      // она не даёт «сжатый» редакционный заголовок из макета.
+      { name: 'Inter Tight', provider: 'google', weights: [700, 800, 900] },
+      // UI/body — спека §4.1. Полная кириллица + казахские знаки.
+      { name: 'Inter', provider: 'google', weights: [400, 500, 600, 700] },
+      // Технические лейблы INK SYSTEM: Design ID, координаты, placement (§36.2).
       { name: 'Space Mono', provider: 'google' },
-      // дисплейный заголовочный гротеск — латиница + кириллица, веса 500–800
-      { name: 'Unbounded', provider: 'google', weights: [500, 600, 700, 800] },
     ],
   },
 
@@ -161,8 +165,9 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        // Тон системного UI мобильных браузеров — бренд-бордо (§2.2)
-        { name: 'theme-color', content: '#7A1F28' },
+        // Тон системного UI мобильных браузеров — бренд-бордо верхней инфо-полосы
+        // (спека §3.1, §8). Обновлён на канонический #7E1F2D.
+        { name: 'theme-color', content: '#7E1F2D' },
       ],
       link: [
         // Бренд-знак — круглый «INK» (§0.1 медиа-брифа). Вектор идёт первым: браузер с
