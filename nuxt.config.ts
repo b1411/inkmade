@@ -166,7 +166,11 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: '#7A1F28' },
       ],
       link: [
-        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        // Бренд-знак — растровый (ярлык «INK», §0.1 медиа-брифа). Мелкие размеры режутся
+        // из плотного кропа: на 16–32px поля исходника съедали бы надпись.
+        { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/favicon-192.png' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         // PWA-манифест: устанавливаемость + имя/тема на Android
         { rel: 'manifest', href: '/site.webmanifest' },

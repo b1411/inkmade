@@ -29,7 +29,7 @@ useHead({
           '@id': `${site}/#organization`,
           name: 'INKMADE',
           url: site,
-          logo: `${site}/og-default.jpg`,
+          logo: `${site}/icon-512.png`,
           description: 'Платформа кастомизации одежды с печатью по требованию. Казахстан.',
           areaServed: 'KZ',
         },
