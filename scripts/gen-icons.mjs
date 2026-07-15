@@ -1,82 +1,106 @@
-// Режет весь набор иконок из мастер-файла знака (public/media/icon.png).
+// Режет весь набор иконок из векторного мастера знака (public/media/ink.svg).
 // Запуск: npm run icons
 //
 // Почему скриптом, а не руками в редакторе: размеры должны пересчитываться из одного
 // источника. Поменялся знак — перегенерил, и favicon/apple-touch/PWA не разъехались.
 //
-// Ключевые решения (см. docs/LANDING_MEDIA_BRIEF.md §0.1):
-//  - мелкие размеры режутся плотным кропом по bbox знака: в мастере поля ~17%, при прямом
-//    ресайзе в 32px надпись «INK» схлопывается в пятно;
-//  - apple-touch — умеренный кроп: iOS сам скругляет углы, нужен воздух;
-//  - maskable — знак вписан в safe-circle ⌀80%, чтобы маска Android ничего не срезала.
+// Мастер — круглый знак во весь кадр, с прозрачными углами. Отсюда три разных обращения
+// с ним (см. docs/LANDING_MEDIA_BRIEF.md §0.1):
+//
+//  1. Фавиконка — вектор как есть. Круг во весь кадр, ничего не обрезано, прозрачные углы.
+//     favicon.svg отдаётся первым: браузер с поддержкой SVG возьмёт его и отрисует чётко
+//     на любом размере, .ico остаётся запасным для Safari и старья.
+//
+//  2. apple-touch — ПЛАШКА БЕЗ АЛЬФЫ. iOS игнорирует прозрачность и заливает её чёрным,
+//     поэтому круг кладём на кремовый квадрат. Скруглит iOS сам.
+//
+//  3. maskable — знак УЖИМАЕТСЯ. В мастере буквы занимают 89% ширины и вылезают за
+//     safe zone Android (⌀80%): маска срезала бы «INK» по бокам. Считаем реальный радиус
+//     самого дальнего пикселя букв и масштабируем круг так, чтобы буквы гарантированно
+//     сели внутрь safe zone.
 
 import sharp from 'sharp'
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, copyFileSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const SRC = join(ROOT, 'public/media/icon.png')
+const SRC = join(ROOT, 'public/media/ink.svg')
 const OUT = join(ROOT, 'public')
-// Фон мастера — ровно бренд-бордо, совпадает с theme_color в nuxt.config.ts.
-const BG = { r: 0x7a, g: 0x1f, b: 0x28, alpha: 1 }
 
-// --- bbox знака: пиксели, отличающиеся от сплошного фона ---
-const { data, info } = await sharp(SRC).raw().toBuffer({ resolveWithObject: true })
-const { width: W, height: H, channels: C } = info
-let minX = W
-let minY = H
-let maxX = 0
-let maxY = 0
-for (let y = 0; y < H; y++) {
-  for (let x = 0; x < W; x++) {
-    const i = (y * W + x) * C
-    const delta =
-      Math.abs(data[i] - BG.r) + Math.abs(data[i + 1] - BG.g) + Math.abs(data[i + 2] - BG.b)
-    if (delta > 40) {
-      if (x < minX) minX = x
-      if (x > maxX) maxX = x
-      if (y < minY) minY = y
-      if (y > maxY) maxY = y
-    }
-  }
-}
-const bw = maxX - minX + 1
-const bh = maxY - minY + 1
-const cx = minX + bw / 2
-const cy = minY + bh / 2
-console.log(`мастер ${W}x${H} · bbox знака ${bw}x${bh} @ (${minX},${minY})`)
+const MASTER = 2048
+const CREAM = { r: 0xef, g: 0xe0, b: 0xc1, alpha: 1 }
+// Android режет по кругу диаметром 80% холста. Всё важное — внутрь.
+const SAFE = 0.8
+// Запас, чтобы буквы не касались границы safe zone впритык.
+const SAFE_MARGIN = 0.96
+// Кремовые поля вокруг круга на плитке iOS.
+const APPLE_DISC = 0.88
 
-/** Квадратный кроп по центру знака; pad — доля поля от длинной стороны знака. */
-function squareCrop(pad) {
-  const side = Math.min(W, H, Math.round(Math.max(bw, bh) * (1 + pad * 2)))
-  return {
-    left: Math.max(0, Math.min(W - side, Math.round(cx - side / 2))),
-    top: Math.max(0, Math.min(H - side, Math.round(cy - side / 2))),
-    width: side,
-    height: side,
-  }
-}
+// Вектор растеризуем один раз в мастер-буфер, дальше режем из него: даёт те же чёткие
+// края, что и рендер под каждый размер, но без десятка проходов librsvg.
+const master = await sharp(SRC, { density: 300 })
+  .resize(MASTER, MASTER, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+  .png()
+  .toBuffer()
 
-// Знак — 3 плоских цвета + тень, поэтому palette даёт кратную экономию без потерь на глаз.
 const png = (pipe) => pipe.png({ compressionLevel: 9, palette: true, quality: 90, effort: 10 })
-
 async function save(pipe, name) {
   const buf = await png(pipe).toBuffer()
   writeFileSync(join(OUT, name), buf)
   console.log(`  ${name.padEnd(24)} ${String(Math.round(buf.length / 102.4) / 10).padStart(6)} KB`)
 }
 
-// 1. Мелкие фавиконы — плотный кроп.
-const tight = () => sharp(SRC).extract(squareCrop(0.1))
-await save(tight().resize(32, 32, { kernel: 'lanczos3' }), 'favicon-32.png')
-await save(tight().resize(192, 192, { kernel: 'lanczos3' }), 'favicon-192.png')
+// --- Насколько далеко буквы уходят от центра? Считаем по кремовым пикселям. ---
+const { data, info } = await sharp(master).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+const { width: W, channels: C } = info
+const c = W / 2
+let maxLetterR = 0
+for (let y = 0; y < W; y++) {
+  for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * C
+    if (data[i + 3] < 16) continue
+    const isCream =
+      Math.abs(data[i] - CREAM.r) < 40 &&
+      Math.abs(data[i + 1] - CREAM.g) < 40 &&
+      Math.abs(data[i + 2] - CREAM.b) < 46
+    if (!isCream) continue
+    const r = Math.hypot(x - c, y - c)
+    if (r > maxLetterR) maxLetterR = r
+  }
+}
+const letterPct = ((maxLetterR / c) * 100).toFixed(1)
+// Во сколько ужать круг, чтобы самый дальний пиксель букв сел в safe zone.
+const fit = Math.min(1, (MASTER * SAFE * SAFE_MARGIN) / 2 / maxLetterR)
+console.log(
+  `мастер ${MASTER}² · буквы уходят на ${letterPct}% радиуса · ужимаем круг до ${(fit * 100).toFixed(0)}% под maskable`,
+)
 
-// 2. favicon.ico — контейнер с PNG-полезной нагрузкой (16/32/48), понимают все живые браузеры.
+/** Круг заданной доли холста на непрозрачной кремовой плитке. */
+async function plate(size, discFraction) {
+  const d = Math.round(size * discFraction)
+  const disc = await sharp(master).resize(d, d, { kernel: 'lanczos3' }).toBuffer()
+  const off = Math.round((size - d) / 2)
+  return sharp({ create: { width: size, height: size, channels: 4, background: CREAM } }).composite(
+    [{ input: disc, left: off, top: off }],
+  )
+}
+
+// 1. Фавиконка-вектор — главный источник для таба: чёткая на любом размере.
+copyFileSync(SRC, join(OUT, 'favicon.svg'))
+const svgKb = Math.round(statSync(join(OUT, 'favicon.svg')).size / 102.4) / 10
+console.log(
+  `  ${'favicon.svg'.padEnd(24)} ${String(svgKb).padStart(6)} KB  (вектор, круг во весь кадр)`,
+)
+
+// 2. favicon.ico — PNG-кадры 16/32/48 с альфой, запасной вариант для Safari и старых браузеров.
 const ICO_SIZES = [16, 32, 48]
 const frames = {}
 for (const s of ICO_SIZES) {
-  frames[s] = await png(tight().resize(s, s, { kernel: 'lanczos3' })).toBuffer()
+  frames[s] = await sharp(master)
+    .resize(s, s, { kernel: 'lanczos3' })
+    .png({ compressionLevel: 9 })
+    .toBuffer()
 }
 const header = Buffer.alloc(6)
 header.writeUInt16LE(0, 0) // reserved
@@ -97,35 +121,16 @@ const entries = ICO_SIZES.map((s) => {
 const ico = Buffer.concat([header, ...entries, ...ICO_SIZES.map((s) => frames[s])])
 writeFileSync(join(OUT, 'favicon.ico'), ico)
 console.log(
-  `  ${'favicon.ico'.padEnd(24)} ${String(Math.round(ico.length / 102.4) / 10).padStart(6)} KB  (16/32/48)`,
+  `  ${'favicon.ico'.padEnd(24)} ${String(Math.round(ico.length / 102.4) / 10).padStart(6)} KB  (16/32/48, альфа)`,
 )
 
-// 3. apple-touch — умеренный кроп под скругление iOS.
-await save(
-  sharp(SRC).extract(squareCrop(0.22)).resize(180, 180, { kernel: 'lanczos3' }),
-  'apple-touch-icon.png',
-)
+// 3. apple-touch — кремовая плашка без альфы, иначе iOS покрасит углы чёрным.
+await save((await plate(180, APPLE_DISC)).flatten({ background: CREAM }), 'apple-touch-icon.png')
 
-// 4. PWA purpose:any — полный кадр, поля мастера здесь как раз уместны.
-await save(sharp(SRC).resize(192, 192, { kernel: 'lanczos3' }), 'icon-192.png')
-await save(sharp(SRC).resize(512, 512, { kernel: 'lanczos3' }), 'icon-512.png')
+// 4. PWA purpose:any — круг с альфой, витрина установки покажет его на своей подложке.
+await save(sharp(master).resize(192, 192, { kernel: 'lanczos3' }), 'icon-192.png')
+await save(sharp(master).resize(512, 512, { kernel: 'lanczos3' }), 'icon-512.png')
 
-// 5. PWA purpose:maskable — Android режет по кругу ⌀80% холста. Вписываем знак целиком
-// (по диагонали bbox) в этот круг: под любой формой маски ничего не срежется.
-const SIDE = 512
-const scale = (SIDE * 0.8) / Math.hypot(bw, bh)
-const mw = Math.round(bw * scale)
-const mh = Math.round(bh * scale)
-const mark = await sharp(SRC)
-  .extract({ left: minX, top: minY, width: bw, height: bh })
-  .resize(mw, mh, { kernel: 'lanczos3' })
-  .toBuffer()
-await save(
-  sharp({ create: { width: SIDE, height: SIDE, channels: 4, background: BG } }).composite([
-    { input: mark, left: Math.round((SIDE - mw) / 2), top: Math.round((SIDE - mh) / 2) },
-  ]),
-  'icon-maskable-512.png',
-)
-console.log(
-  `  maskable: знак ${mw}x${mh} = ${Math.round((mh / SIDE) * 100)}% холста, вписан в ⌀${SIDE * 0.8}`,
-)
+// 5. PWA purpose:maskable — круг ужат так, что буквы внутри safe zone при любой маске.
+await save((await plate(512, fit)).flatten({ background: CREAM }), 'icon-maskable-512.png')
+console.log(`  maskable: круг ${(fit * 100).toFixed(0)}% холста, буквы в пределах ⌀${SAFE * 100}%`)
