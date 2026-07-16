@@ -83,7 +83,8 @@ const filtered = computed(() => {
       <div>
         <UiSectionLabel accent>{{ $t('catalog.label') }}</UiSectionLabel>
         <h1 class="ink-display text-h1 mt-2">{{ label }}</h1>
-        <p v-if="!pending" class="ink-label text-ink-gray-600 mt-2">
+        <!-- Ink Black (§3.3): микротекст — Muted, не Dark Soft. -->
+        <p v-if="!pending" class="ink-label text-ink-text-muted mt-2">
           {{ $t(categoryCountKey(count), { n: count }) }}
         </p>
       </div>

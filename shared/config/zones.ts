@@ -14,6 +14,59 @@ export interface BoundsMm {
   height: number
 }
 
+/**
+ * Посадка и характеристики изделия — products.fit (миграция 0088, спека §42.1).
+ * Всё опционально: блок редакционный, заполняется по мере появления данных, и
+ * карточка показывает ровно то, что заполнено.
+ */
+export interface ProductFit {
+  /** «Свободная oversize», «Классическая» — §42.1 fit label. */
+  label?: string
+  /** «Для более собранной посадки выберите на размер меньше.» */
+  recommendation?: string
+  model?: { heightCm?: number, wornSize?: string, chestCm?: number }
+  composition?: string
+  densityGsm?: number
+  care?: string
+  /** §42.1: shrinkage note, если применимо. */
+  shrinkage?: string
+}
+
+/**
+ * Замер изделия на размер — элемент products.size_chart (миграция 0088, §42.1).
+ * `size` обязан совпадать с variants.size, иначе строка не найдёт свой размер.
+ * Мерки опциональны: у кепки нет длины рукава, и это нормально.
+ */
+export interface SizeChartRow {
+  size: string
+  chestCm?: number
+  lengthCm?: number
+  shoulderCm?: number
+  sleeveCm?: number
+}
+
+/**
+ * Прямоугольник зоны в НОРМАЛИЗОВАННЫХ координатах холста кастомайзера
+ * (0..1 от CANVAS 460×540) — миграция 0087, колонка print_zones.bounds_canvas.
+ *
+ * Зачем понадобился ещё один тип координат. BoundsMm описывает зону в мм от начала
+ * печатного поля изделия, но чтобы перевести это в пиксели, нужно знать, ГДЕ на
+ * картинке лежит само поле. Прежняя связка (garment.ts GARMENT_PRINT_FRAME:
+ * bodyPx + frameMm) отвечала на это только для векторного силуэта — и с разным
+ * масштабом по осям. Холст же показывает реальное фото товара с другим кадром,
+ * поэтому зона уезжала: у груди футболки выходило 374×468 px вместо 122×172.
+ *
+ * Здесь координаты сразу в пространстве холста, поэтому переводить нечего:
+ * что админ нарисовал поверх изображения — то покупатель и видит. Физический
+ * масштаб выводится один на обе оси: pxPerMm = width * CANVAS.width / max_width_mm.
+ */
+export interface BoundsCanvas {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export interface ZonePreset {
   name: string // машинное имя ('chest'/'back'/...)
   title: string // отображаемое ('Грудь'/'Спина'/...)

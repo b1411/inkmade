@@ -16,6 +16,11 @@ const { isAuthenticated } = useAuth()
         <img src="/logo-light.svg" alt="INKMADE" width="1328" height="305" class="h-7 w-auto">
         <p class="ink-label mt-2 text-ink-cream/50">{{ $t('footer.tagline') }}</p>
         <p class="text-caption mt-3">{{ $t('footer.about') }}</p>
+        <!-- INK SYSTEM (§36.2): футер — штатное место и для клейма («print footer»),
+             и для координат. С hero в один экран они не попадают, поэтому лимит
+             §36.3 «не более одного набора координат на viewport» не нарушен. -->
+        <BrandStamp class="mt-6" />
+        <BrandCoordinates class="mt-3" />
       </div>
       <div class="space-y-2">
         <p class="ink-label text-ink-cream/60">{{ $t('footer.catalogCol') }}</p>

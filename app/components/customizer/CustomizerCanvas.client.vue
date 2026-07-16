@@ -2,7 +2,8 @@
 import Konva from 'konva'
 import { CANVAS, useDesign } from '~/composables/useDesign'
 import type { Placement } from '~/composables/useDesign'
-import { garmentKindForSlug, garmentDataUri } from '~~/shared/config/garment'
+import { garmentKindForSlug, garmentDataUri, garmentImageRect } from '~~/shared/config/garment'
+import { INK_CANVAS, CROP_MARK_LEN, CROP_MARK_GAP } from '~~/shared/config/ink-system'
 import { shapeData } from '~/utils/konva-shapes'
 import { applyKonvaFilters } from '~/utils/konva-filters'
 
@@ -14,7 +15,7 @@ const design = useDesign()
 const {
   product, zoneRect, placements, activePlacements, selectedId, productColorHex,
   updatePlacement, removePlacement, duplicatePlacement, undo, redo, zone,
-  registerStage, registerExporter, registerResetView, pxPerMmForZone,
+  registerStage, registerExporter, registerResetView, pxPerMmForZone, rectForZone,
 } = design
 const { load: loadFont } = useFontLoader()
 
@@ -122,9 +123,9 @@ const productPhotoConfig = computed(() => {
   void tick.value
   const img = productPhotoImg.value
   if (!img) return null
-  const sc = Math.max(CANVAS.width / img.width, CANVAS.height / img.height) // cover-fit
-  const w = img.width * sc, h = img.height * sc
-  return { image: img, x: (CANVAS.width - w) / 2, y: (CANVAS.height - h) / 2, width: w, height: h, listening: false }
+  // Раскладка — из shared/config/garment: по ней же админ калибрует зону в
+  // ZoneEditor. Считать cover-fit здесь заново = гарантированно однажды разъехаться.
+  return { image: img, ...garmentImageRect(img.width, img.height), listening: false }
 })
 
 // ── конфиги слоёв ─────────────────────────────────────────────────
@@ -142,7 +143,49 @@ const mockupConfig = computed(() => {
   const w = img.width * sc, h = img.height * sc
   return { image: img, x: (CANVAS.width - w) / 2, y: (CANVAS.height - h) / 2, width: w, height: h, opacity: 0.55, listening: false }
 })
-const zoneFrameConfig = computed(() => ({ ...zoneRect.value, stroke: '#7A1F28', strokeWidth: 1.5, dash: [6, 4], listening: false }))
+// ── INK SYSTEM · print zone frame (§36.2) ─────────────────────────
+// Рамка зоны печати — фирменный элемент, а не просто подсветка. По §36.2: 1px,
+// бордо ТОЛЬКО в selected. Раньше стояло `#7A1F28` жёстко: это старый бордо,
+// переживший миграцию палитры, — холст незаметно разъехался с сайтом.
+//
+// Цвет рамки выбирается по ЦВЕТУ ИЗДЕЛИЯ, а не по фону холста. §36.2 даёт два
+// значения (Bone на тёмном / Ink Black 40% на светлом), и подставить одно жёстко
+// нельзя: рамка размечает зону НА ткани, а ассортимент — от чёрного до костяного.
+// Bone-рамка на белой футболке исчезла бы ровно там, где она нужнее всего.
+const isLightGarment = computed(() => {
+  const hex = (productColorHex.value || '').replace('#', '')
+  if (hex.length !== 6) return false
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16))
+  // Относительная яркость по формуле W3C (восприятие, а не среднее по RGB).
+  return (0.299 * r! + 0.587 * g! + 0.114 * b!) > 140
+})
+const frameStroke = computed(() =>
+  selectedId.value
+    ? INK_CANVAS.frameSelected
+    : isLightGarment.value ? INK_CANVAS.frameOnLight : INK_CANVAS.frameOnDark,
+)
+const zoneFrameConfig = computed(() => ({
+  ...zoneRect.value,
+  stroke: frameStroke.value,
+  strokeWidth: 1,
+  listening: false,
+}))
+
+// Угловые метки (§36.2, 8–12px). Ставятся снаружи рамки с зазором — как в реальной
+// допечатной подготовке; это и есть «выглядит как production workflow, а не как
+// декоративный cyberpunk» (§36.2). Дают рамке узнаваемость без лишнего шума.
+const cropMarksConfig = computed(() => {
+  const { x, y, width: w, height: h } = zoneRect.value
+  const g = CROP_MARK_GAP
+  const l = CROP_MARK_LEN
+  const line = (points: number[]) => ({ points, stroke: frameStroke.value, strokeWidth: 1, listening: false })
+  return [
+    line([x - g - l, y, x - g, y]), line([x, y - g - l, x, y - g]),
+    line([x + w + g, y, x + w + g + l, y]), line([x + w, y - g - l, x + w, y - g]),
+    line([x - g - l, y + h, x - g, y + h]), line([x, y + h + g, x, y + h + g + l]),
+    line([x + w + g, y + h, x + w + g + l, y + h]), line([x + w, y + h + g, x + w, y + h + g + l]),
+  ]
+})
 // клиппинг слоя дизайна строго по зоне (§7.1 — принт не выходит за зону, пиксель-точно)
 const clipConfig = computed(() => ({ clip: { ...zoneRect.value } }))
 
@@ -152,11 +195,11 @@ const hGuides = ref<number[]>([])
 function clearGuides() { vGuides.value = []; hGuides.value = [] }
 function vLineConfig(x: number) {
   const r = zoneRect.value
-  return { points: [x, r.y - 10, x, r.y + r.height + 10], stroke: '#E2B23A', strokeWidth: 1, listening: false }
+  return { points: [x, r.y - 10, x, r.y + r.height + 10], stroke: INK_CANVAS.guide, strokeWidth: 1, listening: false }
 }
 function hLineConfig(y: number) {
   const r = zoneRect.value
-  return { points: [r.x - 10, y, r.x + r.width + 10, y], stroke: '#E2B23A', strokeWidth: 1, listening: false }
+  return { points: [r.x - 10, y, r.x + r.width + 10, y], stroke: INK_CANVAS.guide, strokeWidth: 1, listening: false }
 }
 
 // ── конфиги элементов ─────────────────────────────────────────────
@@ -498,12 +541,12 @@ async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
   for (const zn of zones) {
     const pls = placements.value.filter(p => p.zone === zn)
     if (!pls.length) continue
-    const zrow = product.value?.print_zones.find(z => z.name === zn)
-    const wmm = Number(zrow?.max_width_mm) || 200
-    const hmm = Number(zrow?.max_height_mm) || 250
     const ppmScreen = pxPerMmForZone(zn) || 1
-    const rectW = wmm * ppmScreen, rectH = hmm * ppmScreen
-    const rectX = (CANVAS.width - rectW) / 2, rectY = (CANVAS.height - rectH) / 2
+    // Rect берём из useDesign — ЕДИНСТВЕННЫЙ источник геометрии зоны. Раньше
+    // здесь дублировалась формула центрирования (rectX = (CANVAS.width - rectW)/2).
+    // С калибровкой bounds_canvas (миграция 0087) она разошлась бы с превью:
+    // ширина совпала бы, а кроп поехал по x/y — и в цех ушёл бы не тот кусок макета.
+    const { x: rectX, y: rectY, width: rectW, height: rectH } = rectForZone(zn)
     let outScale = (dpi / 25.4) / ppmScreen
     const rawMax = Math.max(rectW * outScale, rectH * outScale)
     if (rawMax > PRINT_CAP_PX) outScale *= PRINT_CAP_PX / rawMax // кэп памяти для больших зон
@@ -562,6 +605,7 @@ async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
           <v-image v-else-if="garmentConfig" :config="garmentConfig" />
           <v-image v-if="mockupConfig" :config="mockupConfig" />
           <v-rect :config="zoneFrameConfig" />
+          <v-line v-for="(m, i) in cropMarksConfig" :key="`crop-${i}`" :config="m" />
 
           <!-- слой дизайна клиппируется по зоне -->
           <v-group :config="clipConfig">

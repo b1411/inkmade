@@ -8,18 +8,29 @@ export type GarmentKind = 'tee' | 'hoodie' | 'cap'
 // размеры под холст кастомайзера (CANVAS 460×540)
 export const GARMENT_VIEWBOX = { width: 460, height: 540 }
 
-// Печатный кадр изделия для визуального редактора зон (§8.2.1):
-// bodyPx — область силуэта (в координатах viewBox), где физически возможна печать;
-// frameMm — её физический размер в мм. Связка задаёт масштаб мм↔px по каждой оси,
-// согласованный с пресетами зон (chest/back живут в кадре ~360×480 мм).
-export interface GarmentPrintFrame {
-  bodyPx: { x: number; y: number; width: number; height: number }
-  frameMm: { width: number; height: number }
-}
-export const GARMENT_PRINT_FRAME: Record<GarmentKind, GarmentPrintFrame> = {
-  tee: { bodyPx: { x: 120, y: 150, width: 220, height: 330 }, frameMm: { width: 360, height: 480 } },
-  hoodie: { bodyPx: { x: 120, y: 165, width: 220, height: 320 }, frameMm: { width: 360, height: 480 } },
-  cap: { bodyPx: { x: 135, y: 215, width: 195, height: 85 }, frameMm: { width: 200, height: 130 } },
+// GARMENT_PRINT_FRAME (bodyPx + frameMm) удалён вместе с переводом редактора зон на
+// bounds_canvas (миграция 0087). Связка была сломана дважды: масштаб мм↔px расходился
+// по осям (tee: 220/360 = 0.611 против 330/480 = 0.6875 — круг становился овалом на
+// 12%), и откалибрована она была под ВЕКТОРНЫЙ СИЛУЭТ, тогда как холст кастомайзера
+// показывает фото товара. Восстанавливать нечего: геометрию зоны теперь целиком
+// задаёт print_zones.bounds_canvas. История — в git.
+
+/**
+ * Куда ложится фото изделия на холсте (cover-fit, как в CustomizerCanvas).
+ *
+ * ЕДИНСТВЕННЫЙ источник этой раскладки: админский редактор зон и кастомайзер обязаны
+ * класть кадр одинаково, иначе админ калибрует зону по одной картинке, а покупатель
+ * видит другую — и зона уезжает. Ровно на таком дублировании формулы уже разъехались
+ * экспорт печатного файла и превью, поэтому считаем в одном месте.
+ *
+ * cover (Math.max), а не contain: кадр заполняет холст без полей, лишнее обрезается
+ * по бокам — из-за этого x может быть отрицательным, это норма.
+ */
+export function garmentImageRect(imgWidth: number, imgHeight: number) {
+  const sc = Math.max(GARMENT_VIEWBOX.width / imgWidth, GARMENT_VIEWBOX.height / imgHeight)
+  const w = imgWidth * sc
+  const h = imgHeight * sc
+  return { x: (GARMENT_VIEWBOX.width - w) / 2, y: (GARMENT_VIEWBOX.height - h) / 2, width: w, height: h }
 }
 
 /** Тип силуэта по слагу/алиасу товара (шаблоны: tshirt/hoodie/cap…). */

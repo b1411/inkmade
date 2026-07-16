@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ProductFit, SizeChartRow } from '~~/shared/config/zones'
 
 // Страница товара (§6, §7.1). Выбор материала определяет метод/зоны (§5.2.1, F1-11).
 const { t } = useI18n()
@@ -12,6 +13,19 @@ const { data: product, error } = await useAsyncData(`product-${slug}`, () => get
 if (error.value || !product.value) {
   throw createError({ statusCode: 404, statusMessage: t('product.notFound') })
 }
+
+// Посадка и замеры (§42.1, миграция 0088). Обе колонки nullable: пока не заполнены,
+// блок скрыт, а размерная сетка падает на ориентировочную с оговоркой. Пустой объект
+// fit ({}) валиден по CHECK, поэтому проверяем НАЛИЧИЕ полей, а не самого объекта —
+// иначе на карточке висел бы пустой заголовок «Посадка» без содержимого.
+const fit = computed(() => (product.value?.fit ?? null) as ProductFit | null)
+const hasFit = computed(() => {
+  const f = fit.value
+  if (!f) return false
+  return !!(f.label || f.recommendation || f.composition || f.densityGsm || f.care || f.shrinkage
+    || f.model?.heightCm || f.model?.wornSize || f.model?.chestCm)
+})
+const sizeChart = computed(() => (product.value?.size_chart ?? null) as SizeChartRow[] | null)
 
 // похожие товары той же категории (кроме текущего), до 4 штук
 const { data: related } = await useAsyncData(`related-${slug}`, async () => {
@@ -201,8 +215,10 @@ function onZoomMove(e: MouseEvent) {
     <section class="grid md:grid-cols-2 gap-10 items-start">
     <!-- галерея (§6.2): крупное фото с зум-лупой к курсору + crossfade при смене -->
     <div class="space-y-3">
+      <!-- Warm Card под изолированным фото (§3.3 «product isolated media»): у наших
+           кадров запечён белый фон, и на Ink Black они били бы белым прямоугольником. -->
       <div
-        class="group relative aspect-square rounded-lg overflow-hidden bg-ink-gray-50 shadow-sm ring-1 ring-ink-gray-200"
+        class="group relative aspect-square rounded-sm overflow-hidden bg-ink-card ring-1 ring-[var(--ink-line)]"
         :class="zooming ? 'cursor-zoom-in' : ''"
         @mouseenter="zooming = canZoom()"
         @mouseleave="zooming = false"
@@ -220,14 +236,14 @@ function onZoomMove(e: MouseEvent) {
             sizes="(max-width: 768px) 100vw, 560px"
             loading="eager"
           />
-          <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-400">
+          <div v-else class="w-full h-full flex items-center justify-center text-ink-text-dark/25">
             <UIcon name="i-lucide-image" class="size-12" />
           </div>
         </Transition>
         <!-- метка ракурса текущего фото -->
         <span
           v-if="allImages[activeImage]?.label"
-          class="absolute bottom-2 left-2 ink-label bg-ink-black/70 text-ink-cream px-2 py-1 rounded-sm"
+          class="absolute bottom-2 left-2 ink-label bg-ink-black/70 text-ink-bone px-2 py-1 rounded-xs"
         >{{ allImages[activeImage]!.label }}</span>
       </div>
 
@@ -237,7 +253,7 @@ function onZoomMove(e: MouseEvent) {
           v-for="(img, i) in mockupImages"
           :key="img.id"
           class="size-16 rounded-md overflow-hidden border-2 transition-colors"
-          :class="i === activeImage ? 'border-ink-burgundy' : 'border-ink-gray-200 hover:border-ink-gray-400'"
+          :class="i === activeImage ? 'border-ink-burgundy' : 'border-[var(--ink-line-strong)] hover:border-ink-text-muted'"
           :aria-label="img.label || $t('product.photoNumber', { n: i + 1 })"
           @click="activeImage = i"
         >
@@ -247,13 +263,13 @@ function onZoomMove(e: MouseEvent) {
 
       <!-- миниатюры: на людях -->
       <div v-if="lifestyleImages.length">
-        <p class="ink-label text-ink-gray-600 mb-2">{{ $t('product.lifestyle') }}</p>
+        <p class="ink-label text-ink-text-muted mb-2">{{ $t('product.lifestyle') }}</p>
         <div class="flex gap-2 flex-wrap">
           <button
             v-for="(img, i) in lifestyleImages"
             :key="img.id"
             class="size-16 rounded-md overflow-hidden border-2 transition-colors"
-            :class="mockupImages.length + i === activeImage ? 'border-ink-burgundy' : 'border-ink-gray-200 hover:border-ink-gray-400'"
+            :class="mockupImages.length + i === activeImage ? 'border-ink-burgundy' : 'border-[var(--ink-line-strong)] hover:border-ink-text-muted'"
             :aria-label="$t('product.lifestyleNumber', { n: i + 1 })"
             @click="activeImage = mockupImages.length + i"
           >
@@ -266,17 +282,55 @@ function onZoomMove(e: MouseEvent) {
     <!-- инфо + выбор (липнет на десктопе при прокрутке галереи) -->
     <div class="space-y-6 md:sticky md:top-24">
       <div>
-        <nav class="flex items-center gap-1.5 text-caption text-ink-gray-500 mb-2" :aria-label="$t('product.breadcrumb')">
+        <!-- Было text-ink-gray-500 / -700 — таких токенов в теме нет (есть 900/600/400/200/50),
+             classes молча не генерировались и цвет наследовался. Ставим существующие. -->
+        <nav class="flex items-center gap-1.5 text-caption text-ink-text-muted mb-2" :aria-label="$t('product.breadcrumb')">
           <NuxtLink to="/catalog" class="hover:text-ink-burgundy transition-colors">{{ $t('catalog.pageTitle') }}</NuxtLink>
           <span aria-hidden="true">/</span>
-          <span class="text-ink-gray-700 truncate">{{ product.title }}</span>
+          <span class="text-ink-text-soft truncate">{{ product.title }}</span>
         </nav>
         <UiSectionLabel accent>{{ product.category }}</UiSectionLabel>
         <h1 class="ink-display text-h1 mt-2">{{ product.title }}</h1>
         <p class="text-h3 mt-2 text-ink-burgundy font-bold">{{ $t('product.priceFrom', { price: formatPrice(priceFrom) }) }}</p>
       </div>
 
-      <p v-if="product.description" class="text-ink-gray-600">{{ product.description }}</p>
+      <p v-if="product.description" class="text-ink-text-soft">{{ product.description }}</p>
+
+      <!-- Посадка (§42.1). Каждая строка рисуется только если заполнена: спека
+           перечисляет 10 полей, но требовать их все разом = не показать ничего. -->
+      <div v-if="hasFit" class="rounded-md border border-[var(--ink-line)] p-4 space-y-2">
+        <UiSectionLabel>{{ $t('product.fit.label') }}</UiSectionLabel>
+        <dl class="text-caption space-y-1.5 mt-2">
+          <div v-if="fit!.model?.heightCm" class="flex gap-2">
+            <dt class="text-ink-text-muted shrink-0">{{ $t('product.fit.model') }}</dt>
+            <dd class="text-ink-text">
+              {{ $t('product.fit.heightCm', { n: fit!.model.heightCm }) }}<template v-if="fit!.model?.chestCm">, {{ $t('product.fit.chestCm', { n: fit!.model.chestCm }) }}</template>
+            </dd>
+          </div>
+          <div v-if="fit!.model?.wornSize" class="flex gap-2">
+            <dt class="text-ink-text-muted shrink-0">{{ $t('product.fit.wornSize') }}</dt>
+            <dd class="text-ink-text">{{ fit!.model.wornSize }}</dd>
+          </div>
+          <div v-if="fit!.label" class="flex gap-2">
+            <dt class="text-ink-text-muted shrink-0">{{ $t('product.fit.fitLabel') }}</dt>
+            <dd class="text-ink-text">{{ fit!.label }}</dd>
+          </div>
+          <div v-if="fit!.composition" class="flex gap-2">
+            <dt class="text-ink-text-muted shrink-0">{{ $t('product.fit.composition') }}</dt>
+            <dd class="text-ink-text">{{ fit!.composition }}</dd>
+          </div>
+          <div v-if="fit!.densityGsm" class="flex gap-2">
+            <dt class="text-ink-text-muted shrink-0">{{ $t('product.fit.density') }}</dt>
+            <dd class="text-ink-text">{{ $t('product.fit.gsm', { n: fit!.densityGsm }) }}</dd>
+          </div>
+          <div v-if="fit!.care" class="flex gap-2">
+            <dt class="text-ink-text-muted shrink-0">{{ $t('product.fit.care') }}</dt>
+            <dd class="text-ink-text">{{ fit!.care }}</dd>
+          </div>
+        </dl>
+        <p v-if="fit!.recommendation" class="text-caption text-ink-text-soft pt-1">{{ fit!.recommendation }}</p>
+        <p v-if="fit!.shrinkage" class="text-caption text-ink-warning">{{ fit!.shrinkage }}</p>
+      </div>
 
       <!-- материал определяет метод/зоны (§5.2.1) -->
       <div v-if="product.materials.length">
@@ -285,14 +339,16 @@ function onZoomMove(e: MouseEvent) {
           <button
             v-for="m in product.materials"
             :key="m.id"
-            class="px-3 py-2 rounded-md border text-caption transition-colors"
-            :class="m.id === selectedMaterialId ? 'border-ink-burgundy bg-ink-burgundy/5' : 'border-ink-gray-200'"
+            class="px-3 py-2 rounded-xs border text-caption transition-colors"
+            :class="m.id === selectedMaterialId
+              ? 'border-ink-burgundy bg-ink-burgundy text-ink-bone'
+              : 'border-[var(--ink-line-strong)] text-ink-text-soft hover:border-ink-text-muted'"
             @click="selectedMaterialId = m.id"
           >
             {{ m.name }}
           </button>
         </div>
-        <p v-if="selectedMaterial" class="text-caption text-ink-gray-600 mt-2">
+        <p v-if="selectedMaterial" class="text-caption text-ink-text-muted mt-2">
           {{ $t(`domain.printMethod.${selectedMaterial.print_method}`) }} ·
           {{ $t(`domain.printMode.${selectedMaterial.print_mode}`) }}
         </p>
@@ -307,7 +363,7 @@ function onZoomMove(e: MouseEvent) {
             :key="c.hex"
             :title="c.name"
             class="size-9 rounded-full border-2 transition-transform hover:scale-110"
-            :class="c.hex === selectedColor ? 'border-ink-burgundy' : 'border-ink-gray-200'"
+            :class="c.hex === selectedColor ? 'border-ink-bone' : 'border-[var(--ink-line-strong)]'"
             :style="{ backgroundColor: c.hex }"
             @click="selectedColor = c.hex"
           />
@@ -318,14 +374,18 @@ function onZoomMove(e: MouseEvent) {
       <div v-if="sizes.length">
         <div class="flex items-center justify-between gap-2">
           <UiSectionLabel>{{ $t('product.size') }}</UiSectionLabel>
-          <CatalogSizeGuide />
+          <!-- Передаём реальные размеры: гайд не должен предлагать то, чего нет
+               в продаже, и не должен вылезать у товара с единственным размером. -->
+          <CatalogSizeGuide :sizes="sizes" :chart="sizeChart" />
         </div>
         <div class="flex flex-wrap gap-2 mt-2">
           <button
             v-for="s in sizes"
             :key="s"
-            class="min-w-11 px-3 py-2 rounded-md border text-center transition-colors"
-            :class="s === selectedSize ? 'border-ink-burgundy bg-ink-burgundy/5' : 'border-ink-gray-200'"
+            class="min-w-11 px-3 py-2 rounded-xs border text-center transition-colors"
+            :class="s === selectedSize
+              ? 'border-ink-burgundy bg-ink-burgundy text-ink-bone'
+              : 'border-[var(--ink-line-strong)] text-ink-text-soft hover:border-ink-text-muted'"
             @click="selectedSize = s"
           >
             {{ s }}
@@ -373,13 +433,17 @@ function onZoomMove(e: MouseEvent) {
       </div>
 
       <!-- дисклеймер расхождения цвета (§7.3, §10) -->
-      <UAlert
-        color="neutral"
-        variant="subtle"
-        icon="i-lucide-info"
-        :title="$t('product.colorNote.title')"
-        :description="$t('product.colorNote.description')"
-      />
+      <!-- Panel (§3.3), а не UAlert: --ui-* у нас принудительно светлые (main.css),
+           поэтому UAlert рисовал светло-серую плашку посреди Ink Black-страницы.
+           Инпуты/селекты так оставлены сознательно — светлый контрол на тёмном
+           читается как контрол; а вот текстовая сноска обязана жить в среде. -->
+      <div class="flex items-start gap-3 rounded-md bg-ink-panel border border-[var(--ink-line)] p-4">
+        <UIcon name="i-lucide-info" class="size-5 shrink-0 text-ink-text-muted mt-0.5" />
+        <div>
+          <p class="font-semibold text-ink-text">{{ $t('product.colorNote.title') }}</p>
+          <p class="text-caption text-ink-text-soft mt-1">{{ $t('product.colorNote.description') }}</p>
+        </div>
+      </div>
     </div>
     </section>
 

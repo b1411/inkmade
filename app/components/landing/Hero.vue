@@ -200,11 +200,11 @@ onBeforeUnmount(() => ctx?.revert())
          края артборда, и по центру координаты печатались ровно поверх строки с ценой.
          Правый край свободен — фото там нет. Прячем на мобильном: 390px ширины на
          две микроподписи не хватает, они бы снова столкнулись. -->
-    <p
+    <div
       data-hero="note"
-      class="ink-label hidden lg:block absolute bottom-5 left-1/2 -translate-x-1/2 w-full max-w-(--container-max) px-4 text-right text-ink-bone/58 pointer-events-none"
+      class="hidden lg:block absolute bottom-5 left-1/2 -translate-x-1/2 w-full max-w-(--container-max) px-4 text-right pointer-events-none"
     >
-      43.2389° N, 76.8897° E · ALMATY, KAZAKHSTAN
-    </p>
+      <BrandCoordinates />
+    </div>
   </section>
 </template>

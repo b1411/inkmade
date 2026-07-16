@@ -32,8 +32,10 @@ const badgeLabel = computed(() => props.badge ?? (isNew.value ? t('catalog.card.
 </script>
 
 <template>
-  <UiAppCard :to="`/product/${product.slug}`" hover class="group h-full">
-    <div class="app-card-media relative aspect-4/5 bg-ink-gray-50">
+  <!-- Warm Card (§6.3), а не Paper: §3.3 прямо запрещает чистый белый под карточки
+       («сделает сайт холодным и дешёвым»). Карточка светлая даже на Ink Black. -->
+  <UiAppCard :to="`/product/${product.slug}`" hover class="group h-full bg-ink-card">
+    <div class="app-card-media relative aspect-4/5 bg-ink-card">
       <NuxtImg
         v-if="primary"
         :src="primary"
@@ -56,23 +58,25 @@ const badgeLabel = computed(() => props.badge ?? (isNew.value ? t('catalog.card.
       </div>
 
       <!-- Бейдж «Новинка» / ручная метка -->
+      <!-- «small badge» из §3.3 — бордо. Радиус 2px: капсула тут читалась как
+           SaaS-тег, а §5.5 задаёт бейджу тот же острый угол, что и кнопке. -->
       <span
         v-if="badgeLabel"
-        class="absolute top-3 left-3 z-10 ink-label rounded-full bg-ink-burgundy/95 text-ink-cream px-2.5 py-1 shadow-sm backdrop-blur-sm"
+        class="absolute top-3 left-3 z-10 ink-label rounded-xs bg-ink-burgundy/95 text-ink-bone px-2.5 py-1 shadow-sm backdrop-blur-sm"
       >{{ badgeLabel }}</span>
 
       <!-- Подсказка действия — проявляется по hover (десктоп) -->
       <div
         class="absolute inset-x-3 bottom-3 opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0"
       >
-        <span class="block w-full text-center rounded-full bg-ink-burgundy text-ink-cream text-sm font-semibold py-2.5">
+        <span class="block w-full text-center rounded-xs bg-ink-burgundy text-ink-bone text-sm font-semibold py-2.5">
           {{ $t('catalog.card.open') }}
         </span>
       </div>
     </div>
     <div class="p-4">
-      <p class="font-semibold group-hover:text-ink-burgundy transition-colors">{{ product.title }}</p>
-      <p class="text-ink-gray-600 mt-1">{{ $t('catalog.card.priceFrom', { price: formatPrice(product.base_price) }) }}</p>
+      <p class="font-semibold text-ink-text-dark group-hover:text-ink-burgundy transition-colors">{{ product.title }}</p>
+      <p class="text-caption text-ink-text-dark-soft mt-1">{{ $t('catalog.card.priceFrom', { price: formatPrice(product.base_price) }) }}</p>
     </div>
   </UiAppCard>
 </template>

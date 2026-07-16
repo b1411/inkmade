@@ -1,3 +1,5 @@
+import { INK_CANVAS } from '~~/shared/config/ink-system'
+
 // «Улетающее в корзину» превью (§6.3, §9.2). Клонирует снимок композиции и
 // анимирует его полёт к иконке корзины в шапке ([data-cart-icon]). Бейдж корзины
 // «отскакивает» сам (AppHeader следит за количеством). Гейт reduced-motion.
@@ -24,8 +26,9 @@ export function useFlyToCart() {
       overflow: 'hidden',
       zIndex: '9999',
       pointerEvents: 'none',
-      boxShadow: '0 8px 24px rgba(17,17,17,0.3)',
-      background: imageUrl ? `center/cover no-repeat url(${imageUrl})` : '#7a1f28',
+      // RGB Ink Black (§3.1); было 17,17,17 от прежнего чёрного.
+      boxShadow: '0 8px 24px rgba(8,11,13,0.3)',
+      background: imageUrl ? `center/cover no-repeat url(${imageUrl})` : INK_CANVAS.burgundy,
     })
     document.body.appendChild(clone)
 

@@ -3,7 +3,7 @@ import type { ProductWithRelations } from '~/types/models'
 import type { Json } from '~/types/database.types'
 import type { PrintMode } from '~~/shared/config/print-methods'
 import { DPI_MIN } from '~~/shared/config/zones'
-import { zonePresetsForMode, type BoundsMm } from '~~/shared/config/zones'
+import { zonePresetsForMode, type BoundsCanvas } from '~~/shared/config/zones'
 import { garmentKindForSlug } from '~~/shared/config/garment'
 
 // Шаг 4 — Зоны печати (§8.2.1). Зона валидна только для своего режима (§5.2.1).
@@ -86,25 +86,48 @@ async function onDelete(id: string) {
   }
 }
 
-// визуальный редактор зоны (§8.2.1)
+// визуальный редактор зоны (§8.2.1) — калибровка bounds_canvas (миграция 0087)
 const garmentKind = computed(() => garmentKindForSlug(props.product.slug ?? props.product.alias))
 const garmentColor = computed(() => props.product.variants?.[0]?.color_hex ?? '#cccccc')
-const visual = reactive({ open: false, zoneId: '', title: '', bounds: null as BoundsMm | null, maxW: 0, maxH: 0 })
+
+// Фото под калибровку выбираем ТОЙ ЖЕ логикой, что и кастомайзер (перёд/спина по
+// имени зоны, цвет — первый вариант): админ обязан калибровать ровно тот кадр,
+// который увидит покупатель, иначе зона уедет именно на этой разнице.
+function photoForZone(z: ProductWithRelations['print_zones'][number]): string | null {
+  const imgs = (props.product.product_images ?? []).filter(
+    i => i.kind === 'mockup' && !i.is_hidden && i.color_hex === garmentColor.value,
+  )
+  if (!imgs.length) return null
+  const isBack = /back|спин|зад/.test(`${z.name} ${z.title}`.toLowerCase())
+  const front = imgs.find(i => /пер[её]д|front/i.test(i.label ?? '')) ?? imgs[0]
+  const back = imgs.find(i => /спин|back|зад/i.test(i.label ?? ''))
+  return (isBack ? (back ?? front) : front)?.url ?? null
+}
+
+const visual = reactive({
+  open: false, zoneId: '', title: '',
+  boundsCanvas: null as BoundsCanvas | null,
+  widthMm: 0,
+  photoUrl: null as string | null,
+})
 function openVisual(z: ProductWithRelations['print_zones'][number]) {
   visual.zoneId = z.id
   visual.title = z.title
-  visual.bounds = (z.bounds_mm ?? null) as BoundsMm | null
-  visual.maxW = Number(z.max_width_mm) || 0
-  visual.maxH = Number(z.max_height_mm) || 0
+  visual.boundsCanvas = (z.bounds_canvas ?? null) as BoundsCanvas | null
+  visual.widthMm = Number(z.max_width_mm) || 0
+  visual.photoUrl = photoForZone(z)
   visual.open = true
 }
-async function onVisualSave(payload: { bounds_mm: BoundsMm; max_width_mm: number; max_height_mm: number }) {
+async function onVisualSave(payload: { bounds_canvas: BoundsCanvas; max_width_mm: number; max_height_mm: number }) {
   if (payload.max_width_mm <= 0 || payload.max_height_mm <= 0) {
     toast.add({ title: t('admin.wizard.zones.zoneTooSmall'), color: 'warning' }); return
   }
   try {
+    // bounds_mm не трогаем: колонка NOT NULL и осталась от старой модели, геометрию
+    // теперь задаёт bounds_canvas. Снимем bounds_mm отдельной миграцией, когда
+    // убедимся, что на неё больше никто не смотрит.
     await updateZone(visual.zoneId, {
-      bounds_mm: payload.bounds_mm as unknown as Json,
+      bounds_canvas: payload.bounds_canvas as unknown as Json,
       max_width_mm: payload.max_width_mm,
       max_height_mm: payload.max_height_mm,
     })
@@ -220,9 +243,9 @@ async function onMockup(zoneId: string, e: Event) {
         <AdminWizardZoneEditor
           :kind="garmentKind"
           :color-hex="garmentColor"
-          :bounds="visual.bounds"
-          :max-w="visual.maxW"
-          :max-h="visual.maxH"
+          :photo-url="visual.photoUrl"
+          :bounds-canvas="visual.boundsCanvas"
+          :width-mm="visual.widthMm"
           @save="onVisualSave"
         />
       </template>

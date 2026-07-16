@@ -20,7 +20,8 @@ const { data: categories } = await useAsyncData('catalog-categories', () => list
     <div>
       <UiSectionLabel accent>{{ $t('catalog.label') }}</UiSectionLabel>
       <h1 class="ink-display text-h1 mt-2">{{ $t('catalog.index.title') }}</h1>
-      <p class="text-lead text-ink-gray-600 mt-3">{{ $t('catalog.index.subtitle') }}</p>
+      <!-- Страница на Ink Black (§3.3), поэтому body — Text Secondary, а не Dark Soft. -->
+      <p class="text-lead text-ink-text-soft mt-3">{{ $t('catalog.index.subtitle') }}</p>
     </div>
 
     <UiEmptyState
@@ -32,10 +33,12 @@ const { data: categories } = await useAsyncData('catalog-categories', () => list
 
     <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       <UiReveal v-for="(c, i) in categories" :key="c.id" :delay="i * 60">
-        <UiAppCard :to="`/catalog/${c.slug}`" hover class="h-full">
+        <!-- Карточка остаётся светлой (Warm Card, §6.3): на Ink Black тёмным
+             становится окружение, а не сами карточки. Текст внутри — Text Dark. -->
+        <UiAppCard :to="`/catalog/${c.slug}`" hover class="h-full bg-ink-card">
           <div class="p-6 flex flex-col items-center gap-3 text-center">
             <UIcon :name="c.icon ?? 'i-lucide-package'" class="size-10 text-ink-burgundy" />
-            <span class="font-semibold">{{ c.title }}</span>
+            <span class="font-semibold text-ink-text-dark">{{ c.title }}</span>
           </div>
         </UiAppCard>
       </UiReveal>

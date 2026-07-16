@@ -1276,6 +1276,7 @@ export type Database = {
       }
       print_zones: {
         Row: {
+          bounds_canvas: Json | null
           bounds_mm: Json
           id: string
           max_height_mm: number | null
@@ -1289,6 +1290,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          bounds_canvas?: Json | null
           bounds_mm: Json
           id?: string
           max_height_mm?: number | null
@@ -1302,6 +1304,7 @@ export type Database = {
           title: string
         }
         Update: {
+          bounds_canvas?: Json | null
           bounds_mm?: Json
           id?: string
           max_height_mm?: number | null
@@ -1378,11 +1381,13 @@ export type Database = {
           category: string
           created_at: string
           description: string | null
+          fit: Json | null
           id: string
           is_active: boolean
           is_featured: boolean
           max_print_mm: Json | null
           max_size_label: string | null
+          size_chart: Json | null
           slug: string
           title: string
         }
@@ -1392,11 +1397,13 @@ export type Database = {
           category: string
           created_at?: string
           description?: string | null
+          fit?: Json | null
           id?: string
           is_active?: boolean
           is_featured?: boolean
           max_print_mm?: Json | null
           max_size_label?: string | null
+          size_chart?: Json | null
           slug: string
           title: string
         }
@@ -1406,11 +1413,13 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string | null
+          fit?: Json | null
           id?: string
           is_active?: boolean
           is_featured?: boolean
           max_print_mm?: Json | null
           max_size_label?: string | null
+          size_chart?: Json | null
           slug?: string
           title?: string
         }

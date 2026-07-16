@@ -23,7 +23,10 @@ const subtitle = computed(() => props.text || props.description)
       <span class="pointer-events-none absolute -inset-5 rounded-full border border-ink-burgundy/8" aria-hidden="true" />
     </div>
     <h3 class="ink-display text-h3 mt-7">{{ title }}</h3>
-    <p v-if="subtitle" class="text-ink-gray-600 mt-2 max-w-md">{{ subtitle }}</p>
+    <!-- Подпись наследует цвет контекста и гасится прозрачностью, а не берёт
+         фиксированный Dark Soft: компонент живёт и в светлых кабинетах, и на
+         Ink Black-каталоге — жёсткий тёмный текст там пропадал на тёмном. -->
+    <p v-if="subtitle" class="text-current/70 mt-2 max-w-md">{{ subtitle }}</p>
     <div v-if="$slots.default" class="mt-6"><slot /></div>
   </div>
 </template>

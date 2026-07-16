@@ -1,81 +1,104 @@
-<script setup lang="ts">
-import { GARMENT_VIEWBOX, GARMENT_PRINT_FRAME, garmentDataUri, type GarmentKind } from '~~/shared/config/garment'
-import type { BoundsMm } from '~~/shared/config/zones'
+﻿<script setup lang="ts">
+import { GARMENT_VIEWBOX, garmentDataUri, garmentImageRect, type GarmentKind } from '~~/shared/config/garment'
+import type { BoundsCanvas } from '~~/shared/config/zones'
 
-// Визуальный редактор зоны печати (§8.2.1). Админ перетаскивает/масштабирует
-// прямоугольник поверх силуэта изделия → bounds_mm (положение) + max_w/h_mm (размер).
-// Холст в координатах viewBox (460×540), контейнер масштабируется CSS — так
-// dragBoundFunc/координаты Konva остаются в единицах viewBox (как в кастомайзере).
+// Визуальный редактор зоны печати (§8.2.1) — калибровка bounds_canvas (миграция 0087).
+//
+// ЧТО ИЗМЕНИЛОСЬ И ПОЧЕМУ. Раньше редактор показывал ВЕКТОРНЫЙ СИЛУЭТ и выводил
+// миллиметры из прямоугольника через GARMENT_PRINT_FRAME (bodyPx+frameMm). Обе опоры
+// оказались негодными: покупателю холст рисует РЕАЛЬНОЕ ФОТО товара (другой кадр,
+// другие координаты), а сама связка давала разный масштаб по осям — круг превращался
+// в овал на 12%. Админ аккуратно ставил зону, а кастомайзер её выбрасывал: у груди
+// футболки выходило 374×468 px по центру холста вместо 122×172 на груди.
+//
+// Теперь редактор показывает ТО ЖЕ изображение, что увидит покупатель (та же раскладка
+// garmentImageRect), и сохраняет прямоугольник прямо в долях холста. Что нарисовал —
+// то и правда, переводить нечего.
+//
+// Физический размер вводится ОТДЕЛЬНО (ширина в мм), а высота выводится из пропорций
+// прямоугольника — так масштаб мм↔px по построению одинаков по обеим осям, и овал
+// вместо круга стал невозможен в принципе.
 const props = defineProps<{
   kind: GarmentKind
   colorHex: string
-  bounds: BoundsMm | null
-  maxW: number
-  maxH: number
+  /** Фото изделия для этой зоны (перёд/спина). Нет фото — фолбэк на силуэт. */
+  photoUrl?: string | null
+  boundsCanvas: BoundsCanvas | null
+  widthMm: number
 }>()
-const emit = defineEmits<{ save: [{ bounds_mm: BoundsMm; max_width_mm: number; max_height_mm: number }] }>()
+const emit = defineEmits<{ save: [{ bounds_canvas: BoundsCanvas; max_width_mm: number; max_height_mm: number }] }>()
 
 const VB = GARMENT_VIEWBOX
 const DISPLAY_W = 320
 const s = DISPLAY_W / VB.width
 
-const frame = computed(() => GARMENT_PRINT_FRAME[props.kind])
-const pxPerMmX = computed(() => frame.value.bodyPx.width / frame.value.frameMm.width)
-const pxPerMmY = computed(() => frame.value.bodyPx.height / frame.value.frameMm.height)
+// ── подложка: фото товара, иначе силуэт ──────────────────────────
+const photoImg = ref<HTMLImageElement | null>(null)
+watch(() => props.photoUrl, (url) => {
+  if (!url) { photoImg.value = null; return }
+  const img = new window.Image()
+  img.crossOrigin = 'anonymous'
+  img.onload = () => { photoImg.value = img }
+  img.onerror = () => { photoImg.value = null }
+  img.src = url
+}, { immediate: true })
 
-// силуэт изделия выбранного цвета
 const garmentImg = ref<HTMLImageElement | null>(null)
 watchEffect(() => {
   const img = new window.Image()
   img.onload = () => { garmentImg.value = img }
   img.src = garmentDataUri(props.kind, props.colorHex || '#cccccc')
 })
-const garmentConfig = computed(() => garmentImg.value
+
+const photoConfig = computed(() => {
+  const img = photoImg.value
+  if (!img) return null
+  return { image: img, ...garmentImageRect(img.width, img.height), listening: false }
+})
+const garmentConfig = computed(() => (!photoConfig.value && garmentImg.value)
   ? { image: garmentImg.value, x: 0, y: 0, width: VB.width, height: VB.height, listening: false }
   : null)
-
 const bgConfig = { x: 0, y: 0, width: VB.width, height: VB.height, fill: '#efe9df', listening: false }
-const bodyConfig = computed(() => ({ ...frame.value.bodyPx, stroke: '#9a9a9a', strokeWidth: 1, dash: [4, 4], listening: false }))
 
-// редактируемый прямоугольник зоны (координаты viewBox)
+// ── редактируемый прямоугольник (координаты холста) ──────────────
 const rect = reactive({ x: 0, y: 0, width: 0, height: 0 })
+
+// Клампим по холсту, а не по bodyPx: bodyPx — про силуэт, а зона калибруется по фото.
+// Верхняя граница нужна ещё и потому, что CHECK в БД требует x+width <= 1.
 function clampRect() {
-  const bp = frame.value.bodyPx
-  rect.width = Math.max(20, Math.min(rect.width, bp.width))
-  rect.height = Math.max(20, Math.min(rect.height, bp.height))
-  rect.x = Math.max(bp.x, Math.min(rect.x, bp.x + bp.width - rect.width))
-  rect.y = Math.max(bp.y, Math.min(rect.y, bp.y + bp.height - rect.height))
+  rect.width = Math.max(12, Math.min(rect.width, VB.width))
+  rect.height = Math.max(12, Math.min(rect.height, VB.height))
+  rect.x = Math.max(0, Math.min(rect.x, VB.width - rect.width))
+  rect.y = Math.max(0, Math.min(rect.y, VB.height - rect.height))
 }
 function initRect() {
-  const bp = frame.value.bodyPx
-  if (props.bounds && props.maxW > 0 && props.maxH > 0) {
-    rect.width = props.maxW * pxPerMmX.value
-    rect.height = props.maxH * pxPerMmY.value
-    rect.x = bp.x + (props.bounds.x || 0) * pxPerMmX.value
-    rect.y = bp.y + (props.bounds.y || 0) * pxPerMmY.value
+  const b = props.boundsCanvas
+  if (b && b.width > 0 && b.height > 0) {
+    rect.x = b.x * VB.width
+    rect.y = b.y * VB.height
+    rect.width = b.width * VB.width
+    rect.height = b.height * VB.height
   } else {
-    rect.width = bp.width * 0.6
-    rect.height = bp.height * 0.5
-    rect.x = bp.x + (bp.width - rect.width) / 2
-    rect.y = bp.y + (bp.height - rect.height) / 3
+    // Неоткалиброванная зона: даём разумную заготовку на груди, а не «во весь холст».
+    rect.width = VB.width * 0.26
+    rect.height = VB.height * 0.28
+    rect.x = (VB.width - rect.width) / 2
+    rect.y = VB.height * 0.24
   }
   clampRect()
 }
 onMounted(initRect)
-watch(() => [props.kind, props.bounds], initRect)
+watch(() => [props.kind, props.boundsCanvas], initRect)
 
 const rectConfig = computed(() => ({
   id: 'zone-rect',
   x: rect.x, y: rect.y, width: rect.width, height: rect.height,
-  fill: 'rgba(122,31,40,0.18)', stroke: '#7A1F28', strokeWidth: 2,
+  fill: 'rgba(126,31,45,0.18)', stroke: '#7E1F2D', strokeWidth: 2,
   draggable: true,
-  dragBoundFunc: (pos: { x: number; y: number }) => {
-    const bp = frame.value.bodyPx
-    return {
-      x: Math.max(bp.x, Math.min(pos.x, bp.x + bp.width - rect.width)),
-      y: Math.max(bp.y, Math.min(pos.y, bp.y + bp.height - rect.height)),
-    }
-  },
+  dragBoundFunc: (pos: { x: number; y: number }) => ({
+    x: Math.max(0, Math.min(pos.x, VB.width - rect.width)),
+    y: Math.max(0, Math.min(pos.y, VB.height - rect.height)),
+  }),
 }))
 
 function onDragEnd(e: { target: { x: () => number; y: () => number } }) {
@@ -95,24 +118,35 @@ function onTransformEnd(e: { target: any }) {
   clampRect()
 }
 
-// мм-вывод (живой)
-const mm = computed(() => ({
-  w: Math.round(rect.width / pxPerMmX.value),
-  h: Math.round(rect.height / pxPerMmY.value),
-  x: Math.max(0, Math.round((rect.x - frame.value.bodyPx.x) / pxPerMmX.value)),
-  y: Math.max(0, Math.round((rect.y - frame.value.bodyPx.y) / pxPerMmY.value)),
-}))
+// ── физический размер ────────────────────────────────────────────
+// Ширина — от админа. Высота ВЫВОДИТСЯ из пропорций прямоугольника: вводить её
+// руками = дать шанс задать масштаб по осям по-разному, а это и есть та ошибка,
+// от которой уходим.
+const widthMm = ref(props.widthMm > 0 ? props.widthMm : 200)
+watch(() => props.widthMm, v => { if (v > 0) widthMm.value = v })
+const heightMm = computed(() => {
+  if (!rect.width) return 0
+  return Math.round(widthMm.value * (rect.height / rect.width))
+})
+const pxPerMm = computed(() => (widthMm.value > 0 ? rect.width / widthMm.value : 0))
 
 function onSave() {
   emit('save', {
-    bounds_mm: { x: mm.value.x, y: mm.value.y, width: mm.value.w, height: mm.value.h },
-    max_width_mm: mm.value.w,
-    max_height_mm: mm.value.h,
+    bounds_canvas: {
+      x: +(rect.x / VB.width).toFixed(4),
+      y: +(rect.y / VB.height).toFixed(4),
+      width: +(rect.width / VB.width).toFixed(4),
+      height: +(rect.height / VB.height).toFixed(4),
+    },
+    max_width_mm: Math.round(widthMm.value),
+    max_height_mm: heightMm.value,
   })
 }
 
 // привязка трансформера к прямоугольнику
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stageRef = ref<{ getNode: () => any } | null>(null)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const trRef = ref<{ getNode: () => any } | null>(null)
 onMounted(() => nextTick(() => {
   const stage = stageRef.value?.getNode?.()
@@ -133,10 +167,10 @@ onMounted(() => nextTick(() => {
         <v-stage ref="stageRef" :config="{ width: VB.width, height: VB.height }">
           <v-layer>
             <v-rect :config="bgConfig" />
-            <v-image v-if="garmentConfig" :config="garmentConfig" />
-            <v-rect :config="bodyConfig" />
+            <v-image v-if="photoConfig" :config="photoConfig" />
+            <v-image v-else-if="garmentConfig" :config="garmentConfig" />
             <v-rect :config="rectConfig" @dragend="onDragEnd" @transformend="onTransformEnd" />
-            <v-transformer ref="trRef" :config="{ rotateEnabled: false, borderStroke: '#7A1F28', anchorStroke: '#7A1F28', keepRatio: false }" />
+            <v-transformer ref="trRef" :config="{ rotateEnabled: false, borderStroke: '#7E1F2D', anchorStroke: '#7E1F2D', keepRatio: false }" />
           </v-layer>
         </v-stage>
       </div>
@@ -144,17 +178,29 @@ onMounted(() => nextTick(() => {
 
     <div class="flex-1 space-y-3">
       <p class="text-caption text-ink-gray-600">{{ $t('admin.wizard.zoneEditor.instruction') }}</p>
+
+      <p v-if="!photoConfig" class="text-caption text-ink-warning flex items-start gap-1">
+        <UIcon name="i-lucide-triangle-alert" class="size-4 mt-0.5 shrink-0" />
+        {{ $t('admin.wizard.zoneEditor.noPhoto') }}
+      </p>
+
+      <UFormField :label="$t('admin.wizard.zoneEditor.widthMmLabel')">
+        <UInput v-model.number="widthMm" type="number" min="10" max="1000" />
+      </UFormField>
+
       <div class="grid grid-cols-2 gap-3 text-caption">
         <div class="border border-ink-gray-200 rounded-md p-2">
           <span class="text-ink-gray-400 block">{{ $t('admin.wizard.zoneEditor.printSize') }}</span>
-          <span class="font-semibold">{{ $t('admin.wizard.zoneEditor.sizeMm', { w: mm.w, h: mm.h }) }}</span>
+          <span class="font-semibold">{{ $t('admin.wizard.zoneEditor.sizeMm', { w: Math.round(widthMm), h: heightMm }) }}</span>
         </div>
         <div class="border border-ink-gray-200 rounded-md p-2">
-          <span class="text-ink-gray-400 block">{{ $t('admin.wizard.zoneEditor.edgeOffset') }}</span>
-          <span class="font-semibold">{{ $t('admin.wizard.zoneEditor.offsetMm', { x: mm.x, y: mm.y }) }}</span>
+          <span class="text-ink-gray-400 block">{{ $t('admin.wizard.zoneEditor.scale') }}</span>
+          <span class="font-semibold">{{ pxPerMm.toFixed(2) }} px/mm</span>
         </div>
       </div>
+
       <UButton color="primary" icon="i-lucide-check" block @click="onSave">{{ $t('admin.wizard.zoneEditor.saveZone') }}</UButton>
     </div>
   </div>
 </template>
+

@@ -19,6 +19,11 @@ const { validZones, zoneName, zone, zonesWithPlacements } = useDesign()
         {{ z.title }}
       </button>
     </div>
+    <!-- INK SYSTEM (§36.2): физический размер зоны. Конструктор — одно из мест,
+         где §36.2 это разрешает: здесь размер рабочая информация, а не декор.
+         Числа реальные, из print_zones. -->
+    <BrandPrintArea :width-mm="zone?.max_width_mm" :height-mm="zone?.max_height_mm" class="mt-2" />
+
     <!-- подсказка по зоне (§7.1, placement_hint) -->
     <p v-if="zone?.placement_hint" class="text-caption text-ink-gray-600 mt-2 flex items-start gap-1">
       <UIcon name="i-lucide-lightbulb" class="size-4 mt-0.5 shrink-0 text-ink-warning" />

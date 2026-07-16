@@ -1,5 +1,7 @@
 import type { ProductWithRelations, PrintZone, Material } from '~/types/models'
 import type { PrintMethod, PrintMode } from '~~/shared/config/print-methods'
+import type { BoundsCanvas } from '~~/shared/config/zones'
+import { INK_CANVAS } from '~~/shared/config/ink-system'
 
 // Состояние дизайна + спецификация нанесения (§5.2, §7.4).
 // Холст работает в px; масштаб мм↔px вычисляется ДИНАМИЧЕСКИ — каждая зона
@@ -153,22 +155,72 @@ export const useDesign = () => {
     return (product.value?.print_zones ?? []).find(z => z.name === name)
   }
 
-  // ── геометрия per-zone (чистые функции от мм-габаритов зоны) ────
+  // ── геометрия per-zone ──────────────────────────────────────────
+  // Основной путь — калибровка bounds_canvas (миграция 0087): прямоугольник зоны
+  // задан прямо в долях холста, поэтому положение и размер берутся как есть.
+  //
+  // Фолбэк ниже — прежняя формула «вписать зону в холст и отцентрировать». Она
+  // рисует зону НЕ ТАМ и втрое крупнее (у груди футболки 374×468 px вместо
+  // 122×172), потому что не знает, где на картинке изделие. Держим её только для
+  // неоткалиброванных зон: убрать сейчас = сломать превью там, где калибровки ещё
+  // нет. Каждая заполненная bounds_canvas выводит одну зону из-под фолбэка.
+  //
+  // Печатный файл в обоих случаях считается верно: exportPrintBlobs переводит
+  // экранные px в мм через pxPerMmForZone, то есть через ту же шкалу, что и rect.
+  // Врало именно превью — цифры в цех уходили правильные.
   function dimsOf(z?: PrintZone) {
     return { wmm: Number(z?.max_width_mm) || 200, hmm: Number(z?.max_height_mm) || 250 }
   }
+
+  function canvasBoundsOf(z?: PrintZone): BoundsCanvas | null {
+    const b = z?.bounds_canvas as BoundsCanvas | null | undefined
+    if (!b || typeof b.width !== 'number' || typeof b.height !== 'number') return null
+    if (!(b.width > 0) || !(b.height > 0)) return null
+    return b
+  }
+
+  function rectFor(z?: PrintZone) {
+    const b = canvasBoundsOf(z)
+    if (b) {
+      return {
+        x: b.x * CANVAS.width,
+        y: b.y * CANVAS.height,
+        width: b.width * CANVAS.width,
+        height: b.height * CANVAS.height,
+      }
+    }
+    const { wmm, hmm } = dimsOf(z)
+    const ppm = pxPerMmFor(z)
+    return {
+      x: (CANVAS.width - wmm * ppm) / 2,
+      y: (CANVAS.height - hmm * ppm) / 2,
+      width: wmm * ppm,
+      height: hmm * ppm,
+    }
+  }
+
+  // Масштаб мм↔px. У откалиброванной зоны он ВЫВОДИТСЯ из её же ширины, поэтому
+  // единый по обеим осям по построению: круг на экране остаётся кругом в печати.
+  // (В старой связке bodyPx 220×330 под frameMm 360×480 масштабы по осям
+  // расходились на 12% — овал вместо круга.)
   function pxPerMmFor(z?: PrintZone): number {
+    const b = canvasBoundsOf(z)
+    if (b) {
+      const { wmm } = dimsOf(z)
+      return (b.width * CANVAS.width) / wmm
+    }
     const { wmm, hmm } = dimsOf(z)
     return Math.min((CANVAS.width - ZONE_PAD * 2) / wmm, (CANVAS.height - ZONE_PAD * 2) / hmm)
   }
-  function rectFor(z?: PrintZone) {
-    const { wmm, hmm } = dimsOf(z)
-    const ppm = pxPerMmFor(z)
-    const w = wmm * ppm
-    const h = hmm * ppm
-    return { x: (CANVAS.width - w) / 2, y: (CANVAS.height - h) / 2, width: w, height: h }
-  }
+
   function pxPerMmForZone(name: string): number { return pxPerMmFor(zoneByName(name)) }
+  /**
+   * Rect зоны по имени — для экспорта печатного файла. Экспорт ОБЯЗАН брать rect
+   * отсюда, а не считать его сам: раньше он дублировал формулу центрирования, и
+   * с приходом bounds_canvas это разошлось бы с превью — совпала бы только
+   * ширина, а кроп поехал бы по x/y, то есть в цех ушёл бы не тот кусок макета.
+   */
+  function rectForZone(name: string) { return rectFor(zoneByName(name)) }
 
   // активная зона
   const pxPerMm = computed(() => pxPerMmFor(zone.value))
@@ -269,7 +321,7 @@ export const useDesign = () => {
     const side = Math.min(r.width, r.height) * 0.4
     const pl: Placement = {
       id: nextId(), kind: 'shape', zone: zoneName.value, shapeType,
-      fill: opts?.fill ?? '#7A1F28', stroke: opts?.stroke, strokeWidth: opts?.strokeWidth, opacity: 1,
+      fill: opts?.fill ?? INK_CANVAS.burgundy, stroke: opts?.stroke, strokeWidth: opts?.strokeWidth, opacity: 1,
       x: r.x + (r.width - side) / 2,
       y: r.y + (r.height - side) / 2,
       width: side, height: shapeType === 'line' ? Math.max(6, side * 0.06) : side, rotation: 0,
@@ -321,7 +373,7 @@ export const useDesign = () => {
       if (p.kind === 'shape' || p.source === 'shape') {
         next.push({
           id: nextId(), kind: 'shape', zone: zn, x, y, width, height, rotation,
-          shapeType: (p.shape_type as ShapeType) ?? 'rect', fill: p.fill ?? '#7A1F28',
+          shapeType: (p.shape_type as ShapeType) ?? 'rect', fill: p.fill ?? INK_CANVAS.burgundy,
           stroke: p.stroke, strokeWidth: p.stroke_width, opacity: p.opacity ?? 1, locked: p.locked,
         })
       } else if (p.source === 'text') {
@@ -525,7 +577,7 @@ export const useDesign = () => {
   return {
     product, materialId, zoneName, productColorHex, placements, selectedId, colorCount,
     material, printMode, validZones, zone, zoneRect, pxPerMm, hasText, compositionUrl, printFiles,
-    activePlacements, zonesWithPlacements, pxPerMmForZone, atPlacementLimit, MAX_PLACEMENTS,
+    activePlacements, zonesWithPlacements, pxPerMmForZone, rectForZone, atPlacementLimit, MAX_PLACEMENTS,
     canUndo, canRedo, undo, redo,
     init, loadSpec, addImage, addText, addShape, updatePlacement, removePlacement,
     duplicatePlacement, reorder, replaceImageAsset, alignInZone, sizeCm, dpiOf, toMm, toSpec,
