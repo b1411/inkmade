@@ -2,6 +2,7 @@
 // Выбор зоны (§7.1). Показываем только зоны, валидные для режима материала (§5.2.1).
 // Точка-индикатор — в зоне уже что-то расставлено (мультизона §7.1).
 const { validZones, zoneName, zone, zonesWithPlacements } = useDesign()
+defineProps<{ advanced?: boolean }>()
 </script>
 
 <template>
@@ -22,7 +23,7 @@ const { validZones, zoneName, zone, zonesWithPlacements } = useDesign()
     <!-- INK SYSTEM (§36.2): физический размер зоны. Конструктор — одно из мест,
          где §36.2 это разрешает: здесь размер рабочая информация, а не декор.
          Числа реальные, из print_zones. -->
-    <BrandPrintArea :width-mm="zone?.max_width_mm" :height-mm="zone?.max_height_mm" class="mt-2" />
+    <BrandPrintArea v-if="advanced" :width-mm="zone?.max_width_mm" :height-mm="zone?.max_height_mm" class="mt-2" />
 
     <!-- подсказка по зоне (§7.1, placement_hint) -->
     <p v-if="zone?.placement_hint" class="text-caption text-ink-gray-600 mt-2 flex items-start gap-1">

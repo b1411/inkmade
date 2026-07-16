@@ -8,11 +8,11 @@ const points = computed(() =>
 </script>
 
 <template>
-  <section class="w-screen ml-[calc(50%-50vw)] bg-ink-black text-ink-cream/70 border-y border-white/10">
-    <div class="mx-auto max-w-(--container-max) px-4 py-4">
-      <UiReveal :y="12" :duration="600">
-        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 ink-label text-center">
-          <li v-for="p in points" :key="p" class="inline-flex items-center gap-2">
+  <section class="w-screen ml-[calc(50%-50vw)] overflow-hidden border-y border-white/10 bg-ink-black text-ink-cream/70">
+    <div class="mx-auto max-w-(--container-max) overflow-x-auto px-4">
+      <UiReveal :y="12" :duration="600" class="min-w-max">
+        <ul class="flex min-h-12 items-center gap-6 ink-label text-center lg:min-w-0 lg:justify-center">
+          <li v-for="p in points" :key="p" class="inline-flex shrink-0 items-center gap-2">
             <UIcon name="i-lucide-check" class="size-3.5 shrink-0 text-ink-burgundy-light" />
             <span>{{ p }}</span>
           </li>

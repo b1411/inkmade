@@ -3,11 +3,16 @@ import { test, expect } from '@playwright/test'
 // E2E конструктора INKMADE. Сценарий не делает сетевых записей в Storage
 // (никаких загрузок файлов и add-to-cart, который выгружает артефакты) —
 // проверяем рендер, реактивность панели, мультизону, undo/redo, шелкографию.
-const ALIAS = 'oversize-tee'
+const ALIAS = 'tshirt'
+
+async function waitForCustomizer(page: import('@playwright/test').Page) {
+  await expect(page.locator('.customizer-dark')).toHaveAttribute('data-ready', 'true')
+}
 
 test.describe('Конструктор', () => {
   test('страница и базовые контролы рендерятся', async ({ page }) => {
     await page.goto(`/customize/${ALIAS}`)
+    await waitForCustomizer(page)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Загрузить принт' })).toBeVisible()
     await expect(page.getByText('Итого', { exact: true }).first()).toBeVisible()
@@ -16,6 +21,8 @@ test.describe('Конструктор', () => {
 
   test('добавление текста создаёт слой и активирует undo', async ({ page }) => {
     await page.goto(`/customize/${ALIAS}`)
+    await waitForCustomizer(page)
+    await page.getByRole('button', { name: 'advanced', exact: true }).click()
     await page.getByRole('button', { name: 'Текст', exact: true }).click()
     const input = page.getByPlaceholder('Имя или надпись')
     await expect(input).toBeVisible()
@@ -33,6 +40,8 @@ test.describe('Конструктор', () => {
 
   test('добавление фигуры появляется в слоях', async ({ page }) => {
     await page.goto(`/customize/${ALIAS}`)
+    await waitForCustomizer(page)
+    await page.getByRole('button', { name: 'advanced', exact: true }).click()
     await page.getByRole('button', { name: 'Фигуры', exact: true }).click()
     // кнопка фигуры по title (квадрат)
     await page.getByRole('button', { name: 'Прямоугольник' }).click()
@@ -42,6 +51,7 @@ test.describe('Конструктор', () => {
 
   test('переключение зоны печати работает', async ({ page }) => {
     await page.goto(`/customize/${ALIAS}`)
+    await waitForCustomizer(page)
     await expect(page.getByText('Зона нанесения')).toBeVisible()
     // зона «Спина» должна присутствовать у текстиля
     const back = page.getByRole('button', { name: 'Спина' })

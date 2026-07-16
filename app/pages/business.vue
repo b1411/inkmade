@@ -1,22 +1,15 @@
 <script setup lang="ts">
-// Посадочная B2B «INKMADE для команд». Расширенная подача + FAQ + вход в self-serve
-// открытие магазина. Публичная; гейт роута — feature-flags middleware (404 при
-// выключенном b2bShops). Форма заявки (shop_applications + админ-approve + claim-ссылка)
-// заменена прямым созданием магазина владельцем: /shop-new → RPC create_my_shop (0086).
 const { t, locale } = useI18n()
 const user = useSupabaseUser()
 const { public: { siteUrl } } = useRuntimeConfig()
 const site = (siteUrl as string) || 'https://inkmade.kz'
 
-// гость → логин с возвратом на форму создания (login/register пробрасывают ?redirect)
 const startTo = computed(() => (user.value ? '/shop-new' : '/login?redirect=/shop-new'))
-
-// у вошедшего владельца магазин уже может быть — тогда ведём в кабинет, а не на создание
 const { getMine } = useMyShop()
 const { data: myShop } = await useAsyncData(
   'business-my-shop',
   () => (user.value ? getMine() : Promise.resolve(null)),
-  { watch: [user] },
+  { watch: [user] }
 )
 
 useSeoMeta({
@@ -25,132 +18,245 @@ useSeoMeta({
   ogTitle: t('business.seo.title'),
   ogDescription: t('business.seo.description'),
   ogType: 'website',
-  ogUrl: `${site}/business`,
+  ogUrl: `${site}/business`
 })
 
 const steps = computed(() => [0, 1, 2].map(i => ({
-  icon: ['i-lucide-send', 'i-lucide-store', 'i-lucide-truck'][i],
+  icon: ['i-lucide-send', 'i-lucide-store', 'i-lucide-truck'][i]!,
   title: t(`business.cta.steps[${i}].title`),
-  text: t(`business.cta.steps[${i}].text`),
+  text: t(`business.cta.steps[${i}].text`)
 })))
-
 const benefits = computed(() => [0, 1, 2, 3, 4, 5].map(i => ({
-  icon: ['i-lucide-wallet', 'i-lucide-package-open', 'i-lucide-palette', 'i-lucide-percent', 'i-lucide-shield-check', 'i-lucide-bar-chart-3'][i],
+  icon: ['i-lucide-wallet', 'i-lucide-package-open', 'i-lucide-palette', 'i-lucide-percent', 'i-lucide-shield-check', 'i-lucide-bar-chart-3'][i]!,
   title: t(`business.benefits[${i}].title`),
-  text: t(`business.benefits[${i}].text`),
+  text: t(`business.benefits[${i}].text`)
 })))
-
 const faq = computed(() => [0, 1, 2, 3, 4].map(i => ({
   q: t(`business.faq.items[${i}].q`),
-  a: t(`business.faq.items[${i}].a`),
+  a: t(`business.faq.items[${i}].a`)
 })))
-
 const startPoints = computed(() => [0, 1, 2].map(i => t(`business.start.points[${i}]`)))
+
+const audiences = computed(() => {
+  const ru = ['Университетам и школам', 'Компаниям и стартапам', 'Креаторам и блогерам', 'Спортивным командам', 'Ивентам и фестивалям', 'Crew и сообществам']
+  const kk = ['Университеттер мен мектептерге', 'Компаниялар мен стартаптарға', 'Креаторлар мен блогерлерге', 'Спорт командаларына', 'Ивенттер мен фестивальдерге', 'Crew және қауымдастықтарға']
+  const titles = locale.value === 'kk' ? kk : ru
+  const images = ['idea-typography', 'idea-graphic', 'idea-abstract', 'idea-minimal', 'idea-culture', 'idea-art']
+  const icons = ['i-lucide-landmark', 'i-lucide-building-2', 'i-lucide-podcast', 'i-lucide-trophy', 'i-lucide-party-popper', 'i-lucide-users-round']
+  return titles.map((title, index) => ({ title, image: `/media/ideas/${images[index]}-v01.webp`, icon: icons[index] }))
+})
+
+const merch = computed(() => [
+  { title: locale.value === 'kk' ? 'Oversize худи' : 'Худи Oversize', price: 19990, src: '/media/products/on-body/oversize-v01.webp' },
+  { title: locale.value === 'kk' ? 'Oversize футболка' : 'Футболка Oversize', price: 9990, src: '/media/products/blank/oversize-v01.webp' },
+  { title: locale.value === 'kk' ? 'INKMADE кепкасы' : 'Кепка INKMADE', price: 5990, src: '/media/products/blank/cap-v01.webp' },
+  { title: locale.value === 'kk' ? 'Relaxed поло' : 'Поло Relaxed', price: 8990, src: '/media/products/blank/polo-v01.webp' }
+])
+
+const copy = computed(() => locale.value === 'kk'
+  ? {
+      heroTitle: 'Кигің келетін мерч-дүкен.',
+      heroSecondary: 'Мысалдарды көру',
+      proof: ['Премиум сапа', '1 данадан баспа', 'Артық қорсыз', 'ҚР бойынша жеткізу'],
+      audiencesLabel: 'Кімге арналған',
+      audiencesTitle: 'Адамдарды біріктіретін мерч.',
+      economyLabel: 'Адал экономика',
+      economyTitle: 'Көбірек сатасыз — көбірек табасыз.',
+      cost: 'Oversize худидің өзіндік құны',
+      markup: 'Сіздің үстемеңіз',
+      client: 'Клиент бағасы',
+      profit: '1 сатылымнан пайда',
+      merchLabel: 'Кигің келетін мерч',
+      faqLabel: 'Сұрақтар және іске қосу'
+    }
+  : {
+      heroTitle: 'Мерч-магазин, который хотят носить.',
+      heroSecondary: 'Смотреть примеры',
+      proof: ['Премиальное качество', 'Печать от 1 вещи', 'Без перепродаж', 'Доставка по Казахстану'],
+      audiencesLabel: 'Кому подойдёт',
+      audiencesTitle: 'Создавайте мерч, который объединяет.',
+      economyLabel: 'Честная экономика',
+      economyTitle: 'Больше продаёте — больше зарабатываете.',
+      cost: 'Себестоимость худи Oversize',
+      markup: 'Ваша наценка',
+      client: 'Цена для клиента',
+      profit: 'Прибыль с 1 продажи',
+      merchLabel: 'Мерч, который хотят носить',
+      faqLabel: 'Вопросы и запуск'
+    })
 </script>
 
 <template>
-  <div>
-    <!-- Hero -->
-    <section class="ink-grain w-screen ml-[calc(50%-50vw)] bg-ink-black text-ink-cream relative overflow-hidden">
-      <div class="absolute inset-0 m-auto size-[36rem] rounded-full bg-ink-burgundy/25 blur-3xl ink-ambient-a" />
-      <div class="relative mx-auto max-w-(--container-max) px-4 text-center" style="padding-block: var(--section-pad)">
-        <UiReveal>
-          <span class="ink-label text-ink-burgundy-light">{{ $t('business.hero.label') }}</span>
-          <h1 :key="locale" class="ink-hero text-hero mt-3">{{ $t('business.hero.title') }}</h1>
-          <p class="text-lead mt-5 text-ink-cream/80 max-w-2xl mx-auto">{{ $t('business.hero.subtitle') }}</p>
-          <div class="mt-8 flex flex-wrap justify-center gap-4">
-            <UiAppButton to="#apply" variant="primary" size="xl" on-dark magnetic>{{ $t('business.hero.cta') }}</UiAppButton>
+  <div class="w-screen ml-[calc(50%-50vw)] bg-ink-bone text-ink-text-dark">
+    <section class="relative min-h-[640px] overflow-hidden bg-ink-black text-white lg:min-h-[720px]" aria-labelledby="business-title">
+      <img src="/media/campaigns/b2b-campus-v01.webp" alt="Команда в фирменном мерче INKMADE" class="absolute inset-0 size-full object-cover object-[62%_center]" loading="eager" fetchpriority="high">
+      <div class="absolute inset-0 bg-[linear-gradient(90deg,#080b0d_0%,rgba(8,11,13,.98)_30%,rgba(8,11,13,.72)_50%,rgba(8,11,13,.08)_82%)]" />
+      <div class="relative mx-auto flex min-h-[640px] max-w-(--container-max) flex-col justify-end px-4 pb-14 pt-24 lg:min-h-[720px] lg:justify-center lg:pb-20">
+        <div class="max-w-2xl">
+          <UiSectionLabel class="text-white/55">{{ $t('business.hero.label') }} / B2B</UiSectionLabel>
+          <h1 id="business-title" :key="locale" class="ink-display mt-4 text-[clamp(3.4rem,7vw,7.4rem)] leading-[.8] tracking-[-.055em]">{{ copy.heroTitle }}</h1>
+          <p class="mt-6 max-w-xl text-base leading-relaxed text-white/72 sm:text-lg">{{ $t('business.hero.subtitle') }}</p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <UiAppButton to="#apply" variant="primary" size="xl" on-dark trailing-icon="i-lucide-arrow-right">{{ $t('business.hero.cta') }}</UiAppButton>
+            <UiAppButton to="#examples" variant="secondary" size="xl" on-dark>{{ copy.heroSecondary }}</UiAppButton>
           </div>
-        </UiReveal>
+        </div>
+      </div>
+      <div class="absolute inset-x-0 bottom-0 hidden border-t border-white/10 bg-black/45 backdrop-blur-sm lg:block">
+        <div class="mx-auto grid max-w-(--container-max) grid-cols-4 px-4">
+          <div v-for="(item, index) in copy.proof" :key="item" class="flex min-h-14 items-center justify-center gap-2 font-mono text-[10px] uppercase tracking-[.1em] text-white/60" :class="index ? 'border-l border-white/10' : ''">
+            <UIcon :name="['i-lucide-badge-check','i-lucide-package-open','i-lucide-box','i-lucide-truck'][index]" class="size-4 text-ink-burgundy-hover" />
+            {{ item }}
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Как это работает -->
-    <section style="padding-block: var(--section-pad)">
-      <UiSectionLabel accent>{{ $t('business.how.label') }}</UiSectionLabel>
-      <h2 class="ink-display text-h2 mt-2 mb-10">{{ $t('business.how.title') }}</h2>
-      <div class="grid gap-8 md:grid-cols-3">
-        <UiReveal v-for="(s, i) in steps" :key="i" :delay="i * 90">
-          <div class="flex h-full flex-col gap-3">
-            <div class="flex items-center gap-3">
-              <span class="flex size-12 items-center justify-center rounded-full bg-ink-burgundy text-ink-cream shrink-0">
-                <UIcon :name="s.icon" class="size-6" />
-              </span>
-              <span class="font-mono text-body text-ink-gray-400">0{{ i + 1 }}</span>
-            </div>
-            <h3 class="font-bold text-h3">{{ s.title }}</h3>
-            <p class="text-ink-gray-600">{{ s.text }}</p>
+    <section class="mx-auto max-w-(--container-max) px-4 py-14 lg:py-20">
+      <div class="grid gap-8 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <UiSectionLabel accent>{{ $t('business.benefitsLabel') }}</UiSectionLabel>
+          <h2 class="ink-display mt-3 text-h1">{{ $t('business.benefitsTitle') }}</h2>
+          <div class="mt-8 grid gap-x-7 gap-y-6 sm:grid-cols-2">
+            <article v-for="benefit in benefits" :key="benefit.title" class="border-t border-black/10 pt-4">
+              <div class="flex items-center gap-3">
+                <span class="grid size-9 place-items-center rounded-full bg-ink-burgundy text-white"><UIcon :name="benefit.icon" class="size-4" /></span>
+                <h3 class="font-bold">{{ benefit.title }}</h3>
+              </div>
+              <p class="mt-3 text-sm leading-relaxed text-ink-text-dark-soft">{{ benefit.text }}</p>
+            </article>
           </div>
-        </UiReveal>
-      </div>
-    </section>
+        </div>
 
-    <!-- Преимущества -->
-    <section style="padding-block: var(--section-pad)">
-      <UiSectionLabel accent>{{ $t('business.benefitsLabel') }}</UiSectionLabel>
-      <h2 class="ink-display text-h2 mt-2 mb-10">{{ $t('business.benefitsTitle') }}</h2>
-      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <UiReveal v-for="(b, i) in benefits" :key="i" :delay="i * 70">
-          <div class="group h-full rounded-2xl border border-ink-cream-dark bg-ink-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-ink-burgundy/40 hover:shadow-md">
-            <span class="flex size-11 items-center justify-center rounded-full bg-ink-burgundy/10 text-ink-burgundy transition-colors group-hover:bg-ink-burgundy group-hover:text-ink-cream">
-              <UIcon :name="b.icon" class="size-5" />
-            </span>
-            <h3 class="font-bold text-h3 mt-4">{{ b.title }}</h3>
-            <p class="text-ink-gray-600 mt-2">{{ b.text }}</p>
-          </div>
-        </UiReveal>
-      </div>
-    </section>
-
-    <!-- Открытие магазина (self-serve) + FAQ -->
-    <section id="apply" class="w-screen ml-[calc(50%-50vw)] bg-ink-cream/40" style="scroll-margin-top: 80px">
-      <div class="mx-auto max-w-(--container-max) px-4 grid gap-12 lg:grid-cols-2 items-start" style="padding-block: var(--section-pad)">
-        <UiReveal>
-          <div>
-            <UiSectionLabel accent>{{ $t('business.start.label') }}</UiSectionLabel>
-            <h2 class="ink-display text-h2 mt-2">{{ $t('business.start.title') }}</h2>
-            <p class="text-lead text-ink-gray-600 mt-4">{{ $t('business.start.subtitle') }}</p>
-
-            <div class="mt-10 space-y-3">
-              <details v-for="(f, i) in faq" :key="i" class="group rounded-xl border border-ink-cream-dark bg-ink-white px-5 py-4">
-                <summary class="flex cursor-pointer items-center justify-between gap-3 font-semibold list-none">
-                  {{ f.q }}
-                  <UIcon name="i-lucide-plus" class="size-4 shrink-0 text-ink-gray-400 transition-transform group-open:rotate-45" />
-                </summary>
-                <p class="text-ink-gray-600 mt-3">{{ f.a }}</p>
-              </details>
+        <div class="grid gap-3 sm:grid-cols-[1.7fr_1fr] lg:col-span-7">
+          <div class="relative min-h-[520px] overflow-hidden bg-ink-black">
+            <img src="/media/campaigns/b2b-campus-v01.webp" alt="Коллекция команды" class="absolute inset-0 size-full object-cover object-center" loading="lazy">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            <div class="absolute inset-x-0 bottom-0 p-6 text-white">
+              <p class="font-mono text-[10px] uppercase tracking-[.14em] text-white/55">ALMA UNIVERSITY / CASE 001</p>
+              <p class="ink-display mt-2 max-w-sm text-4xl">Создано нами. Носится каждый день.</p>
             </div>
           </div>
-        </UiReveal>
-
-        <UiReveal :delay="80">
-          <div class="rounded-2xl border border-ink-cream-dark bg-ink-white p-6 sm:p-8">
-            <span class="flex size-14 items-center justify-center rounded-full bg-ink-burgundy text-ink-cream">
-              <UIcon name="i-lucide-store" class="size-7" />
-            </span>
-            <h3 class="ink-display text-h2 mt-5">{{ $t('business.cta.title') }}</h3>
-
-            <ul class="mt-6 space-y-3">
-              <li v-for="(p, i) in startPoints" :key="i" class="flex items-start gap-3">
-                <UIcon name="i-lucide-check-circle-2" class="size-5 shrink-0 text-ink-success mt-0.5" />
-                <span class="text-ink-gray-600">{{ p }}</span>
-              </li>
-            </ul>
-
-            <!-- владелец с магазином → в кабинет; остальные → создание (гость через логин) -->
-            <template v-if="myShop">
-              <p class="text-ink-gray-600 mt-6">{{ $t('business.start.hasShop') }}</p>
-              <UiAppButton to="/shop-admin" variant="primary" size="lg" block class="mt-3">
-                {{ $t('business.start.toCabinet') }}
-              </UiAppButton>
-            </template>
-            <UiAppButton v-else :to="startTo" variant="primary" size="lg" block class="mt-8">
-              {{ $t('business.start.action') }}
-            </UiAppButton>
-
-            <p class="text-caption text-ink-gray-400 text-center mt-4">{{ $t('business.cta.note') }}</p>
+          <div class="border border-black/10 bg-ink-raised p-3 text-white">
+            <div class="flex items-center justify-between border-b border-white/10 px-2 pb-3">
+              <p class="font-mono text-[10px] uppercase tracking-[.12em] text-white/55">Товары</p>
+              <span class="size-2 rounded-full bg-ink-burgundy-hover" />
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-1">
+              <div v-for="item in merch.slice(0, 3)" :key="item.title" class="bg-[#e9e4dc] p-2 text-ink-black">
+                <NuxtImg :src="item.src" :alt="item.title" class="aspect-square w-full object-cover" sizes="180px" />
+                <p class="mt-2 text-xs font-bold">{{ item.title }}</p>
+                <p class="font-mono text-[9px] text-black/55">{{ formatPrice(item.price) }}</p>
+              </div>
+            </div>
           </div>
-        </UiReveal>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-y border-black/10 bg-[#eee9e1]">
+      <div class="mx-auto max-w-(--container-max) px-4 py-10">
+        <UiSectionLabel accent>{{ $t('business.how.label') }}</UiSectionLabel>
+        <div class="mt-5 grid gap-6 lg:grid-cols-[1fr_1fr_1fr_1.25fr]">
+          <article v-for="(step, index) in steps" :key="step.title" class="relative border-t border-black/15 pt-4 lg:border-r lg:border-t-0 lg:pr-6">
+            <span class="font-mono text-xs text-ink-burgundy">0{{ index + 1 }}</span>
+            <h3 class="mt-2 font-display text-xl font-black uppercase">{{ step.title }}</h3>
+            <p class="mt-2 text-sm text-ink-text-dark-soft">{{ step.text }}</p>
+          </article>
+          <div class="bg-ink-burgundy p-6 text-white">
+            <p class="font-mono text-[10px] uppercase tracking-[.12em] text-white/60">START / 3 DAYS</p>
+            <p class="font-display mt-2 text-2xl font-black uppercase">{{ $t('business.start.title') }}</p>
+            <UiAppButton to="#apply" variant="secondary" size="md" on-dark class="mt-5" trailing-icon="i-lucide-arrow-right">{{ $t('business.hero.cta') }}</UiAppButton>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="examples" class="mx-auto max-w-(--container-max) px-4 py-14 lg:py-20">
+      <UiSectionLabel accent>{{ copy.audiencesLabel }}</UiSectionLabel>
+      <h2 class="ink-display mt-3 text-h1">{{ copy.audiencesTitle }}</h2>
+      <div class="mt-7 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 lg:grid lg:grid-cols-6 lg:overflow-visible lg:pb-0">
+        <article v-for="audience in audiences" :key="audience.title" class="group relative aspect-[.76] min-w-[68vw] snap-start overflow-hidden bg-ink-black sm:min-w-[36vw] lg:min-w-0">
+          <NuxtImg :src="audience.image" :alt="audience.title" class="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105" sizes="(max-width: 1023px) 70vw, 240px" loading="lazy" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+          <div class="absolute inset-x-0 bottom-0 p-4 text-white">
+            <UIcon :name="audience.icon" class="size-6 text-white/75" />
+            <p class="mt-3 font-display text-xl font-black uppercase leading-[.92]">{{ audience.title }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="border-y border-black/10 bg-[#eee9e1]">
+      <div class="mx-auto max-w-(--container-max) px-4 py-12">
+        <UiSectionLabel accent>{{ copy.economyLabel }}</UiSectionLabel>
+        <h2 class="ink-display mt-2 max-w-2xl text-h2">{{ copy.economyTitle }}</h2>
+        <div class="mt-8 grid border border-black/10 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="p-5 lg:p-7">
+            <p class="text-xs uppercase text-ink-text-dark-soft">{{ copy.cost }}</p>
+            <p class="mt-3 font-display text-3xl font-black">11 990 ₸</p>
+          </div>
+          <div class="border-t border-black/10 p-5 sm:border-l sm:border-t-0 lg:p-7">
+            <p class="text-xs uppercase text-ink-text-dark-soft">{{ copy.markup }}</p>
+            <p class="mt-3 font-display text-3xl font-black">+ 8 000 ₸</p>
+          </div>
+          <div class="border-t border-black/10 p-5 lg:border-l lg:border-t-0 lg:p-7">
+            <p class="text-xs uppercase text-ink-text-dark-soft">{{ copy.client }}</p>
+            <p class="mt-3 font-display text-3xl font-black">19 990 ₸</p>
+          </div>
+          <div class="bg-ink-burgundy p-5 text-white sm:border-l sm:border-black/10 lg:p-7">
+            <p class="text-xs uppercase text-white/65">{{ copy.profit }}</p>
+            <p class="mt-3 font-display text-4xl font-black">8 000 ₸</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mx-auto max-w-(--container-max) px-4 py-14 lg:py-20">
+      <UiSectionLabel accent>{{ copy.merchLabel }}</UiSectionLabel>
+      <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <article v-for="item in merch" :key="item.title" class="border border-black/10 bg-[#eee9e1]">
+          <NuxtImg :src="item.src" :alt="item.title" class="aspect-[4/5] w-full object-cover" sizes="(max-width: 1023px) 50vw, 350px" loading="lazy" />
+          <div class="p-4">
+            <p class="font-bold">{{ item.title }}</p>
+            <p class="mt-1 font-mono text-[10px] text-ink-text-dark-soft">{{ formatPrice(item.price) }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="apply" class="bg-ink-black text-white" style="scroll-margin-top: 80px">
+      <div class="mx-auto grid max-w-(--container-max) gap-10 px-4 py-14 lg:grid-cols-2 lg:py-20">
+        <div>
+          <UiSectionLabel class="text-white/45">{{ copy.faqLabel }}</UiSectionLabel>
+          <h2 class="ink-display mt-3 text-h1">{{ $t('business.start.title') }}</h2>
+          <p class="mt-4 max-w-xl text-ink-text-soft">{{ $t('business.start.subtitle') }}</p>
+          <div class="mt-8 space-y-2">
+            <details v-for="item in faq" :key="item.q" class="group border border-white/10 bg-ink-panel px-5 py-4">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold">
+                {{ item.q }}
+                <UIcon name="i-lucide-plus" class="size-4 text-white/45 transition-transform group-open:rotate-45" />
+              </summary>
+              <p class="mt-3 text-sm leading-relaxed text-ink-text-soft">{{ item.a }}</p>
+            </details>
+          </div>
+        </div>
+
+        <div class="self-start border border-white/10 bg-ink-panel p-6 sm:p-9">
+          <div class="grid size-14 place-items-center bg-ink-burgundy"><UIcon name="i-lucide-store" class="size-7" /></div>
+          <h3 class="ink-display mt-6 text-h2">{{ $t('business.cta.title') }}</h3>
+          <ul class="mt-6 space-y-3">
+            <li v-for="point in startPoints" :key="point" class="flex items-start gap-3 text-ink-text-soft">
+              <UIcon name="i-lucide-check" class="mt-0.5 size-5 shrink-0 text-emerald-400" />{{ point }}
+            </li>
+          </ul>
+          <template v-if="myShop">
+            <p class="mt-7 text-ink-text-soft">{{ $t('business.start.hasShop') }}</p>
+            <UiAppButton to="/shop-admin" variant="primary" size="xl" block class="mt-3">{{ $t('business.start.toCabinet') }}</UiAppButton>
+          </template>
+          <UiAppButton v-else :to="startTo" variant="primary" size="xl" block class="mt-8" trailing-icon="i-lucide-arrow-right">{{ $t('business.start.action') }}</UiAppButton>
+          <p class="mt-4 text-center text-xs text-white/45">{{ $t('business.cta.note') }}</p>
+        </div>
       </div>
     </section>
   </div>

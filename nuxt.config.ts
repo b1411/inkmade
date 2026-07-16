@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   // Nuxt 4: srcDir = app/ по умолчанию (см. паспорт §4)
   future: { compatibilityVersion: 4 },
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV === 'development' },
 
   // Дизайн светлый (кремовая палитра, §2.2) — фиксируем светлую тему Nuxt UI,
   // иначе при тёмной системной теме компоненты (поля, меню) рендерятся тёмными

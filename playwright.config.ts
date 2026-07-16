@@ -10,7 +10,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['list']],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://127.0.0.1:4173',
     locale: 'ru-RU',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -19,10 +19,10 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
   webServer: {
-    command: 'npm run preview',
-    url: 'http://localhost:3000',
+    command: 'npm run preview -- --port 4173',
+    url: 'http://127.0.0.1:4173',
     timeout: 120_000,
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     stdout: 'ignore',
     stderr: 'pipe',
   },

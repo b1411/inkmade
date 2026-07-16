@@ -20,8 +20,22 @@ const props = defineProps<{ product: Product; badge?: string }>()
 const { t } = useI18n()
 
 const images = computed(() => props.product.product_images ?? [])
-const primary = computed(() => images.value.find(i => i.is_primary)?.url ?? images.value[0]?.url)
-const secondary = computed(() => images.value.map(i => i.url).find(u => u !== primary.value))
+const localPrimary: Record<string, string> = {
+  tshirt: '/media/products/blank/classic-v01.webp',
+  tshirt_oversize: '/media/products/blank/oversize-v01.webp',
+  cap: '/media/products/blank/cap-v01.webp',
+  polo: '/media/products/blank/polo-v01.webp'
+}
+const localSecondary: Record<string, string> = {
+  tshirt: '/media/products/on-body/classic-v01.webp',
+  tshirt_oversize: '/media/products/on-body/oversize-v01.webp',
+  cap: '/media/products/on-body/cap-v01.webp',
+  polo: '/media/products/on-body/polo-v01.webp'
+}
+const remotePrimary = computed(() => images.value.find(i => i.is_primary)?.url ?? images.value[0]?.url)
+const primary = computed(() => localPrimary[props.product.slug] ?? remotePrimary.value)
+const secondary = computed(() => localSecondary[props.product.slug]
+  ?? images.value.map(i => i.url).find(u => u !== remotePrimary.value))
 
 const isNew = computed(() => {
   const created = props.product.created_at
@@ -35,12 +49,12 @@ const badgeLabel = computed(() => props.badge ?? (isNew.value ? t('catalog.card.
   <!-- Warm Card (§6.3), а не Paper: §3.3 прямо запрещает чистый белый под карточки
        («сделает сайт холодным и дешёвым»). Карточка светлая даже на Ink Black. -->
   <UiAppCard :to="`/product/${product.slug}`" hover class="group h-full bg-ink-card">
-    <div class="app-card-media relative aspect-4/5 bg-ink-card">
+    <div class="app-card-media relative aspect-4/5 overflow-hidden bg-ink-card">
       <NuxtImg
         v-if="primary"
         :src="primary"
         :alt="product.title"
-        class="absolute inset-0 w-full h-full object-contain transition-[opacity,transform] duration-500"
+        class="absolute inset-0 w-full h-full object-cover transition-[opacity,transform] duration-500"
         :class="secondary ? 'group-hover:opacity-0' : 'group-hover:scale-[1.04]'"
         sizes="(max-width: 768px) 50vw, 320px"
         loading="lazy"
@@ -49,7 +63,7 @@ const badgeLabel = computed(() => props.badge ?? (isNew.value ? t('catalog.card.
         v-if="secondary"
         :src="secondary"
         :alt="product.title"
-        class="absolute inset-0 w-full h-full object-contain opacity-0 scale-105 group-hover:opacity-100 group-hover:scale-100 transition-[opacity,transform] duration-500"
+        class="absolute inset-0 w-full h-full object-cover opacity-0 scale-105 group-hover:opacity-100 group-hover:scale-100 transition-[opacity,transform] duration-500"
         sizes="(max-width: 768px) 50vw, 320px"
         loading="lazy"
       />

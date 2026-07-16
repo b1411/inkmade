@@ -2,7 +2,7 @@
 import type { ProductFit, SizeChartRow } from '~~/shared/config/zones'
 
 // Страница товара (§6, §7.1). Выбор материала определяет метод/зоны (§5.2.1, F1-11).
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const slug = route.params.id as string
 const site = String(useRuntimeConfig().public.siteUrl || '').replace(/\/$/, '')
@@ -151,6 +151,12 @@ const sizes = computed(() =>
 const selectedSize = ref<string>('')
 watch(sizes, (s) => { if (s.length && !s.includes(selectedSize.value)) selectedSize.value = s[0]! }, { immediate: true })
 
+const selectedVariant = computed(() => product.value!.variants.find(variant =>
+  variant.material_id === selectedMaterialId.value
+  && variant.color_hex === selectedColor.value
+  && variant.size === selectedSize.value
+))
+
 const priceFrom = computed(() =>
   product.value!.base_price + (selectedMaterial.value?.surcharge ?? 0),
 )
@@ -173,8 +179,62 @@ const customizeTo = computed(() => {
 const byPrimary = (a: { is_primary: boolean; sort_order: number }, b: { is_primary: boolean; sort_order: number }) =>
   Number(b.is_primary) - Number(a.is_primary) || a.sort_order - b.sort_order
 // скрытые фото (is_hidden) покупателю не показываем
-const visibleImages = computed(() => product.value!.product_images.filter(i => !i.is_hidden))
+interface GalleryImage {
+  id: string
+  url: string
+  alt: string | null
+  label: string | null
+  kind: string
+  color_hex: string | null
+  is_primary: boolean
+  sort_order: number
+}
+const visibleImages = computed<GalleryImage[]>(() => product.value!.product_images
+  .filter(i => !i.is_hidden)
+  .map(i => ({
+    id: i.id,
+    url: i.url,
+    alt: i.alt,
+    label: i.label,
+    kind: i.kind,
+    color_hex: i.color_hex,
+    is_primary: i.is_primary,
+    sort_order: i.sort_order
+  })))
+
+const localMockup = computed<GalleryImage | null>(() => {
+  const hex = selectedColor.value.toLowerCase()
+  const isBlack = ['#000', '#000000', '#111', '#111111', '#111214'].includes(hex)
+  const isWhite = ['#fff', '#ffffff', '#f0ede7', '#f5f2eb'].includes(hex)
+  const isBurgundy = ['#7e1f2d', '#801b2b', '#8f1d2c'].includes(hex)
+  let url = ''
+
+  if (slug === 'tshirt') {
+    if (isBlack) url = '/media/products/blank/classic-black-v01.webp'
+    if (isWhite) url = '/media/products/blank/classic-v01.webp'
+  }
+  if (slug === 'tshirt_oversize') {
+    if (isBlack) url = '/media/products/blank/oversize-v01.webp'
+    if (isWhite) url = '/media/products/blank/oversize-white-v01.webp'
+    if (isBurgundy) url = '/media/products/blank/oversize-burgundy-v01.webp'
+  }
+  if (slug === 'cap' && isBlack) url = '/media/products/blank/cap-v01.webp'
+  if (slug === 'polo' && isBlack) url = '/media/products/blank/polo-v01.webp'
+  if (!url) return null
+
+  return {
+    id: `local-${slug}-${hex}`,
+    url,
+    alt: product.value!.title,
+    label: t('product.photoNumber', { n: 1 }),
+    kind: 'mockup',
+    color_hex: selectedColor.value,
+    is_primary: true,
+    sort_order: -1
+  }
+})
 const mockupImages = computed(() => {
+  if (localMockup.value) return [localMockup.value]
   const imgs = visibleImages.value
   const byColor = imgs.filter(i => i.kind === 'mockup' && i.color_hex === selectedColor.value)
   const common = imgs.filter(i => i.kind === 'mockup' && !i.color_hex)
@@ -208,6 +268,66 @@ function onZoomMove(e: MouseEvent) {
   const y = ((e.clientY - r.top) / r.height) * 100
   zoomOrigin.value = `${x}% ${y}%`
 }
+
+function zoneOverlayStyle(zone: { title: string; name: string }) {
+  const label = `${zone.title} ${zone.name}`.toLowerCase()
+  if (label.includes('лев') || label.includes('left')) {
+    return { left: '12%', top: '34%', width: '23%', height: '22%' }
+  }
+  if (label.includes('прав') || label.includes('right')) {
+    return { right: '12%', top: '34%', width: '23%', height: '22%' }
+  }
+  if (label.includes('спин') || label.includes('back')) {
+    return { left: '50%', top: '29%', width: '40%', height: '44%', transform: 'translateX(-50%)' }
+  }
+  return { left: '50%', top: '31%', width: '38%', height: '40%', transform: 'translateX(-50%)' }
+}
+
+const productCopy = computed(() => locale.value === 'kk'
+  ? {
+      available: 'Қоймада бар',
+      benefits: [
+        ['i-lucide-badge-check', 'Премиум негіз', 'Тығыз мата және сапалы тігіс'],
+        ['i-lucide-sparkles', 'Төзімді принт', 'Түсін және айқындығын сақтайды'],
+        ['i-lucide-map-pin', 'Алматыда жасалған', 'Өндіріс пен баспа бір жерде'],
+        ['i-lucide-truck', 'Қазақстан бойынша', 'Трек-нөмірі бар жеткізу']
+      ],
+      detailsLabel: 'Өнім туралы',
+      description: 'Сипаттама',
+      specs: 'Сипаттамалар',
+      material: 'Материал',
+      fabric: 'Мата',
+      method: 'Басып шығару',
+      density: 'Тығыздық',
+      fit: 'Пішім',
+      zonesLabel: 'Баспа аймақтары',
+      zonesTitle: 'Дизайныңа арналған кеңістік.',
+      maxPrint: 'Макс. баспа',
+      dpi: 'Мин. ажыратымдылық',
+      openEditor: 'Редакторда тексеру'
+    }
+  : {
+      available: 'В наличии',
+      benefits: [
+        ['i-lucide-badge-check', 'Премиальная основа', 'Плотная ткань и аккуратный пошив'],
+        ['i-lucide-sparkles', 'Стойкий принт', 'Сохраняет цвет и детализацию'],
+        ['i-lucide-map-pin', 'Сделано в Алматы', 'Производство и печать в одном месте'],
+        ['i-lucide-truck', 'По Казахстану', 'Доставка с трек-номером']
+      ],
+      detailsLabel: 'О товаре',
+      description: 'Описание',
+      specs: 'Характеристики',
+      material: 'Материал',
+      fabric: 'Ткань',
+      method: 'Печать',
+      density: 'Плотность',
+      fit: 'Посадка',
+      zonesLabel: 'Зоны печати',
+      zonesTitle: 'Пространство для твоего дизайна.',
+      maxPrint: 'Макс. принт',
+      dpi: 'Мин. разрешение',
+      openEditor: 'Проверить в редакторе'
+    })
 </script>
 
 <template>
@@ -393,6 +513,11 @@ function onZoomMove(e: MouseEvent) {
         </div>
       </div>
 
+      <div v-if="selectedVariant?.stock" class="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.12em] text-white/55">
+        <span class="size-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,.7)]" />
+        {{ productCopy.available }} · {{ selectedVariant.stock }}
+      </div>
+
       <!-- нет ни одного варианта в наличии -->
       <UAlert
         v-if="!anyInStock"
@@ -445,6 +570,109 @@ function onZoomMove(e: MouseEvent) {
         </div>
       </div>
     </div>
+    </section>
+
+    <section class="grid border-y border-white/10 md:grid-cols-2 lg:grid-cols-4" aria-label="Преимущества товара">
+      <div v-for="(benefit, index) in productCopy.benefits" :key="benefit[1]" class="flex gap-4 px-5 py-6" :class="index ? 'border-t border-white/10 md:border-l md:border-t-0' : ''">
+        <UIcon :name="benefit[0]" class="mt-0.5 size-6 shrink-0 text-ink-burgundy-hover" />
+        <div>
+          <p class="text-sm font-bold">{{ benefit[1] }}</p>
+          <p class="mt-1 text-xs leading-relaxed text-ink-text-muted">{{ benefit[2] }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="w-screen ml-[calc(50%-50vw)] bg-ink-bone text-ink-text-dark">
+      <div class="mx-auto max-w-(--container-max) px-4 py-12 lg:py-16">
+        <UiSectionLabel accent>01 / {{ productCopy.detailsLabel }}</UiSectionLabel>
+        <div class="mt-6 grid gap-4 lg:grid-cols-3">
+          <article class="border border-black/10 bg-[#f7f3ed] p-6 sm:p-8">
+            <h2 class="ink-display text-2xl">{{ productCopy.description }}</h2>
+            <p class="mt-5 leading-relaxed text-ink-text-dark-soft">
+              {{ product.description || `${product.title} — чистая основа для персонального принта. Выбери цвет и размер, затем собери дизайн в редакторе.` }}
+            </p>
+            <ul class="mt-7 space-y-3 text-sm">
+              <li v-for="item in productCopy.benefits.slice(0, 3)" :key="item[1]" class="flex items-center gap-3 border-t border-black/10 pt-3">
+                <UIcon :name="item[0]" class="size-4 text-ink-burgundy" />
+                {{ item[1] }}
+              </li>
+            </ul>
+          </article>
+
+          <article class="border border-black/10 bg-[#f7f3ed] p-6 sm:p-8">
+            <h2 class="ink-display text-2xl">{{ productCopy.specs }}</h2>
+            <dl class="mt-5 text-sm">
+              <div class="flex justify-between gap-5 border-b border-black/10 py-3">
+                <dt class="text-ink-text-dark-soft">{{ productCopy.material }}</dt>
+                <dd class="text-right font-semibold">{{ selectedMaterial?.name || '—' }}</dd>
+              </div>
+              <div class="flex justify-between gap-5 border-b border-black/10 py-3">
+                <dt class="text-ink-text-dark-soft">{{ productCopy.fabric }}</dt>
+                <dd class="text-right font-semibold">{{ fit?.composition || selectedMaterial?.fabric_type || '—' }}</dd>
+              </div>
+              <div class="flex justify-between gap-5 border-b border-black/10 py-3">
+                <dt class="text-ink-text-dark-soft">{{ productCopy.method }}</dt>
+                <dd class="text-right font-semibold">{{ selectedMaterial ? $t(`domain.printMethod.${selectedMaterial.print_method}`) : '—' }}</dd>
+              </div>
+              <div v-if="fit?.densityGsm" class="flex justify-between gap-5 border-b border-black/10 py-3">
+                <dt class="text-ink-text-dark-soft">{{ productCopy.density }}</dt>
+                <dd class="text-right font-semibold">{{ fit.densityGsm }} GSM</dd>
+              </div>
+              <div v-if="fit?.label" class="flex justify-between gap-5 py-3">
+                <dt class="text-ink-text-dark-soft">{{ productCopy.fit }}</dt>
+                <dd class="text-right font-semibold">{{ fit.label }}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="relative min-h-[360px] overflow-hidden border border-black/10 bg-[#d9d5ce]">
+            <NuxtImg :src="localMockup?.url || allImages[0]?.url" :alt="product.title" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 460px" loading="lazy" />
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent p-6 pt-20 text-white">
+              <p class="font-mono text-[10px] uppercase tracking-[.14em] text-white/55">INKMADE / BLANK 001</p>
+              <p class="ink-display mt-2 text-3xl">{{ product.title }}</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section v-if="product.print_zones.length" aria-labelledby="print-zones-title">
+      <div class="flex items-end justify-between gap-6">
+        <div>
+          <UiSectionLabel accent>02 / {{ productCopy.zonesLabel }}</UiSectionLabel>
+          <h2 id="print-zones-title" class="ink-display mt-2 text-h2">{{ productCopy.zonesTitle }}</h2>
+        </div>
+        <div v-if="product.alias" class="hidden sm:block">
+          <UiAppButton :to="customizeTo" variant="secondary" size="md" on-dark trailing-icon="i-lucide-arrow-right">
+            {{ productCopy.openEditor }}
+          </UiAppButton>
+        </div>
+      </div>
+      <div class="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <article v-for="(zone, index) in product.print_zones" :key="zone.id" class="grid grid-cols-[42%_1fr] overflow-hidden border border-white/10 bg-ink-panel">
+          <div class="relative min-h-52 bg-[#d9d5ce]">
+            <NuxtImg :src="localMockup?.url || allImages[0]?.url" alt="" class="absolute inset-0 size-full object-cover" sizes="260px" loading="lazy" />
+            <div class="absolute border border-dashed border-ink-burgundy bg-ink-burgundy/10" :style="zoneOverlayStyle(zone)" />
+            <span class="absolute left-3 top-3 bg-ink-black px-2 py-1 font-mono text-[9px] uppercase tracking-[.14em] text-white">0{{ index + 1 }}</span>
+          </div>
+          <div class="flex flex-col justify-between p-5">
+            <div>
+              <p class="font-display text-xl font-black uppercase">{{ zone.title }}</p>
+              <p v-if="zone.placement_hint" class="mt-2 text-xs leading-relaxed text-ink-text-muted">{{ zone.placement_hint }}</p>
+            </div>
+            <dl class="mt-6 space-y-2 border-t border-white/10 pt-4 text-xs">
+              <div v-if="zone.max_width_mm && zone.max_height_mm" class="flex justify-between gap-3">
+                <dt class="text-ink-text-muted">{{ productCopy.maxPrint }}</dt>
+                <dd class="font-mono">{{ zone.max_width_mm }}×{{ zone.max_height_mm }} mm</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="text-ink-text-muted">{{ productCopy.dpi }}</dt>
+                <dd class="font-mono">{{ zone.min_dpi }} DPI</dd>
+              </div>
+            </dl>
+          </div>
+        </article>
+      </div>
     </section>
 
     <!-- похожие товары той же категории -->

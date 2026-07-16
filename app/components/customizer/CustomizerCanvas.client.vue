@@ -86,6 +86,39 @@ watchEffect(() => {
 })
 const mockupImage = computed(() => { void tick.value; return mockupUrl.value ? images['__mockup__'] : null })
 
+// PRINT REVEAL (§41): при добавлении нового объекта print-zone и registration
+// marks проявляются первыми, затем за 600–700 ms раскрывается сам принт.
+const prefersReducedMotion = useReducedMotion()
+const revealProgress = ref(1)
+const revealFrameOpacity = ref(0.55)
+let revealRaf = 0
+function startPrintReveal() {
+  cancelAnimationFrame(revealRaf)
+  if (prefersReducedMotion.value) {
+    revealProgress.value = 1
+    revealFrameOpacity.value = 0.55
+    return
+  }
+  const started = performance.now()
+  const frame = (now: number) => {
+    const elapsed = now - started
+    revealFrameOpacity.value = elapsed < 360
+      ? Math.max(0.1, Math.min(1, (elapsed - 120) / 180))
+      : elapsed < 820 ? 1 : Math.max(0.55, 1 - ((elapsed - 820) / 300) * 0.45)
+    revealProgress.value = Math.max(0, Math.min(1, (elapsed - 320) / 620))
+    if (elapsed < 1120) revealRaf = requestAnimationFrame(frame)
+    else {
+      revealProgress.value = 1
+      revealFrameOpacity.value = 0.55
+    }
+  }
+  revealRaf = requestAnimationFrame(frame)
+}
+watch(() => activePlacements.value.length, (next, previous) => {
+  if (next > previous) startPrintReveal()
+})
+onBeforeUnmount(() => cancelAnimationFrame(revealRaf))
+
 // ── силуэт изделия выбранного цвета ──────────────────────────────
 const garmentKind = computed(() => garmentKindForSlug(product.value?.slug ?? product.value?.alias))
 const garmentUri = computed(() => garmentDataUri(garmentKind.value, productColorHex.value))
@@ -101,7 +134,27 @@ watch(garmentUri, (uri) => {
 // Источник — product_images (mockup) выбранного цвета. Перёд/спину выбираем по
 // активной зоне. Если фото нет — остаётся векторный силуэт (фолбэк).
 const isBackZone = computed(() => /back|спин|зад/.test(`${zone.value?.name ?? ''} ${zone.value?.title ?? ''}`.toLowerCase()))
+const localProductPhotoUrl = computed(() => {
+  const slug = product.value?.slug ?? product.value?.alias ?? ''
+  const hex = productColorHex.value.toLowerCase()
+  const isBlack = ['#000', '#000000', '#111', '#111111', '#111214'].includes(hex)
+  const isWhite = ['#fff', '#ffffff', '#f0ede7', '#f5f2eb'].includes(hex)
+  const isBurgundy = ['#7e1f2d', '#801b2b', '#8f1d2c'].includes(hex)
+  if (slug === 'tshirt') {
+    if (isBlack) return '/media/products/blank/classic-black-v01.webp'
+    if (isWhite) return '/media/products/blank/classic-v01.webp'
+  }
+  if (slug === 'tshirt_oversize') {
+    if (isBlack) return '/media/products/blank/oversize-v01.webp'
+    if (isWhite) return '/media/products/blank/oversize-white-v01.webp'
+    if (isBurgundy) return '/media/products/blank/oversize-burgundy-v01.webp'
+  }
+  if (slug === 'cap' && isBlack) return '/media/products/blank/cap-v01.webp'
+  if (slug === 'polo' && isBlack) return '/media/products/blank/polo-v01.webp'
+  return null
+})
 const productPhotoUrl = computed(() => {
+  if (localProductPhotoUrl.value) return localProductPhotoUrl.value
   const imgs = (product.value?.product_images ?? []).filter(
     i => i.kind === 'mockup' && !i.is_hidden && i.color_hex === productColorHex.value,
   )
@@ -168,6 +221,7 @@ const zoneFrameConfig = computed(() => ({
   ...zoneRect.value,
   stroke: frameStroke.value,
   strokeWidth: 1,
+  opacity: selectedId.value ? 1 : revealFrameOpacity.value,
   listening: false,
 }))
 
@@ -178,7 +232,7 @@ const cropMarksConfig = computed(() => {
   const { x, y, width: w, height: h } = zoneRect.value
   const g = CROP_MARK_GAP
   const l = CROP_MARK_LEN
-  const line = (points: number[]) => ({ points, stroke: frameStroke.value, strokeWidth: 1, listening: false })
+  const line = (points: number[]) => ({ points, stroke: frameStroke.value, strokeWidth: 1, opacity: revealFrameOpacity.value, listening: false })
   return [
     line([x - g - l, y, x - g, y]), line([x, y - g - l, x, y - g]),
     line([x + w + g, y, x + w + g + l, y]), line([x + w, y - g - l, x + w, y - g]),
@@ -207,7 +261,7 @@ function imageConfig(p: Placement) {
   void tick.value
   return {
     id: p.id, image: images[p.id], x: p.x, y: p.y, width: p.width, height: p.height,
-    rotation: p.rotation, opacity: p.opacity ?? 1, draggable: !p.locked, dragBoundFunc: makeDragBound(p),
+    rotation: p.rotation, opacity: (p.opacity ?? 1) * revealProgress.value, draggable: !p.locked, dragBoundFunc: makeDragBound(p),
   }
 }
 function patternConfig(p: Placement) {
@@ -217,21 +271,21 @@ function patternConfig(p: Placement) {
   return {
     id: p.id, x: r.x, y: r.y, width: r.width, height: r.height,
     fillPatternImage: images[p.id], fillPatternRepeat: 'repeat',
-    fillPatternScale: { x: s, y: s }, opacity: p.opacity ?? 1, listening: true, draggable: false,
+    fillPatternScale: { x: s, y: s }, opacity: (p.opacity ?? 1) * revealProgress.value, listening: true, draggable: false,
   }
 }
 function shapeConfig(p: Placement) {
   return {
     id: p.id, data: shapeData(p.shapeType ?? 'rect', p.width, p.height), x: p.x, y: p.y,
     fill: p.fill, stroke: p.stroke || undefined, strokeWidth: p.stroke ? (p.strokeWidth ?? 0) : 0,
-    rotation: p.rotation, opacity: p.opacity ?? 1, draggable: !p.locked, dragBoundFunc: makeDragBound(p),
+    rotation: p.rotation, opacity: (p.opacity ?? 1) * revealProgress.value, draggable: !p.locked, dragBoundFunc: makeDragBound(p),
   }
 }
 function textConfig(p: Placement) {
   return {
     id: p.id, text: p.text, x: p.x, y: p.y, width: p.width,
     fontSize: p.fontSize, fontFamily: p.fontFamily, fill: p.fill, rotation: p.rotation,
-    align: p.align ?? 'center', opacity: p.opacity ?? 1,
+    align: p.align ?? 'center', opacity: (p.opacity ?? 1) * revealProgress.value,
     stroke: p.stroke || undefined, strokeWidth: p.stroke ? (p.strokeWidth ?? 0) : 0,
     letterSpacing: p.letterSpacing ?? 0, lineHeight: p.lineHeight ?? 1,
     draggable: !p.locked, dragBoundFunc: makeDragBound(p),
@@ -249,7 +303,7 @@ function textPathConfig(p: Placement) {
   return {
     id: p.id, text: p.text, data: arcPath(p.width, p.curve ?? 0), x: p.x, y: p.y,
     fontSize: p.fontSize, fontFamily: p.fontFamily, fill: p.fill, rotation: p.rotation,
-    align: p.align ?? 'center', opacity: p.opacity ?? 1,
+    align: p.align ?? 'center', opacity: (p.opacity ?? 1) * revealProgress.value,
     stroke: p.stroke || undefined, strokeWidth: p.stroke ? (p.strokeWidth ?? 0) : 0,
     letterSpacing: p.letterSpacing ?? 0, draggable: !p.locked, dragBoundFunc: makeDragBound(p),
   }

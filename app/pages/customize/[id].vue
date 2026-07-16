@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { FEATURES } from '~~/shared/config/features'
 
+definePageMeta({ layout: 'customizer' })
+
 // Кастомайзер (§7). Порядок шагов: изделие → материал → зона → принт/текст → цвет → цена → корзина.
 const route = useRoute()
 const alias = route.params.id as string
@@ -33,12 +35,14 @@ async function uploadComposition(blob: Blob): Promise<string> {
 // «доработать» (§3.1): ?from=<designId> загружает сохранённый дизайн как основу версии
 const fromId = computed(() => (route.query.from as string) || null)
 const parentId = ref<string | null>(null)
+const customizerReady = ref(false)
 // доработка позиции корзины (§9.1): ?cart=<itemId> — восстанавливаем spec и параметры,
 // при повторном «в корзину» обновляем ЭТУ позицию, а не создаём дубль.
 const editCartId = computed(() => (route.query.cart as string) || null)
 
 // инициализация состояния на клиенте (canvas + Image — клиент)
 onMounted(async () => {
+  customizerReady.value = true
   if (!product.value) return
   // из карточки товара приходят выбранные материал/цвет/размер (?material&color&size) —
   // прокидываем их в init, чтобы не сбрасывать выбор пользователя в дефолт
@@ -111,6 +115,14 @@ const TOOLS: Array<{ key: ToolKey; icon: string }> = [
   // вкладка AI-генерации — только при включённом флаге aiDesign
   ...(FEATURES.aiDesign ? [{ key: 'ai' as const, icon: 'i-lucide-sparkles' }] : []),
 ]
+const mode = ref<'simple' | 'advanced'>('simple')
+const modes = ['simple', 'advanced'] as const
+const visibleTools = computed(() => mode.value === 'simple'
+  ? TOOLS.filter(tool => tool.key === 'print' || tool.key === 'text')
+  : TOOLS)
+watch(mode, (value) => {
+  if (value === 'simple' && !visibleTools.value.some(tool => tool.key === activeTool.value)) activeTool.value = 'print'
+})
 const lineTotal = computed(() => breakdown.value.unitPrice * Math.max(1, quantity.value))
 
 const toast = useToast()
@@ -239,7 +251,7 @@ async function onAddToCart() {
 </script>
 
 <template>
-  <section v-if="product" class="pb-24 lg:pb-0">
+  <section v-if="product" class="customizer-dark pb-24 lg:pb-0" :data-ready="customizerReady">
     <!-- верхняя панель: назад · заголовок · undo/redo/save -->
     <div class="flex items-center justify-between gap-3 mb-4">
       <div class="flex items-center gap-3 min-w-0">
@@ -250,6 +262,19 @@ async function onAddToCart() {
         </div>
       </div>
       <div class="flex items-center gap-1.5 shrink-0">
+        <div class="mr-1 hidden border border-white/15 bg-ink-panel p-1 sm:flex">
+          <button
+            v-for="value in modes"
+            :key="value"
+            type="button"
+            class="min-h-8 px-3 font-mono text-[10px] uppercase tracking-[.12em] transition-colors"
+            :class="mode === value ? 'bg-ink-burgundy text-white' : 'text-white/45 hover:text-white'"
+            :aria-pressed="mode === value"
+            @click="mode = value"
+          >
+            {{ value }}
+          </button>
+        </div>
         <UButton color="neutral" variant="subtle" size="sm" icon="i-lucide-undo-2" :disabled="!canUndo" :title="$t('customize.page.undo')" @click="undo()" />
         <UButton color="neutral" variant="subtle" size="sm" icon="i-lucide-redo-2" :disabled="!canRedo" :title="$t('customize.page.redo')" @click="redo()" />
         <UButton color="neutral" variant="subtle" size="sm" icon="i-lucide-bookmark" :loading="saving" :title="$t('customize.page.saveDesign')" @click="onSaveDesign">
@@ -264,9 +289,9 @@ async function onAddToCart() {
       <!-- ЛЕВО: тулбар (десктоп — вертикальный, мобайл — горизонтальный) -->
       <nav class="order-2 lg:order-1 flex lg:flex-col gap-1.5 lg:gap-2 overflow-x-auto lg:overflow-visible shrink-0">
         <button
-          v-for="tl in TOOLS" :key="tl.key"
+          v-for="tl in visibleTools" :key="tl.key"
           class="flex flex-col items-center justify-center gap-1 rounded-lg px-3 py-2 lg:w-16 lg:h-16 text-caption transition-colors shrink-0"
-          :class="activeTool === tl.key ? 'bg-ink-burgundy text-ink-white' : 'bg-ink-gray-50 text-ink-gray-600 hover:bg-ink-gray-100'"
+          :class="activeTool === tl.key ? 'bg-ink-burgundy text-ink-white' : 'bg-ink-panel text-ink-text-soft hover:bg-ink-panel-hover'"
           :aria-pressed="activeTool === tl.key"
           @click="activeTool = tl.key"
         >
@@ -277,7 +302,7 @@ async function onAddToCart() {
 
       <!-- ЛЕВО-2: панель активного инструмента -->
       <div class="order-3 lg:order-2 lg:w-72 shrink-0 lg:sticky lg:top-4">
-        <div class="rounded-xl border border-ink-gray-200 bg-ink-white p-4 space-y-3">
+        <div class="rounded-sm border border-white/10 bg-ink-panel p-4 space-y-3">
           <template v-if="activeTool === 'print'">
             <UiSectionLabel accent>{{ $t('customize.page.print') }}</UiSectionLabel>
             <CustomizerDesignUpload />
@@ -291,8 +316,14 @@ async function onAddToCart() {
 
       <!-- ЦЕНТР: зоны + холст (фокус) -->
       <div class="order-1 lg:order-3 flex-1 min-w-0 lg:sticky lg:top-4">
-        <div class="rounded-xl border border-ink-gray-200 bg-ink-gray-50 p-3 sm:p-4 flex flex-col items-center gap-3">
-          <CustomizerZoneSelector class="self-stretch" />
+        <div class="rounded-sm border border-white/10 bg-ink-panel p-3 sm:p-4 flex flex-col items-center gap-3">
+          <div class="flex w-full items-center justify-between gap-3 sm:hidden">
+            <p class="font-mono text-[10px] uppercase tracking-[.12em] text-white/45">MODE / {{ mode }}</p>
+            <button type="button" class="border border-white/15 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[.1em]" @click="mode = mode === 'simple' ? 'advanced' : 'simple'">
+              {{ mode === 'simple' ? 'Advanced' : 'Simple' }}
+            </button>
+          </div>
+          <CustomizerZoneSelector :advanced="mode === 'advanced'" class="self-stretch" />
           <div ref="canvasWrap" class="w-full flex justify-center">
             <ClientOnly>
               <CustomizerCanvas />
@@ -315,7 +346,7 @@ async function onAddToCart() {
 
       <!-- ПРАВО: настройка товара · слои · итог -->
       <div class="order-4 lg:w-80 shrink-0 space-y-4">
-        <div class="rounded-xl border border-ink-gray-200 bg-ink-white p-4">
+        <div class="rounded-sm border border-white/10 bg-ink-panel p-4">
           <CustomizerSetupPanel
             v-model:size="selectedSize"
             v-model:quantity="quantity"
@@ -325,7 +356,7 @@ async function onAddToCart() {
         </div>
 
         <!-- слои + инспектор выбранного -->
-        <div class="rounded-xl border border-ink-gray-200 bg-ink-white p-4">
+        <div v-if="mode === 'advanced'" class="rounded-sm border border-white/10 bg-ink-panel p-4">
           <CustomizerLayerPanel />
           <p v-if="!placements.length" class="text-caption text-ink-gray-600">{{ $t('customize.page.addPrintOrText') }}</p>
         </div>
@@ -338,7 +369,7 @@ async function onAddToCart() {
     </div>
 
     <!-- мобайл: липкий нижний бар цена + параметры + CTA -->
-    <div class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-ink-white/95 backdrop-blur border-t border-ink-gray-200 px-4 py-3 flex items-center gap-3">
+    <div class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-ink-panel/95 text-white backdrop-blur border-t border-white/10 px-4 py-3 flex items-center gap-3">
       <div class="min-w-0">
         <div class="text-caption text-ink-gray-500 leading-none">{{ $t('customize.price.total') }}</div>
         <div class="text-h4 font-bold text-ink-burgundy tabular-nums">{{ formatPrice(lineTotal) }}</div>
@@ -366,6 +397,29 @@ async function onAddToCart() {
 .customizer-pulse {
   animation: customizer-pulse 2.4s var(--ease-out) infinite;
 }
+
+.customizer-dark {
+  --ui-bg: var(--color-ink-panel);
+  --ui-bg-muted: var(--color-ink-panel-hover);
+  --ui-bg-elevated: var(--color-ink-panel-hover);
+  --ui-bg-accented: #303238;
+  --ui-text: var(--color-ink-text);
+  --ui-text-muted: var(--color-ink-text-soft);
+  --ui-text-toned: var(--color-ink-text-muted);
+  --ui-text-highlighted: #fff;
+  --ui-border: rgba(255, 255, 255, .14);
+  --ui-border-muted: rgba(255, 255, 255, .1);
+  --ui-border-accented: rgba(255, 255, 255, .24);
+  color-scheme: dark;
+}
+.customizer-dark :deep(.bg-ink-white) { background-color: var(--color-ink-panel); }
+.customizer-dark :deep(.bg-ink-gray-50) { background-color: var(--color-ink-panel); }
+.customizer-dark :deep(.bg-ink-gray-100),
+.customizer-dark :deep(.bg-ink-gray-200) { background-color: var(--color-ink-panel-hover); }
+.customizer-dark :deep(.border-ink-gray-200) { border-color: rgba(255, 255, 255, .12); }
+.customizer-dark :deep(.text-ink-gray-600) { color: var(--color-ink-text-soft); }
+.customizer-dark :deep(.text-ink-gray-500),
+.customizer-dark :deep(.text-ink-gray-400) { color: var(--color-ink-text-muted); }
 @keyframes customizer-pulse {
   0% { box-shadow: 0 0 0 0 rgba(122, 31, 40, 0.35); }
   70% { box-shadow: 0 0 0 12px rgba(122, 31, 40, 0); }

@@ -5,7 +5,7 @@
   "description": "INKMADE — B2C платформа кастомизации одежды с печатью по требованию",
   "scripts": {
     "dev": "nuxt dev",
-    "build": "nuxt build",
+    "build": "node --max-old-space-size=4096 node_modules/nuxt/bin/nuxt.mjs build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -13,6 +13,7 @@
     "icons": "node scripts/gen-icons.mjs",
     "logo": "node scripts/gen-logo.mjs",
     "hero": "node scripts/gen-hero.mjs",
+    "media:optimize": "node scripts/optimize-generated-media.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
