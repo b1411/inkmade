@@ -130,16 +130,19 @@ onMounted(() => {
            состояниях (прозрачно над тёмным hero → Ink Black 96% при скролле), тёмная
            надпись на ней нечитаема. Прежний кросс-фейд logo-light/logo-dark обслуживал
            переход на СВЕТЛОЕ стекло, которого больше нет — второй кадр снят. -->
+      <!-- h-4, а не h-8: надпись сменилась на вдвое более широкую относительно высоты
+           (8.7:1 против 4.4:1), и h-8 дала бы 279px вместо 140px. На md шапка с такой
+           надписью не сходится — nav и кнопки уезжают за край. h-4 держит прежние 140px. -->
       <NuxtLink
         to="/"
-        class="block shrink-0 h-8"
+        class="block shrink-0 h-4"
         :aria-label="$t('header.toHome')"
       >
         <img
           src="/logo-light.svg"
           alt=""
-          width="1328"
-          height="305"
+          width="1275"
+          height="146"
           class="h-full w-auto"
         >
       </NuxtLink>
@@ -222,7 +225,7 @@ onMounted(() => {
           @keydown="onMenuKeydown"
         >
           <div class="flex items-center justify-between h-16 px-4">
-            <img src="/logo-light.svg" alt="INKMADE" width="1328" height="305" class="h-8 w-auto">
+            <img src="/logo-light.svg" alt="INKMADE" width="1275" height="146" class="h-4 w-auto">
             <button :aria-label="$t('header.closeMenu')" @click="closeMenu">
               <UIcon name="i-lucide-x" class="size-6" />
             </button>

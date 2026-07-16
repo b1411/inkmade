@@ -1,27 +1,32 @@
-// Режет логотип-надпись (wordmark) из векторных мастеров дизайнера.
+// Режет логотип-надпись (wordmark) из векторного мастера дизайнера.
 // Запуск: npm run logo
 //
-// Мастера — public/media/wordmark-{dark,light}.svg. Это ОДНА и та же надпись в двух
-// заливках (см. §0.1a docs/LANDING_MEDIA_BRIEF.md):
-//   dark  — буквы #111111 (ink-black) в кремовой обводке → кладём на СВЕТЛЫЙ фон
-//   light — буквы #efe0c1 (ink-cream) в чёрной обводке   → кладём на ТЁМНЫЙ фон
+// Мастер — public/media/wordmark.svg. ОДНА фигура в ОДНУ заливку, без обводки.
+// Отсюда оба варианта получаются перекраской (см. VARIANTS):
+//   light — буквы bone #F3F0EB   → кладём на ТЁМНЫЙ фон (шапка, футер, error, auth-борт)
+//   dark  — буквы ink-black      → кладём на СВЕТЛЫЙ фон (кабинеты, shop-admin, designer)
 // Имя = цвет самих букв, не цвет фона под ними.
+//
+// Прежде мастеров было два (wordmark-{dark,light}.svg): та надпись была рукописной, с
+// обводкой, и варианты меняли буквы с обводкой цветами местами — перекраской одного
+// файла это не выражалось. У нынешней надписи обводки нет, поэтому второй мастер снят:
+// два файла одной формы неизбежно разъезжаются при переэкспорте.
 //
 // Почему скриптом, а не руками: мастер = экспорт дизайнера, его НЕ правим. Переэкспорт
 // надписи не должен требовать ручной возни с viewBox — перегенерил, и всё сошлось.
 //
 // Что делает скрипт:
 //  1. Обрезает viewBox по фактическим границам букв. В экспорте надпись висит в центре
-//     пустого холста 1440×810 и занимает ~1326×303 — 62% кадра воздух. В <img> такой
+//     пустого холста 1440×810 и занимает ~1273×144 — 84% кадра воздух. В <img> такой
 //     файл отрисовался бы мелким и не прижатым к своему боксу.
 //     Границы МЕРЯЕМ РЕНДЕРОМ, а не парсингом path: контрольные точки безье лежат
 //     снаружи кривой и дают bbox с запасом.
-//  2. Гонит через svgo с точностью 1 знак: 153кб → ~34кб. Потерь не видно — 0.1 единицы
-//     при ширине кадра 1326 это сотые доли пикселя на любом реальном кегле.
+//  2. Гонит через svgo с точностью 1 знак. Потерь не видно — 0.1 единицы при ширине
+//     кадра ~1275 это сотые доли пикселя на любом реальном кегле.
 //
-// Оба варианта получают ОДИН размер кадра, отцентрованный по буквам. Это обязательно:
-// шапка кросс-фейдит их друг в друга (тёмный ⇄ светлый при скролле), и кадры,
-// разъехавшиеся хотя бы на единицу, дали бы заметный рывок надписи.
+// Размер кадра печатается в лог. Он же должен стоять в width/height у каждого <img> с
+// лого (шапка, футер, error, auth, UiAppLogo): атрибуты резервируют место до загрузки и
+// держат пропорцию — разъедутся с кадром, получим CLS и кривую ширину.
 
 import sharp from 'sharp'
 import { optimize } from 'svgo'
@@ -30,12 +35,21 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const SRC = join(ROOT, 'public/media')
+const SRC = join(ROOT, 'public/media/wordmark.svg')
 const OUT = join(ROOT, 'public')
 
-const VARIANTS = ['dark', 'light']
+// Заливка в мастере. Ищем её точное значение, а не «любой fill»: промахнёмся —
+// вариант молча уедет в цвет мастера, и это заметно только глазом на проде.
+const MASTER_FILL = '#f3f0eb'
+// Цвет букв каждого варианта — канонические токены из app/assets/css/main.css.
+// dark берёт ink-black: светлые layout'ы (account, shop-admin, designer) ставят
+// себе text-ink-black, и лого должно попадать с этим текстом в один тон.
+const VARIANTS = {
+  light: '#f3f0eb', // --color-ink-bone
+  dark: '#080b0d', // --color-ink-black
+}
 // Воздух по краям кадра. Нужен только чтобы округление координат в svgo (±0.05)
-// не срезало крайний пиксель обводки. Больше не нужно — отступы задаёт вёрстка.
+// не срезало крайний пиксель буквы. Больше не нужно — отступы задаёт вёрстка.
 const PAD = 1
 
 /** Подменяет атрибуты корневого <svg>: и для замерочного рендера, и для итогового кадра. */
@@ -67,34 +81,35 @@ async function measure(svg) {
   }
 }
 
-const masters = Object.fromEntries(
-  VARIANTS.map(v => [v, readFileSync(join(SRC, `wordmark-${v}.svg`), 'utf8')]),
-)
-const boxes = Object.fromEntries(
-  await Promise.all(VARIANTS.map(async v => [v, await measure(masters[v])])),
-)
+const master = readFileSync(SRC, 'utf8')
+if (!master.includes(MASTER_FILL)) {
+  throw new Error(
+    `gen-logo: в мастере нет заливки ${MASTER_FILL}. Похоже, надпись переэкспортирована в `
+    + 'другом цвете — сверь MASTER_FILL с фактическим fill в public/media/wordmark.svg.',
+  )
+}
 
-// Единый кадр на оба варианта — по самому широкому/высокому из них.
-const W = Math.max(...VARIANTS.map(v => boxes[v].w)) + PAD * 2
-const H = Math.max(...VARIANTS.map(v => boxes[v].h)) + PAD * 2
+// Геометрия у вариантов общая (отличается только цвет), поэтому меряем один раз.
+const b = await measure(master)
+const W = b.w + PAD * 2
+const H = b.h + PAD * 2
+const x = +(b.x - PAD).toFixed(2)
+const y = +(b.y - PAD).toFixed(2)
 
-for (const v of VARIANTS) {
-  const b = boxes[v]
-  // Кадр фиксированного размера, отцентрованный по буквам этого варианта.
-  const x = +(b.x + b.w / 2 - W / 2).toFixed(2)
-  const y = +(b.y + b.h / 2 - H / 2).toFixed(2)
-
-  const framed = withSvgAttrs(masters[v], { width: W, height: H, viewBox: `${x} ${y} ${W} ${H}` })
-  const { data } = optimize(framed, {
+for (const [name, fill] of Object.entries(VARIANTS)) {
+  const framed = withSvgAttrs(master, { width: W, height: H, viewBox: `${x} ${y} ${W} ${H}` })
+  const { data } = optimize(framed.replaceAll(MASTER_FILL, fill), {
     multipass: true,
     floatPrecision: 1,
     plugins: [{ name: 'preset-default', params: { overrides: { convertPathData: { transformPrecision: 3 } } } }],
   })
 
-  writeFileSync(join(OUT, `logo-${v}.svg`), data)
+  writeFileSync(join(OUT, `logo-${name}.svg`), data)
   const kb = s => (Buffer.byteLength(s) / 1024).toFixed(1)
-  console.log(
-    `logo-${v}.svg  ${W}×${H}  ${kb(masters[v])}кб → ${kb(data)}кб`
-    + `  (буквы ${b.w}×${b.h} @ ${b.x},${b.y})`,
-  )
+  console.log(`logo-${name}.svg  ${W}×${H}  буквы ${fill}  ${kb(master)}кб → ${kb(data)}кб`)
 }
+
+console.log(
+  `\nКадр ${W}×${H} (${(W / H).toFixed(2)}:1). Этот размер должен стоять в width/height`
+  + ` у каждого <img> с лого — иначе CLS и кривая ширина.`,
+)

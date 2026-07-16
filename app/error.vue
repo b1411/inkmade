@@ -23,7 +23,7 @@ function goCatalog() {
 
 <template>
   <div class="ink-grain min-h-screen flex flex-col items-center justify-center text-center px-4 bg-ink-black text-ink-cream">
-    <img src="/logo-light.svg" alt="INKMADE" width="1328" height="305" class="h-9 w-auto">
+    <img src="/logo-light.svg" alt="INKMADE" width="1275" height="146" class="h-4.5 w-auto">
     <p class="ink-display text-[8rem] leading-none mt-6 text-ink-burgundy-light">
       {{ error?.statusCode || '!' }}
     </p>

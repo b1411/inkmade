@@ -27,7 +27,7 @@ const benefits = computed(() => [
       <div class="absolute -bottom-32 -left-16 size-80 rounded-full bg-ink-black/20 blur-3xl z-0" />
 
       <NuxtLink to="/" class="relative z-10 self-start">
-        <img src="/logo-light.svg" alt="INKMADE" width="1328" height="305" class="h-10 w-auto">
+        <img src="/logo-light.svg" alt="INKMADE" width="1275" height="146" class="h-5 w-auto">
       </NuxtLink>
 
       <div class="relative z-10">
@@ -52,7 +52,7 @@ const benefits = computed(() => [
     <main id="main-content" tabindex="-1" class="flex flex-col justify-center items-center px-6 py-10 sm:px-12 focus:outline-none">
       <div class="w-full max-w-sm">
         <NuxtLink to="/" class="lg:hidden block mb-10">
-          <img src="/logo-dark.svg" alt="INKMADE" width="1328" height="305" class="h-8 w-auto">
+          <img src="/logo-dark.svg" alt="INKMADE" width="1275" height="146" class="h-4 w-auto">
         </NuxtLink>
         <slot />
       </div>

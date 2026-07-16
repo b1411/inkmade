@@ -1,9 +1,9 @@
 <script setup lang="ts">
 // Фирменная надпись-лого (§4.1) + моно-сабтекст.
 // tone — цвет САМИХ БУКВ, а не подложки под ними:
-//   dark  — тёмные буквы в кремовой обводке → на светлый фон (по умолчанию)
-//   light — кремовые буквы в чёрной обводке → на тёмный фон
-// Ассеты режет npm run logo из мастеров public/media/wordmark-*.svg.
+//   dark  — буквы ink-black → на светлый фон (по умолчанию)
+//   light — буквы bone      → на тёмный фон
+// Ассеты режет npm run logo из мастера public/media/wordmark.svg.
 withDefaults(defineProps<{ subtitle?: boolean; to?: string; tone?: 'dark' | 'light' }>(), {
   subtitle: true,
   to: '/',
@@ -14,7 +14,9 @@ withDefaults(defineProps<{ subtitle?: boolean; to?: string; tone?: 'dark' | 'lig
 <template>
   <NuxtLink :to="to" class="inline-flex flex-col leading-none">
     <!-- width/height = кадр ассета: держит соотношение и резервирует место до загрузки (без CLS) -->
-    <img :src="`/logo-${tone}.svg`" alt="INKMADE" width="1328" height="305" class="h-7 w-auto">
+    <!-- h-3.5 = 122px по ширине. Узкое место — сайдбар админки (240px минус px-4 и бейдж
+         ADMIN оставляют ~145px), поэтому выше не поднимать без проверки этого layout'а. -->
+    <img :src="`/logo-${tone}.svg`" alt="INKMADE" width="1275" height="146" class="h-3.5 w-auto">
     <span v-if="subtitle" class="ink-label opacity-70 mt-1">{{ $t('footer.tagline') }}</span>
   </NuxtLink>
 </template>

@@ -13,7 +13,7 @@ const { isAuthenticated } = useAuth()
       style="padding-block: var(--section-pad)"
     >
       <div>
-        <img src="/logo-light.svg" alt="INKMADE" width="1328" height="305" class="h-7 w-auto">
+        <img src="/logo-light.svg" alt="INKMADE" width="1275" height="146" class="h-3.5 w-auto">
         <p class="ink-label mt-2 text-ink-cream/50">{{ $t('footer.tagline') }}</p>
         <p class="text-caption mt-3">{{ $t('footer.about') }}</p>
         <!-- INK SYSTEM (§36.2): футер — штатное место и для клейма («print footer»),
