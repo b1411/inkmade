@@ -16,3 +16,8 @@ export function verifyWebhookSignature(raw: string, signature: string, secret: s
   if (signature.length !== expected.length) return false
   return timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
 }
+
+export function verifyOpaqueSecret(received: string, expected: string): boolean {
+  if (!received || !expected || received.length !== expected.length) return false
+  return timingSafeEqual(Buffer.from(received), Buffer.from(expected))
+}

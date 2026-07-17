@@ -1,4 +1,3 @@
-import { gsap } from 'gsap'
 import type { Directive } from 'vue'
 
 /**
@@ -28,10 +27,12 @@ export default defineNuxtPlugin((nuxtApp) => {
         const r = el.getBoundingClientRect()
         const dx = e.clientX - (r.left + r.width / 2)
         const dy = e.clientY - (r.top + r.height / 2)
-        gsap.to(el, { x: dx * strength, y: dy * strength, duration: 0.3, ease: 'power3.out' })
+        el.style.transition = 'transform 300ms cubic-bezier(.22,1,.36,1)'
+        el.style.transform = `translate3d(${dx * strength}px, ${dy * strength}px, 0)`
       }
       const leave = () => {
-        gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.4)' })
+        el.style.transition = 'transform 500ms cubic-bezier(.34,1.56,.64,1)'
+        el.style.transform = 'translate3d(0, 0, 0)'
       }
 
       el.addEventListener('mousemove', move, { passive: true })

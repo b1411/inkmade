@@ -355,10 +355,68 @@ export type Database = {
         }
         Relationships: []
       }
+      design_templates: {
+        Row: {
+          created_at: string
+          id: string
+          locale: string
+          print_mode: string
+          product_id: string | null
+          product_type: string
+          sort: number
+          spec: Json
+          status: string
+          tags: string[]
+          thumbnail_url: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          locale?: string
+          print_mode: string
+          product_id?: string | null
+          product_type: string
+          sort?: number
+          spec: Json
+          status?: string
+          tags?: string[]
+          thumbnail_url: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          locale?: string
+          print_mode?: string
+          product_id?: string | null
+          product_type?: string
+          sort?: number
+          spec?: Json
+          status?: string
+          tags?: string[]
+          thumbnail_url?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_templates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       designs: {
         Row: {
           ai_generation_id: string | null
           created_at: string
+          draft_key: string | null
+          draft_status: string
           id: string
           is_saved: boolean
           moderation_status: string
@@ -368,15 +426,19 @@ export type Database = {
           preview_url: string | null
           print_file_url: string | null
           product_id: string
+          revision: number
           share_token: string | null
           spec: Json
           title: string | null
           user_id: string
+          updated_at: string
           variant_id: string | null
         }
         Insert: {
           ai_generation_id?: string | null
           created_at?: string
+          draft_key?: string | null
+          draft_status?: string
           id?: string
           is_saved?: boolean
           moderation_status?: string
@@ -386,15 +448,19 @@ export type Database = {
           preview_url?: string | null
           print_file_url?: string | null
           product_id: string
+          revision?: number
           share_token?: string | null
           spec?: Json
           title?: string | null
           user_id: string
+          updated_at?: string
           variant_id?: string | null
         }
         Update: {
           ai_generation_id?: string | null
           created_at?: string
+          draft_key?: string | null
+          draft_status?: string
           id?: string
           is_saved?: boolean
           moderation_status?: string
@@ -404,10 +470,12 @@ export type Database = {
           preview_url?: string | null
           print_file_url?: string | null
           product_id?: string
+          revision?: number
           share_token?: string | null
           spec?: Json
           title?: string | null
           user_id?: string
+          updated_at?: string
           variant_id?: string | null
         }
         Relationships: [
@@ -1072,6 +1140,7 @@ export type Database = {
           is_gift: boolean
           paid_at: string | null
           payment_id: string | null
+          payment_invoice_id: string
           promo_code: string | null
           shipped_at: string | null
           shipping_addr: Json | null
@@ -1095,6 +1164,7 @@ export type Database = {
           is_gift?: boolean
           paid_at?: string | null
           payment_id?: string | null
+          payment_invoice_id?: string
           promo_code?: string | null
           shipped_at?: string | null
           shipping_addr?: Json | null
@@ -1118,6 +1188,7 @@ export type Database = {
           is_gift?: boolean
           paid_at?: string | null
           payment_id?: string | null
+          payment_invoice_id?: string
           promo_code?: string | null
           shipped_at?: string | null
           shipping_addr?: Json | null

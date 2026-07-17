@@ -1,4 +1,5 @@
 import { onBeforeUnmount } from 'vue'
+import { loadGsap } from '~/utils/gsap-loader'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Единый язык scroll-движения INKMADE поверх GSAP + ScrollTrigger (§8 ТЗ).
@@ -52,52 +53,58 @@ const EASE_NONE = 'none'
 
 export function useScrollFx(): ScrollFx {
   const prefersReduced = useReducedMotion()
-  const gsap = (import.meta.client ? (useNuxtApp().$gsap as Gsap | undefined) : undefined)
-  const enabled = Boolean(import.meta.client && !prefersReduced.value && gsap)
+  const enabled = Boolean(import.meta.client && !prefersReduced.value)
 
   let ctx: { revert: () => void } | null = null
-  onBeforeUnmount(() => ctx?.revert())
+  let disposed = false
+  onBeforeUnmount(() => {
+    disposed = true
+    ctx?.revert()
+  })
 
   function scope(root: HTMLElement, build: Parameters<ScrollFx['scope']>[1]): void {
-    if (!enabled || !gsap || !root) return
+    if (!enabled || !root) return
+    void loadGsap().then(({ gsap }) => {
+      if (disposed || !root.isConnected) return
 
-    const reveal: RevealFn = (targets, opts = {}) => {
-      const { y = 28, scale = 1, blur = 0, duration = 0.8, stagger = 0.08, start = 'top 82%' } = opts
-      gsap.from(targets, {
-        opacity: 0,
-        y,
-        scale,
-        filter: blur ? `blur(${blur}px)` : undefined,
-        duration,
-        stagger,
-        ease: EASE_OUT,
-        scrollTrigger: { trigger: root, start },
-      })
-    }
+      const reveal: RevealFn = (targets, opts = {}) => {
+        const { y = 28, scale = 1, blur = 0, duration = 0.8, stagger = 0.08, start = 'top 82%' } = opts
+        gsap.from(targets, {
+          opacity: 0,
+          y,
+          scale,
+          filter: blur ? `blur(${blur}px)` : undefined,
+          duration,
+          stagger,
+          ease: EASE_OUT,
+          scrollTrigger: { trigger: root, start },
+        })
+      }
 
-    const parallax: ParallaxFn = (targets, trigger, opts = {}) => {
-      const { y = -10, x = 0 } = opts
-      gsap.to(targets, {
-        yPercent: y,
-        xPercent: x,
-        ease: EASE_NONE,
-        scrollTrigger: { trigger, start: 'top bottom', end: 'bottom top', scrub: true },
-      })
-    }
+      const parallax: ParallaxFn = (targets, trigger, opts = {}) => {
+        const { y = -10, x = 0 } = opts
+        gsap.to(targets, {
+          yPercent: y,
+          xPercent: x,
+          ease: EASE_NONE,
+          scrollTrigger: { trigger, start: 'top bottom', end: 'bottom top', scrub: true },
+        })
+      }
 
-    const float: FloatFn = (targets, opts = {}) => {
-      const { y = 12, duration = 3.2 } = opts
-      gsap.to(targets, {
-        y: `+=${y}`,
-        duration,
-        ease: 'sine.inOut',
-        repeat: -1,
-        yoyo: true,
-        stagger: { each: 0.4, from: 'random' },
-      })
-    }
+      const float: FloatFn = (targets, opts = {}) => {
+        const { y = 12, duration = 3.2 } = opts
+        gsap.to(targets, {
+          y: `+=${y}`,
+          duration,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+          stagger: { each: 0.4, from: 'random' },
+        })
+      }
 
-    ctx = gsap.context(() => build(gsap, reveal, parallax, float), root)
+      ctx = gsap.context(() => build(gsap, reveal, parallax, float), root)
+    })
   }
 
   return { enabled, scope }

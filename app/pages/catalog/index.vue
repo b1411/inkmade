@@ -2,6 +2,7 @@
 const { t, locale } = useI18n()
 const { listActive } = useCategories()
 const { listAll } = useCatalog()
+onMounted(() => useAnalytics().catalogView())
 
 useSeoMeta({
   title: t('catalog.pageTitle'),
@@ -62,7 +63,7 @@ const copy = computed(() => locale.value === 'kk'
     <section class="grid overflow-hidden border border-white/10 bg-ink-raised lg:grid-cols-12" aria-labelledby="catalog-title">
       <div class="flex min-h-[380px] flex-col justify-between p-6 sm:p-10 lg:col-span-5 lg:min-h-[520px]">
         <div>
-          <UiSectionLabel accent>{{ copy.eyebrow }}</UiSectionLabel>
+          <UiSectionLabel inverse>{{ copy.eyebrow }}</UiSectionLabel>
           <h1 id="catalog-title" class="ink-display mt-4 max-w-[8ch] text-[clamp(3rem,6vw,6.6rem)] leading-[.82]">{{ copy.title }}</h1>
           <p class="mt-6 max-w-md text-base text-ink-text-soft sm:text-lg">{{ copy.body }}</p>
         </div>
@@ -95,7 +96,7 @@ const copy = computed(() => locale.value === 'kk'
     <section aria-labelledby="catalog-products-title">
       <div class="mb-7 flex items-end justify-between gap-5 border-b border-white/10 pb-5">
         <div>
-          <UiSectionLabel accent>02 / BASES</UiSectionLabel>
+          <UiSectionLabel inverse>02 / BASES</UiSectionLabel>
           <h2 id="catalog-products-title" class="ink-display mt-2 text-h2">{{ copy.products }}</h2>
         </div>
         <p class="hidden font-mono text-[10px] uppercase tracking-[.12em] text-white/45 sm:block">{{ copy.note }}</p>
@@ -109,7 +110,7 @@ const copy = computed(() => locale.value === 'kk'
 
     <section class="grid overflow-hidden border border-white/10 bg-ink-panel lg:grid-cols-12">
       <div class="flex flex-col justify-center p-6 sm:p-10 lg:col-span-5">
-        <UiSectionLabel accent>03 / PRINT ON DEMAND</UiSectionLabel>
+        <UiSectionLabel inverse>03 / PRINT ON DEMAND</UiSectionLabel>
         <h2 class="ink-display mt-3 text-h2">{{ copy.editorial }}</h2>
         <p class="mt-4 max-w-md text-ink-text-soft">{{ copy.editorialBody }}</p>
         <UiAppButton to="/customize/tshirt_oversize" variant="primary" size="lg" class="mt-7 self-start" trailing-icon="i-lucide-arrow-right">

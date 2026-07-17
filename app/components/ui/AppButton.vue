@@ -57,8 +57,7 @@ onMounted(() => {
   if (!window.matchMedia('(pointer: fine)').matches) return
 
   const node = wrap.value
-  const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
-  if (!node || !gsap) return
+  if (!node) return
 
   const radius = 60
   const strength = 0.35
@@ -70,13 +69,15 @@ onMounted(() => {
     const dx = e.clientX - cx
     const dy = e.clientY - cy
     if (Math.hypot(dx, dy) < rect.width / 2 + radius) {
-      gsap!.to(node, { x: dx * strength, y: dy * strength, duration: 0.4, ease: 'power3.out' })
+      node!.style.transition = 'transform 400ms cubic-bezier(.22,1,.36,1)'
+      node!.style.transform = `translate3d(${dx * strength}px, ${dy * strength}px, 0)`
     } else {
-      gsap!.to(node, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1, 0.4)' })
+      reset()
     }
   }
   function reset() {
-    gsap!.to(node, { x: 0, y: 0, duration: 0.6, ease: 'elastic.out(1, 0.4)' })
+    node!.style.transition = 'transform 600ms cubic-bezier(.34,1.56,.64,1)'
+    node!.style.transform = 'translate3d(0, 0, 0)'
   }
 
   window.addEventListener('mousemove', onMove, { passive: true })

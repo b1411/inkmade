@@ -2,6 +2,7 @@ import type { ProductWithRelations, PrintZone, Material } from '~/types/models'
 import type { PrintMethod, PrintMode } from '~~/shared/config/print-methods'
 import type { BoundsCanvas } from '~~/shared/config/zones'
 import { INK_CANVAS } from '~~/shared/config/ink-system'
+import { DESIGN_SPEC_VERSION } from '~~/shared/design/spec'
 
 // Состояние дизайна + спецификация нанесения (§5.2, §7.4).
 // Холст работает в px; масштаб мм↔px вычисляется ДИНАМИЧЕСКИ — каждая зона
@@ -41,6 +42,11 @@ export interface Placement {
   rotation: number // градусы
   opacity?: number // 0..1
   locked?: boolean // элемент защищён от перемещения/трансформации
+  crop?: { x: number; y: number; width: number; height: number }
+  flipX?: boolean
+  flipY?: boolean
+  groupId?: string | null
+  hidden?: boolean
   // image
   source?: 'upload' | 'library' | 'ai'
   assetUrl?: string
@@ -82,6 +88,7 @@ export const useDesign = () => {
   const productColorHex = useState<string>('design_color', () => '#111111')
   const placements = useState<Placement[]>('design_placements', () => [])
   const selectedId = useState<string | null>('design_selected', () => null)
+  const selectedIds = useState<string[]>('design_selected_many', () => [])
   // шелкография: число спот-цветов в макете (влияет на цену §5.5)
   const colorCount = useState<number>('design_color_count', () => 1)
 
@@ -99,6 +106,7 @@ export const useDesign = () => {
     past.value = past.value.slice(0, -1)
     placements.value = prev
     selectedId.value = null
+    selectedIds.value = []
   }
   function redo() {
     if (!future.value.length) return
@@ -107,6 +115,7 @@ export const useDesign = () => {
     future.value = future.value.slice(1)
     placements.value = next
     selectedId.value = null
+    selectedIds.value = []
   }
   const canUndo = computed(() => past.value.length > 0)
   const canRedo = computed(() => future.value.length > 0)
@@ -131,6 +140,7 @@ export const useDesign = () => {
     productColorHex.value = wantColor ?? (p.variants.find(v => v.stock > 0) ?? p.variants[0])?.color_hex ?? '#111111'
     placements.value = []
     selectedId.value = null
+    selectedIds.value = []
     colorCount.value = 1
     printFiles.value = []
     resetHistory()
@@ -240,14 +250,15 @@ export const useDesign = () => {
         commit()
         placements.value = kept
         selectedId.value = null
+        selectedIds.value = []
       }
     }
   })
 
   // плейсменты активной зоны (для рендера/редактирования)
-  const activePlacements = computed(() => placements.value.filter(p => p.zone === zoneName.value))
+  const activePlacements = computed(() => placements.value.filter(p => p.zone === zoneName.value && !p.hidden))
   // имена зон, в которых что-то расставлено (для индикаторов в ZoneSelector)
-  const zonesWithPlacements = computed(() => new Set(placements.value.map(p => p.zone)))
+  const zonesWithPlacements = computed(() => new Set(placements.value.filter(p => !p.hidden).map(p => p.zone)))
 
   // ── элементы ──────────────────────────────────────────────────
   let seq = 0
@@ -282,6 +293,7 @@ export const useDesign = () => {
     commit()
     placements.value = [...placements.value, pl]
     selectedId.value = pl.id
+    selectedIds.value = [pl.id]
     return pl
   }
 
@@ -313,6 +325,7 @@ export const useDesign = () => {
     commit()
     placements.value = [...placements.value, pl]
     selectedId.value = pl.id
+    selectedIds.value = [pl.id]
   }
 
   function addShape(shapeType: ShapeType, opts?: { fill?: string; stroke?: string; strokeWidth?: number }) {
@@ -329,6 +342,7 @@ export const useDesign = () => {
     commit()
     placements.value = [...placements.value, pl]
     selectedId.value = pl.id
+    selectedIds.value = [pl.id]
   }
 
   // ── загрузка существующего дизайна для «доработать» (§3.1) ─────
@@ -340,12 +354,14 @@ export const useDesign = () => {
     asset_url?: string; source_file_url?: string; natural_w?: number; natural_h?: number; vector?: boolean; opacity?: number
     align?: string; stroke?: string; stroke_width?: number; letter_spacing?: number; line_height?: number; curve?: number
     shape_type?: string; pattern?: boolean; pattern_scale?: number; filters?: ImageFilters; locked?: boolean
+    crop?: { x: number; y: number; width: number; height: number }; flip_x?: boolean; flip_y?: boolean
+    group_id?: string | null; hidden?: boolean
   }
   interface SpecIn {
     placements?: SpecPlacementIn[]; product_color_hex?: string
     material?: string; print_method?: string; print_id?: string | null; color_count?: number
   }
-  function loadSpec(raw: unknown) {
+  function loadSpec(raw: unknown, options: { compatibleOnly?: boolean } = {}) {
     const spec = raw as SpecIn | null
     if (!product.value || !spec) return
     // материал: по методу печати → по ткани → первый
@@ -362,6 +378,7 @@ export const useDesign = () => {
     for (const p of spec.placements ?? []) {
       const zn = p.zone || validZones.value[0]?.name || ''
       const z = zoneByName(zn)
+      if (options.compatibleOnly && (!z || !validZones.value.some(valid => valid.name === zn))) continue
       const r = rectFor(z)
       const ppm = pxPerMmFor(z)
       const width = (Number(p.width_mm) || 0) * ppm
@@ -375,6 +392,7 @@ export const useDesign = () => {
           id: nextId(), kind: 'shape', zone: zn, x, y, width, height, rotation,
           shapeType: (p.shape_type as ShapeType) ?? 'rect', fill: p.fill ?? INK_CANVAS.burgundy,
           stroke: p.stroke, strokeWidth: p.stroke_width, opacity: p.opacity ?? 1, locked: p.locked,
+          flipX: p.flip_x, flipY: p.flip_y, groupId: p.group_id, hidden: p.hidden,
         })
       } else if (p.source === 'text') {
         next.push({
@@ -384,6 +402,7 @@ export const useDesign = () => {
           align: (p.align as Placement['align']) ?? 'center',
           stroke: p.stroke, strokeWidth: p.stroke_width, letterSpacing: p.letter_spacing,
           lineHeight: p.line_height, curve: p.curve, opacity: p.opacity ?? 1, locked: p.locked,
+          flipX: p.flip_x, flipY: p.flip_y, groupId: p.group_id, hidden: p.hidden,
         })
       } else if (p.asset_url) {
         next.push({
@@ -391,6 +410,7 @@ export const useDesign = () => {
           source: p.source === 'library' ? 'library' : 'upload',
           assetUrl: p.asset_url, sourceFileUrl: p.source_file_url, vector: !!p.vector, opacity: p.opacity ?? 1,
           pattern: p.pattern, patternScale: p.pattern_scale, filters: p.filters, locked: p.locked,
+          crop: p.crop, flipX: p.flip_x, flipY: p.flip_y, groupId: p.group_id, hidden: p.hidden,
           printId: p.source === 'library' ? (spec.print_id ?? undefined) : undefined,
           naturalW: p.natural_w, naturalH: p.natural_h,
         })
@@ -399,7 +419,25 @@ export const useDesign = () => {
     if (firstValidZone) zoneName.value = firstValidZone
     placements.value = next
     selectedId.value = null
+    selectedIds.value = []
     resetHistory()
+  }
+
+  function selectPlacement(id: string | null, additive = false) {
+    if (!id) {
+      selectedId.value = null
+      selectedIds.value = []
+      return
+    }
+    if (!additive) {
+      selectedId.value = id
+      selectedIds.value = [id]
+      return
+    }
+    selectedIds.value = selectedIds.value.includes(id)
+      ? selectedIds.value.filter(value => value !== id)
+      : [...selectedIds.value, id]
+    selectedId.value = selectedIds.value.at(-1) ?? null
   }
 
   function updatePlacement(id: string, patch: Partial<Placement>, record = true) {
@@ -410,7 +448,8 @@ export const useDesign = () => {
   function removePlacement(id: string) {
     commit()
     placements.value = placements.value.filter(p => p.id !== id)
-    if (selectedId.value === id) selectedId.value = null
+    selectedIds.value = selectedIds.value.filter(value => value !== id)
+    if (selectedId.value === id) selectedId.value = selectedIds.value.at(-1) ?? null
   }
 
   function duplicatePlacement(id: string) {
@@ -420,6 +459,67 @@ export const useDesign = () => {
     const np: Placement = { ...p, id: nextId(), x: p.x + 14, y: p.y + 14 }
     placements.value = [...placements.value, np]
     selectedId.value = np.id
+    selectedIds.value = [np.id]
+  }
+
+  const clipboard = useState<Placement[]>('design_clipboard', () => [])
+
+  function copySelected() {
+    const ids = selectedIds.value.length ? selectedIds.value : (selectedId.value ? [selectedId.value] : [])
+    clipboard.value = placements.value
+      .filter(placement => ids.includes(placement.id))
+      .map(placement => ({
+        ...placement,
+        filters: placement.filters ? { ...placement.filters } : undefined,
+        crop: placement.crop ? { ...placement.crop } : undefined,
+      }))
+  }
+
+  function pasteSelected() {
+    if (!clipboard.value.length || placements.value.length >= MAX_PLACEMENTS) return
+    const available = MAX_PLACEMENTS - placements.value.length
+    const copiedGroup = `group_${Date.now()}`
+    const next = clipboard.value.slice(0, available).map(placement => ({
+      ...placement,
+      id: nextId(),
+      x: placement.x + 12,
+      y: placement.y + 12,
+      groupId: placement.groupId ? copiedGroup : null,
+    }))
+    if (!next.length) return
+    commit()
+    placements.value = [...placements.value, ...next]
+    selectedIds.value = next.map(placement => placement.id)
+    selectedId.value = next.at(-1)?.id ?? null
+  }
+
+  function groupSelected() {
+    if (selectedIds.value.length < 2) return null
+    const selected = placements.value.filter(placement => selectedIds.value.includes(placement.id))
+    if (new Set(selected.map(placement => placement.zone)).size !== 1) return null
+    const groupId = `group_${Date.now()}`
+    commit()
+    placements.value = placements.value.map(placement => selectedIds.value.includes(placement.id) ? { ...placement, groupId } : placement)
+    return groupId
+  }
+
+  function ungroupSelected() {
+    const groupIds = new Set(placements.value
+      .filter(placement => selectedIds.value.includes(placement.id))
+      .map(placement => placement.groupId)
+      .filter((value): value is string => !!value))
+    if (!groupIds.size) return
+    commit()
+    placements.value = placements.value.map(placement => placement.groupId && groupIds.has(placement.groupId) ? { ...placement, groupId: null } : placement)
+  }
+
+  function removeSelected() {
+    const ids = selectedIds.value.length ? selectedIds.value : (selectedId.value ? [selectedId.value] : [])
+    if (!ids.length) return
+    commit()
+    placements.value = placements.value.filter(placement => !ids.includes(placement.id))
+    selectedId.value = null
+    selectedIds.value = []
   }
 
   // переупорядочивание слоёв (порядок в массиве = порядок отрисовки, позже = выше)
@@ -453,6 +553,49 @@ export const useDesign = () => {
     placements.value = placements.value.map(x => (x.id === id ? { ...x, ...patch } : x))
   }
 
+  function alignSelected(dir: AlignDir) {
+    const selected = placements.value.filter(placement => selectedIds.value.includes(placement.id) && !placement.locked)
+    if (selected.length <= 1) {
+      const id = selected[0]?.id ?? selectedId.value
+      if (id) alignInZone(id, dir)
+      return
+    }
+    const left = Math.min(...selected.map(placement => placement.x))
+    const right = Math.max(...selected.map(placement => placement.x + placement.width))
+    const top = Math.min(...selected.map(placement => placement.y))
+    const bottom = Math.max(...selected.map(placement => placement.y + placement.height))
+    commit()
+    placements.value = placements.value.map((placement) => {
+      if (!selectedIds.value.includes(placement.id) || placement.locked) return placement
+      if (dir === 'left') return { ...placement, x: left }
+      if (dir === 'hcenter') return { ...placement, x: (left + right - placement.width) / 2 }
+      if (dir === 'right') return { ...placement, x: right - placement.width }
+      if (dir === 'top') return { ...placement, y: top }
+      if (dir === 'vcenter') return { ...placement, y: (top + bottom - placement.height) / 2 }
+      return { ...placement, y: bottom - placement.height }
+    })
+  }
+
+  function distributeSelected(axis: 'horizontal' | 'vertical') {
+    const selected = placements.value.filter(placement => selectedIds.value.includes(placement.id) && !placement.locked)
+    if (selected.length < 3) return
+    const sorted = [...selected].sort((a, b) => axis === 'horizontal' ? a.x - b.x : a.y - b.y)
+    const first = sorted[0]!
+    const last = sorted.at(-1)!
+    const start = axis === 'horizontal' ? first.x + first.width / 2 : first.y + first.height / 2
+    const end = axis === 'horizontal' ? last.x + last.width / 2 : last.y + last.height / 2
+    const step = (end - start) / (sorted.length - 1)
+    const positions = new Map(sorted.map((placement, index) => [placement.id, start + step * index]))
+    commit()
+    placements.value = placements.value.map((placement) => {
+      const center = positions.get(placement.id)
+      if (center === undefined) return placement
+      return axis === 'horizontal'
+        ? { ...placement, x: center - placement.width / 2 }
+        : { ...placement, y: center - placement.height / 2 }
+    })
+  }
+
   // размер элемента в сантиметрах (для подписи в инспекторе)
   function sizeCm(p: Placement): { w: number; h: number } {
     const ppm = pxPerMmFor(zoneByName(p.zone)) || 1
@@ -475,6 +618,7 @@ export const useDesign = () => {
   /** Спецификация нанесения для производства (§5.2), мультизона. */
   function toSpec() {
     return {
+      version: DESIGN_SPEC_VERSION,
       placements: placements.value.map((p, i) => {
         const z = zoneByName(p.zone)
         const r = rectFor(z)
@@ -491,6 +635,11 @@ export const useDesign = () => {
           kind: p.kind,
           opacity: p.opacity ?? 1,
           locked: p.locked ?? false,
+          crop: p.crop,
+          flip_x: p.flipX ?? false,
+          flip_y: p.flipY ?? false,
+          group_id: p.groupId ?? null,
+          hidden: p.hidden ?? false,
           source: p.kind === 'text' ? 'text' : p.kind === 'shape' ? 'shape' : p.source,
           ...(p.kind === 'image'
             ? {
@@ -575,12 +724,13 @@ export const useDesign = () => {
   }
 
   return {
-    product, materialId, zoneName, productColorHex, placements, selectedId, colorCount,
+    product, materialId, zoneName, productColorHex, placements, selectedId, selectedIds, colorCount,
     material, printMode, validZones, zone, zoneRect, pxPerMm, hasText, compositionUrl, printFiles,
     activePlacements, zonesWithPlacements, pxPerMmForZone, rectForZone, atPlacementLimit, MAX_PLACEMENTS,
     canUndo, canRedo, undo, redo,
-    init, loadSpec, addImage, addText, addShape, updatePlacement, removePlacement,
-    duplicatePlacement, reorder, replaceImageAsset, alignInZone, sizeCm, dpiOf, toMm, toSpec,
+    init, loadSpec, addImage, addText, addShape, updatePlacement, removePlacement, removeSelected,
+    selectPlacement, duplicatePlacement, copySelected, pasteSelected, groupSelected, ungroupSelected,
+    reorder, replaceImageAsset, alignInZone, alignSelected, distributeSelected, sizeCm, dpiOf, toMm, toSpec,
     registerStage, captureComposition, setCompositionUrl, registerExporter, registerResetView, generatePrintFiles,
   }
 }

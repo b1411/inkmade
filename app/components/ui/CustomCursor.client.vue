@@ -9,31 +9,37 @@ const active = ref(false)
 const visible = ref(false)
 const enabled = ref(false)
 let teardown: (() => void) | null = null
+let frame = 0
 
 onMounted(() => {
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const fine = window.matchMedia('(pointer: fine)').matches
   if (reduced || !fine) return
 
-  const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
   const ringEl = ring.value
   const dotEl = dot.value
-  if (!gsap || !ringEl || !dotEl) return
+  if (!ringEl || !dotEl) return
   enabled.value = true
 
   // Кольцо догоняет с лагом, точка — почти мгновенно (контраст = премиум-ощущение).
-  const ringX = gsap.quickTo(ringEl, 'x', { duration: 0.4, ease: 'power3' })
-  const ringY = gsap.quickTo(ringEl, 'y', { duration: 0.4, ease: 'power3' })
-  const dotX = gsap.quickTo(dotEl, 'x', { duration: 0.12, ease: 'power3' })
-  const dotY = gsap.quickTo(dotEl, 'y', { duration: 0.12, ease: 'power3' })
+  let targetX = 0
+  let targetY = 0
+  let currentX = 0
+  let currentY = 0
+  const tick = () => {
+    currentX += (targetX - currentX) * 0.18
+    currentY += (targetY - currentY) * 0.18
+    ringEl.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`
+    frame = requestAnimationFrame(tick)
+  }
+  frame = requestAnimationFrame(tick)
 
   const interactiveSel = 'a,button,[role="button"],input,select,textarea,label,[data-cursor]'
   const onMove = (e: MouseEvent) => {
     visible.value = true
-    ringX(e.clientX)
-    ringY(e.clientY)
-    dotX(e.clientX)
-    dotY(e.clientY)
+    targetX = e.clientX
+    targetY = e.clientY
+    dotEl.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`
     active.value = !!(e.target as HTMLElement)?.closest?.(interactiveSel)
   }
   const onLeave = () => (visible.value = false)
@@ -43,6 +49,7 @@ onMounted(() => {
   teardown = () => {
     window.removeEventListener('mousemove', onMove)
     document.removeEventListener('mouseleave', onLeave)
+    cancelAnimationFrame(frame)
   }
 })
 onBeforeUnmount(() => teardown?.())

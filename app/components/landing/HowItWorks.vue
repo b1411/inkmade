@@ -18,13 +18,13 @@ const line = ref<HTMLElement | null>(null)
 const prefersReduced = useReducedMotion()
 let ctx: { revert: () => void } | null = null
 
-onMounted(() => {
+onMounted(async () => {
   if (prefersReduced.value) return
-  const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
+  const { gsap } = await import('~/utils/gsap-loader').then(module => module.loadGsap())
   // template-ref выводится vue-tsc структурно (конфликт CSSOM) — приводим к HTMLElement.
   const el = root.value as HTMLElement | null
   const ln = line.value
-  if (!gsap || !el || !ln) return
+  if (!el?.isConnected || !ln?.isConnected) return
 
   ctx = gsap.context(() => {
     // По умолчанию линия полная (reduced/без-JS); JS сворачивает и рисует по скроллу.

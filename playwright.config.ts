@@ -16,13 +16,21 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium', testIgnore: /mobile\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox', testIgnore: /mobile\.spec\.ts/, use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit', testIgnore: /mobile\.spec\.ts/, use: { ...devices['Desktop Safari'] } },
+    { name: 'android-chrome', testMatch: /mobile\.spec\.ts/, use: { ...devices['Pixel 7'] } },
+    { name: 'iphone-safari', testMatch: /mobile\.spec\.ts/, use: { ...devices['iPhone 13'] } },
   ],
   webServer: {
     command: 'npm run preview -- --port 4173',
     url: 'http://127.0.0.1:4173',
     timeout: 120_000,
     reuseExistingServer: false,
+    env: {
+      ...process.env,
+      NUXT_PUBLIC_E2E_SEEDED: 'true',
+    },
     stdout: 'ignore',
     stderr: 'pipe',
   },

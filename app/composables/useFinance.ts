@@ -122,9 +122,10 @@ export const useFinance = () => {
 
   /** Возврат заказа: статус refunded + реверс начисленных роялти + леджер (§7.3). */
   async function refundOrder(orderId: string, note?: string) {
-    const { data, error } = await supabase.rpc('refund_order', { p_order_id: orderId, p_note: note ?? undefined })
-    if (error) throw error
-    return data
+    return await $fetch('/api/admin/orders/refund', {
+      method: 'POST',
+      body: { orderId, note },
+    })
   }
 
   async function auditLog(limit = 200) {

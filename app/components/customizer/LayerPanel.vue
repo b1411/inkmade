@@ -9,8 +9,10 @@ import { PRINT_FONTS } from '~~/shared/config/print-fonts'
 const { t } = useI18n()
 
 const {
-  product, placements, selectedId, zoneName,
-  removePlacement, duplicatePlacement, reorder, updatePlacement, replaceImageAsset, alignInZone, sizeCm, dpiOf,
+  product, placements, selectedId, selectedIds, zoneName,
+  removePlacement, duplicatePlacement, reorder, updatePlacement, replaceImageAsset, alignInZone, alignSelected,
+  distributeSelected, selectPlacement, copySelected, pasteSelected, groupSelected, ungroupSelected, sizeCm, dpiOf,
+  pxPerMmForZone, rectForZone,
 } = useDesign()
 
 const ALIGNS_IN: Array<{ dir: 'left' | 'hcenter' | 'right' | 'top' | 'vcenter' | 'bottom'; icon: string }> = [
@@ -44,10 +46,10 @@ const dpiTone = computed(() => {
   return 'bg-ink-success/10 text-ink-success'
 })
 
-function selectLayer(p: Placement) {
+function selectLayer(p: Placement, event?: MouseEvent) {
   // выбор слоя другой зоны переключает активную зону на его
   if (p.zone !== zoneName.value) zoneName.value = p.zone
-  selectedId.value = p.id
+  selectPlacement(p.id, !!(event?.ctrlKey || event?.metaKey || event?.shiftKey))
 }
 
 function layerLabel(p: Placement): string {
@@ -82,6 +84,42 @@ function numFilter(p: Placement, key: 'brightness' | 'contrast' | 'saturation' |
   return p.filters?.[key] ?? 0
 }
 function resetFilters(p: Placement) { patch(p, { filters: {} }) }
+
+function geometryMm(p: Placement) {
+  const ppm = pxPerMmForZone(p.zone) || 1
+  const rect = rectForZone(p.zone)
+  return {
+    x: +((p.x - rect.x) / ppm).toFixed(1),
+    y: +((p.y - rect.y) / ppm).toFixed(1),
+    width: +(p.width / ppm).toFixed(1),
+    height: +(p.height / ppm).toFixed(1),
+    rotation: +p.rotation.toFixed(1),
+  }
+}
+
+function setGeometry(p: Placement, key: 'x' | 'y' | 'width' | 'height' | 'rotation', raw: string | number) {
+  const value = Number(raw)
+  if (!Number.isFinite(value)) return
+  const ppm = pxPerMmForZone(p.zone) || 1
+  const rect = rectForZone(p.zone)
+  if (key === 'x') patch(p, { x: rect.x + value * ppm })
+  else if (key === 'y') patch(p, { y: rect.y + value * ppm })
+  else if (key === 'width') patch(p, { width: Math.max(1, value * ppm) })
+  else if (key === 'height') patch(p, { height: Math.max(1, value * ppm) })
+  else patch(p, { rotation: value })
+}
+
+function setCropZoom(p: Placement, raw: string | number) {
+  const zoom = Math.min(0.8, Math.max(0, Number(raw) / 100))
+  const size = 1 - zoom
+  patch(p, { crop: zoom === 0 ? undefined : { x: (1 - size) / 2, y: (1 - size) / 2, width: size, height: size } })
+}
+
+function setCropPosition(p: Placement, axis: 'x' | 'y', raw: string | number) {
+  const crop = p.crop ?? { x: 0, y: 0, width: 1, height: 1 }
+  const limit = axis === 'x' ? 1 - crop.width : 1 - crop.height
+  patch(p, { crop: { ...crop, [axis]: Math.max(0, Math.min(limit, Number(raw) / 100 * limit)) } })
+}
 
 const ALIGNS: Array<{ value: NonNullable<Placement['align']>; icon: string }> = [
   { value: 'left', icon: 'i-lucide-align-left' },
@@ -135,7 +173,20 @@ async function removeBg(p: Placement) {
 
 <template>
   <div v-if="placements.length" class="space-y-4 border-t border-ink-gray-200 pt-5">
-    <UiSectionLabel>{{ $t('customize.layers.label') }}</UiSectionLabel>
+    <div class="flex items-center justify-between gap-2">
+      <UiSectionLabel>{{ $t('customize.layers.label') }}</UiSectionLabel>
+      <span v-if="selectedIds.length > 1" class="ink-label text-[10px] text-ink-burgundy">{{ selectedIds.length }} selected</span>
+    </div>
+
+    <div class="flex flex-wrap gap-1 border-y border-ink-gray-200 py-2">
+      <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-copy" :title="$t('customize.layers.copy')" @click="() => { copySelected() }" />
+      <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-clipboard-paste" :title="$t('customize.layers.paste')" @click="() => { pasteSelected() }" />
+      <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-group" :disabled="selectedIds.length < 2" :title="$t('customize.layers.group')" @click="() => { groupSelected() }" />
+      <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-ungroup" :disabled="!selectedIds.length" :title="$t('customize.layers.ungroup')" @click="() => { ungroupSelected() }" />
+      <span class="mx-1 h-6 w-px bg-ink-gray-200" />
+      <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-columns-3" :disabled="selectedIds.length < 3" :title="$t('customize.layers.distributeHorizontal')" @click="distributeSelected('horizontal')" />
+      <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-rows-3" :disabled="selectedIds.length < 3" :title="$t('customize.layers.distributeVertical')" @click="distributeSelected('vertical')" />
+    </div>
 
     <!-- список слоёв -->
     <ul class="space-y-1">
@@ -143,12 +194,15 @@ async function removeBg(p: Placement) {
         v-for="p in layers"
         :key="p.id"
         class="flex items-center gap-2 rounded-md border px-2 py-1.5 cursor-pointer transition-colors"
-        :class="p.id === selectedId ? 'border-ink-burgundy bg-ink-burgundy/5' : 'border-ink-gray-200 hover:border-ink-gray-400'"
-        @click="selectLayer(p)"
+        :class="selectedIds.includes(p.id) || p.id === selectedId ? 'border-ink-burgundy bg-ink-burgundy/5' : 'border-ink-gray-200 hover:border-ink-gray-400'"
+        @click="selectLayer(p, $event)"
       >
         <UIcon :name="layerIcon(p)" class="size-4 shrink-0 text-ink-gray-600" />
         <span class="flex-1 truncate text-caption">{{ layerLabel(p) }}</span>
         <span class="text-[10px] text-ink-gray-400 shrink-0">{{ zoneTitle(p.zone) }}</span>
+        <button class="text-ink-gray-400 hover:text-ink-burgundy" :title="p.hidden ? $t('customize.layers.show') : $t('customize.layers.hide')" @click.stop="patch(p, { hidden: !p.hidden })">
+          <UIcon :name="p.hidden ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-4" />
+        </button>
         <button class="text-ink-gray-400 hover:text-ink-burgundy" :title="$t('customize.layers.duplicate')" @click.stop="duplicatePlacement(p.id)">
           <UIcon name="i-lucide-copy" class="size-4" />
         </button>
@@ -185,6 +239,33 @@ async function removeBg(p: Placement) {
         </button>
       </div>
 
+      <fieldset class="grid grid-cols-2 gap-2 border-t border-ink-gray-200 pt-3">
+        <legend class="mb-2 text-caption font-semibold text-ink-gray-600">{{ $t('customize.inspector.geometry') }}</legend>
+        <UFormField v-for="field in (['x', 'y', 'width', 'height'] as const)" :key="field" :label="$t(`customize.inspector.${field}Mm`)">
+          <UInput
+            type="number"
+            step="0.1"
+            :min="field === 'width' || field === 'height' ? 1 : undefined"
+            :model-value="geometryMm(selected)[field]"
+            size="xs"
+            class="w-full"
+            :disabled="selected.locked"
+            @update:model-value="setGeometry(selected, field, $event)"
+          />
+        </UFormField>
+        <UFormField :label="$t('customize.inspector.rotationDeg')" class="col-span-2">
+          <UInput
+            type="number"
+            step="1"
+            :model-value="geometryMm(selected).rotation"
+            size="xs"
+            class="w-full"
+            :disabled="selected.locked"
+            @update:model-value="setGeometry(selected, 'rotation', $event)"
+          />
+        </UFormField>
+      </fieldset>
+
       <!-- слои + выравнивание -->
       <div class="flex items-center gap-1.5 flex-wrap">
         <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-chevrons-up" :title="$t('customize.layers.toFront')" @click="reorder(selected.id, 'front')" />
@@ -196,8 +277,36 @@ async function removeBg(p: Placement) {
           v-for="a in ALIGNS_IN" :key="a.dir"
           size="xs" color="neutral" variant="ghost" :icon="a.icon"
           :disabled="selected.locked" :title="$t(`customize.inspector.align_${a.dir}`)"
-          @click="alignInZone(selected.id, a.dir)"
+          @click="selectedIds.length > 1 ? alignSelected(a.dir) : alignInZone(selected.id, a.dir)"
         />
+      </div>
+
+      <div v-if="selected.kind === 'image'" class="flex items-center gap-2 border-t border-ink-gray-200 pt-3">
+        <span class="text-caption text-ink-gray-600">{{ $t('customize.inspector.flip') }}</span>
+        <UButton size="xs" color="neutral" :variant="selected.flipX ? 'solid' : 'ghost'" icon="i-lucide-flip-horizontal-2" :title="$t('customize.inspector.flipHorizontal')" @click="patch(selected, { flipX: !selected.flipX })" />
+        <UButton size="xs" color="neutral" :variant="selected.flipY ? 'solid' : 'ghost'" icon="i-lucide-flip-vertical-2" :title="$t('customize.inspector.flipVertical')" @click="patch(selected, { flipY: !selected.flipY })" />
+        <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-scan" :title="$t('customize.inspector.cropReset')" @click="patch(selected, { crop: undefined })" />
+      </div>
+
+      <div v-if="selected.kind === 'image' && !selected.pattern" class="space-y-2 border-t border-ink-gray-200 pt-3">
+        <label class="block text-caption text-ink-gray-600">
+          {{ $t('customize.inspector.cropZoom') }}
+          <input
+            type="range" min="0" max="80" step="1" class="w-full accent-ink-burgundy"
+            :value="selected.crop ? Math.round((1 - Math.min(selected.crop.width, selected.crop.height)) * 100) : 0"
+            @input="setCropZoom(selected, ($event.target as HTMLInputElement).value)"
+          >
+        </label>
+        <div v-if="selected.crop" class="grid grid-cols-2 gap-2">
+          <label class="block text-caption text-ink-gray-600">
+            {{ $t('customize.inspector.cropX') }}
+            <input type="range" min="0" max="100" step="1" class="w-full accent-ink-burgundy" :value="selected.crop.x / Math.max(0.001, 1 - selected.crop.width) * 100" @input="setCropPosition(selected, 'x', ($event.target as HTMLInputElement).value)">
+          </label>
+          <label class="block text-caption text-ink-gray-600">
+            {{ $t('customize.inspector.cropY') }}
+            <input type="range" min="0" max="100" step="1" class="w-full accent-ink-burgundy" :value="selected.crop.y / Math.max(0.001, 1 - selected.crop.height) * 100" @input="setCropPosition(selected, 'y', ($event.target as HTMLInputElement).value)">
+          </label>
+        </div>
       </div>
 
       <!-- прозрачность (общая) -->

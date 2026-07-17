@@ -82,7 +82,7 @@ const animate = ref(false)
 const prefersReduced = useReducedMotion()
 let ctx: { revert: () => void } | null = null
 
-onMounted(() => {
+onMounted(async () => {
   if (prefersReduced.value) return
 
   // Гейт по времени гидрации. SSR отдаёт hero уже видимым (класса .hero-anim на
@@ -94,10 +94,10 @@ onMounted(() => {
   // типичной гидрации (~300–800 мс от старта навигации).
   if (performance.now() > 1200) return
 
-  const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
+  const { gsap } = await import('~/utils/gsap-loader').then(module => module.loadGsap())
   // template-ref выводится vue-tsc структурно (конфликт CSSOM) — приводим к HTMLElement.
   const el = root.value as HTMLElement | null
-  if (!gsap || !el) return
+  if (!el?.isConnected) return
 
   animate.value = true // включаем .hero-anim (начальное скрытие) синхронно перед таймлайном
 

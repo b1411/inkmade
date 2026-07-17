@@ -9,7 +9,12 @@ const points = computed(() =>
 
 <template>
   <section class="w-screen ml-[calc(50%-50vw)] overflow-hidden border-y border-white/10 bg-ink-black text-ink-cream/70">
-    <div class="mx-auto max-w-(--container-max) overflow-x-auto px-4">
+    <div
+      class="mx-auto max-w-(--container-max) overflow-x-auto px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-white"
+      role="region"
+      :aria-label="t('landing.trustBar.ariaLabel')"
+      tabindex="0"
+    >
       <UiReveal :y="12" :duration="600" class="min-w-max">
         <ul class="flex min-h-12 items-center gap-6 ink-label text-center lg:min-w-0 lg:justify-center">
           <li v-for="p in points" :key="p" class="inline-flex shrink-0 items-center gap-2">

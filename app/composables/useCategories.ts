@@ -6,6 +6,7 @@ export const useCategories = () => {
   const supabase = useSupabaseClient<Database>()
 
   async function listActive() {
+    if (isE2eSeededCatalog()) return structuredClone(e2eCategories)
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -17,6 +18,7 @@ export const useCategories = () => {
   }
 
   async function listAll() {
+    if (isE2eSeededCatalog()) return structuredClone(e2eCategories)
     const { data, error } = await supabase
       .from('categories')
       .select('*')

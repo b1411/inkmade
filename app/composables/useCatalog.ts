@@ -7,6 +7,10 @@ export const useCatalog = () => {
 
   /** Товары категории с основным фото (для плиток). */
   async function listByCategory(category: string) {
+    if (isE2eSeededCatalog()) {
+      const product = e2eProduct()
+      return product.category === category ? [product] : []
+    }
     const { data, error } = await supabase
       .from('products')
       .select('id, slug, alias, title, base_price, category, created_at, product_images(url, is_primary)')
@@ -19,6 +23,7 @@ export const useCatalog = () => {
 
   /** Все опубликованные товары (для блока «Выбери основу» на главной). */
   async function listAll() {
+    if (isE2eSeededCatalog()) return [e2eProduct()]
     const { data, error } = await supabase
       .from('products')
       .select('id, slug, alias, title, base_price, category, is_featured, created_at, product_images(url, is_primary)')
@@ -30,6 +35,11 @@ export const useCatalog = () => {
 
   /** Полная карточка товара по slug (для страницы товара/конструктора). */
   async function getBySlug(slug: string) {
+    if (isE2eSeededCatalog()) {
+      const product = e2eProduct()
+      if (product.slug !== slug) throw new Error('Product not found')
+      return product
+    }
     const { data, error } = await supabase
       .from('products')
       .select('*, materials(*), print_zones(*), variants(*), product_images(*)')
@@ -42,6 +52,11 @@ export const useCatalog = () => {
 
   /** Карточка по alias (URL конструктора, §7.1.1). */
   async function getByAlias(alias: string) {
+    if (isE2eSeededCatalog()) {
+      const product = e2eProduct()
+      if (product.alias !== alias) throw new Error('Product not found')
+      return product
+    }
     const { data, error } = await supabase
       .from('products')
       .select('*, materials(*), print_zones(*), variants(*), product_images(*)')

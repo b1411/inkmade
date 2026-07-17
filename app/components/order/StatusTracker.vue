@@ -18,11 +18,12 @@ const fill = ref<HTMLElement | null>(null)
 const prefersReduced = useReducedMotion()
 let ctx: { revert: () => void } | null = null
 
-onMounted(() => {
+onMounted(async () => {
   if (prefersReduced.value) return
-  const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
   const el = fill.value
-  if (!gsap || !el) return
+  if (!el) return
+  const { gsap } = await import('~/utils/gsap-loader').then(module => module.loadGsap())
+  if (!el.isConnected) return
   ctx = gsap.context(() => {
     gsap.fromTo(el, { scaleX: 0 }, { scaleX: fraction.value, duration: 0.9, ease: 'power2.out', delay: 0.15 })
   }, el)

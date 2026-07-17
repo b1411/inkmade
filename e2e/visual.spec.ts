@@ -37,6 +37,7 @@ async function primeReveals(page: import('@playwright/test').Page) {
 
 for (const vp of VIEWPORTS) {
   test(`home visual @${vp.name}`, async ({ page }) => {
+    test.skip(test.info().project.name !== 'chromium', 'visual baselines are canonicalized in Chromium')
     await page.setViewportSize({ width: vp.width, height: vp.height })
     await page.goto('/')
     await page.evaluate(() => document.fonts.ready)

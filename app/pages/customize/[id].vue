@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { FEATURES } from '~~/shared/config/features'
+import { preflightDesign } from '~~/shared/design/spec'
 
 definePageMeta({ layout: 'customizer' })
 
 // Кастомайзер (§7). Порядок шагов: изделие → материал → зона → принт/текст → цвет → цена → корзина.
 const route = useRoute()
 const alias = route.params.id as string
-const { getByAlias } = useCatalog()
+const { getByAlias, listAll } = useCatalog()
 
 const { t } = useI18n()
 
@@ -15,6 +16,13 @@ if (error.value || !product.value) {
   throw createError({ statusCode: 404, statusMessage: t('customize.page.notFound') })
 }
 useHead({ title: t('customize.page.headTitle', { title: product.value.title }) })
+const { data: switchProducts } = await useAsyncData('customizer-switch-products', () => listAll())
+
+async function switchProduct(nextAlias: string) {
+  if (!nextAlias || nextAlias === alias || !import.meta.client) return
+  sessionStorage.setItem('inkmade:product-switch-spec', JSON.stringify(toSpec()))
+  await navigateTo(`/customize/${nextAlias}?switch=1`)
+}
 
 const design = useDesign()
 const { material, materialId, placements, productColorHex, toSpec, undo, redo, canUndo, canRedo, generatePrintFiles } = design
@@ -39,6 +47,12 @@ const customizerReady = ref(false)
 // доработка позиции корзины (§9.1): ?cart=<itemId> — восстанавливаем spec и параметры,
 // при повторном «в корзину» обновляем ЭТУ позицию, а не создаём дубль.
 const editCartId = computed(() => (route.query.cart as string) || null)
+const autosave = useDesignAutosave({
+  productId: product.value.id,
+  draftKey: `${alias}:${editCartId.value ?? fromId.value ?? 'new'}`.slice(0, 128),
+  toSpec,
+  loadSpec: design.loadSpec,
+})
 
 // инициализация состояния на клиенте (canvas + Image — клиент)
 onMounted(async () => {
@@ -51,8 +65,22 @@ onMounted(async () => {
     materialId: (route.query.material as string) || undefined,
     colorHex: (route.query.color as string) || undefined,
   })
-  useAnalytics().viewContent(product.value.id) // первое звено воронки (§3.5.1)
-  if (editCartId.value) {
+  useAnalytics().customizeStart(product.value.id, mode.value)
+  let restoredFromSwitch = false
+  if (route.query.switch === '1') {
+    const raw = sessionStorage.getItem('inkmade:product-switch-spec')
+    sessionStorage.removeItem('inkmade:product-switch-spec')
+    if (raw) {
+      try {
+        design.loadSpec(JSON.parse(raw), { compatibleOnly: true })
+        restoredFromSwitch = true
+        toast.add({ title: t('customize.page.productSwitched'), color: 'success' })
+      } catch { /* повреждённый session draft не блокирует редактор */ }
+    }
+  }
+  if (restoredFromSwitch) {
+    // compatible placements already restored above
+  } else if (editCartId.value) {
     // доработка позиции корзины: spec лежит локально, не в БД
     cart.load()
     const item = cart.items.value.find(i => i.id === editCartId.value)
@@ -79,6 +107,11 @@ onMounted(async () => {
     const sz = route.query.size as string
     if (sizeVariants.value.some(v => v.size === sz)) selectedSize.value = sz
   }
+  if (!editCartId.value && !fromId.value && !restoredFromSwitch) {
+    const restored = await autosave.restore()
+    if (restored) toast.add({ title: t('customize.autosave.restored'), color: 'info' })
+  }
+  autosave.start()
 })
 
 const materialItems = computed(() =>
@@ -106,10 +139,11 @@ const quantity = ref(1)
 const paramsOpen = ref(false)
 
 // ── 3-зонный редактор: левый тулбар выбирает активный инструмент ──
-type ToolKey = 'print' | 'text' | 'shape' | 'ai'
+type ToolKey = 'print' | 'template' | 'text' | 'shape' | 'ai'
 const activeTool = ref<ToolKey>('print')
 const TOOLS: Array<{ key: ToolKey; icon: string }> = [
   { key: 'print', icon: 'i-lucide-image' },
+  { key: 'template', icon: 'i-lucide-layout-template' },
   { key: 'text', icon: 'i-lucide-type' },
   { key: 'shape', icon: 'i-lucide-shapes' },
   // вкладка AI-генерации — только при включённом флаге aiDesign
@@ -118,12 +152,62 @@ const TOOLS: Array<{ key: ToolKey; icon: string }> = [
 const mode = ref<'simple' | 'advanced'>('simple')
 const modes = ['simple', 'advanced'] as const
 const visibleTools = computed(() => mode.value === 'simple'
-  ? TOOLS.filter(tool => tool.key === 'print' || tool.key === 'text')
+  ? TOOLS.filter(tool => tool.key === 'print' || tool.key === 'template' || tool.key === 'text')
   : TOOLS)
 watch(mode, (value) => {
   if (value === 'simple' && !visibleTools.value.some(tool => tool.key === activeTool.value)) activeTool.value = 'print'
+  if (value === 'advanced') useAnalytics().track('simple_to_advanced', { product_id: product.value?.id })
+})
+watch(() => placements.value.length, (count, previous) => {
+  if (count > previous) {
+    const placement = placements.value.at(-1)
+    useAnalytics().assetAdded(placement?.kind || 'unknown', placement?.zone)
+  }
 })
 const lineTotal = computed(() => breakdown.value.unitPrice * Math.max(1, quantity.value))
+const preflight = computed(() => preflightDesign(toSpec(), {
+  zones: (product.value?.print_zones ?? []).map(zone => ({
+    name: zone.name,
+    width_mm: Number(zone.max_width_mm) || 1,
+    height_mm: Number(zone.max_height_mm) || 1,
+  })),
+  supported_print_modes: material.value?.print_mode ? [material.value.print_mode] : undefined,
+}))
+const preflightOpen = ref(false)
+const proofOpen = ref(false)
+const proofLoading = ref(false)
+const proofPreviews = ref<Array<{ zone: string; title: string; url: string }>>([])
+const warningConfirmed = ref(false)
+watch(() => JSON.stringify(toSpec()), () => { warningConfirmed.value = false })
+
+function clearProofPreviews() {
+  for (const preview of proofPreviews.value) URL.revokeObjectURL(preview.url)
+  proofPreviews.value = []
+}
+
+async function openProof() {
+  if (!placements.value.length || proofLoading.value) return
+  proofOpen.value = true
+  proofLoading.value = true
+  clearProofPreviews()
+  const previousZone = design.zoneName.value
+  design.selectPlacement(null)
+  try {
+    const occupied = design.validZones.value.filter(zone => design.zonesWithPlacements.value.has(zone.name))
+    for (const zone of occupied) {
+      design.zoneName.value = zone.name
+      await nextTick()
+      await new Promise(resolve => setTimeout(resolve, 80))
+      const blob = await design.captureComposition()
+      if (blob) proofPreviews.value.push({ zone: zone.name, title: zone.title, url: URL.createObjectURL(blob) })
+    }
+  } finally {
+    design.zoneName.value = previousZone
+    proofLoading.value = false
+  }
+}
+
+onBeforeUnmount(clearProofPreviews)
 
 const toast = useToast()
 
@@ -187,6 +271,16 @@ async function onAddToCart() {
     notify.warn(t('customize.page.selectSize'))
     return
   }
+  if (!preflight.value.can_continue) {
+    preflightOpen.value = true
+    notify.error(t('customize.preflight.blocked'))
+    return
+  }
+  if (preflight.value.summary.warnings > 0 && !warningConfirmed.value) {
+    preflightOpen.value = true
+    return
+  }
+  useAnalytics().preflightPass(preflight.value.summary.warnings)
   submitting.value = true
   let previewObjUrl: string | undefined
   try {
@@ -205,7 +299,10 @@ async function onAddToCart() {
     // позицию в заказ: иначе она уйдёт в цех без печатного артефакта, а брак
     // вскроется уже после продажи. (Пустой дизайн сюда не доходит — guard выше.)
     let files: import('~/composables/useDesign').PrintFile[] = []
-    try { files = await generatePrintFiles() } catch { files = [] }
+    try { files = await generatePrintFiles() } catch {
+      files = []
+      useAnalytics().track('print_export_error', { product_id: product.value?.id })
+    }
     if (!files.length) {
       notify.error(t('customize.page.printFilesFailed'))
       return
@@ -259,6 +356,18 @@ async function onAddToCart() {
         <div class="min-w-0">
           <UiSectionLabel accent>{{ $t('customize.page.label') }}</UiSectionLabel>
           <h1 class="ink-display text-h3 truncate">{{ product.title }}</h1>
+          <USelect
+            :model-value="alias"
+            :items="(switchProducts ?? []).map(item => ({ label: item.title, value: item.alias }))"
+            size="xs"
+            class="mt-1 hidden min-w-48 sm:flex"
+            :aria-label="$t('customize.page.switchProduct')"
+            @update:model-value="value => switchProduct(String(value))"
+          />
+          <p class="mt-1 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[.1em] text-white/45" aria-live="polite">
+            <span class="size-1.5 rounded-full" :class="autosave.status.value === 'saved' ? 'bg-ink-success' : autosave.status.value === 'error' || autosave.status.value === 'conflict' ? 'bg-ink-error' : 'bg-ink-warning'" />
+            {{ $t(`customize.autosave.${autosave.status.value}`) }}
+          </p>
         </div>
       </div>
       <div class="flex items-center gap-1.5 shrink-0">
@@ -279,6 +388,9 @@ async function onAddToCart() {
         <UButton color="neutral" variant="subtle" size="sm" icon="i-lucide-redo-2" :disabled="!canRedo" :title="$t('customize.page.redo')" @click="redo()" />
         <UButton color="neutral" variant="subtle" size="sm" icon="i-lucide-bookmark" :loading="saving" :title="$t('customize.page.saveDesign')" @click="onSaveDesign">
           <span class="hidden sm:inline">{{ $t('customize.page.saveDesign') }}</span>
+        </UButton>
+        <UButton color="neutral" variant="subtle" size="sm" icon="i-lucide-scan-eye" :disabled="!placements.length" :title="$t('customize.proof.open')" @click="openProof">
+          <span class="hidden xl:inline">{{ $t('customize.proof.open') }}</span>
         </UButton>
       </div>
     </div>
@@ -308,6 +420,7 @@ async function onAddToCart() {
             <CustomizerDesignUpload />
             <CustomizerPrintLibraryPicker />
           </template>
+          <CustomizerTemplateBrowser v-else-if="activeTool === 'template'" />
           <CustomizerTextTool v-else-if="activeTool === 'text'" />
           <CustomizerShapePicker v-else-if="activeTool === 'shape'" />
           <CustomizerAIGenerator v-else-if="activeTool === 'ai'" />
@@ -389,6 +502,47 @@ async function onAddToCart() {
         />
       </template>
     </USlideover>
+
+    <UModal :open="autosave.status.value === 'conflict'" :title="$t('customize.autosave.conflictTitle')" :dismissible="false">
+      <template #body>
+        <p class="text-sm text-ink-gray-600">{{ $t('customize.autosave.conflictText') }}</p>
+        <div class="mt-5 grid gap-2 sm:grid-cols-2">
+          <UButton color="neutral" variant="outline" block @click="autosave.keepCurrent">{{ $t('customize.autosave.keepCurrent') }}</UButton>
+          <UButton color="primary" block @click="autosave.useLatestSaved">{{ $t('customize.autosave.useSaved') }}</UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal v-model:open="preflightOpen" :title="$t('customize.preflight.title')">
+      <template #body>
+        <CustomizerPreflightPanel :result="preflight" />
+        <div class="mt-5 flex justify-end gap-2">
+          <UButton color="neutral" variant="outline" @click="preflightOpen = false">{{ $t('customize.preflight.back') }}</UButton>
+          <UButton
+            v-if="preflight.can_continue && preflight.summary.warnings > 0"
+            color="primary"
+            @click="warningConfirmed = true; preflightOpen = false; onAddToCart()"
+          >
+            {{ $t('customize.preflight.continue') }}
+          </UButton>
+        </div>
+      </template>
+    </UModal>
+
+    <UModal v-model:open="proofOpen" :title="$t('customize.proof.title')" :ui="{ content: 'sm:max-w-5xl' }">
+      <template #body>
+        <p class="mb-4 text-sm text-ink-gray-600">{{ $t('customize.proof.description') }}</p>
+        <div v-if="proofLoading" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+          <UiSkeleton v-for="n in Math.max(1, design.zonesWithPlacements.value.size)" :key="n" class="aspect-[4/5]" />
+        </div>
+        <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <figure v-for="preview in proofPreviews" :key="preview.zone" class="overflow-hidden border border-ink-gray-200 bg-ink-gray-50">
+            <img :src="preview.url" :alt="preview.title" class="aspect-[4/5] w-full object-contain">
+            <figcaption class="border-t border-ink-gray-200 px-3 py-2 text-xs font-semibold">{{ preview.title }}</figcaption>
+          </figure>
+        </div>
+      </template>
+    </UModal>
   </section>
 </template>
 

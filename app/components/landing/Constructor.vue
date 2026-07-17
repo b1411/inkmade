@@ -108,7 +108,14 @@ onBeforeUnmount(() => {
               <UIcon name="i-lucide-upload" class="size-4" />
               {{ locale === 'kk' ? 'Сурет жүктеу' : 'Загрузить изображение' }}
             </button>
-            <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="sr-only" @change="onFile">
+            <input
+              ref="fileInput"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              class="sr-only"
+              :aria-label="locale === 'kk' ? 'Принт суретін жүктеу' : 'Загрузить изображение принта'"
+              @change="onFile"
+            >
           </div>
 
           <div class="flex flex-col border-t border-white/10 bg-ink-surface md:border-l md:border-t-0">

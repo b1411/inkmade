@@ -234,21 +234,17 @@ onMounted(() => {
             <NuxtLink
               v-for="(l, i) in menuLinks"
               :key="l.to"
-              v-motion
-              :initial="{ opacity: 0, y: 24 }"
-              :enter="{ opacity: 1, y: 0, transition: { delay: 100 + i * 80 } }"
               :to="l.to"
-              class="ink-display text-4xl py-2"
+              class="menu-link-enter ink-display text-4xl py-2"
+              :style="{ animationDelay: `${100 + i * 80}ms` }"
               @click="closeMenu"
             >
               {{ l.label }}
             </NuxtLink>
             <NuxtLink
-              v-motion
-              :initial="{ opacity: 0, y: 24 }"
-              :enter="{ opacity: 1, y: 0, transition: { delay: 100 + menuLinks.length * 80 } }"
               :to="cabinetTo"
-              class="ink-display text-4xl py-2"
+              class="menu-link-enter ink-display text-4xl py-2"
+              :style="{ animationDelay: `${100 + menuLinks.length * 80}ms` }"
               @click="closeMenu"
             >
               {{ $t('nav.cabinet') }}
@@ -281,5 +277,16 @@ onMounted(() => {
 .menu-enter-from,
 .menu-leave-to {
   opacity: 0;
+}
+.menu-link-enter {
+  opacity: 0;
+  animation: menu-link-in 500ms var(--ease-out) forwards;
+}
+@keyframes menu-link-in {
+  from { opacity: 0; transform: translate3d(0, 24px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-link-enter { opacity: 1; animation: none; }
 }
 </style>

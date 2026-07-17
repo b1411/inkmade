@@ -13,16 +13,12 @@ const prefersReduced = useReducedMotion()
 let tween: { kill: () => void } | null = null
 watch(
   () => lineTotal.value,
-  (to) => {
+  async (to) => {
     if (prefersReduced.value) {
       display.value = to
       return
     }
-    const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
-    if (!gsap) {
-      display.value = to
-      return
-    }
+    const { gsap } = await import('~/utils/gsap-loader').then(module => module.loadGsap())
     tween?.kill()
     const obj = { v: display.value }
     tween = gsap.to(obj, {

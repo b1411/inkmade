@@ -1,5 +1,17 @@
 <script setup lang="ts">
 import Konva from 'konva'
+import {
+  Group as VGroup,
+  Image as VImage,
+  Layer as VLayer,
+  Line as VLine,
+  Path as VPath,
+  Rect as VRect,
+  Stage as VStage,
+  Text as VText,
+  TextPath as VTextPath,
+  Transformer as VTransformer,
+} from 'vue-konva'
 import { CANVAS, useDesign } from '~/composables/useDesign'
 import type { Placement } from '~/composables/useDesign'
 import { garmentKindForSlug, garmentDataUri, garmentImageRect } from '~~/shared/config/garment'
@@ -13,8 +25,9 @@ import { applyKonvaFilters } from '~/utils/konva-filters'
 // Мультизона: показываем плейсменты только активной зоны.
 const design = useDesign()
 const {
-  product, zoneRect, placements, activePlacements, selectedId, productColorHex,
-  updatePlacement, removePlacement, duplicatePlacement, undo, redo, zone,
+  product, zoneRect, placements, activePlacements, selectedId, selectedIds, productColorHex,
+  updatePlacement, removeSelected, duplicatePlacement, copySelected, pasteSelected, groupSelected, ungroupSelected,
+  selectPlacement, undo, redo, zone,
   registerStage, registerExporter, registerResetView, pxPerMmForZone, rectForZone,
 } = design
 const { load: loadFont } = useFontLoader()
@@ -182,7 +195,7 @@ const productPhotoConfig = computed(() => {
 })
 
 // ── конфиги слоёв ─────────────────────────────────────────────────
-const bgConfig = computed(() => ({ x: 0, y: 0, width: CANVAS.width, height: CANVAS.height, fill: '#efe9df', listening: false }))
+const bgConfig = computed(() => ({ x: 0, y: 0, width: CANVAS.width, height: CANVAS.height, fill: INK_CANVAS.canvas, listening: false }))
 const garmentConfig = computed(() => {
   void tick.value
   const img = garmentImg.value
@@ -259,9 +272,21 @@ function hLineConfig(y: number) {
 // ── конфиги элементов ─────────────────────────────────────────────
 function imageConfig(p: Placement) {
   void tick.value
+  const source = images[p.id]
+  const crop = p.crop && source
+    ? {
+        cropX: p.crop.x * source.width,
+        cropY: p.crop.y * source.height,
+        cropWidth: p.crop.width * source.width,
+        cropHeight: p.crop.height * source.height,
+      }
+    : {}
   return {
     id: p.id, image: images[p.id], x: p.x, y: p.y, width: p.width, height: p.height,
     rotation: p.rotation, opacity: (p.opacity ?? 1) * revealProgress.value, draggable: !p.locked, dragBoundFunc: makeDragBound(p),
+    scaleX: p.flipX ? -1 : 1, scaleY: p.flipY ? -1 : 1,
+    offsetX: p.flipX ? p.width : 0, offsetY: p.flipY ? p.height : 0,
+    ...crop,
   }
 }
 function patternConfig(p: Placement) {
@@ -389,9 +414,12 @@ function makeDragBound(p: Placement) {
 
 // ── взаимодействие ────────────────────────────────────────────────
 function onStageClick(e: any) {
-  if (e.target === e.target.getStage() || !e.target.id?.()) selectedId.value = null
+  if (e.target === e.target.getStage() || !e.target.id?.()) selectPlacement(null)
 }
-function onSelect(id: string) { selectedId.value = id }
+function onSelect(id: string, event?: any) {
+  const original = event?.evt
+  selectPlacement(id, !!(original?.ctrlKey || original?.metaKey || original?.shiftKey))
+}
 function onDragEnd(p: Placement, e: any) {
   clearGuides()
   updatePlacement(p.id, { x: e.target.x(), y: e.target.y() })
@@ -426,9 +454,12 @@ function onKey(e: KeyboardEvent) {
   const k = e.key.toLowerCase()
   if (meta && k === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); return }
   if (meta && k === 'y') { e.preventDefault(); redo(); return }
+  if (meta && k === 'c') { e.preventDefault(); copySelected(); return }
+  if (meta && k === 'v') { e.preventDefault(); pasteSelected(); return }
+  if (meta && k === 'g') { e.preventDefault(); e.shiftKey ? ungroupSelected() : groupSelected(); return }
   if (meta && k === 'd') { e.preventDefault(); if (selectedId.value) duplicatePlacement(selectedId.value); return }
   if (!selectedId.value) return
-  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removePlacement(selectedId.value); return }
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeSelected(); return }
   const p = placements.value.find(x => x.id === selectedId.value)
   if (!p || p.zone !== zone.value?.name || p.locked) return
   const step = e.shiftKey ? 10 : 1
@@ -520,7 +551,7 @@ watch([filterSig, tick], () => nextTick(applyFilters))
 const selectedPlacement = computed(() => placements.value.find(p => p.id === selectedId.value))
 const transformerConfig = computed(() => ({
   rotateEnabled: !selectedPlacement.value?.locked,
-  borderStroke: '#7A1F28', anchorStroke: '#7A1F28', anchorSize: 12,
+  borderStroke: INK_CANVAS.burgundy, anchorStroke: INK_CANVAS.burgundy, anchorSize: 12,
   enabledAnchors: (selectedPlacement.value && (isCurved(selectedPlacement.value) || selectedPlacement.value.locked || isPattern(selectedPlacement.value)))
     ? []
     : ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
@@ -532,12 +563,18 @@ function attachTransformer() {
     if (!stage || !tr) return
     const sel = selectedPlacement.value
     if (!selectedId.value || sel?.locked || isPattern(sel ?? {} as Placement)) { tr.nodes([]); tr.getLayer()?.batchDraw(); return }
-    const node = stage.findOne('#' + selectedId.value)
-    tr.nodes(node ? [node] : [])
+    const ids = selectedIds.value.length ? selectedIds.value : [selectedId.value]
+    const nodes = ids
+      .map(id => placements.value.find(placement => placement.id === id))
+      .filter((placement): placement is Placement => !!placement && placement.zone === zone.value?.name && !placement.locked && !placement.hidden && !isPattern(placement))
+      .map(placement => stage.findOne('#' + placement.id))
+      .filter(Boolean)
+    tr.nodes(nodes)
     tr.getLayer()?.batchDraw()
   })
 }
 watch(selectedId, attachTransformer)
+watch(selectedIds, attachTransformer)
 watch(() => activePlacements.value.length, () => { attachTransformer(); nextTick(applyFilters) })
 // принт-изображение рендерится в Konva только ПОСЛЕ асинхронной загрузки (images[id]).
 // В момент addImage ноды ещё нет → трансформер цепляется к пустоте и принт нельзя
@@ -549,7 +586,7 @@ watch(tick, () => {
   if (tr && tr.nodes().length) return
   attachTransformer()
 })
-watch(() => zone.value?.name, () => { selectedId.value = null; attachTransformer(); nextTick(applyFilters) })
+watch(() => zone.value?.name, () => { selectPlacement(null); attachTransformer(); nextTick(applyFilters) })
 onMounted(() => {
   attachTransformer()
   nextTick(applyFilters)
@@ -667,30 +704,30 @@ async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
               <v-rect
                 v-if="p.kind === 'image' && p.pattern && images[p.id]"
                 :config="patternConfig(p)"
-                @click="onSelect(p.id)" @tap="onSelect(p.id)"
+                @click="onSelect(p.id, $event)" @tap="onSelect(p.id, $event)"
               />
               <v-image
                 v-else-if="p.kind === 'image' && images[p.id]"
                 :config="imageConfig(p)"
-                @click="onSelect(p.id)" @tap="onSelect(p.id)"
+                @click="onSelect(p.id, $event)" @tap="onSelect(p.id, $event)"
                 @dragend="onDragEnd(p, $event)" @transformend="onTransformEnd(p, $event)"
               />
               <v-path
                 v-else-if="p.kind === 'shape'"
                 :config="shapeConfig(p)"
-                @click="onSelect(p.id)" @tap="onSelect(p.id)"
+                @click="onSelect(p.id, $event)" @tap="onSelect(p.id, $event)"
                 @dragend="onDragEnd(p, $event)" @transformend="onTransformEnd(p, $event)"
               />
               <v-text-path
                 v-else-if="p.kind === 'text' && p.curve"
                 :config="textPathConfig(p)"
-                @click="onSelect(p.id)" @tap="onSelect(p.id)"
+                @click="onSelect(p.id, $event)" @tap="onSelect(p.id, $event)"
                 @dragend="onDragEnd(p, $event)" @transformend="onTransformEnd(p, $event)"
               />
               <v-text
                 v-else-if="p.kind === 'text'"
                 :config="textConfig(p)"
-                @click="onSelect(p.id)" @tap="onSelect(p.id)"
+                @click="onSelect(p.id, $event)" @tap="onSelect(p.id, $event)"
                 @dragend="onDragEnd(p, $event)" @transformend="onTransformEnd(p, $event)"
               />
             </template>

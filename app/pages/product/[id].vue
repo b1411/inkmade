@@ -102,7 +102,7 @@ useHead({
 })
 
 // первое звено воронки — просмотр товара (§3.5.1)
-onMounted(() => useAnalytics().viewContent(product.value!.id))
+onMounted(() => useAnalytics().productView(product.value!.id))
 
 // избранное (CRM §3.1)
 const { isProductFav, toggleProduct } = useFavorites()
@@ -586,7 +586,7 @@ const productCopy = computed(() => locale.value === 'kk'
       <div class="mx-auto max-w-(--container-max) px-4 py-12 lg:py-16">
         <UiSectionLabel accent>01 / {{ productCopy.detailsLabel }}</UiSectionLabel>
         <div class="mt-6 grid gap-4 lg:grid-cols-3">
-          <article class="border border-black/10 bg-[#f7f3ed] p-6 sm:p-8">
+          <article class="border border-black/10 bg-ink-paper p-6 sm:p-8">
             <h2 class="ink-display text-2xl">{{ productCopy.description }}</h2>
             <p class="mt-5 leading-relaxed text-ink-text-dark-soft">
               {{ product.description || `${product.title} — чистая основа для персонального принта. Выбери цвет и размер, затем собери дизайн в редакторе.` }}
@@ -599,7 +599,7 @@ const productCopy = computed(() => locale.value === 'kk'
             </ul>
           </article>
 
-          <article class="border border-black/10 bg-[#f7f3ed] p-6 sm:p-8">
+          <article class="border border-black/10 bg-ink-paper p-6 sm:p-8">
             <h2 class="ink-display text-2xl">{{ productCopy.specs }}</h2>
             <dl class="mt-5 text-sm">
               <div class="flex justify-between gap-5 border-b border-black/10 py-3">

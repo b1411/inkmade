@@ -119,10 +119,13 @@ async function onFile(e: Event) {
 
     const objectUrl = URL.createObjectURL(rasterFile)
     const { w, h } = await readImageSize(objectUrl)
-    URL.revokeObjectURL(objectUrl)
     // DPI больше не блокирует — принимаем любой растр. Оценку качества показываем
     // по реальному размеру на холсте (notifyAdded → dpiOf), а не worst-case.
-    const url = await uploadToStorage(rasterFile, rasterContentType)
+    // Playwright seed не имеет внешнего Storage: blob URL оставляем живым на время
+    // тестовой страницы. В обычном runtime исходник всегда уходит в постоянный bucket.
+    const seeded = isE2eSeededCatalog()
+    const url = seeded ? objectUrl : await uploadToStorage(rasterFile, rasterContentType)
+    if (!seeded) URL.revokeObjectURL(objectUrl)
     const pl = addImage(url, w, h, 'upload')
     if (!pl) { toast.add({ title: t('customize.tools.limitReached'), color: 'warning' }); return }
     notifyAdded(pl)

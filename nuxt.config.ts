@@ -20,7 +20,6 @@ export default defineNuxtConfig({
     '@nuxtjs/supabase',
     '@nuxt/image',
     '@nuxtjs/i18n',
-    '@vueuse/motion/nuxt',
     '@formkit/auto-animate/nuxt',
   ],
 
@@ -121,6 +120,13 @@ export default defineNuxtConfig({
     paymentMerchantId: process.env.PAYMENT_MERCHANT_ID,
     paymentSecretKey: process.env.PAYMENT_SECRET_KEY,
     paymentWebhookSecret: process.env.PAYMENT_WEBHOOK_SECRET,
+    paymentProvider: process.env.PAYMENT_PROVIDER || (process.env.NODE_ENV === 'production' ? '' : 'mock'),
+    epayEnvironment: process.env.EPAY_ENV || 'test',
+    epayClientId: process.env.EPAY_CLIENT_ID,
+    epayClientSecret: process.env.EPAY_CLIENT_SECRET,
+    epayShopId: process.env.EPAY_SHOP_ID,
+    epayAccountId: process.env.EPAY_ACCOUNT_ID,
+    epayTerminalId: process.env.EPAY_TERMINAL_ID,
     // AI-генерация принтов (§AI). Ключ провайдера — только сервер. Провайдер сменяемый
     // (fal/Ideogram по умолчанию; Recraft/Flux — сменой AI_IMAGE_PROVIDER/AI_IMAGE_MODEL).
     aiImageApiKey: process.env.FAL_KEY,
@@ -133,6 +139,9 @@ export default defineNuxtConfig({
       metaPixelId: process.env.NUXT_PUBLIC_META_PIXEL_ID,
       tiktokPixelId: process.env.NUXT_PUBLIC_TIKTOK_PIXEL_ID,
       analyticsId: process.env.NUXT_PUBLIC_ANALYTICS_ID,
+      paymentProvider: process.env.PAYMENT_PROVIDER || (process.env.NODE_ENV === 'production' ? 'unconfigured' : 'mock'),
+      // Только для Playwright preview: детерминированный локальный каталог без внешней Supabase.
+      e2eSeeded: process.env.NUXT_PUBLIC_E2E_SEEDED === 'true',
     },
   },
 

@@ -1,9 +1,7 @@
 <script setup lang="ts">
-// Кабинет владельца B2B-магазина (Фаза B3). Владелец управляет своей витриной,
-// брендингом и позициями. Роль — обычный customer + shops.owner_id (middleware shop-owner).
 const { t } = useI18n()
 const nav = computed(() => [
-  { label: t('shopAdmin.nav.dashboard'), to: '/shop-admin', icon: 'i-lucide-layout-dashboard' },
+  { label: t('shopAdmin.nav.dashboard'), to: '/shop-admin', icon: 'i-lucide-layout-dashboard', exact: true },
   { label: t('shopAdmin.nav.items'), to: '/shop-admin/items', icon: 'i-lucide-shopping-bag' },
   { label: t('shopAdmin.nav.promos'), to: '/shop-admin/promos', icon: 'i-lucide-ticket-percent' },
   { label: t('shopAdmin.nav.orders'), to: '/shop-admin/orders', icon: 'i-lucide-receipt' },
@@ -13,45 +11,24 @@ const nav = computed(() => [
 ])
 const { signOut } = useAuth()
 async function onSignOut() { await signOut(); await navigateTo('/') }
-// подсветка пункта: дашборд (/shop-admin) — только точное совпадение, иначе он бы
-// «горел» на всех подстраницах; остальные — по префиксу.
-const route = useRoute()
-const isActive = (to: string) => (to === '/shop-admin' ? route.path === to : route.path.startsWith(to))
 </script>
 
 <template>
-  <div class="min-h-screen bg-ink-white text-ink-black">
-    <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
-    <header class="border-b border-ink-gray-200">
-      <div class="mx-auto max-w-(--container-max) px-4 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <UiAppLogo :subtitle="false" />
-          <UiSectionLabel accent>{{ $t('shopAdmin.nav.title') }}</UiSectionLabel>
-        </div>
-        <div class="flex items-center gap-2">
-          <UButton to="/account" color="neutral" variant="ghost" size="sm" icon="i-lucide-user">{{ $t('shopAdmin.nav.account') }}</UButton>
-          <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-log-out" @click="onSignOut">{{ $t('shopAdmin.nav.signOut') }}</UButton>
-        </div>
-      </div>
-    </header>
-
-    <div class="mx-auto max-w-(--container-max) px-4 py-8 grid grid-cols-1 md:grid-cols-[240px_1fr] gap-8">
-      <nav class="space-y-1 md:sticky md:top-8 md:self-start" :aria-label="$t('shopAdmin.nav.title')">
-        <NuxtLink
-          v-for="item in nav"
-          :key="item.to"
-          :to="item.to"
-          class="flex items-center gap-2.5 px-3 py-2.5 rounded-md text-body transition-colors"
-          :class="isActive(item.to) ? 'bg-ink-burgundy text-ink-cream font-semibold shadow-sm' : 'text-ink-gray-600 hover:bg-ink-gray-50 hover:text-ink-black'"
-        >
-          <UIcon :name="item.icon" class="size-4" />
-          {{ item.label }}
-        </NuxtLink>
-      </nav>
-
-      <main id="main-content" tabindex="-1" class="min-w-0 focus:outline-none">
-        <slot />
-      </main>
-    </div>
-  </div>
+  <WorkspaceShell :title="$t('shopAdmin.nav.title')" badge="B2B" :nav="nav" content-class="mx-auto w-full max-w-[1440px]">
+    <template #header-actions>
+      <UButton to="/account" color="neutral" variant="ghost" size="sm" icon="i-lucide-user">
+        <span class="hidden sm:inline">{{ $t('shopAdmin.nav.account') }}</span>
+      </UButton>
+      <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-log-out" @click="onSignOut">
+        <span class="sr-only">{{ $t('shopAdmin.nav.signOut') }}</span>
+      </UButton>
+    </template>
+    <template #rail-footer>
+      <button class="flex min-h-11 w-full items-center gap-3 px-3 text-sm text-ink-text-soft transition-colors hover:bg-white/5 hover:text-ink-text" @click="onSignOut">
+        <UIcon name="i-lucide-log-out" class="size-4" />
+        {{ $t('shopAdmin.nav.signOut') }}
+      </button>
+    </template>
+    <slot />
+  </WorkspaceShell>
 </template>

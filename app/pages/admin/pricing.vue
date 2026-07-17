@@ -79,7 +79,8 @@ const fmtVal = (p: { discount_type: string; discount_value: number }) =>
       </div>
 
       <!-- список -->
-      <table v-if="promos?.length" class="w-full text-caption mt-6">
+      <div v-if="promos?.length" class="mt-6 overflow-x-auto">
+      <table class="min-w-[680px] w-full text-caption">
         <thead class="ink-label text-ink-gray-500"><tr class="border-b border-ink-gray-200">
           <th class="text-left py-2">{{ $t('admin.pricing.colCode') }}</th><th class="text-right">{{ $t('admin.pricing.colDiscount') }}</th><th class="text-right">{{ $t('admin.pricing.colMin') }}</th>
           <th class="text-right">{{ $t('admin.pricing.colUsedLimit') }}</th><th class="text-center pl-3">{{ $t('admin.pricing.colActive') }}</th><th></th>
@@ -97,6 +98,7 @@ const fmtVal = (p: { discount_type: string; discount_value: number }) =>
           </tr>
         </tbody>
       </table>
+      </div>
       <UiEmptyState v-else icon="i-lucide-ticket" :title="$t('admin.pricing.emptyTitle')" :text="$t('admin.pricing.emptyText')" class="mt-4" />
     </UiPanel>
   </div>

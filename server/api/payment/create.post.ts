@@ -3,10 +3,12 @@ import type { Database } from '~/types/database.types'
 import { getPaymentProvider } from '~~/server/utils/payment'
 import { notifyOrder, notifyShopSales } from '~~/server/utils/email'
 import { requireUuid } from '~~/server/utils/validation'
+import { assertProductionCommerceReady } from '~~/server/utils/readiness'
 
 // Инициация платежа (§9, шаг 2). Ставит order → pending, возвращает URL оплаты.
 // paid здесь НЕ ставится (инвариант §10) — только webhook после подтверждения.
 export default defineEventHandler(async (event) => {
+  assertProductionCommerceReady()
   const user = await serverSupabaseUser(event)
   if (!user) throw createError({ statusCode: 401, statusMessage: 'Требуется вход' })
 
@@ -49,10 +51,22 @@ export default defineEventHandler(async (event) => {
     return { payUrl: `/order/${order.id}`, paymentId: `free_${order.id}`, free: true }
   }
 
-  const provider = getPaymentProvider()
-  const init = provider.createPayment(order.id, total, config.public.siteUrl || '')
+  const address = (order.shipping_addr && typeof order.shipping_addr === 'object' && !Array.isArray(order.shipping_addr))
+    ? order.shipping_addr as Record<string, unknown>
+    : {}
+  const provider = getPaymentProvider(config)
+  const init = await provider.createPayment({
+    orderId: order.id,
+    invoiceId: order.payment_invoice_id,
+    amount: total,
+    siteUrl: config.public.siteUrl || '',
+    email: String(address.email || user.email || ''),
+    phone: String(address.phone || ''),
+    locale: getHeader(event, 'accept-language') || 'ru',
+  })
 
-  await svc.from('orders').update({ status: 'pending', payment_id: init.paymentId }).eq('id', orderId)
+  const { error: updateError } = await svc.from('orders').update({ status: 'pending', payment_id: init.paymentId }).eq('id', orderId)
+  if (updateError) throw createError({ statusCode: 500, statusMessage: 'Не удалось сохранить платёжную сессию' })
 
-  return { payUrl: init.payUrl, paymentId: init.paymentId, free: false }
+  return { payUrl: init.payUrl, paymentId: init.paymentId, provider: provider.name, free: false }
 })

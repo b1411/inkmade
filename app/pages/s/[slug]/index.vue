@@ -7,6 +7,7 @@ import type { Json } from '~/types/database.types'
 import type { StorefrontItem } from '~/composables/useShops'
 import { safeCssUrl } from '~/utils/safeUrl'
 import { resolveTheme, heroLayout, cardRatio, heroOverlay } from '~~/shared/config/shop-theme'
+import { FEATURES } from '~~/shared/config/features'
 
 definePageMeta({ layout: false })
 
@@ -172,7 +173,7 @@ const quickOpen = computed({ get: () => !!quick.value, set: (v: boolean) => { if
 const quickMode = ref<'single' | 'bulk'>('single')
 const openQuick = (it: StorefrontItem, mode: 'single' | 'bulk' = 'single') => {
   quick.value = it
-  quickMode.value = mode
+  quickMode.value = mode === 'bulk' && !FEATURES.b2bGroupOrders ? 'single' : mode
   resetBulk()
   if (shop.value) track(shop.value.id, 'item_view', it.id)
 }
@@ -437,7 +438,7 @@ const contacts = computed(() => shop.value?.contacts ?? {})
                 </div>
                 <!-- заказ на команду: открывает быстрый просмотр в режиме матрицы размеров -->
                 <button
-                  v-if="hasSizes(it)"
+                  v-if="FEATURES.b2bGroupOrders && hasSizes(it)"
                   type="button"
                   class="mt-2 w-full inline-flex items-center justify-center gap-1 text-xs sf-muted hover:opacity-70"
                   @click="openQuick(it, 'bulk')"
@@ -503,7 +504,7 @@ const contacts = computed(() => shop.value?.contacts ?? {})
               <p v-if="quick.description" class="text-sm sf-muted mt-2 whitespace-pre-line">{{ quick.description }}</p>
 
               <!-- переключатель поштучно / на команду (только если есть размеры) -->
-              <div v-if="hasSizes(quick)" class="mt-4 inline-flex rounded-lg border sf-bord p-0.5 text-sm self-start">
+              <div v-if="FEATURES.b2bGroupOrders && hasSizes(quick)" class="mt-4 inline-flex rounded-lg border sf-bord p-0.5 text-sm self-start">
                 <button
                   type="button"
                   class="px-3 py-1 rounded-md font-medium transition-colors"

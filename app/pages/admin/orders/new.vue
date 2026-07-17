@@ -138,8 +138,8 @@ async function create() {
       <!-- Позиции -->
       <UiPanel :title="$t('admin.orders.new.linesTitle')" icon="i-lucide-list" :padded="false">
         <UiEmptyState v-if="!lines.length" icon="i-lucide-package" :title="$t('admin.orders.new.noLines')" />
-        <div v-else>
-          <table class="w-full text-left border-collapse">
+        <div v-else class="overflow-x-auto">
+          <table class="min-w-[620px] w-full text-left border-collapse">
             <tbody>
               <tr v-for="(l, i) in lines" :key="i" class="border-b border-ink-gray-200 last:border-0">
                 <td class="px-6 py-3">

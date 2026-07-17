@@ -74,6 +74,7 @@ async function onSubmit() {
   creating.value = true
   try {
     await createMine(name.value.trim(), slug.value)
+    useAnalytics().track('b2b_store_created', { slug: slug.value })
     toast.add({ title: t('business.new.created'), color: 'success' })
     await navigateTo('/shop-admin')
   } catch (e) {

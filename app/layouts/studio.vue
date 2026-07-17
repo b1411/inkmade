@@ -1,9 +1,7 @@
 <script setup lang="ts">
-// Производственный кабинет /studio (§8.3). Роль operator/admin (middleware F0-13).
-// Светлый рабочий контекст, бордо — только акценты.
 const { t } = useI18n()
 const nav = computed(() => [
-  { label: t('studio.nav.queue'), to: '/studio', icon: 'i-lucide-layout-list' },
+  { label: t('studio.nav.queue'), to: '/studio', icon: 'i-lucide-layout-list', exact: true },
   { label: t('studio.nav.stock'), to: '/studio/stock', icon: 'i-lucide-boxes' },
 ])
 const { signOut } = useAuth()
@@ -11,36 +9,19 @@ async function onSignOut() { await signOut(); await navigateTo('/') }
 </script>
 
 <template>
-  <div class="min-h-screen bg-ink-white text-ink-black">
-    <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
-    <header class="bg-ink-black text-ink-cream">
-      <div class="mx-auto max-w-(--container-max) px-4 h-14 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <UiAppLogo :subtitle="false" tone="light" />
-          <UBadge color="primary" variant="solid" size="sm">{{ $t('studio.nav.badge') }}</UBadge>
-        </div>
-        <nav class="flex gap-1">
-          <NuxtLink
-            v-for="item in nav"
-            :key="item.to"
-            :to="item.to"
-            class="ink-label px-3 py-1.5 rounded-sm hover:bg-white/10 transition-colors"
-            active-class="bg-white/15"
-          >
-            {{ item.label }}
-          </NuxtLink>
-          <button
-            class="ink-label px-3 py-1.5 rounded-sm hover:bg-white/10 transition-colors inline-flex items-center gap-1"
-            @click="onSignOut"
-          >
-            <UIcon name="i-lucide-log-out" class="size-4" /> {{ $t('studio.nav.signOut') }}
-          </button>
-        </nav>
-      </div>
-    </header>
-
-    <main id="main-content" tabindex="-1" class="mx-auto max-w-(--container-max) px-4 py-6 focus:outline-none">
-      <slot />
-    </main>
-  </div>
+  <WorkspaceShell :title="$t('studio.nav.badge')" badge="STUDIO" :nav="nav" content-class="mx-auto w-full max-w-[1600px]">
+    <template #header-actions>
+      <span class="hidden items-center gap-2 text-xs text-ink-gray-600 sm:flex">
+        <span class="size-2 rounded-full bg-ink-success" />
+        Production live
+      </span>
+    </template>
+    <template #rail-footer>
+      <button class="flex min-h-11 w-full items-center gap-3 px-3 text-sm text-ink-text-soft transition-colors hover:bg-white/5 hover:text-ink-text" @click="onSignOut">
+        <UIcon name="i-lucide-log-out" class="size-4" />
+        {{ $t('studio.nav.signOut') }}
+      </button>
+    </template>
+    <slot />
+  </WorkspaceShell>
 </template>

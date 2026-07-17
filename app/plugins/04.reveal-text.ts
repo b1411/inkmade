@@ -1,7 +1,5 @@
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { SplitText } from 'gsap/SplitText'
 import type { Directive } from 'vue'
+import { loadGsap } from '~/utils/gsap-loader'
 
 /**
  * Директива v-reveal-text — киношное появление заголовка по строкам: каждая строка
@@ -28,7 +26,8 @@ export default defineNuxtPlugin((nuxtApp) => {
       catch {
         // noop — продолжаем с тем, что есть
       }
-      gsap.registerPlugin(ScrollTrigger, SplitText)
+      const { gsap, ScrollTrigger, SplitText } = await loadGsap()
+      if (!el.isConnected) return
 
       const split = new SplitText(el, { type: 'lines', mask: 'lines', linesClass: 'rt-line' })
       const tween = gsap.from(split.lines, {

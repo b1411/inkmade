@@ -11,11 +11,11 @@ const orderId = route.params.id as string
 const supabase = useSupabaseClient<Database>()
 const cart = useCart()
 const toast = useToast()
-// Демо-провайдер (кнопка «Оплатить») доступен только в dev — в проде реального
-// платёжного провайдера ещё нет, показываем аккуратный экран «оплата подключается».
-const isDev = import.meta.dev
+const runtimeConfig = useRuntimeConfig()
+const isMock = computed(() => runtimeConfig.public.paymentProvider === 'mock')
+const isEpay = computed(() => runtimeConfig.public.paymentProvider === 'epay')
 
-const { data: order } = await useAsyncData(`pay-${orderId}`, async () => {
+const { data: order, refresh } = await useAsyncData(`pay-${orderId}`, async () => {
   const { data } = await supabase.from('orders').select('id, total, status').eq('id', orderId).single()
   return data
 })
@@ -33,6 +33,33 @@ const state = computed<'missing' | 'payable' | 'done' | 'closed'>(() => {
 })
 
 const paying = ref(false)
+const checking = ref(false)
+
+async function checkPayment() {
+  if (!isEpay.value || checking.value || state.value !== 'payable') return
+  checking.value = true
+  try {
+    const result = await $fetch<{ paid: boolean; status: string }>('/api/payment/status', {
+      method: 'POST',
+      body: { orderId },
+    })
+    if (result.paid) {
+      useAnalytics().purchase(Number(order.value?.total ?? 0), orderId)
+      cart.clear()
+      await refresh()
+      toast.add({ title: t('cart.pay.success'), color: 'success' })
+    }
+  } catch (error) {
+    toast.add({ title: t('cart.pay.checkFailed'), description: getFetchMessage(error), color: 'warning' })
+  } finally {
+    checking.value = false
+  }
+}
+
+onMounted(() => {
+  if (route.query.cancelled === '1') useAnalytics().track('payment_cancel', { order_id: orderId })
+  if (route.query.returned === '1') void checkPayment()
+})
 
 async function pay() {
   if (state.value !== 'payable') return
@@ -46,6 +73,7 @@ async function pay() {
     toast.add({ title: t('cart.pay.success'), color: 'success' })
     await navigateTo(`/order/${orderId}`)
   } catch (e) {
+    useAnalytics().track('payment_failure', { order_id: orderId, provider: 'mock' })
     toast.add({ title: t('cart.pay.error'), description: getFetchMessage(e), color: 'error' })
   } finally {
     paying.value = false
@@ -65,7 +93,7 @@ async function pay() {
         <p class="text-h1 ink-display text-ink-burgundy mt-1">{{ order?.total }} {{ $t('units.currency') }}</p>
       </div>
       <!-- DEV: демо-провайдер для сквозного теста потока (в проде /api/payment/mock-confirm отдаёт 404) -->
-      <template v-if="isDev">
+      <template v-if="isMock">
         <UButton color="primary" size="xl" block icon="i-lucide-check" :loading="paying" @click="pay">
           {{ $t('cart.pay.submit') }}
         </UButton>
@@ -77,6 +105,20 @@ async function pay() {
       </template>
 
       <!-- ПРОД: реальный платёжный провайдер ещё не подключён — вместо нерабочей кнопки показываем статус -->
+      <template v-else-if="isEpay">
+        <div class="border border-ink-gray-200 rounded-lg bg-ink-gray-50 p-6 text-left space-y-2" role="status" aria-live="polite">
+          <p class="ink-label text-ink-gray-700 flex items-center gap-1.5">
+            <UIcon :name="checking ? 'i-lucide-loader-circle' : 'i-lucide-shield-check'" :class="['shrink-0', checking && 'animate-spin']" />
+            {{ route.query.cancelled === '1' ? $t('cart.pay.cancelledTitle') : $t('cart.pay.verifyingTitle') }}
+          </p>
+          <p class="text-caption text-ink-gray-600">{{ $t('cart.pay.verifyingText') }}</p>
+        </div>
+        <UButton color="primary" size="xl" block icon="i-lucide-refresh-cw" :loading="checking" @click="checkPayment">
+          {{ $t('cart.pay.checkStatus') }}
+        </UButton>
+        <UButton :to="`/order/${orderId}`" color="neutral" variant="ghost" block>{{ $t('cart.pay.viewOrder') }}</UButton>
+      </template>
+
       <template v-else>
         <div class="border border-ink-gray-200 rounded-lg bg-ink-gray-50 p-6 text-left space-y-2">
           <p class="ink-label text-ink-gray-700 flex items-center gap-1.5">

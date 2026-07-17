@@ -4,6 +4,7 @@
 const { t, locale } = useI18n()
 const route = useRoute()
 const category = route.params.category as string
+onMounted(() => useAnalytics().catalogView(category))
 
 // Русское склонение существительного после числа: 1 → «изделие», 2-4 → «изделия»,
 // 0/5-20 → «изделий» (было: всегда countMany → «2 изделий»). В казахском форма не

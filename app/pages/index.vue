@@ -118,7 +118,7 @@ function printedImage(slug: string) {
           <UiReveal class="lg:col-span-2">
             <div class="flex h-full flex-col items-start justify-between gap-6">
               <div>
-                <UiSectionLabel accent>01 / BASE</UiSectionLabel>
+                <UiSectionLabel inverse>01 / BASE</UiSectionLabel>
                 <h2 id="bases-heading" class="ink-display text-h2 mt-2">{{ $t('landing.categories.title') }}</h2>
                 <p class="mt-3 text-sm text-ink-text-soft">{{ $t('landing.categories.subtitle') }}</p>
               </div>

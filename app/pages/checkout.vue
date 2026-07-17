@@ -8,6 +8,10 @@ const cart = useCart()
 const { createFromCart } = useOrder()
 const user = useSupabaseUser()
 const toast = useToast()
+const runtimeConfig = useRuntimeConfig()
+const paymentMethodLabel = computed(() => runtimeConfig.public.paymentProvider === 'epay'
+  ? t('cart.checkout.payment.epay')
+  : t('cart.checkout.payment.online'))
 
 const form = reactive({ full_name: '', email: '', phone: '', city: 'Алматы', address: '' })
 const paying = ref(false)
@@ -108,6 +112,7 @@ async function onPay() {
     if (res.free) useAnalytics().purchase(0, orderId)
     await navigateTo(res.payUrl)
   } catch (e) {
+    useAnalytics().track('payment_failure', { stage: 'checkout_create' })
     // дружелюбный текст сервера (напр. «Недостаточно товара — обновите корзину»)
     // лежит в e.data.statusMessage, а не в техническом e.message
     toast.add({ title: t('cart.checkout.error.title'), description: getFetchMessage(e), color: 'error' })
@@ -118,9 +123,30 @@ async function onPay() {
 </script>
 
 <template>
-  <section class="grid md:grid-cols-[1fr_320px] gap-8 max-w-4xl">
+  <section class="pb-10">
+    <UiPageHeader :label="$t('cart.checkout.label')" :title="$t('cart.checkout.title')" :description="$t('cart.checkout.description')" />
+
+    <ol class="mb-8 grid grid-cols-2 border border-ink-gray-200 bg-ink-white sm:grid-cols-4" :aria-label="$t('cart.checkout.progressLabel')">
+      <li v-for="(step, index) in [
+        { icon: 'i-lucide-user-round', key: 'contacts' },
+        { icon: 'i-lucide-truck', key: 'delivery' },
+        { icon: 'i-lucide-credit-card', key: 'payment' },
+        { icon: 'i-lucide-shield-check', key: 'review' },
+      ]" :key="step.key" class="flex min-h-16 items-center gap-3 border-ink-gray-200 px-3 sm:border-r sm:last:border-r-0">
+        <span class="grid size-7 shrink-0 place-items-center border border-ink-burgundy font-mono text-[10px] text-ink-burgundy">0{{ index + 1 }}</span>
+        <div class="min-w-0">
+          <UIcon :name="step.icon" class="size-4 text-ink-gray-400" />
+          <p class="truncate text-xs font-semibold">{{ $t(`cart.checkout.steps.${step.key}`) }}</p>
+        </div>
+      </li>
+    </ol>
+
+    <div class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:gap-12">
     <div class="space-y-5">
-      <h1 class="ink-display text-h2">{{ $t('cart.checkout.title') }}</h1>
+      <div class="border-b border-ink-gray-200 pb-3">
+        <UiSectionLabel accent>01 / {{ $t('cart.checkout.steps.contacts') }}</UiSectionLabel>
+        <h2 class="ink-display mt-2 text-2xl">{{ $t('cart.checkout.contactTitle') }}</h2>
+      </div>
       <UFormField :label="$t('cart.checkout.fields.fullName')" required>
         <UInput v-model="form.full_name" autocomplete="name" class="w-full" />
       </UFormField>
@@ -136,6 +162,10 @@ async function onPay() {
           :color="form.phone && phoneDigits.length < 10 ? 'error' : undefined" class="w-full"
         />
       </UFormField>
+      <div class="border-b border-ink-gray-200 pb-3 pt-4">
+        <UiSectionLabel accent>02 / {{ $t('cart.checkout.steps.delivery') }}</UiSectionLabel>
+        <h2 class="ink-display mt-2 text-2xl">{{ $t('cart.checkout.deliveryTitle') }}</h2>
+      </div>
       <div class="grid grid-cols-2 gap-4">
         <UFormField :label="$t('cart.checkout.fields.city')" required>
           <UInput v-model="form.city" class="w-full" />
@@ -162,7 +192,7 @@ async function onPay() {
       </UiPanel>
     </div>
 
-    <aside class="h-fit md:sticky md:top-8">
+    <aside class="h-fit lg:sticky lg:top-24">
       <UiPanel :title="$t('cart.checkout.summary.title')" icon="i-lucide-shopping-bag">
         <div class="space-y-3">
       <div v-for="i in cart.items.value" :key="i.id" class="flex justify-between text-caption">
@@ -200,6 +230,16 @@ async function onPay() {
         <UIcon name="i-lucide-shield-check" class="shrink-0" />
         {{ $t('cart.checkout.summary.secureNote') }}
       </p>
+      <div class="border-t border-ink-gray-200 pt-3">
+        <p class="ink-label text-[9px] text-ink-gray-400">03 / {{ $t('cart.checkout.steps.payment') }}</p>
+        <div class="mt-2 flex items-center gap-3 border border-ink-gray-200 bg-ink-gray-50 p-3">
+          <span class="grid size-9 place-items-center bg-ink-black text-xs font-bold text-white">H</span>
+          <div>
+            <p class="text-sm font-semibold">{{ paymentMethodLabel }}</p>
+            <p class="text-[11px] text-ink-gray-500">Visa · Mastercard · secure redirect</p>
+          </div>
+        </div>
+      </div>
       <!-- Акцепт оферты = оплата (см. shared/legal/documents.ts, оферта §3) -->
       <p class="text-caption text-ink-gray-400 leading-relaxed">
         {{ $t('cart.checkout.summary.legalPrefix') }}
@@ -211,5 +251,6 @@ async function onPay() {
         </div>
       </UiPanel>
     </aside>
+    </div>
   </section>
 </template>

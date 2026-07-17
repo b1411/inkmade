@@ -75,7 +75,7 @@ const props = computed(() => [
         </div>
         <UIcon name="i-lucide-arrow-right" class="mx-4 hidden size-5 self-center text-ink-gray-400 md:block" />
         <div class="bg-ink-burgundy p-5 text-white">
-          <p class="font-mono text-[9px] uppercase tracking-[.12em] text-white/60">{{ locale === 'kk' ? 'Сіздің пайдаңыз' : 'Ваша прибыль' }}</p>
+          <p class="font-mono text-[9px] uppercase tracking-[.12em] text-white/70">{{ locale === 'kk' ? 'Сіздің пайдаңыз' : 'Ваша прибыль' }}</p>
           <p class="mt-1 font-display text-2xl font-black">8 000 ₸</p>
         </div>
       </div>

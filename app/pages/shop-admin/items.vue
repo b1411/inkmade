@@ -49,6 +49,7 @@ async function onSave() {
   // активная позиция обязана иметь цену > 0 (price+markup; иначе витрина покажет её, но заказ упрётся в 400)
   if (form.isActive && !(buyerPays.value > 0)) { toast.add({ title: t('shopAdmin.items.priceRequired'), color: 'warning' }); return }
   saving.value = true
+  const wasNew = !editing.value
   try {
     const d = (designs.value ?? []).find(x => x.id === form.designId)
     await saveItem({
@@ -65,6 +66,7 @@ async function onSave() {
       sort: Number(form.sort) || 0,
       is_active: form.isActive,
     })
+    if (wasNew && form.isActive) useAnalytics().track('b2b_first_item_published', { shop_id: shop.value.id })
     toast.add({ title: editing.value ? t('shopAdmin.items.updated') : t('shopAdmin.items.added'), color: 'success' })
     reset()
     await refresh()

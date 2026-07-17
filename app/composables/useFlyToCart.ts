@@ -6,11 +6,12 @@ import { INK_CANVAS } from '~~/shared/config/ink-system'
 export function useFlyToCart() {
   const prefersReduced = useReducedMotion()
 
-  function fly(source: HTMLElement | null, imageUrl?: string) {
+  async function fly(source: HTMLElement | null, imageUrl?: string) {
     if (prefersReduced.value || !source || !import.meta.client) return
     const target = document.querySelector('[data-cart-icon]') as HTMLElement | null
-    const gsap = useNuxtApp().$gsap as typeof import('gsap').gsap | undefined
-    if (!target || !gsap) return
+    if (!target) return
+    const { gsap } = await import('~/utils/gsap-loader').then(module => module.loadGsap())
+    if (!source.isConnected || !target.isConnected) return
 
     const s = source.getBoundingClientRect()
     const t = target.getBoundingClientRect()

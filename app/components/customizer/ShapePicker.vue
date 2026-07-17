@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ShapeType } from '~/composables/useDesign'
+import { INK_CANVAS } from '~~/shared/config/ink-system'
 
 // Фигуры как элементы дизайна (§7.1): выбор цвета + режим «заливка/контур»,
 // затем клик по фигуре добавляет её на активную зону. Линия всегда рисуется штрихом.
@@ -22,10 +23,10 @@ const SHAPES: Array<{ type: ShapeType; icon: string }> = [
 ]
 
 // брендовая палитра + базовые цвета для быстрого выбора
-const SWATCHES = ['#7A1F28', '#111111', '#FFFFFF', '#E2B23A', '#2F6F4E', '#2B4C7E', '#B5482E']
+const SWATCHES = [INK_CANVAS.burgundy, '#111111', '#FFFFFF', '#C89A4B', '#2F6F4E', '#2B4C7E', '#B5482E']
 
 const mode = ref<'fill' | 'outline'>('fill')
-const color = ref('#7A1F28')
+const color = ref<string>(INK_CANVAS.burgundy)
 
 function add(type: ShapeType) {
   if (atPlacementLimit.value) { toast.add({ title: t('customize.tools.limitReached'), color: 'warning' }); return }

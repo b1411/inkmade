@@ -85,7 +85,8 @@ function exportCsv() {
       :description="$t('admin.leads.empty.description')"
     />
 
-    <table v-else class="w-full text-left border-collapse">
+    <div v-else class="overflow-x-auto">
+    <table class="min-w-[760px] w-full text-left border-collapse">
       <thead>
         <tr class="ink-label text-ink-gray-600 border-b border-ink-gray-200">
           <th class="py-2 pr-4">{{ $t('admin.leads.table.name') }}</th>
@@ -129,5 +130,6 @@ function exportCsv() {
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 </template>

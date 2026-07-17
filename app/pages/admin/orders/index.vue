@@ -98,11 +98,12 @@ function exportCsv() {
         <UiStatCard :label="$t('admin.orders.summary.paid')" :value="formatPrice(paidSum)" icon="i-lucide-wallet" accent />
       </div>
 
-      <div class="flex flex-wrap items-center gap-3 mb-4">
-        <UInput v-model="search" icon="i-lucide-search" :placeholder="$t('admin.orders.searchPlaceholder')" class="w-56" />
-        <USelect v-model="filter" :items="statusItems" value-key="value" class="w-52" />
-        <USelect v-model="period" :items="periodItems" value-key="value" class="w-52" />
-      </div>
+      <WorkspaceCommandBar v-model="search" :placeholder="$t('admin.orders.searchPlaceholder')" :result-count="filtered.length" class="mb-4">
+        <template #filters>
+          <USelect v-model="filter" :items="statusItems" value-key="value" class="w-52" />
+          <USelect v-model="period" :items="periodItems" value-key="value" class="w-52" />
+        </template>
+      </WorkspaceCommandBar>
 
       <UiEmptyState v-if="!filtered.length" icon="i-lucide-package" :title="$t('admin.orders.empty.title')" :text="$t('admin.orders.empty.text')" />
 

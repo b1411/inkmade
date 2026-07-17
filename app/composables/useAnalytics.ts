@@ -1,22 +1,68 @@
-// Единая точка трекинга событий воронки (§3.5.1). Безопасно вызывать всегда:
-// если пиксели не подключены, методы просто ничего не делают.
+export type InkAnalyticsEvent =
+  | 'catalog_view'
+  | 'product_view'
+  | 'customize_start'
+  | 'asset_added'
+  | 'preflight_pass'
+  | 'add_to_cart'
+  | 'checkout_start'
+  | 'payment_success'
+  | 'order_delivered'
+  | 'upload_error'
+  | 'print_export_error'
+  | 'simple_to_advanced'
+  | 'template_used'
+  | 'checkout_exit'
+  | 'payment_failure'
+  | 'payment_cancel'
+  | 'b2b_store_created'
+  | 'b2b_first_item_published'
+  | 'ai_generate'
+
+interface AnalyticsWindow {
+  dataLayer?: Array<Record<string, unknown>>
+  fbq?: (...args: unknown[]) => void
+  ttq?: { track?: (...args: unknown[]) => void }
+}
+
+const AD_EVENT_MAP: Partial<Record<InkAnalyticsEvent, string>> = {
+  product_view: 'ViewContent',
+  add_to_cart: 'AddToCart',
+  checkout_start: 'InitiateCheckout',
+  payment_success: 'Purchase',
+}
+
 export const useAnalytics = () => {
-  function emit(event: string, data?: Record<string, unknown>) {
+  function track(event: InkAnalyticsEvent, data: Record<string, unknown> = {}) {
     if (!import.meta.client) return
-    const w = window as unknown as { fbq?: (...a: unknown[]) => void; ttq?: { track?: (...a: unknown[]) => void } }
-    w.fbq?.('track', event, data)
-    w.ttq?.track?.(event, data)
+    const payload = { event, ...data }
+    const w = window as unknown as AnalyticsWindow
+    w.dataLayer ||= []
+    w.dataLayer.push(payload)
+    window.dispatchEvent(new CustomEvent('inkmade:analytics', { detail: payload }))
+    const adEvent = AD_EVENT_MAP[event]
+    if (adEvent) {
+      w.fbq?.('track', adEvent, data)
+      w.ttq?.track?.(adEvent, data)
+    }
   }
 
   return {
-    viewContent: (id: string) => emit('ViewContent', { content_ids: [id] }),
-    addToCart: (value: number) => emit('AddToCart', { value, currency: 'KZT' }),
-    initiateCheckout: (value: number) => emit('InitiateCheckout', { value, currency: 'KZT' }),
-    // событие покупки с суммой — критично для оптимизации рекламы (§3.5.1)
+    track,
+    catalogView: (category = 'all') => track('catalog_view', { category }),
+    productView: (id: string) => track('product_view', { product_id: id, content_ids: [id] }),
+    customizeStart: (id: string, mode = 'simple') => track('customize_start', { product_id: id, mode }),
+    assetAdded: (type: string, zone?: string) => track('asset_added', { asset_type: type, zone }),
+    preflightPass: (warnings: number) => track('preflight_pass', { warnings }),
+    addToCart: (value: number) => track('add_to_cart', { value, currency: 'KZT' }),
+    checkoutStart: (value: number) => track('checkout_start', { value, currency: 'KZT' }),
+    paymentSuccess: (value: number, orderId: string) =>
+      track('payment_success', { value, currency: 'KZT', order_id: orderId, content_ids: [orderId] }),
     purchase: (value: number, orderId: string) =>
-      emit('Purchase', { value, currency: 'KZT', content_ids: [orderId] }),
-    // воронка AI-генерации принтов — отдельное событие для оптимизации фичи
+      track('payment_success', { value, currency: 'KZT', order_id: orderId, content_ids: [orderId] }),
+    initiateCheckout: (value: number) => track('checkout_start', { value, currency: 'KZT' }),
+    viewContent: (id: string) => track('product_view', { product_id: id, content_ids: [id] }),
     aiGenerate: (success: boolean, style?: string) =>
-      emit('AIGenerate', { success, style: style ?? null }),
+      track('ai_generate', { success, style: style ?? null }),
   }
 }

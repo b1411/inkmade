@@ -20,10 +20,11 @@ export const INK_CANVAS = {
   frameSelected: '#7E1F2D',
   /** Смарт-направляющие. Muted Warning из канона (§3.1) вместо самодельного золота. */
   guide: '#C89A4B',
+  /** Нейтральная поверхность 2D proof/canvas. */
+  canvas: '#EFE9DF',
 } as const
 
 /** Длина угловой метки, px (§36.2 допускает 8–12). */
 export const CROP_MARK_LEN = 10
 /** Зазор между рамкой и меткой, px — как в настоящей допечатной подготовке. */
 export const CROP_MARK_GAP = 5
-

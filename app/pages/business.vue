@@ -143,7 +143,7 @@ const copy = computed(() => locale.value === 'kk'
               <span class="size-2 rounded-full bg-ink-burgundy-hover" />
             </div>
             <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-1">
-              <div v-for="item in merch.slice(0, 3)" :key="item.title" class="bg-[#e9e4dc] p-2 text-ink-black">
+              <div v-for="item in merch.slice(0, 3)" :key="item.title" class="bg-ink-card p-2 text-ink-black">
                 <NuxtImg :src="item.src" :alt="item.title" class="aspect-square w-full object-cover" sizes="180px" />
                 <p class="mt-2 text-xs font-bold">{{ item.title }}</p>
                 <p class="font-mono text-[9px] text-black/55">{{ formatPrice(item.price) }}</p>
@@ -154,7 +154,7 @@ const copy = computed(() => locale.value === 'kk'
       </div>
     </section>
 
-    <section class="border-y border-black/10 bg-[#eee9e1]">
+    <section class="border-y border-black/10 bg-ink-card">
       <div class="mx-auto max-w-(--container-max) px-4 py-10">
         <UiSectionLabel accent>{{ $t('business.how.label') }}</UiSectionLabel>
         <div class="mt-5 grid gap-6 lg:grid-cols-[1fr_1fr_1fr_1.25fr]">
@@ -164,7 +164,7 @@ const copy = computed(() => locale.value === 'kk'
             <p class="mt-2 text-sm text-ink-text-dark-soft">{{ step.text }}</p>
           </article>
           <div class="bg-ink-burgundy p-6 text-white">
-            <p class="font-mono text-[10px] uppercase tracking-[.12em] text-white/60">START / 3 DAYS</p>
+            <p class="font-mono text-[10px] uppercase tracking-[.12em] text-white/70">START / 3 DAYS</p>
             <p class="font-display mt-2 text-2xl font-black uppercase">{{ $t('business.start.title') }}</p>
             <UiAppButton to="#apply" variant="secondary" size="md" on-dark class="mt-5" trailing-icon="i-lucide-arrow-right">{{ $t('business.hero.cta') }}</UiAppButton>
           </div>
@@ -187,7 +187,7 @@ const copy = computed(() => locale.value === 'kk'
       </div>
     </section>
 
-    <section class="border-y border-black/10 bg-[#eee9e1]">
+    <section class="border-y border-black/10 bg-ink-card">
       <div class="mx-auto max-w-(--container-max) px-4 py-12">
         <UiSectionLabel accent>{{ copy.economyLabel }}</UiSectionLabel>
         <h2 class="ink-display mt-2 max-w-2xl text-h2">{{ copy.economyTitle }}</h2>
@@ -215,7 +215,7 @@ const copy = computed(() => locale.value === 'kk'
     <section class="mx-auto max-w-(--container-max) px-4 py-14 lg:py-20">
       <UiSectionLabel accent>{{ copy.merchLabel }}</UiSectionLabel>
       <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <article v-for="item in merch" :key="item.title" class="border border-black/10 bg-[#eee9e1]">
+        <article v-for="item in merch" :key="item.title" class="border border-black/10 bg-ink-card">
           <NuxtImg :src="item.src" :alt="item.title" class="aspect-[4/5] w-full object-cover" sizes="(max-width: 1023px) 50vw, 350px" loading="lazy" />
           <div class="p-4">
             <p class="font-bold">{{ item.title }}</p>
@@ -255,7 +255,7 @@ const copy = computed(() => locale.value === 'kk'
             <UiAppButton to="/shop-admin" variant="primary" size="xl" block class="mt-3">{{ $t('business.start.toCabinet') }}</UiAppButton>
           </template>
           <UiAppButton v-else :to="startTo" variant="primary" size="xl" block class="mt-8" trailing-icon="i-lucide-arrow-right">{{ $t('business.start.action') }}</UiAppButton>
-          <p class="mt-4 text-center text-xs text-white/45">{{ $t('business.cta.note') }}</p>
+          <p class="mt-4 text-center text-xs text-white/55">{{ $t('business.cta.note') }}</p>
         </div>
       </div>
     </section>

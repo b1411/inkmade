@@ -13,7 +13,7 @@ const showPrinted = ref(false)
 <template>
   <article class="group relative min-w-0 overflow-hidden rounded-[4px] border border-black/8 bg-ink-card text-ink-text-dark shadow-sm">
     <NuxtLink :to="props.to" class="block" :aria-label="props.title">
-      <div class="relative aspect-[4/3] overflow-hidden bg-[#e7e3dc]">
+      <div class="relative aspect-[4/3] overflow-hidden bg-ink-card">
         <NuxtImg
           v-if="props.blankSrc"
           :src="props.blankSrc"

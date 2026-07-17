@@ -12,7 +12,7 @@ const finiteNonNeg = (max = GEOM_MAX) =>
   z.number().finite().min(0).max(max)
 
 // ── Дизайн (spec) ───────────────────────────────────────────────
-const placementSchema = z.object({
+export const placementSchema = z.object({
   zone: z.string().max(64).optional(),
   width_mm: finiteNonNeg().optional(),
   height_mm: finiteNonNeg().optional(),
@@ -22,6 +22,16 @@ const placementSchema = z.object({
   source: z.string().max(32).optional(),
   text: z.string().max(2000).optional(),
   asset_url: z.string().max(2048).optional(),
+  crop: z.object({
+    x: z.number().finite().min(0).max(1),
+    y: z.number().finite().min(0).max(1),
+    width: z.number().finite().positive().max(1),
+    height: z.number().finite().positive().max(1),
+  }).optional(),
+  flip_x: z.boolean().optional(),
+  flip_y: z.boolean().optional(),
+  group_id: z.string().max(128).nullable().optional(),
+  hidden: z.boolean().optional(),
 }).passthrough()
 
 const printFileSchema = z.object({
@@ -32,7 +42,8 @@ const printFileSchema = z.object({
   dpi: z.number().finite().positive(),
 })
 
-const designSpecSchema = z.object({
+export const designSpecSchema = z.object({
+  version: z.literal(2).optional(),
   placements: z.array(placementSchema).max(20).optional(),
   print_mode: z.string().max(32).optional(),
   composition_url: z.string().max(2048).optional(),
@@ -40,6 +51,21 @@ const designSpecSchema = z.object({
   print_files: z.array(printFileSchema).max(8).optional(),
   print_id: z.uuid().nullish(),
 }).passthrough()
+
+export const designPreflightSchema = z.object({
+  spec: designSpecSchema,
+  context: z.object({
+    zones: z.array(z.object({
+      name: z.string().min(1).max(64),
+      width_mm: z.number().finite().positive().max(MM_MAX),
+      height_mm: z.number().finite().positive().max(MM_MAX),
+    })).max(8).optional(),
+    supported_print_modes: z.array(z.string().max(32)).max(8).optional(),
+    min_dpi: z.number().finite().min(72).max(600).optional(),
+    safe_margin_mm: z.number().finite().min(0).max(50).optional(),
+    min_stroke_mm: z.number().finite().min(0.1).max(10).optional(),
+  }).optional(),
+})
 
 // ── Адрес доставки (jsonb) ──────────────────────────────────────
 export const shippingAddrSchema = z.object({

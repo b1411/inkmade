@@ -86,21 +86,22 @@ async function onReorder(orderId: string) {
 
     <div v-else>
       <!-- поиск + фильтр статуса (Фаза C3b) -->
-      <div class="flex flex-wrap items-center gap-3 mb-4">
-        <UInput v-model="q" icon="i-lucide-search" :placeholder="$t('account.orders.searchPlaceholder')" class="w-full sm:w-64" />
-        <USelect v-model="statusFilter" :items="statusItems" value-key="value" class="w-44" />
-      </div>
+      <WorkspaceCommandBar v-model="q" :placeholder="$t('account.orders.searchPlaceholder')" :result-count="filtered.length" class="mb-4">
+        <template #filters>
+          <USelect v-model="statusFilter" :items="statusItems" value-key="value" class="w-44" />
+        </template>
+      </WorkspaceCommandBar>
 
       <div v-if="!filtered.length" class="py-10 text-center text-ink-gray-400 text-caption">{{ $t('account.orders.noMatches') }}</div>
 
       <div v-else class="space-y-3">
         <UiAppCard v-for="o in visible" :key="o.id" :to="`/order/${o.id}`" hover>
-          <div class="flex items-center justify-between p-4">
+          <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p class="ink-label">#{{ shortId(o.id) }}</p>
               <p class="text-caption text-ink-gray-600">{{ date(o.created_at) }} · {{ o.order_items?.length ?? 0 }} {{ $t('account.orders.itemsShort') }}</p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center justify-between gap-3 sm:justify-end">
               <div class="text-right">
                 <UBadge :color="badge(o.status)" variant="subtle">{{ $t(`domain.customerStatus.${o.status}`) }}</UBadge>
                 <p class="font-semibold mt-1">{{ money(o.total, o.currency) }}</p>

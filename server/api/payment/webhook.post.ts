@@ -9,10 +9,17 @@ import { logError } from '~~/server/utils/logger'
 // ЕДИНСТВЕННЫЙ триггер paid (§10, инвариант 2). Проверка подписи обязательна.
 // Редирект пользователя НЕ является подтверждением оплаты.
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
+  // ePay confirmations have their own callback which always re-checks the
+  // transaction against Halyk server-to-server. Keeping the generic signed
+  // webhook active in that mode would create a second, weaker paid path.
+  if (String(config.paymentProvider || '').toLowerCase() === 'epay') {
+    throw createError({ statusCode: 404, statusMessage: 'Not found' })
+  }
+
   const raw = (await readRawBody(event)) || ''
   const signature = getHeader(event, 'x-signature') || ''
 
-  const config = useRuntimeConfig()
   const secret = config.paymentWebhookSecret
   if (!secret) throw createError({ statusCode: 500, statusMessage: 'PAYMENT_WEBHOOK_SECRET не настроен' })
 
