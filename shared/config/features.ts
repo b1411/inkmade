@@ -28,6 +28,12 @@ export const FEATURES = {
   // Матрица размеров, имена/номера и раздельная оплата — post-launch эксперимент.
   // Код матрицы совместим с витриной, но в первом production-релизе не показывается.
   b2bGroupOrders: false,
+  // subdomains — фирменные субдомены витрин (<slug>.inkmade.kz) вместо пути /s/<slug>.
+  // ВЫКЛЮЧЕНО: провижининг субдомена (DNS+TLS) зависит от хостинга, а переезд с Vercel
+  // ещё впереди. Host-независимый слой готов заранее (shared/utils/tenant.ts + резолвер +
+  // host-гейт tenant.global + shopUrl + шов server/utils/subdomain.ts). Включение ПОСЛЕ
+  // переезда = этот флаг + один драйвер провижининга + NUXT_PUBLIC_COOKIE_DOMAIN=.inkmade.kz.
+  subdomains: false,
 } as const
 
 // Префиксы роутов, скрываемых вместе с фичей. Используются глобальным

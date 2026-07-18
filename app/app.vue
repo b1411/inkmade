@@ -1,14 +1,23 @@
 <script setup lang="ts">
+import { FEATURES } from '~~/shared/config/features'
+import { tenantFromHost, baseDomainFromSite } from '~~/shared/utils/tenant'
+
 // Язык документа следует за выбранной локалью i18n (RU по умолчанию, KK переключателем).
 const { locale } = useI18n()
 const route = useRoute()
 const site = String(useRuntimeConfig().public.siteUrl || '').replace(/\/$/, '')
+const reqUrl = useRequestURL()
 
 // Канонический URL (P2 SEO): само-ссылающийся canonical по пути без query-строки —
 // консолидирует варианты с параметрами (сортировка каталога и т.п.) в один URL для
 // индексации. i18n strategy 'no_prefix' → один URL на страницу, поэтому self-canonical
 // корректен. Страницы могут переопределить canonical своим useHead при необходимости.
-const canonical = computed(() => site + route.path)
+// На субдомене магазина база = origin субдомена (иначе apex-canonical уводил бы вес с
+// брендового хоста). Пока subdomains выключен — всегда site (прежнее поведение).
+const canonicalBase = computed(() =>
+  FEATURES.subdomains && tenantFromHost(reqUrl.host, baseDomainFromSite(site)) ? reqUrl.origin : site,
+)
+const canonical = computed(() => canonicalBase.value + route.path)
 useHead({
   htmlAttrs: { lang: locale },
   link: [{ rel: 'canonical', href: canonical }],

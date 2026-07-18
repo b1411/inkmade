@@ -17,7 +17,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     try {
       const res = await $fetch<{ imported: number }>('/api/designs/import', {
         method: 'POST',
-        body: { designs: items.map(i => ({ productId: i.productId, spec: i.spec, previewUrl: i.previewUrl })) },
+        body: { designs: items.map(i => ({ productId: i.productId, variantId: i.variantId, spec: i.spec, previewUrl: i.previewUrl })) },
       })
       guest.clear()
       if (res.imported > 0) {

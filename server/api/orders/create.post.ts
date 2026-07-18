@@ -199,8 +199,14 @@ export default defineEventHandler(async (event) => {
   let promoCode: string | null = null
   let shopLineDiscount: Record<string, number> = {}
   if (body.promoCode) {
-    const promo = await computePromoDiscount(svc, body.promoCode, subtotal)
-    if (promo) {
+    // Платформенный код скидывает ТОЛЬКО товары платформы (собственный каталог), а НЕ
+    // позиции магазинов. Иначе платформа субсидировала бы продажу чужого магазина из своей
+    // базы: apply_paid платит владельцу полную долю (line_discount по его товару = 0), а
+    // скидку покупателю оплатила бы платформа → минус на «магазинной» корзине. Товары
+    // магазина скидываются только промокодом магазина (shop_promo_codes — расход владельца).
+    const platformSubtotal = priced.reduce((s, p) => s + (p.shopId ? 0 : p.unitPrice * p.item.quantity), 0)
+    const promo = platformSubtotal > 0 ? await computePromoDiscount(svc, body.promoCode, platformSubtotal) : null
+    if (promo && promo.discount > 0) {
       discount = promo.discount; promoCode = promo.code
     } else {
       const shopLines = items.filter(i => i.shopItemId).map(i => ({ shopItemId: i.shopItemId!, quantity: i.quantity }))

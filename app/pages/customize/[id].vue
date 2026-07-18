@@ -232,16 +232,19 @@ async function onSaveDesign() {
     // печатные файлы на зону (300 DPI, прозрачный фон) — артефакт «для печати»
     try { await generatePrintFiles() } catch { /* не блокируем сохранение */ }
     const spec = toSpec() as unknown as import('~/types/database.types').Json
+    // variantId — выбранный размер/цвет; сохраняем, чтобы дизайн можно было
+    // опубликовать как позицию B2B-витрины (guard требует разрешимый вариант).
+    const variantId = selectedVariant.value?.id ?? null
     if (user.value) {
       await $fetch('/api/designs/import', {
         method: 'POST',
-        body: { designs: [{ productId: product.value!.id, spec, previewUrl, parentId: parentId.value }] },
+        body: { designs: [{ productId: product.value!.id, variantId, spec, previewUrl, parentId: parentId.value }] },
       })
       toast.add({ title: t('customize.page.savedToCabinet'), color: 'success' })
       await navigateTo('/account/designs')
     } else {
       guestDesigns.add({
-        productId: product.value!.id, alias: product.value!.alias, title: product.value!.title, spec, previewUrl,
+        productId: product.value!.id, variantId, alias: product.value!.alias, title: product.value!.title, spec, previewUrl,
       })
       toast.add({ title: t('customize.page.saved'), description: t('customize.page.savedGuestHint'), color: 'success' })
     }

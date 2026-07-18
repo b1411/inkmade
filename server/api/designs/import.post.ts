@@ -32,6 +32,16 @@ export default defineEventHandler(async (event) => {
     ownParents = new Set((parents ?? []).map(p => p.id))
   }
 
+  // variant_id (размер/цвет из конструктора) обязан принадлежать тому же продукту — иначе
+  // при service-role вставке в обход RLS клиент мог бы прикрепить чужой вариант. Нужен для
+  // B2B: активная позиция витрины требует разрешимый вариант (guard_shop_item, 0086).
+  const variantIds = [...new Set(incoming.map(d => d.variantId).filter((x): x is string => !!x))]
+  const variantProduct = new Map<string, string>()
+  if (variantIds.length) {
+    const { data: vars } = await svc.from('variants').select('id, product_id').in('id', variantIds)
+    for (const v of vars ?? []) variantProduct.set(v.id, v.product_id)
+  }
+
   // previewUrl обязан вести в НАШ публичный Storage (anti-SSRF/фишинг при показе в галерее/
   // CRM-карточке), как в orders/create. Чужой/внешний URL отбрасываем (best-effort, не валим импорт).
   const cfg = useRuntimeConfig(event)
@@ -63,6 +73,7 @@ export default defineEventHandler(async (event) => {
     .map(d => ({
       user_id: user.id,
       product_id: d.productId!,
+      variant_id: (d.variantId && variantProduct.get(d.variantId) === d.productId) ? d.variantId : null,
       spec: d.spec as Json,
       preview_url: ownStorageUrl(d.previewUrl) ? (d.previewUrl ?? null) : null,
       parent_design_id: (d.parentId && ownParents.has(d.parentId)) ? d.parentId : null,

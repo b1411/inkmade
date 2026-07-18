@@ -5,8 +5,8 @@
 // (RLS shops_owner_update; guard пускает их владельцу). См. shared/config/shop-theme.ts.
 import { safeCssUrl } from '~/utils/safeUrl'
 import {
-  THEME_PRESETS, SHOP_FONT_KEYS, SHOP_RADIUS_KEYS, HERO_LAYOUTS,
-  resolveTheme, cardRatio, type ThemePreset,
+  THEME_PRESETS, STOREFRONT_TEMPLATES, SHOP_FONT_KEYS, SHOP_RADIUS_KEYS, HERO_LAYOUTS,
+  resolveTheme, cardRatio, type ThemePreset, type StorefrontTemplate,
 } from '~~/shared/config/shop-theme'
 
 definePageMeta({ layout: 'shop-admin', middleware: 'shop-owner' })
@@ -15,6 +15,7 @@ useHead({ title: t('shopAdmin.branding.headTitle') })
 
 const { getMine, update, uploadLogo } = useMyShop()
 const toast = useToast()
+const { confirm } = useConfirm()
 
 const { data: shop } = await useAsyncData('my-shop', () => getMine())
 
@@ -137,6 +138,48 @@ function applyPreset(p: ThemePreset) {
   toast.add({ title: t('shopAdmin.branding.presetApplied', { name: t(`shopAdmin.branding.presetName.${p.key}`) }), color: 'success' })
 }
 
+// применить полный шаблон витрины: тема + hero (раскладка/тексты) + секции + карточки.
+// Перезаписывает «мягкие» поля оформления, но НЕ трогает логотип/баннер/контакты/товары.
+// Тексты берём из i18n по ключу шаблона (kk/ru), только для включённых секций.
+async function applyTemplate(tpl: StorefrontTemplate) {
+  const base = `shopAdmin.templates.${tpl.key}`
+  const name = t(`${base}.name`)
+  const ok = await confirm({
+    title: t('shopAdmin.templates.confirmTitle', { name }),
+    description: t('shopAdmin.templates.confirmText'),
+    confirmLabel: t('shopAdmin.templates.apply'),
+  })
+  if (!ok) return
+  // тема
+  form.theme.primary = tpl.theme.primary
+  form.theme.accent = tpl.theme.accent
+  form.theme.bg = tpl.theme.bg
+  form.theme.font = tpl.theme.font
+  form.theme.radius = tpl.theme.radius
+  form.theme.mode = tpl.theme.mode
+  // hero: раскладка/затемнение + тексты-подсказки (баннер-фото владельца оставляем)
+  form.hero.layout = tpl.hero.layout
+  form.hero.overlay = tpl.hero.overlay
+  form.hero.title = t(`${base}.heroTitle`)
+  form.hero.subtitle = t(`${base}.heroSubtitle`)
+  form.hero.cta_text = t(`${base}.heroCta`)
+  // секции: включаем/выключаем, текст пишем только для включённых
+  form.layout.showHero = tpl.sections.showHero
+  form.layout.announcement.on = tpl.sections.announcement
+  if (tpl.sections.announcement) form.layout.announcement.text = t(`${base}.announcement`)
+  form.layout.about.on = tpl.sections.about
+  if (tpl.sections.about) {
+    form.layout.about.title = t(`${base}.aboutTitle`)
+    form.layout.about.text = t(`${base}.aboutText`)
+  }
+  // карточки + порядок
+  form.layout.cards.ratio = tpl.cards.ratio
+  form.layout.cards.showPrice = tpl.cards.showPrice
+  form.layout.cards.showDesc = tpl.cards.showDesc
+  form.layout.order = [...tpl.sections.order]
+  toast.add({ title: t('shopAdmin.templates.applied', { name }), color: 'success' })
+}
+
 // живое превью — резолв темы (свет/тьма) как на витрине
 const previewBanner = computed(() => safeCssUrl(form.hero.banner_url))
 const hasPreviewBanner = computed(() => !!previewBanner.value)
@@ -211,6 +254,37 @@ async function save() {
     <div class="grid lg:grid-cols-[1fr_420px] gap-8 items-start">
       <!-- форма -->
       <div class="space-y-6">
+        <!-- готовые шаблоны витрины: один клик задаёт тему+hero+секции -->
+        <UiPanel :title="$t('shopAdmin.templates.panelTitle')" icon="i-lucide-layout-template">
+          <p class="text-caption text-ink-gray-500 mb-3">{{ $t('shopAdmin.templates.hint') }}</p>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <button
+              v-for="tpl in STOREFRONT_TEMPLATES"
+              :key="tpl.key"
+              type="button"
+              class="text-left rounded-xl border border-ink-gray-200 p-3 hover:border-ink-burgundy hover:shadow-sm transition-all"
+              @click="applyTemplate(tpl)"
+            >
+              <div class="flex items-center gap-2 mb-2">
+                <span class="flex -space-x-1">
+                  <span class="size-5 rounded-full border-2 border-white" :style="{ background: tpl.theme.primary }" />
+                  <span class="size-5 rounded-full border-2 border-white" :style="{ background: tpl.theme.accent }" />
+                  <span class="size-5 rounded-full border-2 border-white" :style="{ background: tpl.theme.bg }" />
+                </span>
+                <UIcon v-if="tpl.theme.mode === 'dark'" name="i-lucide-moon" class="size-3.5 text-ink-gray-400" />
+              </div>
+              <p class="font-semibold text-sm">{{ $t(`shopAdmin.templates.${tpl.key}.name`) }}</p>
+              <p class="text-caption text-ink-gray-500 leading-snug">{{ $t(`shopAdmin.templates.${tpl.key}.tagline`) }}</p>
+              <p class="mt-1.5 flex items-start gap-1 text-[11px] text-ink-gray-400 leading-snug">
+                <UIcon name="i-lucide-camera" class="size-3 mt-0.5 shrink-0" /> {{ $t(`shopAdmin.templates.${tpl.key}.photoHint`) }}
+              </p>
+              <span class="mt-2 inline-flex items-center gap-1 text-caption text-ink-burgundy font-medium">
+                {{ $t('shopAdmin.templates.apply') }} <UIcon name="i-lucide-arrow-right" class="size-3" />
+              </span>
+            </button>
+          </div>
+        </UiPanel>
+
         <!-- идентичность -->
         <UiPanel :title="$t('shopAdmin.branding.identity')" icon="i-lucide-badge">
           <div class="space-y-4">

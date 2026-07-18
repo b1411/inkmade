@@ -4,10 +4,11 @@ definePageMeta({ layout: 'shop-admin', middleware: 'shop-owner' })
 const { t } = useI18n()
 useHead({ title: t('shopAdmin.dashboard.headTitle') })
 
+import { shopStorefrontUrl } from '~/utils/shopUrl'
+
 const { getMine, listItems, finance, analytics, myDesigns } = useMyShop()
 const toast = useToast()
 const { public: { siteUrl } } = useRuntimeConfig()
-const site = (siteUrl as string) || 'https://inkmade-pi.vercel.app'
 
 const { data: shop } = await useAsyncData('my-shop', () => getMine())
 const { data: items } = await useAsyncData('my-shop-items', async () => {
@@ -26,7 +27,7 @@ const conversion = computed(() => {
 const maxDaily = computed(() => Math.max(1, ...((stats.value?.daily ?? []).map(d => d.views))))
 const { number: fmt, date } = useFormat()
 
-const storefrontUrl = computed(() => (shop.value ? `${site}/s/${shop.value.slug}` : ''))
+const storefrontUrl = computed(() => (shop.value ? shopStorefrontUrl(shop.value.slug, siteUrl) : ''))
 const activeItems = computed(() => (items.value ?? []).filter(i => i.is_active).length)
 
 // сохранённые дизайны владельца — позиция витрины собирается ТОЛЬКО из них

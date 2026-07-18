@@ -5,6 +5,7 @@ import type { Json } from '~/types/database.types'
 // а при входе переносится в кабинет (designs, is_saved=true) плагином guest-import.
 export interface GuestDesign {
   productId: string
+  variantId?: string | null
   alias: string | null
   title: string
   spec: Json

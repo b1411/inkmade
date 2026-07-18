@@ -112,6 +112,13 @@ export default defineNuxtConfig({
     key: process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
     serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
     redirect: false,
+    // Домен cookie сессии. Пусто на текущем хосте (host-only cookie — прежнее поведение).
+    // После переезда и включения субдоменов задаём NUXT_PUBLIC_COOKIE_DOMAIN=.inkmade.kz,
+    // чтобы сессия жила и на <slug>.inkmade.kz (иначе владелец уходит в цикл логина при
+    // переходе с apex на субдомен). Пока env не задан — cookieOptions не применяются.
+    cookieOptions: process.env.NUXT_PUBLIC_COOKIE_DOMAIN
+      ? { domain: process.env.NUXT_PUBLIC_COOKIE_DOMAIN, maxAge: 60 * 60 * 8, sameSite: 'lax', secure: true }
+      : undefined,
   },
 
   // §3.8: публичные ключи — в браузер; секреты (service role, платёжные) — только сервер.

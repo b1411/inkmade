@@ -18,6 +18,12 @@ const { data: designs, pending, refresh } = await useAsyncData('account-designs'
   return data
 })
 
+// Владелец B2B-магазина? Если да — на каждом сохранённом дизайне показываем «Продать в
+// магазине» (→ витрина с преселектом). Это убирает трение воронки: раньше владелец после
+// сохранения дизайна должен был вручную вернуться в кабинет и заново найти дизайн в списке.
+const { getMine } = useMyShop()
+const { data: myShop } = await useAsyncData('account-designs-shop', () => getMine())
+
 type DesignRow = NonNullable<typeof designs.value>[number]
 const displayTitle = (d: DesignRow) => d.title || d.products?.title || t('account.designs.untitled')
 
@@ -114,6 +120,7 @@ async function confirmDelete() {
           <div class="flex items-center justify-between gap-1">
             <NuxtLink v-if="d.products?.alias" :to="`/customize/${d.products.alias}?from=${d.id}`" class="text-caption text-ink-burgundy shrink-0">{{ $t('account.designs.refine') }}</NuxtLink>
             <div class="flex items-center">
+              <UButton v-if="myShop" size="xs" color="primary" variant="ghost" icon="i-lucide-store" :to="`/shop-admin/items?design=${d.id}`" :aria-label="$t('account.designs.sellInShop')" :title="$t('account.designs.sellInShop')" />
               <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-share-2" :aria-label="$t('account.designs.share')" :loading="sharingId === d.id" @click="share(d.id)" />
               <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" :aria-label="$t('actions.edit')" @click="openRename(d)" />
               <UButton size="xs" color="error" variant="ghost" icon="i-lucide-trash-2" :aria-label="$t('actions.delete')" @click="openDelete(d)" />

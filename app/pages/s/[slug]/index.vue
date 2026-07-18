@@ -6,19 +6,24 @@
 import type { Json } from '~/types/database.types'
 import type { StorefrontItem } from '~/composables/useShops'
 import { safeCssUrl } from '~/utils/safeUrl'
+import { shopStorefrontUrl, siteBase } from '~/utils/shopUrl'
 import { resolveTheme, heroLayout, cardRatio, heroOverlay } from '~~/shared/config/shop-theme'
 import { FEATURES } from '~~/shared/config/features'
 
 definePageMeta({ layout: false })
 
 const route = useRoute()
-const slug = computed(() => String(route.params.slug))
+// slug берём с тенант-хоста (<slug>.inkmade.kz), иначе из пути /s/<slug>. Пока
+// FEATURES.subdomains выключен — tenantSlug всегда null → поведение прежнее (route.params).
+const { tenantSlug } = useTenant()
+const slug = computed(() => tenantSlug.value ?? String(route.params.slug))
 const { storefront, buyPayload, track } = useShops()
 const cart = useCart()
 const toast = useToast()
 const { t } = useI18n()
 const { public: { siteUrl } } = useRuntimeConfig()
-const site = (siteUrl as string) || 'https://inkmade-pi.vercel.app'
+// платформенный хост (для ссылки «powered by» в футере), единый фолбэк
+const site = siteBase(siteUrl)
 
 const code = ref('')
 const { data, pending, refresh } = await useAsyncData(
@@ -233,7 +238,7 @@ async function addBulk() {
 }
 
 async function shareItem(it: StorefrontItem) {
-  const url = `${site}/s/${slug.value}?item=${it.id}`
+  const url = `${shopStorefrontUrl(slug.value, siteUrl)}?item=${it.id}`
   try {
     if (import.meta.client && navigator.share) await navigator.share({ title: it.title, url })
     else { await navigator.clipboard.writeText(url); toast.add({ title: t('shop.buy.linkCopied'), color: 'success' }) }

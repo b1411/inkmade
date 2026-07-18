@@ -53,6 +53,60 @@ export const THEME_PRESETS: ThemePreset[] = [
   { key: 'dark', primary: '#22d3ee', accent: '#f472b6', bg: '#0f1115', font: 'modern', radius: 'soft', mode: 'dark' },
 ]
 
+// ── Полные шаблоны витрины (тема + hero + секции + карточки в один клик) ─────
+// В отличие от THEME_PRESETS (только цвета/шрифт/скругление), шаблон задаёт всю
+// раскладку: hero (layout/overlay), какие секции включены и их порядок, форму
+// карточек. Тексты (заголовок hero, объявление, «о магазине») НЕ хранятся здесь —
+// они локализованы и резолвятся в кабинете по ключу `shopAdmin.templates.<key>.*`
+// (kk/ru), поэтому шаблон нейтрален к языку. Владелец после применения меняет
+// логотип, фото баннера и текст на свои — контакты/товары шаблон не трогает.
+export interface StorefrontTemplate {
+  key: string
+  theme: { primary: string; accent: string; bg: string; font: ShopFont; radius: ShopRadius; mode: ShopMode }
+  hero: { layout: HeroLayout; overlay: number }
+  cards: { ratio: CardRatio; showPrice: boolean; showDesc: boolean }
+  // какие секции включены (текст читается из i18n только для включённых)
+  sections: { showHero: boolean; announcement: boolean; about: boolean; order: string[] }
+}
+const ORDER_DEFAULT = ['hero', 'items', 'about']
+export const STOREFRONT_TEMPLATES: StorefrontTemplate[] = [
+  {
+    key: 'corporate',
+    theme: { primary: '#1e293b', accent: '#2563eb', bg: '#ffffff', font: 'modern', radius: 'strict', mode: 'light' },
+    hero: { layout: 'left', overlay: 55 },
+    cards: { ratio: 'portrait', showPrice: true, showDesc: true },
+    sections: { showHero: true, announcement: true, about: true, order: ORDER_DEFAULT },
+  },
+  {
+    key: 'university',
+    theme: { primary: '#6b1e2e', accent: '#c2703d', bg: '#faf7f2', font: 'classic', radius: 'soft', mode: 'light' },
+    hero: { layout: 'center', overlay: 45 },
+    cards: { ratio: 'portrait', showPrice: true, showDesc: true },
+    sections: { showHero: true, announcement: true, about: true, order: ORDER_DEFAULT },
+  },
+  {
+    key: 'startup',
+    theme: { primary: '#7c3aed', accent: '#f59e0b', bg: '#faf5ff', font: 'modern', radius: 'soft', mode: 'light' },
+    hero: { layout: 'compact', overlay: 40 },
+    cards: { ratio: 'square', showPrice: true, showDesc: false },
+    sections: { showHero: true, announcement: true, about: false, order: ORDER_DEFAULT },
+  },
+  {
+    key: 'drop',
+    theme: { primary: '#22d3ee', accent: '#f472b6', bg: '#0f1115', font: 'modern', radius: 'soft', mode: 'dark' },
+    hero: { layout: 'center', overlay: 60 },
+    cards: { ratio: 'square', showPrice: true, showDesc: false },
+    sections: { showHero: true, announcement: true, about: false, order: ORDER_DEFAULT },
+  },
+  {
+    key: 'minimal',
+    theme: { primary: '#111111', accent: '#111111', bg: '#ffffff', font: 'modern', radius: 'strict', mode: 'light' },
+    hero: { layout: 'left', overlay: 30 },
+    cards: { ratio: 'portrait', showPrice: true, showDesc: false },
+    sections: { showHero: true, announcement: false, about: false, order: ORDER_DEFAULT },
+  },
+]
+
 // ── Контраст текста на брендовом цвете (WCAG-яркость) ────────────────────────
 // Кнопки/строка-объявление красятся в --shop-primary; текст на них должен читаться и
 // на светлом, и на тёмном primary. Считаем относительную яркость и выбираем чёрный/белый.

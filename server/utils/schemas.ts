@@ -113,6 +113,9 @@ export const orderCreateSchema = z.object({
 export const designImportSchema = z.object({
   designs: z.array(z.object({
     productId: z.uuid().optional(),
+    // variantId — выбранный в конструкторе размер/цвет. Нужен для B2B: активная позиция
+    // витрины требует разрешимый вариант (guard_shop_item), а он берётся из дизайна.
+    variantId: z.uuid().nullish(),
     spec: z.unknown().optional(),
     previewUrl: z.string().max(2048).nullish(),
     parentId: z.uuid().nullish(),

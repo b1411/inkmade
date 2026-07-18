@@ -35,6 +35,16 @@ watch(() => form.designId, (id) => {
   }
 })
 
+// deep-link из /account/designs («Продать в магазине»): преселект дизайна в форме, чтобы
+// владелец не искал его заново. Только свой дизайн (список = myDesigns), иначе игнор.
+const route = useRoute()
+onMounted(() => {
+  const pre = route.query.design
+  if (typeof pre === 'string' && (designs.value ?? []).some(d => d.id === pre)) {
+    form.designId = pre
+  }
+})
+
 function startEdit(it: NonNullable<typeof items.value>[number]) {
   Object.assign(form, {
     id: it.id, designId: it.design_id ?? '', title: it.title, description: it.description ?? '',
