@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Появление секции при скролле (§8 ТЗ): fade + slide-up, один раз при входе в вьюпорт.
-// Обёртка над @vueuse/motion (v-motion visible-once). Под prefers-reduced-motion
-// CSS-гейт гасит transition; v-motion ставит финальные значения сразу — контент виден.
+// Самодостаточно на IntersectionObserver + CSS-transition (без @vueuse/motion). Под
+// prefers-reduced-motion наблюдатель не армится — контент виден сразу, без анимации.
 interface Props {
   delay?: number
   y?: number

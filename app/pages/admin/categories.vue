@@ -40,9 +40,13 @@ async function onSubmit() {
   }
 }
 
+const busyId = ref<string | null>(null)
 async function toggleActive(c: NonNullable<typeof cats.value>[number]) {
+  if (busyId.value) return
+  busyId.value = c.id
   try { await update(c.id, { is_active: !c.is_active }); refresh() }
   catch (e) { toast.add({ title: t('admin.categories.error'), description: getFetchMessage(e), color: 'error' }) }
+  finally { busyId.value = null }
 }
 
 const { confirm } = useConfirm()
@@ -97,7 +101,7 @@ async function onDelete(id: string, title: string) {
                   </td>
                   <td class="px-6 py-3 text-right whitespace-nowrap">
                     <UButton size="sm" color="neutral" variant="ghost" icon="i-lucide-pencil" @click="startEdit(c)" />
-                    <UButton size="sm" color="neutral" variant="ghost" :icon="c.is_active ? 'i-lucide-eye-off' : 'i-lucide-eye'" @click="toggleActive(c)" />
+                    <UButton size="sm" color="neutral" variant="ghost" :icon="c.is_active ? 'i-lucide-eye-off' : 'i-lucide-eye'" :loading="busyId === c.id" :disabled="!!busyId" @click="toggleActive(c)" />
                     <UButton size="sm" color="error" variant="ghost" icon="i-lucide-trash-2" @click="onDelete(c.id, c.title)" />
                   </td>
                 </tr>

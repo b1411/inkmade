@@ -437,7 +437,7 @@ function printPackingSlip() {
           <UFormField v-else :label="$t('studio.production.order.reason')" required>
             <UTextarea v-model="modal.note" :rows="3" class="w-full" :placeholder="$t('studio.production.order.reasonPlaceholder')" />
           </UFormField>
-          <UButton color="primary" block :loading="busy" @click="confirmModal">{{ $t('studio.production.order.confirm') }}</UButton>
+          <UButton color="primary" block :loading="busy" :disabled="modal.to === 'shipped' ? !((modal.trackingNo || '').trim() && (modal.carrier || '').trim()) : !(modal.note || '').trim()" @click="confirmModal">{{ $t('studio.production.order.confirm') }}</UButton>
         </div>
       </template>
     </UModal>

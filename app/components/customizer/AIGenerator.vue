@@ -55,7 +55,8 @@ function onAdd() {
   const img = new window.Image()
   img.crossOrigin = 'anonymous'
   img.onload = () => {
-    addImage(r.url, img.naturalWidth || r.w || 1024, img.naturalHeight || r.h || 1024, 'ai')
+    const pl = addImage(r.url, img.naturalWidth || r.w || 1024, img.naturalHeight || r.h || 1024, 'ai')
+    if (!pl) { toast.add({ title: t('customize.tools.limitReached'), color: 'warning' }); return }
     toast.add({ title: t('customize.aiPanel.added'), color: 'success' })
   }
   img.onerror = () => toast.add({ title: t('customize.aiPanel.loadFailed'), color: 'error' })

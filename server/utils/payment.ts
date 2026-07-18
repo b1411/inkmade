@@ -64,7 +64,17 @@ interface EpayStatusResponse {
   invoiceID?: string | number
   amount?: number | string
   currency?: string
-  transaction?: { id?: string | number; statusName?: string }
+  id?: string | number
+  // Halyk кладёт часть полей внутрь transaction, часть — на верхний уровень; конкретный
+  // набор зависит от эндпоинта/версии. Поэтому читаем ОБА уровня (см. checkStatus ниже).
+  transaction?: {
+    id?: string | number
+    statusName?: string
+    resultCode?: string | number
+    amount?: number | string
+    currency?: string
+    invoiceID?: string | number
+  }
 }
 
 export function epayEndpoints(environment: EpayEnvironment) {
@@ -181,14 +191,24 @@ export function createEpayProvider(config: EpayConfig): PaymentProvider {
       const raw = await $fetch<EpayStatusResponse>(`${endpoints.api}/check-status/payment/transaction/${encodeURIComponent(invoiceId)}`, {
         headers: { authorization: `Bearer ${token}` },
       })
-      const status = String(raw.statusName || raw.transaction?.statusName || 'UNKNOWN').toUpperCase()
+      // Читаем поля с фолбэком top-level ↔ transaction: раньше statusName/id брались из
+      // разных уровней, а amount/currency/resultCode — только сверху; при несовпадении со
+      // схемой Halyk оплаченный заказ падал на сверке суммы и застревал в pending навсегда
+      // (деньги списаны, applyPaid не вызван). Теперь читаем оба уровня — см. epay-order.ts.
+      const tx = raw.transaction ?? {}
+      const status = String(raw.statusName ?? tx.statusName ?? 'UNKNOWN').toUpperCase()
+      const resultCode = raw.resultCode ?? tx.resultCode
+      const transactionId = tx.id ?? raw.id
+      const invoiceIdRaw = raw.invoiceID ?? tx.invoiceID
+      const amountRaw = raw.amount ?? tx.amount
+      const currency = raw.currency ?? tx.currency
       return {
-        paid: String(raw.resultCode) === '100' && status === 'CHARGE',
+        paid: String(resultCode) === '100' && status === 'CHARGE',
         status,
-        transactionId: raw.transaction?.id == null ? undefined : String(raw.transaction.id),
-        invoiceId: raw.invoiceID == null ? undefined : String(raw.invoiceID),
-        amount: raw.amount == null ? undefined : Number(raw.amount),
-        currency: raw.currency,
+        transactionId: transactionId == null ? undefined : String(transactionId),
+        invoiceId: invoiceIdRaw == null ? undefined : String(invoiceIdRaw),
+        amount: amountRaw == null ? undefined : Number(amountRaw),
+        currency,
         raw,
       }
     },

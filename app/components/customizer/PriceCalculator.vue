@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Калькулятор цены в реальном времени (§5.5, §9.1) — главное отличие от B2B-референса.
 // Итог «накручивается» (count-up) при каждом изменении — цена осязаема и честна.
-const props = withDefaults(defineProps<{ quantity?: number }>(), { quantity: 1 })
+const props = withDefaults(defineProps<{ quantity?: number; loading?: boolean }>(), { quantity: 1, loading: false })
 const emit = defineEmits<{ addToCart: [] }>()
 const { breakdown } = usePricing()
 
@@ -48,7 +48,7 @@ onBeforeUnmount(() => tween?.kill())
       <span class="font-semibold">{{ $t('customize.price.total') }}</span>
       <span class="text-h3 font-bold text-ink-burgundy tabular-nums">{{ formatPrice(display) }}</span>
     </div>
-    <UiAppButton variant="primary" size="lg" block icon="i-lucide-shopping-cart" @click="emit('addToCart')">
+    <UiAppButton variant="primary" size="lg" block icon="i-lucide-shopping-cart" :loading="loading" @click="emit('addToCart')">
       {{ $t('customize.price.addToCart') }}
     </UiAppButton>
   </div>

@@ -31,7 +31,8 @@ function pick(p: Tables<'print_library'>) {
   const img = new window.Image()
   img.crossOrigin = 'anonymous'
   img.onload = () => {
-    addImage(p.file_url, img.naturalWidth || 1000, img.naturalHeight || 1000, 'library', p.id)
+    const pl = addImage(p.file_url, img.naturalWidth || 1000, img.naturalHeight || 1000, 'library', p.id)
+    if (!pl) { toast.add({ title: t('customize.tools.limitReached'), color: 'warning' }); return }
     open.value = false
     toast.add({ title: t('customize.library.added', { title: p.title }), color: 'success' })
   }

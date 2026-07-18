@@ -152,6 +152,7 @@
   --text-h1: clamp(1.75rem, 3.2vw, 2.75rem); /* 28→44, display */
   --text-h2: clamp(1.6875rem, 2.9vw, 2.625rem); /* 27→42, display */
   --text-h3: clamp(1.2rem, 1rem + 1vw, 1.4rem); /* card/sub-heading, font-sans 700 — не «compact H2», роль другая */
+  --text-h4: clamp(1rem, 0.95rem + 0.3vw, 1.125rem); /* панельный под-заголовок конструктора, font-sans 600 */
   --text-lead: clamp(1rem, 1.1vw, 1.0625rem); /* body large 16→17 */
   --text-body-lg: 1.0625rem; /* 17 */
   --text-body: 0.9375rem; /* 15 — спека «Body 14–15» */
@@ -620,6 +621,13 @@
   .skip-link:focus-visible {
     transform: translateY(0);
     outline: 2px solid var(--color-ink-cream);
+    outline-offset: 2px;
+  }
+
+  /* Клавиатурный фокус-ринг для ссылок-иконок (лого в кабинетах WorkspaceShell и т.п.),
+     где нет собственного focus-visible-стиля. Совпадает с паттерном nav-ссылок. */
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--color-ink-burgundy);
     outline-offset: 2px;
   }
 

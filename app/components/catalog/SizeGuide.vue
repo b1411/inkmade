@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import type { SizeChartRow } from '~~/shared/config/zones'
 
 // Размерная сетка у селектора размера.

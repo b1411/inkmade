@@ -476,7 +476,7 @@ async function onAddToCart() {
 
         <!-- итог (липкий на десктопе) -->
         <div class="hidden lg:block lg:sticky lg:bottom-4">
-          <CustomizerPriceCalculator :quantity="quantity" @add-to-cart="onAddToCart" />
+          <CustomizerPriceCalculator :quantity="quantity" :loading="submitting" @add-to-cart="onAddToCart" />
         </div>
       </div>
     </div>

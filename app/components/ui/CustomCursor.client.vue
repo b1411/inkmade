@@ -69,7 +69,7 @@ onBeforeUnmount(() => teardown?.())
 </template>
 
 <style scoped>
-/* Внешний слой — позиционируется gsap через transform: translate (x/y) */
+/* Внешний слой — позиционируется requestAnimationFrame-lerp'ом через transform: translate (x/y) */
 .ink-cursor {
   position: fixed;
   top: 0;
@@ -78,7 +78,7 @@ onBeforeUnmount(() => teardown?.())
   z-index: 9998;
   will-change: transform;
 }
-/* Кольцо — визуал и scale (CSS не конфликтует с gsap-translate) */
+/* Кольцо — визуал и scale (CSS не конфликтует с JS-translate внешнего слоя) */
 .ink-cursor__ring {
   display: block;
   width: 30px;

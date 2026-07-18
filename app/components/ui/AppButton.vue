@@ -25,6 +25,15 @@ const props = withDefaults(defineProps<Props>(), {
   onDark: false,
   type: 'button',
 })
+const emit = defineEmits<{ click: [MouseEvent] }>()
+
+// Явный контракт клика: раньше @click держался ТОЛЬКО на attribute-fallthrough к корневому
+// <span> + всплытии — смена inheritAttrs / второй корневой узел молча убили бы все @click.
+// Теперь клик эмитится с реального контрола; disabled/loading его глушат (в т.ч. link-вариант).
+function onClick(e: MouseEvent) {
+  if (props.disabled || props.loading) { e.preventDefault(); return }
+  emit('click', e)
+}
 
 // Высоты — спека §6.1/§6.2: CTA бренда 50px, паддинг 22–26px, min-width 184px.
 // lg = дефолтный размер компонента и есть тот самый CTA. Базовый min-height 44px
@@ -96,7 +105,9 @@ onBeforeUnmount(() => teardown?.())
       v-if="to"
       :to="to"
       :class="btnClass"
-      :aria-disabled="disabled ? 'true' : undefined"
+      :aria-disabled="disabled || loading ? 'true' : undefined"
+      :tabindex="disabled || loading ? -1 : undefined"
+      @click="onClick"
     >
       <UIcon v-if="loading" name="i-lucide-loader-2" class="size-5 animate-spin" />
       <UIcon v-else-if="icon" :name="icon" class="size-5" />
@@ -108,6 +119,7 @@ onBeforeUnmount(() => teardown?.())
       :type="type"
       :disabled="disabled || loading"
       :class="btnClass"
+      @click="onClick"
     >
       <UIcon v-if="loading" name="i-lucide-loader-2" class="size-5 animate-spin" />
       <UIcon v-else-if="icon" :name="icon" class="size-5" />

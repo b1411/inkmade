@@ -146,19 +146,36 @@ export function useDesignAutosave(options: AutosaveOptions) {
     lastSavedAt.value = data.updated_at
   }
 
+  let saving = false
+  let dirtyDuringSave = false
+
   async function flush() {
-    if (!import.meta.client || status.value === 'saving' || status.value === 'conflict') return
+    // Гард по РЕАЛЬНОМУ in-flight-флагу, а не по status: markDirty во время сохранения
+    // сбрасывал status в 'dirty', из-за чего этот guard не срабатывал и запускался второй
+    // параллельный saveServer с тем же базовым revision → ложный self-conflict.
+    if (!import.meta.client || saving || status.value === 'conflict') return
+    saving = true
     status.value = 'saving'
     try {
-      await saveServer(options.toSpec())
+      // Если во время сохранения прилетела новая правка — до-сохраняем её тем же
+      // проходом (трейлинг-правка не теряется, гонки перекрывающихся save нет).
+      do {
+        dirtyDuringSave = false
+        await saveServer(options.toSpec())
+      } while (dirtyDuringSave && !conflict.value)
       if (!conflict.value) status.value = 'saved'
     } catch {
       status.value = 'error'
+    } finally {
+      saving = false
     }
   }
 
   function markDirty() {
     if (!started.value || status.value === 'conflict') return
+    // Идёт сохранение — НЕ запускаем второй параллельный saveServer. Помечаем «есть свежая
+    // правка», текущий flush до-сохранит её в do/while по завершении.
+    if (saving) { dirtyDuringSave = true; return }
     status.value = 'dirty'
     if (timer) clearTimeout(timer)
     timer = setTimeout(() => { void flush() }, 1000)

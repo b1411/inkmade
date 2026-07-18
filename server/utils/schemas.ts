@@ -43,7 +43,9 @@ const printFileSchema = z.object({
 })
 
 export const designSpecSchema = z.object({
-  version: z.literal(2).optional(),
+  // Принимаем и v1: корзины/гест-черновики, сериализованные до бампа до v2, несут
+  // version:1 — без union их отклонял бы order-create (позиция «ломается» на чекауте).
+  version: z.union([z.literal(1), z.literal(2)]).optional(),
   placements: z.array(placementSchema).max(20).optional(),
   print_mode: z.string().max(32).optional(),
   composition_url: z.string().max(2048).optional(),

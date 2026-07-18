@@ -2,6 +2,7 @@
 import type { Database } from '~/types/database.types'
 
 const { t, locale } = useI18n()
+const { confirm } = useConfirm()
 const supabase = useSupabaseClient<Database>()
 const design = useDesign()
 const templates = ref<Database['public']['Tables']['design_templates']['Row'][]>([])
@@ -40,7 +41,18 @@ async function loadTemplates() {
 
 watch([() => design.product.value?.id, () => design.printMode.value, locale], loadTemplates, { immediate: true })
 
-function applyTemplate(template: Database['public']['Tables']['design_templates']['Row']) {
+async function applyTemplate(template: Database['public']['Tables']['design_templates']['Row']) {
+  // loadSpec ПОЛНОСТЬЮ заменяет placements и стирает историю (resetHistory) — undo не
+  // спасёт. Если у пользователя уже есть работа, спрашиваем подтверждение, чтобы не
+  // потерять дизайн молча по одному клику.
+  if (design.placements.value.length > 0) {
+    const ok = await confirm({
+      title: t('customize.templates.applyConfirm'),
+      confirmLabel: t('customize.templates.applyConfirmLabel'),
+      tone: 'danger',
+    })
+    if (!ok) return
+  }
   design.loadSpec(template.spec)
   useAnalytics().track('template_used', {
     template_id: template.id,

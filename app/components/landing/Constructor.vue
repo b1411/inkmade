@@ -142,7 +142,7 @@ onBeforeUnmount(() => {
             <div class="mt-auto p-4">
               <p class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">Итого</p>
               <p class="mt-1 font-display text-3xl font-black">{{ fmtNum(price) }} ₸</p>
-              <UiAppButton :to="createTo" variant="primary" size="lg" class="mt-4 w-full" trailing-icon="i-lucide-arrow-right">
+              <UiAppButton :to="createTo" variant="primary" size="lg" block class="mt-4" trailing-icon="i-lucide-arrow-right">
                 {{ locale === 'kk' ? 'Толық редактор' : 'Продолжить в редакторе' }}
               </UiAppButton>
             </div>

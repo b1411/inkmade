@@ -56,10 +56,15 @@ async function onSubmit() {
     // Иначе согласие гарантированно фиксируется на сервере при оформлении заказа (§24).
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      await supabase.from('user_consents').insert([
-        { user_id: user.id, consent_type: 'tos', doc_version: LEGAL.tosVersion },
-        { user_id: user.id, consent_type: 'privacy', doc_version: LEGAL.privacyVersion },
-      ])
+      // Согласие — best-effort: его провал (дубль/сеть) НЕ должен оставлять пользователя
+      // с уже валидной сессией на форме регистрации. Согласие всё равно гарантированно
+      // фиксируется на сервере при оформлении заказа (§24).
+      try {
+        await supabase.from('user_consents').insert([
+          { user_id: user.id, consent_type: 'tos', doc_version: LEGAL.tosVersion },
+          { user_id: user.id, consent_type: 'privacy', doc_version: LEGAL.privacyVersion },
+        ])
+      } catch { /* фиксация согласия отложена до чекаута */ }
       // сессия уже есть → ведём туда, зачем пришли (или в свой кабинет), а не в алерт
       await navigateTo(redirect.value ?? '/account')
       return

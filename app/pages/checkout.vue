@@ -92,6 +92,7 @@ const formValid = computed(() =>
 )
 
 async function onPay() {
+  if (paying.value) return
   if (!formValid.value) {
     toast.add({ title: t('cart.checkout.validation.title'), description: t('cart.checkout.validation.description'), color: 'warning' })
     return
@@ -110,7 +111,10 @@ async function onPay() {
       body: { orderId },
     })
     if (res.free) useAnalytics().purchase(0, orderId)
-    await navigateTo(res.payUrl)
+    // ePay возвращает АБСОЛЮТНЫЙ invoice_url банка — navigateTo без external его
+    // отклоняет, и ни один реальный платёж не доходит до шлюза. Free/mock отдают
+    // относительный путь и должны остаться обычной клиентской навигацией.
+    await navigateTo(res.payUrl, { external: /^https?:\/\//i.test(res.payUrl) })
   } catch (e) {
     useAnalytics().track('payment_failure', { stage: 'checkout_create' })
     // дружелюбный текст сервера (напр. «Недостаточно товара — обновите корзину»)

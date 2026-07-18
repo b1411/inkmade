@@ -459,6 +459,7 @@ const productCopy = computed(() => locale.value === 'kk'
           <button
             v-for="m in product.materials"
             :key="m.id"
+            type="button"
             class="px-3 py-2 rounded-xs border text-caption transition-colors"
             :class="m.id === selectedMaterialId
               ? 'border-ink-burgundy bg-ink-burgundy text-ink-bone'
@@ -481,6 +482,7 @@ const productCopy = computed(() => locale.value === 'kk'
           <button
             v-for="c in colors"
             :key="c.hex"
+            type="button"
             :title="c.name"
             class="size-9 rounded-full border-2 transition-transform hover:scale-110"
             :class="c.hex === selectedColor ? 'border-ink-bone' : 'border-[var(--ink-line-strong)]'"
@@ -502,6 +504,7 @@ const productCopy = computed(() => locale.value === 'kk'
           <button
             v-for="s in sizes"
             :key="s"
+            type="button"
             class="min-w-11 px-3 py-2 rounded-xs border text-center transition-colors"
             :class="s === selectedSize
               ? 'border-ink-burgundy bg-ink-burgundy text-ink-bone'

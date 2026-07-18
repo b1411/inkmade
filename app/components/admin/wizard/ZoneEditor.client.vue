@@ -1,6 +1,12 @@
 ﻿<script setup lang="ts">
+import { Image as VImage, Layer as VLayer, Rect as VRect, Stage as VStage, Transformer as VTransformer } from 'vue-konva'
 import { GARMENT_VIEWBOX, garmentDataUri, garmentImageRect, type GarmentKind } from '~~/shared/config/garment'
 import type { BoundsCanvas } from '~~/shared/config/zones'
+
+// vue-konva больше НЕ регистрируется глобальным плагином (удалён vue-konva.client.ts):
+// компоненты <v-stage>/<v-layer>/<v-rect>/<v-image>/<v-transformer> резолвятся из этих
+// именованных импортов, как в CustomizerCanvas.client.vue. Без них холст калибровки
+// зон рендерился инертными DOM-тегами (Stage не создавался, save отдавал дефолт).
 
 // Визуальный редактор зоны печати (§8.2.1) — калибровка bounds_canvas (миграция 0087).
 //

@@ -185,7 +185,7 @@ const shortId = (s: string) => s.slice(0, 8)
             <UFormField :label="$t('admin.order.modal.carrier')" required><UInput v-model="modal.carrier" class="w-full" /></UFormField>
           </template>
           <UFormField v-else :label="$t('admin.order.modal.reason')" required><UTextarea v-model="modal.note" :rows="3" class="w-full" /></UFormField>
-          <UButton color="primary" block :loading="busy" @click="perform(modal.to, { note: modal.note, trackingNo: modal.trackingNo, carrier: modal.carrier })">{{ $t('admin.order.modal.confirm') }}</UButton>
+          <UButton color="primary" block :loading="busy" :disabled="modal.to === 'shipped' ? !((modal.trackingNo || '').trim() && (modal.carrier || '').trim()) : !(modal.note || '').trim()" @click="perform(modal.to, { note: modal.note, trackingNo: modal.trackingNo, carrier: modal.carrier })">{{ $t('admin.order.modal.confirm') }}</UButton>
         </div>
       </template>
     </UModal>

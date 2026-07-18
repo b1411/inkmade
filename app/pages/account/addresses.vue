@@ -56,14 +56,17 @@ async function onRemove(id: string) {
     toast.add({ title: t('account.addresses.errorTitle'), description: getFetchMessage(e), color: 'error' })
   }
 }
+const busyId = ref<string | null>(null)
 async function onDefault(id: string) {
+  if (busyId.value) return
+  busyId.value = id
   try {
     await setDefault(id)
     await refresh()
   } catch (e) {
     toast.add({ title: t('account.addresses.errorTitle'), description: getFetchMessage(e), color: 'error' })
     await refresh() // вернуть UI к фактическому состоянию (setDefault неатомарен)
-  }
+  } finally { busyId.value = null }
 }
 </script>
 
@@ -93,7 +96,7 @@ async function onDefault(id: string) {
           <p class="text-caption text-ink-gray-600 mt-0.5">{{ a.phone }} · {{ a.city }}, {{ a.address }}</p>
         </div>
         <div class="flex gap-1 shrink-0">
-          <UButton v-if="!a.is_default" size="xs" color="neutral" variant="ghost" icon="i-lucide-star" :aria-label="t('account.addresses.makeDefault')" @click="onDefault(a.id)" />
+          <UButton v-if="!a.is_default" size="xs" color="neutral" variant="ghost" icon="i-lucide-star" :aria-label="t('account.addresses.makeDefault')" :loading="busyId === a.id" :disabled="!!busyId" @click="onDefault(a.id)" />
           <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" :aria-label="t('account.addresses.editAddress')" @click="startEdit(a)" />
           <UButton size="xs" color="error" variant="ghost" icon="i-lucide-trash-2" :aria-label="t('account.addresses.removeAria')" @click="onRemove(a.id)" />
         </div>

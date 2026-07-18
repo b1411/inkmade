@@ -6,7 +6,9 @@ export interface WorkspaceNavItem {
   exact?: boolean
 }
 
-const props = withDefaults(defineProps<{
+// props в скрипте не читаем — все поля используются напрямую в шаблоне (авто-unwrap),
+// поэтому defineProps без присваивания (иначе no-unused-vars ругается на `props`).
+withDefaults(defineProps<{
   title: string
   badge: string
   nav: WorkspaceNavItem[]

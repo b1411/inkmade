@@ -163,7 +163,7 @@ export const useCart = () => {
     persist()
   }
   function updateQty(id: string, quantity: number) {
-    items.value = items.value.map(i => (i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i))
+    items.value = items.value.map(i => (i.id === id ? { ...i, quantity: Math.min(999, Math.max(1, quantity)) } : i))
     persist()
   }
   function clear() {

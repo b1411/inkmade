@@ -37,9 +37,10 @@
 }
 
 @media (max-width: 767px) {
+  /* Высоту НЕ меняем — она остаётся 30px и совпадает с TOP_BAR_H в AppHeader.
+     Раньше 28px здесь давали 2px щель над fixed-шапкой при scrollY=0. Уменьшаем
+     только кегль, вертикальный ритм 30px держит 9px-текст без переноса. */
   .top-bar-text {
-    height: 28px;
-    line-height: 28px;
     font-size: 9px;
   }
 }

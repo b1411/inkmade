@@ -50,6 +50,7 @@ function setQty(n: number) {
       <div class="flex flex-wrap gap-2 mt-1">
         <button
           v-for="v in sizeVariants" :key="v.id"
+          type="button"
           class="min-w-11 px-3 py-2 rounded-md border text-center transition-colors"
           :class="v.size === size ? 'border-ink-burgundy bg-ink-burgundy/5' : 'border-ink-gray-200'"
           @click="size = v.size"

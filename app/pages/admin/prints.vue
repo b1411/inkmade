@@ -74,9 +74,13 @@ async function onSubmit() {
   }
 }
 
+const busyId = ref<string | null>(null)
 async function toggleActive(p: NonNullable<typeof prints.value>[number]) {
+  if (busyId.value) return
+  busyId.value = p.id
   try { await update(p.id, { is_active: !p.is_active }); refresh() }
   catch (e) { toast.add({ title: t('admin.prints.error'), description: getFetchMessage(e), color: 'error' }) }
+  finally { busyId.value = null }
 }
 
 const { confirm } = useConfirm()
@@ -120,7 +124,7 @@ async function onDelete(id: string, title: string) {
               <p v-if="p.tags?.length" class="text-caption text-ink-gray-400 truncate">{{ p.tags.join(', ') }}</p>
               <div class="flex items-center gap-1 pt-1">
                 <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" @click="startEdit(p)" />
-                <UButton size="xs" color="neutral" variant="ghost" :icon="p.is_active ? 'i-lucide-eye-off' : 'i-lucide-eye'" @click="toggleActive(p)" />
+                <UButton size="xs" color="neutral" variant="ghost" :icon="p.is_active ? 'i-lucide-eye-off' : 'i-lucide-eye'" :loading="busyId === p.id" :disabled="!!busyId" @click="toggleActive(p)" />
                 <UButton size="xs" color="error" variant="ghost" icon="i-lucide-trash-2" @click="onDelete(p.id, p.title)" />
               </div>
             </div>

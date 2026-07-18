@@ -208,7 +208,13 @@ export default defineEventHandler(async (event) => {
       if (shopPromo) { discount = shopPromo.discount; promoCode = shopPromo.code; shopLineDiscount = shopPromo.byItem }
     }
   }
-  const total = Math.max(0, subtotal - discount)
+  // total — это сумма, которую спишет банк. ePay принимает amount в ЦЕЛЫХ тенге и
+  // возвращает целое в check-status, а sync/apply_paid сверяют его с orders.total
+  // с точностью 0.001. Магазинный промо-путь (shop-promo round2) и наценки дают
+  // копейки (напр. 11041.50) → банк спишет 11041, сверка не сойдётся, и заказ
+  // навсегда останется pending при списанных деньгах. Округляем до целого ЗДЕСЬ,
+  // у источника, чтобы у orders.total и у ePay была одна и та же сумма.
+  const total = Math.max(0, Math.round(subtotal - discount))
 
   const gift = body.gift
   const isGift = !!gift && (!!gift.recipient || !!gift.message)

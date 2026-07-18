@@ -586,7 +586,14 @@ watch(tick, () => {
   if (tr && tr.nodes().length) return
   attachTransformer()
 })
-watch(() => zone.value?.name, () => { selectPlacement(null); attachTransformer(); nextTick(applyFilters) })
+watch(() => zone.value?.name, () => {
+  // Не сбрасываем выделение, если выбранный элемент принадлежит НОВОЙ зоне: клик по слою
+  // чужой зоны в LayerPanel сначала меняет зону, затем ставит выделение — без этой
+  // проверки watcher затирал бы его в том же flush, и требовался бы второй клик.
+  const sel = placements.value.find(p => p.id === selectedId.value)
+  if (!sel || sel.zone !== zone.value?.name) selectPlacement(null)
+  attachTransformer(); nextTick(applyFilters)
+})
 onMounted(() => {
   attachTransformer()
   nextTick(applyFilters)
@@ -609,13 +616,17 @@ const PRINT_CAP_PX = 4096
 type ZoneBlob = { zone: string; blob: Blob; w: number; h: number }
 async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
   const dpi = Math.max(72, Math.min(600, Math.round(dpiRaw))) // защитный кэп
+  // Скрытые слои НЕ печатаются: превью (activePlacements) и preflight их уже
+  // отфильтровывают, а экспорт — нет, и в цех уходил слой, которого клиент не видел.
+  // Фильтруем ОДИН раз в начале: скрытый битый ассет не должен блокировать заказ.
+  const printable = placements.value.filter(p => !p.hidden)
   // гарантируем загрузку шрифтов перед растеризацией текста
-  const fonts = [...new Set(placements.value.filter(p => p.kind === 'text' && p.fontFamily).map(p => p.fontFamily!))]
+  const fonts = [...new Set(printable.filter(p => p.kind === 'text' && p.fontFamily).map(p => p.fontFamily!))]
   await Promise.all(fonts.map(f => loadFont(f)))
   try { await (document as any).fonts?.ready } catch { /* noop */ }
   // гарантируем загрузку ВСЕХ принтов — иначе в печатный файл уйдёт пустой слой (§13.2)
   await ensureImagesLoaded(
-    placements.value
+    printable
       .filter(p => p.kind === 'image' && p.assetUrl && !images[p.id])
       .map(p => ({ id: p.id, url: p.assetUrl! })),
   )
@@ -624,13 +635,13 @@ async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
   // загрузился (удалён из Storage / сеть / CORS), НЕ отдаём молча пустой/неполный
   // слой — падаем явно: generatePrintFiles вернёт [], а add-to-cart-гард заблокирует
   // заказ, вместо отправки в цех валидного, но прозрачного PNG (аудит 2026-07-12 #2).
-  const failedAssets = placements.value.filter(p => p.kind === 'image' && p.assetUrl && !images[p.id])
+  const failedAssets = printable.filter(p => p.kind === 'image' && p.assetUrl && !images[p.id])
   if (failedAssets.length) throw new Error(`print-assets-not-loaded:${failedAssets.length}`)
 
-  const zones = [...new Set(placements.value.map(p => p.zone))]
+  const zones = [...new Set(printable.map(p => p.zone))]
   const out: ZoneBlob[] = []
   for (const zn of zones) {
-    const pls = placements.value.filter(p => p.zone === zn)
+    const pls = printable.filter(p => p.zone === zn)
     if (!pls.length) continue
     const ppmScreen = pxPerMmForZone(zn) || 1
     // Rect берём из useDesign — ЕДИНСТВЕННЫЙ источник геометрии зоны. Раньше
@@ -656,7 +667,26 @@ async function exportPrintBlobs(dpiRaw = 300): Promise<ZoneBlob[]> {
           const s = (p.patternScale ?? 0.5) * outScale
           layer.add(new Konva.Rect({ x: 0, y: 0, width: outW, height: outH, fillPatternImage: images[p.id], fillPatternRepeat: 'repeat', fillPatternScale: { x: s, y: s }, opacity: p.opacity ?? 1 }))
         } else if (p.kind === 'image' && images[p.id]) {
-          const node = new Konva.Image({ image: images[p.id], x: lx, y: ly, width: lw, height: lh, rotation: p.rotation, opacity: p.opacity ?? 1 })
+          // Кроп и flip ОБЯЗАНЫ повторять imageConfig() превью — иначе клиент видит
+          // обрезанный/зеркальный принт, а в цех уходит полный и незеркальный (WYSIWYG).
+          // Кроп задаётся в пикселях ИСХОДНИКА (не масштабируется outScale), offset —
+          // в координатах узла, поэтому здесь lw/lh, а в превью p.width/p.height.
+          const src = images[p.id]!
+          const crop = p.crop
+            ? {
+                cropX: p.crop.x * src.width,
+                cropY: p.crop.y * src.height,
+                cropWidth: p.crop.width * src.width,
+                cropHeight: p.crop.height * src.height,
+              }
+            : {}
+          const node = new Konva.Image({
+            image: src, x: lx, y: ly, width: lw, height: lh,
+            rotation: p.rotation, opacity: p.opacity ?? 1,
+            scaleX: p.flipX ? -1 : 1, scaleY: p.flipY ? -1 : 1,
+            offsetX: p.flipX ? lw : 0, offsetY: p.flipY ? lh : 0,
+            ...crop,
+          })
           applyKonvaFilters(node, Konva, p.filters)
           layer.add(node)
         } else if (p.kind === 'shape') {

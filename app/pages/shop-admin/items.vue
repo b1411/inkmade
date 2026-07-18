@@ -77,12 +77,16 @@ async function onSave() {
   }
 }
 
+const busyId = ref<string | null>(null)
 async function toggleActive(it: NonNullable<typeof items.value>[number]) {
+  if (busyId.value) return
+  busyId.value = it.id
   try {
     await saveItem({ id: it.id, shop_id: it.shop_id, title: it.title, is_active: !it.is_active })
     await refresh()
     toast.add({ title: t('states.saved'), color: 'success' })
   } catch (e) { toast.add({ title: t('shopAdmin.items.error'), description: getFetchMessage(e), color: 'error' }) }
+  finally { busyId.value = null }
 }
 
 const { confirm } = useConfirm()
@@ -123,7 +127,7 @@ async function onDelete(it: NonNullable<typeof items.value>[number]) {
               <p class="font-bold text-ink-burgundy">{{ fmtPrice(Number(it.price) + Number(it.markup)) }}</p>
               <div class="flex items-center gap-1 pt-1">
                 <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-pencil" @click="startEdit(it)" />
-                <UButton size="xs" color="neutral" variant="ghost" :icon="it.is_active ? 'i-lucide-eye-off' : 'i-lucide-eye'" @click="toggleActive(it)" />
+                <UButton size="xs" color="neutral" variant="ghost" :icon="it.is_active ? 'i-lucide-eye-off' : 'i-lucide-eye'" :loading="busyId === it.id" :disabled="!!busyId" @click="toggleActive(it)" />
                 <UButton size="xs" color="error" variant="ghost" icon="i-lucide-trash-2" @click="onDelete(it)" />
               </div>
             </div>

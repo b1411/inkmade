@@ -242,12 +242,22 @@ onMounted(() => {
               {{ l.label }}
             </NuxtLink>
             <NuxtLink
+              v-if="isAuthenticated"
               :to="cabinetTo"
               class="menu-link-enter ink-display text-4xl py-2"
               :style="{ animationDelay: `${100 + menuLinks.length * 80}ms` }"
               @click="closeMenu"
             >
               {{ $t('nav.cabinet') }}
+            </NuxtLink>
+            <NuxtLink
+              v-else
+              to="/login"
+              class="menu-link-enter ink-display text-4xl py-2"
+              :style="{ animationDelay: `${100 + menuLinks.length * 80}ms` }"
+              @click="closeMenu"
+            >
+              {{ $t('header.login') }}
             </NuxtLink>
             <ClientOnly>
               <button

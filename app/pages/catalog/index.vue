@@ -17,12 +17,15 @@ const [{ data: categories }, { data: products }] = await Promise.all([
 ])
 
 type CatalogProduct = NonNullable<Awaited<ReturnType<typeof listAll>>>[number]
-const fallbackProducts = computed<CatalogProduct[]>(() => [
+// Фолбэки — ТОЛЬКО для локальной разработки без засеянной БД. В проде мёртвые карточки
+// недопустимы: их ссылки на /product/{slug} и /customize/{alias} дают 404, если слага
+// нет в БД. В проде секция показывает только реальные опубликованные товары.
+const fallbackProducts = computed<CatalogProduct[]>(() => (import.meta.dev ? [
   { id: 'fallback-oversize', slug: 'tshirt_oversize', alias: 'tshirt_oversize', title: locale.value === 'kk' ? 'Oversize футболка' : 'Футболка Oversize', base_price: 9990, category: 'textile', is_featured: true, created_at: '2026-01-04', product_images: [] },
   { id: 'fallback-classic', slug: 'tshirt', alias: 'tshirt', title: locale.value === 'kk' ? 'Classic футболка' : 'Футболка Classic', base_price: 6990, category: 'textile', is_featured: false, created_at: '2026-01-03', product_images: [] },
   { id: 'fallback-cap', slug: 'cap', alias: 'cap', title: locale.value === 'kk' ? 'INKMADE кепкасы' : 'Кепка INKMADE', base_price: 5990, category: 'textile', is_featured: false, created_at: '2026-01-02', product_images: [] },
   { id: 'fallback-polo', slug: 'polo', alias: 'polo', title: locale.value === 'kk' ? 'Relaxed поло' : 'Поло Relaxed', base_price: 8990, category: 'textile', is_featured: false, created_at: '2026-01-01', product_images: [] }
-])
+] : []))
 const baseOrder = ['tshirt_oversize', 'tshirt', 'polo', 'cap']
 const showcaseProducts = computed(() => {
   const live = products.value ?? []
@@ -33,6 +36,13 @@ const showcaseProducts = computed(() => {
       return (ai === -1 ? baseOrder.length : ai) - (bi === -1 ? baseOrder.length : bi)
     })
     .slice(0, 4)
+})
+
+// CTA «Создать свой принт» ведёт в конструктор ПЕРВОЙ реальной базы (alias из БД),
+// а не на захардкоженный slug — иначе 404, если алиаса нет в проде. Пусто → в каталог.
+const createHref = computed(() => {
+  const first = showcaseProducts.value[0]
+  return first ? `/customize/${first.alias ?? first.slug}` : '/catalog'
 })
 
 const copy = computed(() => locale.value === 'kk'
@@ -113,7 +123,7 @@ const copy = computed(() => locale.value === 'kk'
         <UiSectionLabel inverse>03 / PRINT ON DEMAND</UiSectionLabel>
         <h2 class="ink-display mt-3 text-h2">{{ copy.editorial }}</h2>
         <p class="mt-4 max-w-md text-ink-text-soft">{{ copy.editorialBody }}</p>
-        <UiAppButton to="/customize/tshirt_oversize" variant="primary" size="lg" class="mt-7 self-start" trailing-icon="i-lucide-arrow-right">
+        <UiAppButton :to="createHref" variant="primary" size="lg" class="mt-7 self-start" trailing-icon="i-lucide-arrow-right">
           {{ copy.create }}
         </UiAppButton>
       </div>
