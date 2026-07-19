@@ -40,17 +40,24 @@ useSeoMeta({
 <template>
   <section v-if="data" class="space-y-8">
     <!-- шапка автора -->
-    <div class="flex items-center gap-4">
-      <div class="size-16 rounded-full bg-ink-gray-200 overflow-hidden shrink-0">
-        <img v-if="data.profile.avatar_url" :src="data.profile.avatar_url" :alt="name" class="w-full h-full object-cover">
-        <div v-else class="w-full h-full flex items-center justify-center text-ink-gray-400">
-          <UIcon name="i-lucide-palette" class="size-7" />
+    <div class="grid overflow-hidden border border-ink-gray-200 bg-ink-black text-white lg:grid-cols-[1.05fr_.95fr]">
+      <div class="flex min-h-80 flex-col justify-between p-6 sm:p-10 lg:min-h-[430px] lg:p-12">
+        <UiSectionLabel accent>{{ $t('customize.designerPage.author') }}</UiSectionLabel>
+        <div>
+          <div class="mb-6 size-20 overflow-hidden rounded-full border border-white/20 bg-white/10">
+            <img v-if="data.profile.avatar_url" :src="data.profile.avatar_url" :alt="name" class="size-full object-cover">
+            <div v-else class="grid size-full place-items-center text-white/60">
+              <UIcon name="i-lucide-palette" class="size-8" />
+            </div>
+          </div>
+          <h1 class="ink-display text-[clamp(3rem,7vw,6.5rem)] leading-[.86] tracking-[-.05em]">{{ name }}</h1>
+          <p v-if="data.profile.bio" class="mt-5 max-w-xl text-white/60">{{ data.profile.bio }}</p>
         </div>
       </div>
-      <div>
-        <UiSectionLabel accent>{{ $t('customize.designerPage.author') }}</UiSectionLabel>
-        <h1 class="ink-display text-h2">{{ name }}</h1>
-        <p v-if="data.profile.bio" class="text-caption text-ink-gray-600 mt-1 max-w-prose">{{ data.profile.bio }}</p>
+      <div class="relative min-h-72 overflow-hidden lg:min-h-[430px]">
+        <NuxtImg src="/media/prints/alatau-night-v01.webp" alt="" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 580px" loading="eager" />
+        <div class="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
+        <span class="absolute bottom-5 left-5 ink-label text-white/70">INKMADE / CREATOR</span>
       </div>
     </div>
 
@@ -63,15 +70,17 @@ useSeoMeta({
         :title="$t('customize.designerPage.emptyTitle')"
         :text="$t('customize.designerPage.emptyText')"
       />
-      <div v-else class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-3">
-        <div v-for="p in data.prints" :key="p.id" class="border border-ink-gray-200 rounded-lg shadow-sm overflow-hidden group">
-          <div class="aspect-square bg-ink-gray-200">
-            <img v-if="p.thumbnail_url" :src="p.thumbnail_url" :alt="p.title" class="w-full h-full object-contain group-hover:scale-105 transition-transform">
+      <div v-else class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <NuxtLink v-for="p in data.prints" :key="p.id" :to="`/customize/tshirt?print=${p.id}`" class="group overflow-hidden border border-ink-gray-200 bg-ink-white shadow-sm transition hover:-translate-y-1 hover:border-ink-burgundy">
+          <div class="aspect-square overflow-hidden bg-ink-gray-200">
+            <img v-if="p.thumbnail_url" :src="p.thumbnail_url" :alt="p.title" class="size-full object-cover transition-transform duration-500 group-hover:scale-105">
+            <div v-else class="grid size-full place-items-center"><UIcon name="i-lucide-image" class="size-8 text-ink-gray-400" /></div>
           </div>
-          <div class="p-3">
-            <p class="text-caption font-semibold truncate">{{ p.title }}</p>
+          <div class="flex items-center justify-between gap-2 p-3">
+            <p class="truncate text-caption font-semibold">{{ p.title }}</p>
+            <UIcon name="i-lucide-arrow-up-right" class="size-4 shrink-0 text-ink-burgundy transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
-        </div>
+        </NuxtLink>
       </div>
     </div>
 

@@ -86,12 +86,13 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="max-w-xl mx-auto py-10 sm:py-14">
-    <UiSectionLabel accent>{{ $t('business.new.label') }}</UiSectionLabel>
-    <h1 class="ink-display text-h2 mt-2">{{ $t('business.new.title') }}</h1>
-    <p class="text-ink-gray-600 mt-3">{{ $t('business.new.subtitle') }}</p>
+  <div class="grid overflow-hidden bg-ink-paper shadow-[0_24px_80px_rgba(8,11,13,.12)] lg:grid-cols-[minmax(0,1fr)_440px]">
+    <div class="p-6 sm:p-10 lg:p-12">
+      <UiSectionLabel accent>{{ $t('business.new.label') }}</UiSectionLabel>
+      <h1 class="ink-display mt-2 text-h2">{{ $t('business.new.title') }}</h1>
+      <p class="mt-3 max-w-xl text-ink-gray-600">{{ $t('business.new.subtitle') }}</p>
 
-    <form class="mt-8 space-y-5" @submit.prevent="onSubmit">
+      <form class="mt-8 max-w-xl space-y-5" @submit.prevent="onSubmit">
       <UFormField :label="$t('business.new.nameLabel')" :help="$t('business.new.nameHelp')" required>
         <UInput v-model="name" size="lg" :placeholder="$t('business.new.namePh')" class="w-full" />
       </UFormField>
@@ -124,9 +125,24 @@ async function onSubmit() {
         <p class="text-caption text-ink-gray-600">{{ $t('business.new.terms') }}</p>
       </div>
 
-      <UiAppButton type="submit" variant="primary" size="lg" block :loading="creating" :disabled="!canSubmit">
-        {{ $t('business.new.submit') }}
-      </UiAppButton>
-    </form>
+        <UiAppButton type="submit" variant="primary" size="lg" block :loading="creating" :disabled="!canSubmit">
+          {{ $t('business.new.submit') }}
+        </UiAppButton>
+      </form>
+    </div>
+
+    <aside class="relative hidden min-h-[680px] overflow-hidden bg-[#d9d5ce] text-white lg:block">
+      <NuxtImg src="/media/products/blank/tote-v01.webp" alt="Чёрный шоппер INKMADE, предметный вид" class="absolute inset-0 size-full object-contain p-10" sizes="440px" loading="eager" />
+      <div class="absolute inset-0 bg-gradient-to-t from-ink-black via-ink-black/35 to-transparent" />
+      <div class="absolute inset-x-0 bottom-0 p-8">
+        <p class="ink-label text-white/45">B2B / OWN STOREFRONT</p>
+        <p class="ink-display mt-3 text-3xl">{{ $t('business.new.title') }}</p>
+        <div class="mt-5 grid gap-3 text-xs text-white/70">
+          <span class="flex items-center gap-2"><UIcon name="i-lucide-link-2" class="size-4 text-ink-burgundy-hover" />{{ host }}/s/your-brand</span>
+          <span class="flex items-center gap-2"><UIcon name="i-lucide-palette" class="size-4 text-ink-burgundy-hover" />Собственная тема и оформление</span>
+          <span class="flex items-center gap-2"><UIcon name="i-lucide-chart-no-axes-combined" class="size-4 text-ink-burgundy-hover" />Заказы, промокоды и финансы</span>
+        </div>
+      </div>
+    </aside>
   </div>
 </template>

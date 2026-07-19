@@ -14,6 +14,8 @@ const toast = useToast()
 const password = ref('')
 const confirm = ref('')
 const loading = ref(false)
+const showPassword = ref(false)
+const showConfirm = ref(false)
 const ready = ref(false) // есть активная (recovery) сессия → форма доступна
 const checking = ref(true) // ещё выясняем наличие сессии
 
@@ -83,10 +85,22 @@ async function onSubmit() {
     <!-- форма нового пароля -->
     <form v-else class="space-y-4" @submit.prevent="onSubmit">
       <UFormField :label="$t('auth.reset.passwordLabel')">
-        <UInput v-model="password" type="password" size="lg" autocomplete="new-password" icon="i-lucide-lock" required class="w-full" />
+        <UInput v-model="password" :type="showPassword ? 'text' : 'password'" size="lg" autocomplete="new-password" icon="i-lucide-lock" required class="w-full" :ui="{ trailing: 'pointer-events-auto' }">
+          <template #trailing>
+            <button type="button" class="text-ink-gray-500 hover:text-ink-black" :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'" @click="showPassword = !showPassword">
+              <UIcon :name="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-4" />
+            </button>
+          </template>
+        </UInput>
       </UFormField>
       <UFormField :label="$t('auth.reset.passwordConfirmLabel')">
-        <UInput v-model="confirm" type="password" size="lg" autocomplete="new-password" icon="i-lucide-lock" required class="w-full" />
+        <UInput v-model="confirm" :type="showConfirm ? 'text' : 'password'" size="lg" autocomplete="new-password" icon="i-lucide-lock" required class="w-full" :ui="{ trailing: 'pointer-events-auto' }">
+          <template #trailing>
+            <button type="button" class="text-ink-gray-500 hover:text-ink-black" :aria-label="showConfirm ? 'Скрыть пароль' : 'Показать пароль'" @click="showConfirm = !showConfirm">
+              <UIcon :name="showConfirm ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-4" />
+            </button>
+          </template>
+        </UInput>
       </UFormField>
       <UButton type="submit" color="primary" size="lg" block :loading="loading" trailing-icon="i-lucide-check">{{ $t('auth.reset.submit') }}</UButton>
     </form>

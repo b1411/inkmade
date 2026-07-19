@@ -26,7 +26,7 @@ export default defineNuxtPlugin((nuxtApp) => {
       catch {
         // noop — продолжаем с тем, что есть
       }
-      const { gsap, ScrollTrigger, SplitText } = await loadGsap()
+      const { gsap, SplitText } = await loadGsap()
       if (!el.isConnected) return
 
       const split = new SplitText(el, { type: 'lines', mask: 'lines', linesClass: 'rt-line' })
@@ -41,7 +41,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
       el.__rt = {
         revert() {
-          const st = tween.scrollTrigger as ScrollTrigger | undefined
+          const st = tween.scrollTrigger as { kill: () => void } | undefined
           st?.kill()
           tween.kill()
           split.revert()

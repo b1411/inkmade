@@ -22,16 +22,25 @@ function goCatalog() {
 </script>
 
 <template>
-  <div class="ink-grain min-h-screen flex flex-col items-center justify-center text-center px-4 bg-ink-black text-ink-cream">
-    <img src="/logo-light.svg" alt="INKMADE" width="1275" height="146" class="h-4.5 w-auto">
-    <p class="ink-display text-[8rem] leading-none mt-6 text-ink-burgundy-light">
-      {{ error?.statusCode || '!' }}
-    </p>
-    <h1 class="ink-display text-h2 mt-2">{{ title }}</h1>
-    <p class="text-lead text-ink-cream/75 mt-4 max-w-md">{{ text }}</p>
-    <div class="flex flex-wrap gap-3 mt-8 justify-center">
-      <UiAppButton variant="primary" size="lg" on-dark @click="goHome">{{ $t('errorPage.toHome') }}</UiAppButton>
-      <UiAppButton variant="secondary" size="lg" on-dark @click="goCatalog">{{ $t('errorPage.toCatalog') }}</UiAppButton>
+  <div class="min-h-screen bg-ink-black text-ink-cream lg:grid lg:grid-cols-[minmax(0,1fr)_42vw]">
+    <div class="ink-grain flex min-h-screen flex-col justify-center px-6 py-12 sm:px-12 lg:px-16">
+      <img src="/logo-light.svg" alt="INKMADE" width="1275" height="146" class="h-4.5 w-auto self-start">
+      <p class="ink-display mt-10 text-[clamp(6rem,15vw,12rem)] leading-[.75] text-ink-burgundy-light">
+        {{ error?.statusCode || '!' }}
+      </p>
+      <h1 class="ink-display mt-6 text-h2">{{ title }}</h1>
+      <p class="mt-4 max-w-md text-lead text-ink-cream/75">{{ text }}</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <UiAppButton variant="primary" size="lg" on-dark @click="goHome">{{ $t('errorPage.toHome') }}</UiAppButton>
+        <UiAppButton variant="secondary" size="lg" on-dark @click="goCatalog">{{ $t('errorPage.toCatalog') }}</UiAppButton>
+      </div>
+    </div>
+    <div class="relative hidden min-h-screen overflow-hidden lg:block">
+      <NuxtImg src="/media/products/blank/oversize-v01.webp" alt="" class="absolute inset-0 size-full object-contain p-8 grayscale-[.2]" sizes="42vw" />
+      <div class="absolute inset-0 bg-gradient-to-r from-ink-black/65 via-transparent to-transparent" />
+      <div class="absolute bottom-8 right-8 border border-white/20 bg-black/45 px-4 py-3 font-mono text-[10px] uppercase tracking-[.14em] text-white/60 backdrop-blur">
+        Route interrupted / return to base
+      </div>
     </div>
   </div>
 </template>

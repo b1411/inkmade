@@ -41,13 +41,13 @@ const audiences = computed(() => {
   const ru = ['Университетам и школам', 'Компаниям и стартапам', 'Креаторам и блогерам', 'Спортивным командам', 'Ивентам и фестивалям', 'Crew и сообществам']
   const kk = ['Университеттер мен мектептерге', 'Компаниялар мен стартаптарға', 'Креаторлар мен блогерлерге', 'Спорт командаларына', 'Ивенттер мен фестивальдерге', 'Crew және қауымдастықтарға']
   const titles = locale.value === 'kk' ? kk : ru
-  const images = ['idea-typography', 'idea-graphic', 'idea-abstract', 'idea-minimal', 'idea-culture', 'idea-art']
+  const images = ['nomad-grid', 'city-pulse', 'orbit-43', 'steppe-frequency', 'alatau-night', 'concrete-bloom']
   const icons = ['i-lucide-landmark', 'i-lucide-building-2', 'i-lucide-podcast', 'i-lucide-trophy', 'i-lucide-party-popper', 'i-lucide-users-round']
-  return titles.map((title, index) => ({ title, image: `/media/ideas/${images[index]}-v01.webp`, icon: icons[index] }))
+  return titles.map((title, index) => ({ title, image: `/media/prints/${images[index]}-v01.webp`, icon: icons[index] }))
 })
 
 const merch = computed(() => [
-  { title: locale.value === 'kk' ? 'Oversize худи' : 'Худи Oversize', price: 19990, src: '/media/products/on-body/oversize-v01.webp' },
+  { title: locale.value === 'kk' ? 'Oversize худи' : 'Худи Oversize', price: 19990, src: '/media/products/blank/hoodie-v01.webp' },
   { title: locale.value === 'kk' ? 'Oversize футболка' : 'Футболка Oversize', price: 9990, src: '/media/products/blank/oversize-v01.webp' },
   { title: locale.value === 'kk' ? 'INKMADE кепкасы' : 'Кепка INKMADE', price: 5990, src: '/media/products/blank/cap-v01.webp' },
   { title: locale.value === 'kk' ? 'Relaxed поло' : 'Поло Relaxed', price: 8990, src: '/media/products/blank/polo-v01.webp' }
@@ -89,7 +89,7 @@ const copy = computed(() => locale.value === 'kk'
 <template>
   <div class="w-screen ml-[calc(50%-50vw)] bg-ink-bone text-ink-text-dark">
     <section class="relative min-h-[640px] overflow-hidden bg-ink-black text-white lg:min-h-[720px]" aria-labelledby="business-title">
-      <img src="/media/campaigns/b2b-campus-v01.webp" alt="Команда в фирменном мерче INKMADE" class="absolute inset-0 size-full object-cover object-[62%_center]" loading="eager" fetchpriority="high">
+      <NuxtImg src="/media/campaigns/merch-system-v02.webp" alt="Чёрная мерч-капсула для команды" class="absolute inset-0 size-full object-cover object-center" sizes="100vw" loading="eager" fetchpriority="high" />
       <div class="absolute inset-0 bg-[linear-gradient(90deg,#080b0d_0%,rgba(8,11,13,.98)_30%,rgba(8,11,13,.72)_50%,rgba(8,11,13,.08)_82%)]" />
       <div class="relative mx-auto flex min-h-[640px] max-w-(--container-max) flex-col justify-end px-4 pb-14 pt-24 lg:min-h-[720px] lg:justify-center lg:pb-20">
         <div class="max-w-2xl">
@@ -129,12 +129,12 @@ const copy = computed(() => locale.value === 'kk'
         </div>
 
         <div class="grid gap-3 sm:grid-cols-[1.7fr_1fr] lg:col-span-7">
-          <div class="relative min-h-[520px] overflow-hidden bg-ink-black">
-            <img src="/media/campaigns/b2b-campus-v01.webp" alt="Коллекция команды" class="absolute inset-0 size-full object-cover object-center" loading="lazy">
+          <div class="relative min-h-[520px] overflow-hidden bg-[#d9d5ce]">
+            <NuxtImg src="/media/products/blank/tote-v01.webp" alt="Шоппер для коллекции команды, предметный вид" class="absolute inset-0 size-full object-contain p-8 sm:p-12" sizes="760px" loading="lazy" />
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             <div class="absolute inset-x-0 bottom-0 p-6 text-white">
-              <p class="font-mono text-[10px] uppercase tracking-[.14em] text-white/55">ALMA UNIVERSITY / CASE 001</p>
-              <p class="ink-display mt-2 max-w-sm text-4xl">Создано нами. Носится каждый день.</p>
+              <p class="font-mono text-[10px] uppercase tracking-[.14em] text-white/55">COLLECTION / PREVIEW 001</p>
+              <p class="ink-display mt-2 max-w-sm text-4xl">Основа для цельной коллекции команды.</p>
             </div>
           </div>
           <div class="border border-black/10 bg-ink-raised p-3 text-white">
@@ -177,7 +177,7 @@ const copy = computed(() => locale.value === 'kk'
       <h2 class="ink-display mt-3 text-h1">{{ copy.audiencesTitle }}</h2>
       <div class="mt-7 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 lg:grid lg:grid-cols-6 lg:overflow-visible lg:pb-0">
         <article v-for="audience in audiences" :key="audience.title" class="group relative aspect-[.76] min-w-[68vw] snap-start overflow-hidden bg-ink-black sm:min-w-[36vw] lg:min-w-0">
-          <NuxtImg :src="audience.image" :alt="audience.title" class="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105" sizes="(max-width: 1023px) 70vw, 240px" loading="lazy" />
+          <NuxtImg :src="audience.image" :alt="`Визуальное направление: ${audience.title}`" class="absolute inset-0 size-full bg-[#111214] object-contain p-3 transition-transform duration-700 group-hover:scale-[1.03]" sizes="(max-width: 1023px) 70vw, 240px" loading="lazy" />
           <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
           <div class="absolute inset-x-0 bottom-0 p-4 text-white">
             <UIcon :name="audience.icon" class="size-6 text-white/75" />
@@ -216,7 +216,7 @@ const copy = computed(() => locale.value === 'kk'
       <UiSectionLabel accent>{{ copy.merchLabel }}</UiSectionLabel>
       <div class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <article v-for="item in merch" :key="item.title" class="border border-black/10 bg-ink-card">
-          <NuxtImg :src="item.src" :alt="item.title" class="aspect-[4/5] w-full object-cover" sizes="(max-width: 1023px) 50vw, 350px" loading="lazy" />
+          <NuxtImg :src="item.src" :alt="`${item.title}, предметный вид`" class="aspect-[4/5] w-full bg-[#d9d5ce] object-contain p-4" sizes="(max-width: 1023px) 50vw, 350px" loading="lazy" />
           <div class="p-4">
             <p class="font-bold">{{ item.title }}</p>
             <p class="mt-1 font-mono text-[10px] text-ink-text-dark-soft">{{ formatPrice(item.price) }}</p>

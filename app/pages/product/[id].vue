@@ -220,6 +220,9 @@ const localMockup = computed<GalleryImage | null>(() => {
   }
   if (slug === 'cap' && isBlack) url = '/media/products/blank/cap-v01.webp'
   if (slug === 'polo' && isBlack) url = '/media/products/blank/polo-v01.webp'
+  if (slug === 'sweatshirt' && isBlack) url = '/media/products/blank/sweatshirt-v01.webp'
+  if (slug === 'hoodie' && isBlack) url = '/media/products/blank/hoodie-v01.webp'
+  if (slug === 'tote' && isBlack) url = '/media/products/blank/tote-v01.webp'
   if (!url) return null
 
   return {
@@ -234,22 +237,75 @@ const localMockup = computed<GalleryImage | null>(() => {
   }
 })
 const mockupImages = computed(() => {
-  if (localMockup.value) return [localMockup.value]
   const imgs = visibleImages.value
   const byColor = imgs.filter(i => i.kind === 'mockup' && i.color_hex === selectedColor.value)
   const common = imgs.filter(i => i.kind === 'mockup' && !i.color_hex)
   const combined = [...byColor, ...common]
+  // Новая медиаматрица Supabase хранит реальные WebP front/back. Старые SVG
+  // оставлены в базе как резерв, но при наличии растра не должны попадать в галерею.
+  const raster = combined.filter(image => !image.url.toLowerCase().endsWith('.svg'))
+  if (raster.length) return [...raster].sort(byPrimary)
+  if (localMockup.value) return [localMockup.value]
   const list = combined.length ? combined : imgs.filter(i => i.kind === 'mockup')
   return [...(list.length ? list : imgs)].sort(byPrimary)
 })
-// lifestyle «на людях» — гибрид: фото этого цвета + общие
-const lifestyleImages = computed(() => {
-  const imgs = visibleImages.value
-  const byColor = imgs.filter(i => i.kind === 'lifestyle' && i.color_hex === selectedColor.value)
-  const common = imgs.filter(i => i.kind === 'lifestyle' && !i.color_hex)
-  return [...byColor, ...common].sort((a, b) => a.sort_order - b.sort_order)
+const localFitBySlug: Record<string, string> = {
+  tshirt: '/media/models/fit-classic-v02.webp',
+  tshirt_oversize: '/media/models/fit-oversize-v02.webp',
+  polo: '/media/models/fit-polo-v02.webp',
+  sweatshirt: '/media/models/fit-sweatshirt-v02.webp',
+  hoodie: '/media/models/fit-hoodie-v02.webp',
+  cap: '/media/models/fit-cap-v02.webp',
+  tote: '/media/models/fit-tote-v02.webp',
+}
+
+const fitImages = computed<GalleryImage[]>(() => {
+  const remote = visibleImages.value
+    .filter(i => i.kind === 'lifestyle' && /brand\/fit-v02/i.test(i.url))
+    .filter(i => !i.color_hex || i.color_hex === selectedColor.value)
+  if (remote.length) return remote.sort((a, b) => a.sort_order - b.sort_order)
+  const url = localFitBySlug[slug]
+  if (!url) return []
+  return [{
+    id: `local-fit-${slug}`,
+    url,
+    alt: `${product.value!.title}, посадка на модели`,
+    label: locale.value === 'kk' ? 'Пішімі' : 'Посадка',
+    kind: 'lifestyle', color_hex: null, is_primary: false, sort_order: 900,
+  }]
 })
-const allImages = computed(() => [...mockupImages.value, ...lifestyleImages.value])
+
+// Детали товара: фактура, швы и результат печати. Старые сюжетные on-body
+// кадры отфильтрованы отдельно от новой нейтральной fit-серии.
+const detailImages = computed(() => {
+  const imgs = visibleImages.value
+  const localMaterialBySlug: Record<string, string> = {
+    polo: '/media/products/detail/polo-pique-v02.webp',
+    hoodie: '/media/products/detail/hoodie-rib-v02.webp',
+    cap: '/media/products/detail/cap-twill-v02.webp',
+    tote: '/media/products/detail/tote-handles-v02.webp',
+  }
+  const remoteDetails = imgs
+    .filter(i => i.kind === 'lifestyle')
+    .filter(i => !/on-body-v01|products\/on-body|brand\/lifestyle-v01|brand\/fit-v02/i.test(i.url))
+    .filter(i => !i.color_hex || i.color_hex === selectedColor.value)
+
+  const localDetails = [
+    {
+      id: `local-detail-cotton-${slug}`,
+      url: localMaterialBySlug[slug] ?? '/media/products/detail/cotton-collar-v01.webp',
+      alt: product.value!.title,
+      label: locale.value === 'kk' ? 'Мата бөлшектері' : 'Детали материала',
+      kind: 'lifestyle', color_hex: null, is_primary: false, sort_order: 1000,
+    },
+    { id: `local-detail-print-${slug}`, url: '/media/products/detail/print-texture-v01.webp', alt: product.value!.title, label: locale.value === 'kk' ? 'Баспа сапасы' : 'Фактура печати', kind: 'lifestyle', color_hex: null, is_primary: false, sort_order: 1001 },
+  ] satisfies GalleryImage[]
+
+  return [...remoteDetails, ...localDetails]
+    .filter((image, index, list) => list.findIndex(item => item.url === image.url) === index)
+    .sort((a, b) => a.sort_order - b.sort_order)
+})
+const allImages = computed(() => [...mockupImages.value, ...fitImages.value, ...detailImages.value])
 const activeImage = ref(0)
 // при смене цвета/состава галереи — на первое фото
 watch([selectedColor, allImages], () => { activeImage.value = 0 })
@@ -381,17 +437,34 @@ const productCopy = computed(() => locale.value === 'kk'
         </button>
       </div>
 
-      <!-- миниатюры: на людях -->
-      <div v-if="lifestyleImages.length">
-        <p class="ink-label text-ink-text-muted mb-2">{{ $t('product.lifestyle') }}</p>
+      <!-- миниатюры: посадка -->
+      <div v-if="fitImages.length">
+        <p class="ink-label text-ink-text-muted mb-2">{{ locale === 'kk' ? 'Пішімі' : 'Посадка' }}</p>
         <div class="flex gap-2 flex-wrap">
           <button
-            v-for="(img, i) in lifestyleImages"
+            v-for="(img, i) in fitImages"
             :key="img.id"
             class="size-16 rounded-md overflow-hidden border-2 transition-colors"
             :class="mockupImages.length + i === activeImage ? 'border-ink-burgundy' : 'border-[var(--ink-line-strong)] hover:border-ink-text-muted'"
-            :aria-label="$t('product.lifestyleNumber', { n: i + 1 })"
+            :aria-label="img.label || `${locale === 'kk' ? 'Пішімі' : 'Посадка'} ${i + 1}`"
             @click="activeImage = mockupImages.length + i"
+          >
+            <NuxtImg :src="img.url" alt="" class="w-full h-full object-cover" sizes="64px" loading="lazy" />
+          </button>
+        </div>
+      </div>
+
+      <!-- миниатюры: материалы и печать -->
+      <div v-if="detailImages.length">
+        <p class="ink-label text-ink-text-muted mb-2">{{ locale === 'kk' ? 'Материал және баспа' : 'Материал и печать' }}</p>
+        <div class="flex gap-2 flex-wrap">
+          <button
+            v-for="(img, i) in detailImages"
+            :key="img.id"
+            class="size-16 rounded-md overflow-hidden border-2 transition-colors"
+            :class="mockupImages.length + fitImages.length + i === activeImage ? 'border-ink-burgundy' : 'border-[var(--ink-line-strong)] hover:border-ink-text-muted'"
+            :aria-label="img.label || `${locale === 'kk' ? 'Бөлшек' : 'Деталь'} ${i + 1}`"
+            @click="activeImage = mockupImages.length + fitImages.length + i"
           >
             <NuxtImg :src="img.url" alt="" class="w-full h-full object-cover" sizes="64px" loading="lazy" />
           </button>

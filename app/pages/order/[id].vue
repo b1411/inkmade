@@ -161,10 +161,19 @@ async function submitRequest() {
 </script>
 
 <template>
-  <section v-if="order" class="max-w-2xl space-y-8">
-    <div>
-      <UiSectionLabel accent>{{ $t('cart.order.number', { id: shortId(order.id) }) }}</UiSectionLabel>
-      <h1 class="ink-display text-h2 mt-2">{{ customerStatus }}</h1>
+  <section v-if="order" class="mx-auto max-w-5xl space-y-8">
+    <div class="grid overflow-hidden border border-ink-gray-200 bg-ink-black text-white lg:grid-cols-[1.15fr_.85fr]">
+      <div class="flex min-h-64 flex-col justify-between p-6 sm:p-9 lg:min-h-80 lg:p-11">
+        <UiSectionLabel accent>{{ $t('cart.order.number', { id: shortId(order.id) }) }}</UiSectionLabel>
+        <div>
+          <h1 class="ink-display mt-8 max-w-2xl text-[clamp(2.8rem,7vw,6rem)] leading-[.86] tracking-[-.05em]">{{ customerStatus }}</h1>
+          <p class="mt-5 text-sm text-white/50">{{ date(order.created_at) }} · {{ money(order.total, order.currency) }}</p>
+        </div>
+      </div>
+      <div class="relative hidden min-h-80 overflow-hidden lg:block">
+        <NuxtImg src="/media/products/blank/hoodie-v01.webp" alt="" class="absolute inset-0 size-full bg-[#d9d5ce] object-contain p-6" sizes="420px" loading="eager" />
+        <div class="absolute inset-0 bg-linear-to-r from-ink-black/45 to-transparent" />
+      </div>
     </div>
 
     <!-- прогресс (§6.6) -->
@@ -186,9 +195,13 @@ async function submitRequest() {
     <!-- позиции -->
     <UiPanel :title="$t('cart.order.items.title')" icon="i-lucide-package">
       <div class="space-y-1">
-        <div v-for="(it, i) in order.order_items" :key="i" class="flex justify-between border-b border-ink-gray-200 py-2 last:border-0">
-          <span>{{ it.variants?.products?.title }} · {{ it.variants?.color_name }}/{{ it.variants?.size }} ×{{ it.quantity }}</span>
-          <span class="font-semibold">{{ money(it.unit_price * it.quantity, order.currency) }}</span>
+        <div v-for="(it, i) in order.order_items" :key="i" class="grid grid-cols-[3.5rem_1fr_auto] items-center gap-3 border-b border-ink-gray-200 py-3 last:border-0">
+          <div class="grid aspect-square place-items-center overflow-hidden bg-ink-gray-100">
+            <NuxtImg v-if="it.designs?.preview_url" :src="it.designs.preview_url" :alt="it.variants?.products?.title || ''" class="size-full object-contain p-1" width="72" height="72" />
+            <UIcon v-else name="i-lucide-shirt" class="size-5 text-ink-gray-400" />
+          </div>
+          <span class="min-w-0 text-sm">{{ it.variants?.products?.title }} · {{ it.variants?.color_name }}/{{ it.variants?.size }} ×{{ it.quantity }}</span>
+          <span class="whitespace-nowrap font-semibold">{{ money(it.unit_price * it.quantity, order.currency) }}</span>
         </div>
         <div class="flex justify-between pt-2 font-bold">
           <span>{{ $t('cart.order.items.total') }}</span><span class="text-ink-burgundy">{{ money(order.total, order.currency) }}</span>

@@ -32,20 +32,30 @@ useSeoMeta({
 </script>
 
 <template>
-  <section v-if="data" class="max-w-xl mx-auto py-10 text-center space-y-6">
-    <UiSectionLabel accent>{{ $t('customize.designPage.label') }}</UiSectionLabel>
-    <h1 class="ink-display text-h2">{{ productTitle }}</h1>
-
-    <div class="border border-ink-gray-200 rounded-lg shadow-sm overflow-hidden bg-ink-white aspect-square max-w-md mx-auto flex items-center justify-center">
-      <img v-if="data.preview" :src="data.preview" :alt="$t('customize.designPage.previewAlt', { title: productTitle })" class="w-full h-full object-contain">
-      <UIcon v-else name="i-lucide-shapes" class="size-12 text-ink-gray-400" />
+  <section v-if="data" class="grid overflow-hidden border border-white/10 bg-ink-black text-white lg:grid-cols-[1.05fr_.95fr]">
+    <div class="flex min-h-[560px] flex-col justify-between p-6 sm:p-10 lg:p-14">
+      <div class="flex items-center justify-between gap-4">
+        <UiSectionLabel accent>{{ $t('customize.designPage.label') }}</UiSectionLabel>
+        <span class="ink-label text-white/40">SHARED / DESIGN</span>
+      </div>
+      <div>
+        <h1 class="ink-display max-w-xl text-[clamp(3.5rem,8vw,7.5rem)] leading-[.82] tracking-[-.055em]">{{ productTitle }}</h1>
+        <p class="mt-6 max-w-md text-lg text-white/60">{{ $t('customize.designPage.cta') }}</p>
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+          <UiAppButton :to="customizeTo" variant="primary" size="lg" icon="i-lucide-wand-2">{{ $t('customize.designPage.createOwn') }}</UiAppButton>
+          <UiAppButton to="/catalog" variant="ghost" size="lg">{{ $t('customize.designPage.viewCatalog') }}</UiAppButton>
+        </div>
+      </div>
     </div>
-
-    <p class="text-ink-gray-600">{{ $t('customize.designPage.cta') }}</p>
-
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <UButton :to="customizeTo" color="primary" size="lg" icon="i-lucide-wand-2">{{ $t('customize.designPage.createOwn') }}</UButton>
-      <UButton to="/catalog" color="neutral" variant="ghost" size="lg">{{ $t('customize.designPage.viewCatalog') }}</UButton>
+    <div class="relative flex min-h-[480px] items-center justify-center overflow-hidden bg-[#d9d5ce] p-6 sm:p-10 lg:min-h-[720px]">
+      <NuxtImg src="/media/prints/nomad-grid-v01.webp" alt="" class="absolute inset-0 size-full object-cover opacity-25" sizes="(max-width: 1023px) 100vw, 560px" loading="eager" />
+      <div class="absolute inset-0 bg-white/20 backdrop-blur-[2px]" />
+      <div class="relative aspect-square w-full max-w-lg overflow-hidden border border-black/10 bg-white/90 p-5 shadow-2xl sm:p-8">
+        <img v-if="data.preview" :src="data.preview" :alt="$t('customize.designPage.previewAlt', { title: productTitle })" class="size-full object-contain">
+        <div v-else class="grid size-full place-items-center bg-ink-paper">
+          <UIcon name="i-lucide-shapes" class="size-16 text-ink-gray-400" />
+        </div>
+      </div>
     </div>
   </section>
 </template>

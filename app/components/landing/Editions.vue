@@ -5,15 +5,9 @@ const { locale } = useI18n()
 <template>
   <section class="ink-grain w-screen ml-[calc(50%-50vw)] bg-ink-surface text-ink-text" aria-labelledby="edition-heading">
     <div class="mx-auto grid max-w-(--container-max) gap-2 px-4 py-12 lg:grid-cols-12 lg:py-16">
-      <NuxtLink to="/catalog" class="group relative min-h-[360px] overflow-hidden rounded-[4px] lg:col-span-8 lg:min-h-[430px]">
-        <NuxtImg
-          src="/media/ideas/idea-culture-v01.webp"
-          alt="Edition 001 — Almaty After Dark"
-          format="webp"
-          sizes="(max-width: 1023px) 100vw, 900px"
-          class="absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-[1.025]"
-        />
-        <div class="absolute inset-0 bg-gradient-to-r from-black/88 via-black/35 to-transparent" />
+      <NuxtLink to="/catalog" class="group relative min-h-[360px] overflow-hidden rounded-[4px] bg-[#0d1012] lg:col-span-8 lg:min-h-[430px]">
+        <NuxtImg src="/media/prints/alatau-night-v01.webp" alt="Edition 001 — Almaty After Dark" format="webp" sizes="(max-width: 1023px) 100vw, 900px" class="absolute inset-y-0 right-0 h-full w-[72%] object-contain p-6 transition duration-700 group-hover:scale-[1.02] sm:p-10" />
+        <div class="absolute inset-0 bg-gradient-to-r from-black via-black/88 to-black/10" />
         <div class="absolute inset-0 flex max-w-xl flex-col justify-between p-6 sm:p-9">
           <div class="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.15em] text-white/65">
             <span>INK EDITIONS</span><span class="h-px w-10 bg-white/35" /><span>001 / 2026</span>
@@ -32,17 +26,17 @@ const { locale } = useI18n()
       </NuxtLink>
 
       <div class="grid gap-2 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
-        <NuxtLink to="/catalog" class="group relative min-h-[210px] overflow-hidden rounded-[4px]">
-          <NuxtImg src="/media/ideas/idea-abstract-v01.webp" alt="Edition print set" format="webp" sizes="(max-width: 1023px) 50vw, 440px" class="absolute inset-0 size-full object-cover transition duration-500 group-hover:scale-[1.035]" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+        <NuxtLink to="/catalog" class="group relative min-h-[210px] overflow-hidden rounded-[4px] bg-[#111214]">
+          <NuxtImg src="/media/prints/city-pulse-v01.webp" alt="Готовый набор графики City Pulse" format="webp" sizes="(max-width: 1023px) 50vw, 440px" class="absolute inset-y-0 right-0 h-full w-2/3 object-contain p-3 transition duration-500 group-hover:scale-[1.025]" loading="lazy" />
+          <div class="absolute inset-0 bg-gradient-to-r from-black via-black/65 to-transparent" />
           <div class="absolute inset-x-0 bottom-0 p-5 text-white">
             <p class="font-mono text-[10px] tracking-[0.14em] text-white/60">PRINT SET / 04</p>
             <p class="mt-1 font-semibold">{{ locale === 'kk' ? 'Дайын графика' : 'Готовая графика' }}</p>
           </div>
         </NuxtLink>
-        <NuxtLink to="/customize/tshirt_oversize" class="group relative min-h-[210px] overflow-hidden rounded-[4px]">
-          <NuxtImg src="/media/ideas/idea-art-v01.webp" alt="Customize Edition 001" format="webp" sizes="(max-width: 1023px) 50vw, 440px" class="absolute inset-0 size-full object-cover transition duration-500 group-hover:scale-[1.035]" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
+        <NuxtLink to="/customize/tshirt_oversize" class="group relative min-h-[210px] overflow-hidden rounded-[4px] bg-[#111214]">
+          <NuxtImg src="/media/prints/orbit-43-v01.webp" alt="Принт Orbit 43 для кастомизации" format="webp" sizes="(max-width: 1023px) 50vw, 440px" class="absolute inset-y-0 right-0 h-full w-2/3 object-contain p-3 transition duration-500 group-hover:scale-[1.025]" loading="lazy" />
+          <div class="absolute inset-0 bg-gradient-to-r from-black via-black/65 to-transparent" />
           <div class="absolute inset-x-0 bottom-0 p-5 text-white">
             <p class="font-mono text-[10px] tracking-[0.14em] text-white/60">REMIX / YOURS</p>
             <p class="mt-1 font-semibold">{{ locale === 'kk' ? 'Өзіңе бейімде' : 'Сделай по-своему' }}</p>

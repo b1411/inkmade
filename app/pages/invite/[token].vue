@@ -35,23 +35,35 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="max-w-md mx-auto py-12 text-center space-y-4">
-    <UiSectionLabel accent>{{ $t('legal.invite.label') }}</UiSectionLabel>
-    <div v-if="state === 'loading'" class="flex flex-col items-center gap-3 text-ink-gray-600 py-6">
-      <UIcon name="i-lucide-loader-circle" class="size-7 animate-spin text-ink-burgundy" />
-      {{ $t('legal.invite.loading') }}
+  <section class="mx-auto grid max-w-5xl overflow-hidden border border-ink-gray-200 bg-ink-white shadow-sm lg:grid-cols-[.95fr_1.05fr]">
+    <div class="relative min-h-80 overflow-hidden bg-ink-black lg:min-h-[580px]">
+      <NuxtImg src="/media/prints/alatau-night-v01.webp" alt="" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 480px" loading="eager" />
+      <div class="absolute inset-0 bg-linear-to-t from-ink-black via-transparent to-transparent" />
+      <div class="absolute inset-x-0 bottom-0 p-7 text-white sm:p-9">
+        <p class="ink-label text-white/55">INKMADE / CREATOR ACCESS</p>
+        <p class="ink-display mt-2 text-4xl">{{ $t('legal.invite.label') }}</p>
+      </div>
     </div>
-
-    <template v-else-if="state === 'ok'">
-      <h1 class="ink-display text-h2">{{ $t('legal.invite.okTitle') }}</h1>
-      <p class="text-ink-gray-600">{{ message }}</p>
-      <UButton to="/studio-designer" color="primary" size="lg" icon="i-lucide-palette">{{ $t('legal.invite.toStudio') }}</UButton>
-    </template>
-
-    <template v-else>
-      <h1 class="ink-display text-h2">{{ $t('legal.invite.errorTitle') }}</h1>
-      <p class="text-ink-gray-600">{{ message }}</p>
-      <UButton to="/" color="neutral" variant="subtle">{{ $t('legal.invite.toHome') }}</UButton>
-    </template>
-  </div>
+    <div class="flex min-h-[420px] flex-col justify-center p-7 text-center sm:p-12">
+      <UiSectionLabel accent>{{ $t('legal.invite.label') }}</UiSectionLabel>
+      <div v-if="state === 'loading'" class="flex flex-col items-center gap-4 py-10 text-ink-gray-600" role="status" aria-live="polite">
+        <span class="grid size-16 place-items-center rounded-full border border-ink-burgundy/20 bg-ink-burgundy/5">
+          <UIcon name="i-lucide-loader-circle" class="size-7 animate-spin text-ink-burgundy" />
+        </span>
+        {{ $t('legal.invite.loading') }}
+      </div>
+      <template v-else-if="state === 'ok'">
+        <UIcon name="i-lucide-badge-check" class="mx-auto mt-7 size-12 text-ink-burgundy" />
+        <h1 class="ink-display mt-4 text-h2">{{ $t('legal.invite.okTitle') }}</h1>
+        <p class="mx-auto mt-3 max-w-md text-ink-gray-600">{{ message }}</p>
+        <UButton to="/studio-designer" color="primary" size="lg" icon="i-lucide-palette" class="mx-auto mt-7">{{ $t('legal.invite.toStudio') }}</UButton>
+      </template>
+      <template v-else>
+        <UIcon name="i-lucide-link-2-off" class="mx-auto mt-7 size-12 text-ink-gray-400" />
+        <h1 class="ink-display mt-4 text-h2">{{ $t('legal.invite.errorTitle') }}</h1>
+        <p class="mx-auto mt-3 max-w-md text-ink-gray-600">{{ message }}</p>
+        <UButton to="/" color="neutral" variant="subtle" class="mx-auto mt-7">{{ $t('legal.invite.toHome') }}</UButton>
+      </template>
+    </div>
+  </section>
 </template>

@@ -9,7 +9,7 @@ import { LEGAL } from '~~/shared/config/legal'
 import { FEATURES } from '~~/shared/config/features'
 
 const route = useRoute()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const cart = useCart()
 const cartCount = computed(() => cart.count.value)
 const { homePath: cabinetTo, isAuthenticated, signOut } = useAuth()
@@ -41,14 +41,15 @@ const glass = computed(() => !overHero.value)
 const navLinks = computed(() => [
   { label: t('nav.catalog'), to: '/catalog' },
   { label: t('nav.howItWorks'), to: '/#how' },
+  ...(FEATURES.b2bShops ? [{ label: t('nav.business'), to: '/business' }] : []),
 ])
+const createLabel = computed(() => locale.value === 'kk' ? 'Принт жасау' : 'Создать принт')
 
 // Мобильное меню = список крупных ссылок, кнопке там негде выделиться, поэтому
 // «Для компаний» идёт обычным пунктом; на десктопе тот же вход — кнопка справа.
 // Отдельный массив (а не navLinks), чтобы в десктоп-nav ссылка не задвоилась.
 const menuLinks = computed(() => [
   ...navLinks.value,
-  ...(FEATURES.b2bShops ? [{ label: t('nav.business'), to: '/business' }] : []),
 ])
 
 // ── Бейдж корзины: «отскок» при увеличении количества ──
@@ -135,7 +136,7 @@ onMounted(() => {
            надписью не сходится — nav и кнопки уезжают за край. h-4 держит прежние 140px. -->
       <NuxtLink
         to="/"
-        class="block shrink-0 h-4"
+        class="block shrink-0 h-5 lg:h-6"
         :aria-label="$t('header.toHome')"
       >
         <img
@@ -148,13 +149,13 @@ onMounted(() => {
       </NuxtLink>
 
       <!-- Десктоп-навигация -->
-      <nav class="hidden md:flex items-center gap-7" :aria-label="$t('header.mainNav')">
+      <nav class="hidden md:flex items-center gap-5 lg:gap-7" :aria-label="$t('header.mainNav')">
         <NuxtLink
           v-for="l in navLinks"
           :key="l.to"
           v-magnetic="0.3"
           :to="l.to"
-          class="nav-link ink-label"
+          class="nav-link ink-label relative py-2 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-ink-burgundy after:transition-transform hover:after:scale-x-100"
         >
           {{ l.label }}
         </NuxtLink>
@@ -167,9 +168,9 @@ onMounted(() => {
              бы потерялась. on-dark теперь постоянный, а не завязан на overHero:
              подложка шапки тёмная в ОБОИХ состояниях, и светлый вариант secondary
              рисовал бы тёмную обводку по тёмному фону. -->
-        <div v-if="FEATURES.b2bShops" class="hidden md:block">
-          <UiAppButton to="/business" variant="secondary" size="sm" on-dark>
-            {{ $t('nav.business') }}
+        <div class="hidden lg:block">
+          <UiAppButton to="/catalog" variant="primary" size="sm" trailing-icon="i-lucide-arrow-up-right">
+            {{ createLabel }}
           </UiAppButton>
         </div>
         <UiLangSwitcher class="hidden sm:inline-flex" />

@@ -25,6 +25,7 @@ const fullName = ref('')
 const email = ref('')
 const phone = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const agree = ref(false)
 const contactConsent = ref(false)
 const loading = ref(false)
@@ -109,7 +110,16 @@ async function onSubmit() {
         <UInput v-model="phone" type="tel" size="lg" autocomplete="tel" inputmode="tel" icon="i-lucide-phone" :placeholder="$t('auth.register.phonePlaceholder')" required class="w-full" />
       </UFormField>
       <UFormField :label="$t('auth.register.passwordLabel')">
-        <UInput v-model="password" type="password" size="lg" autocomplete="new-password" icon="i-lucide-lock" required class="w-full" />
+        <UInput v-model="password" :type="showPassword ? 'text' : 'password'" size="lg" autocomplete="new-password" icon="i-lucide-lock" required class="w-full" :ui="{ trailing: 'pointer-events-auto' }">
+          <template #trailing>
+            <button type="button" class="inline-flex text-ink-gray-400 hover:text-ink-burgundy" :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'" @click="showPassword = !showPassword">
+              <UIcon :name="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-4" />
+            </button>
+          </template>
+        </UInput>
+        <template #hint>
+          <span class="text-xs text-ink-gray-400">{{ $t('auth.register.passwordHint') }}</span>
+        </template>
       </UFormField>
       <UCheckbox v-model="agree" required>
         <template #label>
@@ -121,7 +131,8 @@ async function onSubmit() {
       </UCheckbox>
       <UCheckbox v-model="contactConsent">
         <template #label>
-          {{ $t('auth.register.contactConsent') }}
+          <span>{{ $t('auth.register.contactConsent') }}</span>
+          <span class="ml-1 text-ink-gray-400">{{ $t('auth.register.optional') }}</span>
         </template>
       </UCheckbox>
       <UButton type="submit" color="primary" size="lg" block :loading="loading" :disabled="!agree || !phoneValid" trailing-icon="i-lucide-arrow-right">{{ $t('auth.register.submit') }}</UButton>

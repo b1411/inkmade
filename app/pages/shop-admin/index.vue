@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { shopStorefrontUrl } from '~/utils/shopUrl'
+
 // Дашборд владельца магазина (Фаза B3): ссылка на витрину, статус, быстрые действия.
 definePageMeta({ layout: 'shop-admin', middleware: 'shop-owner' })
 const { t } = useI18n()
 useHead({ title: t('shopAdmin.dashboard.headTitle') })
-
-import { shopStorefrontUrl } from '~/utils/shopUrl'
 
 const { getMine, listItems, finance, analytics, myDesigns } = useMyShop()
 const toast = useToast()

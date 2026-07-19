@@ -24,14 +24,30 @@ const localPrimary: Record<string, string> = {
   tshirt: '/media/products/blank/classic-v01.webp',
   tshirt_oversize: '/media/products/blank/oversize-v01.webp',
   cap: '/media/products/blank/cap-v01.webp',
-  polo: '/media/products/blank/polo-v01.webp'
+  polo: '/media/products/blank/polo-v01.webp',
+  sweatshirt: '/media/products/blank/sweatshirt-v01.webp',
+  hoodie: '/media/products/blank/hoodie-v01.webp',
+  tote: '/media/products/blank/tote-v01.webp',
 }
 const localSecondary: Record<string, string> = {
-  tshirt: '/media/products/on-body/classic-v01.webp',
-  tshirt_oversize: '/media/products/on-body/oversize-v01.webp',
-  cap: '/media/products/on-body/cap-v01.webp',
-  polo: '/media/products/on-body/polo-v01.webp'
+  tshirt: '/media/products/back/classic-back-v01.webp',
+  tshirt_oversize: '/media/products/back/oversize-back-v01.webp',
+  cap: '/media/products/back/cap-back-v01.webp',
+  polo: '/media/products/back/polo-back-v01.webp',
+  sweatshirt: '/media/products/back/sweatshirt-back-v01.webp',
+  hoodie: '/media/products/back/hoodie-back-v01.webp',
+  tote: '/media/products/back/tote-back-v01.webp',
 }
+const productMeta: Record<string, { fit: string; gsm: string; colors: string[] }> = {
+  tshirt_oversize: { fit: 'Oversize', gsm: '240 GSM', colors: ['#111111', '#f3f0eb', '#7e1f2d'] },
+  tshirt: { fit: 'Regular', gsm: '220 GSM', colors: ['#111111', '#f3f0eb', '#8e8a84'] },
+  polo: { fit: 'Relaxed', gsm: '220 GSM', colors: ['#111111', '#f3f0eb'] },
+  sweatshirt: { fit: 'Relaxed', gsm: '320 GSM', colors: ['#111111', '#8e8a84', '#7e1f2d'] },
+  hoodie: { fit: 'Oversize', gsm: '340 GSM', colors: ['#111111', '#8e8a84', '#7e1f2d'] },
+  cap: { fit: 'One size', gsm: 'Twill', colors: ['#111111', '#f3f0eb', '#8e8a84'] },
+  tote: { fit: 'One size', gsm: '320 GSM', colors: ['#111111'] },
+}
+const meta = computed(() => productMeta[props.product.slug])
 const remotePrimary = computed(() => images.value.find(i => i.is_primary)?.url ?? images.value[0]?.url)
 const primary = computed(() => localPrimary[props.product.slug] ?? remotePrimary.value)
 const secondary = computed(() => localSecondary[props.product.slug]
@@ -89,8 +105,17 @@ const badgeLabel = computed(() => props.badge ?? (isNew.value ? t('catalog.card.
       </div>
     </div>
     <div class="p-4">
+      <div v-if="meta" class="mb-2 flex items-center justify-between gap-3 font-mono text-[9px] uppercase tracking-[.12em] text-ink-gray-400">
+        <span>{{ meta.fit }} · {{ meta.gsm }}</span>
+        <span class="flex items-center -space-x-0.5" aria-hidden="true">
+          <i v-for="color in meta.colors" :key="color" class="size-3 rounded-full border border-black/20" :style="{ backgroundColor: color }" />
+        </span>
+      </div>
       <p class="font-semibold text-ink-text-dark group-hover:text-ink-burgundy transition-colors">{{ product.title }}</p>
-      <p class="text-caption text-ink-text-dark-soft mt-1">{{ $t('catalog.card.priceFrom', { price: formatPrice(product.base_price) }) }}</p>
+      <div class="mt-1 flex items-center justify-between gap-3">
+        <p class="text-caption text-ink-text-dark-soft">{{ $t('catalog.card.priceFrom', { price: formatPrice(product.base_price) }) }}</p>
+        <UIcon name="i-lucide-arrow-up-right" class="size-4 text-ink-burgundy" />
+      </div>
     </div>
   </UiAppCard>
 </template>

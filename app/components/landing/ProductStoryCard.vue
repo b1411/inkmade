@@ -4,10 +4,10 @@ const props = defineProps<{
   title: string
   price: string
   blankSrc?: string
-  printedSrc: string
+  secondarySrc: string
 }>()
 
-const showPrinted = ref(false)
+const showSecondary = ref(false)
 </script>
 
 <template>
@@ -17,27 +17,27 @@ const showPrinted = ref(false)
         <NuxtImg
           v-if="props.blankSrc"
           :src="props.blankSrc"
-          :alt="`${props.title} без принта`"
+          :alt="`${props.title}, вид спереди`"
           format="webp"
           sizes="(max-width: 767px) 78vw, (max-width: 1199px) 44vw, 280px"
           class="absolute inset-0 size-full object-contain p-3 transition-all duration-500 ease-out group-hover:scale-[1.02]"
-          :class="showPrinted ? 'opacity-0' : 'opacity-100 group-hover:opacity-0'"
+          :class="showSecondary ? 'opacity-0' : 'opacity-100 group-hover:opacity-0'"
         />
         <div v-else class="absolute inset-0 grid place-items-center text-black/18">
           <UIcon name="i-lucide-shirt" class="size-12" />
         </div>
 
         <NuxtImg
-          :src="props.printedSrc"
-          :alt="`${props.title} с принтом на модели`"
+          :src="props.secondarySrc"
+          :alt="`${props.title}, вид сзади`"
           format="webp"
           sizes="(max-width: 767px) 78vw, (max-width: 1199px) 44vw, 280px"
-          class="absolute inset-0 size-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.03]"
-          :class="showPrinted ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+          class="absolute inset-0 size-full object-contain p-3 transition-all duration-500 ease-out group-hover:scale-[1.03]"
+          :class="showSecondary ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
         />
 
         <div class="absolute inset-x-0 bottom-0 flex items-end justify-between bg-gradient-to-t from-black/55 to-transparent px-3 pb-3 pt-10 text-[10px] font-mono uppercase tracking-[0.12em] text-white">
-          <span>{{ showPrinted ? 'ON BODY' : 'BLANK' }}</span>
+          <span>{{ showSecondary ? 'BACK' : 'FRONT' }}</span>
           <span>INK / 01</span>
         </div>
       </div>
@@ -54,11 +54,11 @@ const showPrinted = ref(false)
     <button
       type="button"
       class="absolute right-2 top-2 z-10 grid size-9 place-items-center border border-white/30 bg-black/55 text-white backdrop-blur-sm transition hover:bg-ink-burgundy focus-visible:outline focus-visible:outline-2"
-      :aria-pressed="showPrinted"
-      :aria-label="showPrinted ? 'Показать изделие без принта' : 'Показать изделие на модели'"
-      @click="showPrinted = !showPrinted"
+      :aria-pressed="showSecondary"
+      :aria-label="showSecondary ? 'Показать вид спереди' : 'Показать вид сзади'"
+      @click="showSecondary = !showSecondary"
     >
-      <UIcon :name="showPrinted ? 'i-lucide-shirt' : 'i-lucide-user-round'" class="size-4" />
+      <UIcon name="i-lucide-rotate-3d" class="size-4" />
     </button>
   </article>
 </template>

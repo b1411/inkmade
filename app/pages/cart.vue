@@ -1,8 +1,11 @@
 <script setup lang="ts">
-const { t } = useI18n()
+const { t, locale } = useI18n()
 useHead({ title: () => `${t('cart.cart.headTitle')} — INKMADE` })
 const cart = useCart()
 onMounted(() => cart.load())
+const emptyVisualCopy = computed(() => locale.value === 'kk'
+  ? { alt: 'INKMADE фирмалық графикасы', line: 'Бір заттан. Сенің есігіңе дейін.' }
+  : { alt: 'Фирменная графика INKMADE', line: 'От одной вещи. До твоей двери.' })
 
 function previewUrl(spec: unknown): string | null {
   const url = (spec as { composition_url?: string | null } | null)?.composition_url
@@ -36,14 +39,24 @@ async function clearCart() {
       </template>
     </UiPageHeader>
 
-    <UiEmptyState
-      v-if="!cart.items.value.length"
-      icon="i-lucide-shopping-cart"
-      :title="$t('cart.cart.empty.title')"
-      :text="$t('cart.cart.empty.text')"
-    >
-      <UiAppButton to="/catalog" variant="primary" size="md">{{ $t('cart.cart.empty.toCatalog') }}</UiAppButton>
-    </UiEmptyState>
+    <div v-if="!cart.items.value.length" class="grid overflow-hidden border border-ink-gray-200 bg-ink-white lg:grid-cols-2">
+      <div class="flex min-h-[380px] flex-col justify-center p-7 sm:p-12">
+        <span class="grid size-12 place-items-center bg-ink-burgundy text-white"><UIcon name="i-lucide-shopping-cart" class="size-6" /></span>
+        <h2 class="ink-display mt-6 text-h2">{{ $t('cart.cart.empty.title') }}</h2>
+        <p class="mt-3 max-w-md text-ink-gray-600">{{ $t('cart.cart.empty.text') }}</p>
+        <div class="mt-7">
+          <UiAppButton to="/catalog" variant="primary" size="lg" trailing-icon="i-lucide-arrow-right">{{ $t('cart.cart.empty.toCatalog') }}</UiAppButton>
+        </div>
+      </div>
+      <div class="relative min-h-[360px] bg-ink-black lg:min-h-[520px]">
+        <NuxtImg src="/media/prints/steppe-frequency-v01.webp" :alt="emptyVisualCopy.alt" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 720px" loading="eager" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10" />
+        <div class="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
+          <p class="font-mono text-[10px] uppercase tracking-[.14em] text-white/50">INKMADE / ORIGINAL GRAPHICS</p>
+          <p class="ink-display mt-2 max-w-md text-4xl">{{ emptyVisualCopy.line }}</p>
+        </div>
+      </div>
+    </div>
 
     <div v-else class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-10">
       <div v-auto-animate class="space-y-4">
@@ -57,7 +70,7 @@ async function clearCart() {
             class="group/thumb relative grid aspect-square min-h-44 place-items-center overflow-hidden border-b border-ink-gray-200 bg-ink-card sm:aspect-auto sm:border-b-0 sm:border-r"
             :aria-label="t('cart.cart.viewItem', { title: i.title })"
           >
-            <img v-if="previewUrl(i.spec)" :src="previewUrl(i.spec)!" :alt="i.title" class="size-full object-cover transition-transform duration-500 group-hover/thumb:scale-[1.03]">
+            <img v-if="previewUrl(i.spec)" :src="previewUrl(i.spec)!" :alt="i.title" class="size-full object-contain p-1 transition-transform duration-500 group-hover/thumb:scale-[1.03]">
             <UIcon v-else name="i-lucide-shirt" class="size-12 text-ink-gray-400" />
             <span class="absolute left-3 top-3 ink-label border border-black/10 bg-ink-paper/90 px-2 py-1 text-[9px] text-ink-black backdrop-blur">Proof preview</span>
           </NuxtLink>

@@ -54,6 +54,9 @@ const { data: products, pending } = await useAsyncData(
   () => listByCategory(category),
 )
 const count = computed(() => products.value?.length ?? 0)
+const categoryVisual = computed(() => category === 'accessories'
+  ? '/media/categories/bag-v01.webp'
+  : '/media/products/blank/oversize-v01.webp')
 
 // Клиентская сортировка витрины (данные уже пришли). 'new' = порядок сервера (created desc).
 type SortKey = 'new' | 'price-asc' | 'price-desc'
@@ -80,35 +83,49 @@ const filtered = computed(() => {
 
 <template>
   <section class="space-y-8">
-    <div class="flex items-end justify-between gap-4">
-      <div>
-        <UiSectionLabel accent>{{ $t('catalog.label') }}</UiSectionLabel>
-        <h1 class="ink-display text-h1 mt-2">{{ label }}</h1>
-        <!-- Ink Black (§3.3): микротекст — Muted, не Dark Soft. -->
-        <p v-if="!pending" class="ink-label text-ink-text-muted mt-2">
-          {{ $t(categoryCountKey(count), { n: count }) }}
-        </p>
+    <div class="grid overflow-hidden border border-white/10 bg-ink-panel lg:grid-cols-[1.05fr_.95fr]">
+      <div class="flex min-h-72 flex-col justify-between p-6 sm:p-9 lg:min-h-96 lg:p-12">
+        <div class="flex items-center justify-between gap-4">
+          <UiSectionLabel accent>{{ $t('catalog.label') }}</UiSectionLabel>
+          <span v-if="!pending" class="ink-label text-ink-text-muted">
+            {{ $t(categoryCountKey(count), { n: count }) }}
+          </span>
+        </div>
+        <div>
+          <h1 class="ink-display max-w-2xl text-[clamp(3rem,8vw,7rem)] leading-[.82] tracking-[-.055em] text-white">{{ label }}</h1>
+          <NuxtLink to="/catalog" class="mt-7 inline-flex min-h-11 items-center gap-2 text-sm text-ink-text-soft transition-colors hover:text-white">
+            <UIcon name="i-lucide-arrow-left" class="size-4" />
+            {{ $t('catalog.category.toCategories') }}
+          </NuxtLink>
+        </div>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="relative min-h-72 overflow-hidden bg-[#d9d5ce] lg:min-h-96">
+        <NuxtImg :src="categoryVisual" :alt="label" class="absolute inset-0 size-full object-contain p-8 sm:p-12" sizes="(max-width: 1023px) 100vw, 620px" loading="eager" />
+        <div class="absolute inset-0 bg-linear-to-t from-black/45 via-transparent to-transparent" />
+        <span class="absolute bottom-5 left-5 ink-label text-white/75">INKMADE / BASES</span>
+      </div>
+    </div>
+
+    <div v-if="!pending && count > 1" class="flex flex-col gap-3 border-y border-white/10 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <p class="ink-label text-ink-text-muted">{{ $t(categoryCountKey(filtered.length), { n: filtered.length }) }}</p>
+      <div class="flex items-center gap-2 sm:shrink-0">
         <UInput
-          v-if="!pending && count > 1"
           v-model="query"
           size="sm"
           icon="i-lucide-search"
           :placeholder="$t('catalog.searchPlaceholder')"
           :aria-label="$t('catalog.searchPlaceholder')"
-          class="w-32 sm:w-40"
+          class="min-w-0 flex-1 sm:w-52 sm:flex-none"
         />
         <USelect
-          v-if="!pending && count > 1"
           v-model="sort"
           :items="sortItems"
           size="sm"
           variant="outline"
           icon="i-lucide-arrow-up-down"
           :aria-label="$t('catalog.sort.label')"
+          class="w-44"
         />
-        <UButton to="/catalog" color="neutral" variant="ghost" icon="i-lucide-arrow-left" class="hidden sm:inline-flex">{{ $t('catalog.category.toCategories') }}</UButton>
       </div>
     </div>
 

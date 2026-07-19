@@ -8,7 +8,7 @@ export interface WorkspaceNavItem {
 
 // props в скрипте не читаем — все поля используются напрямую в шаблоне (авто-unwrap),
 // поэтому defineProps без присваивания (иначе no-unused-vars ругается на `props`).
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   title: string
   badge: string
   nav: WorkspaceNavItem[]
@@ -20,6 +20,13 @@ withDefaults(defineProps<{
 })
 
 const route = useRoute()
+const workspaceVisual = computed(() => ({
+  ACCOUNT: '/media/products/blank/classic-black-v01.webp',
+  DESIGNER: '/media/prints/alatau-night-v01.webp',
+  B2B: '/media/products/blank/tote-v01.webp',
+  STUDIO: '/media/products/detail/cotton-collar-v01.webp',
+  ADMIN: '/media/prints/nomad-grid-v01.webp',
+}[props.badge] ?? '/media/hero/hero-home-desktop-v01.webp'))
 
 function isActive(item: WorkspaceNavItem) {
   const exact = item.exact ?? item.to.split('/').filter(Boolean).length <= 1
@@ -31,7 +38,7 @@ function isActive(item: WorkspaceNavItem) {
   <div class="min-h-screen bg-ink-bone text-ink-text-dark lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
     <a href="#main-content" class="skip-link">{{ $t('a11y.skipToContent') }}</a>
 
-    <aside class="hidden min-h-screen bg-ink-black text-ink-text lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
+    <aside class="hidden min-h-screen overflow-hidden bg-ink-black text-ink-text lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col">
       <div class="flex h-20 items-center justify-between border-b border-white/10 px-5">
         <NuxtLink :to="homeTo" class="focus-ring rounded-sm" :aria-label="title">
           <UiAppLogo :subtitle="false" tone="light" />
@@ -39,9 +46,13 @@ function isActive(item: WorkspaceNavItem) {
         <span class="ink-label border border-white/15 px-2 py-1 text-[10px] text-ink-text-soft">{{ badge }}</span>
       </div>
 
-      <div class="border-b border-white/10 px-5 py-5">
-        <p class="ink-label text-[10px] text-ink-text-muted">Workspace</p>
-        <p class="mt-2 text-sm font-semibold text-ink-text">{{ title }}</p>
+      <div class="relative min-h-40 overflow-hidden border-b border-white/10">
+        <NuxtImg :src="workspaceVisual" alt="" class="absolute inset-0 size-full object-cover object-center" sizes="264px" loading="eager" />
+        <div class="absolute inset-0 bg-gradient-to-t from-ink-black via-ink-black/55 to-ink-black/10" />
+        <div class="absolute inset-x-0 bottom-0 p-5">
+          <p class="ink-label text-[10px] text-ink-text-muted">Workspace / {{ badge }}</p>
+          <p class="mt-2 text-sm font-semibold text-ink-text">{{ title }}</p>
+        </div>
       </div>
 
       <nav class="min-h-0 flex-1 overflow-y-auto px-3 py-4" :aria-label="title">
@@ -93,6 +104,15 @@ function isActive(item: WorkspaceNavItem) {
           </NuxtLink>
         </nav>
       </header>
+
+      <div class="relative h-28 overflow-hidden border-b border-ink-gray-200 lg:hidden">
+        <NuxtImg :src="workspaceVisual" alt="" class="absolute inset-0 size-full object-cover object-center" sizes="100vw" loading="eager" />
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-black/90 via-ink-black/55 to-transparent" />
+        <div class="absolute inset-0 flex flex-col justify-end p-4">
+          <p class="ink-label text-[9px] text-white/55">Workspace / {{ badge }}</p>
+          <p class="mt-1 max-w-[70%] truncate text-sm font-semibold text-white">{{ title }}</p>
+        </div>
+      </div>
 
       <main id="main-content" tabindex="-1" class="min-w-0 px-4 py-6 focus:outline-none sm:px-6 lg:px-8 lg:py-8" :class="contentClass">
         <slot />

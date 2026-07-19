@@ -85,21 +85,25 @@ const blankBySlug: Record<string, string> = {
   tshirt: '/media/products/blank/classic-v01.webp',
   cap: '/media/products/blank/cap-v01.webp',
   polo: '/media/products/blank/polo-v01.webp',
+  sweatshirt: '/media/products/blank/sweatshirt-v01.webp',
+  hoodie: '/media/products/blank/hoodie-v01.webp',
 }
 
 function blankImage(p: LandingProduct) {
   return blankBySlug[p.slug] ?? image(p)
 }
 
-const printedBySlug: Record<string, string> = {
-  tshirt_oversize: '/media/products/on-body/oversize-v01.webp',
-  tshirt: '/media/products/on-body/classic-v01.webp',
-  cap: '/media/products/on-body/cap-v01.webp',
-  polo: '/media/products/on-body/polo-v01.webp',
+const backBySlug: Record<string, string> = {
+  tshirt_oversize: '/media/products/back/oversize-back-v01.webp',
+  tshirt: '/media/products/back/classic-back-v01.webp',
+  cap: '/media/products/back/cap-back-v01.webp',
+  polo: '/media/products/back/polo-back-v01.webp',
+  sweatshirt: '/media/products/back/sweatshirt-back-v01.webp',
+  hoodie: '/media/products/back/hoodie-back-v01.webp',
 }
 
-function printedImage(slug: string) {
-  return printedBySlug[slug] ?? '/media/products/on-body/oversize-v01.webp'
+function backImage(slug: string) {
+  return backBySlug[slug] ?? '/media/products/back/oversize-back-v01.webp'
 }
 </script>
 
@@ -135,7 +139,7 @@ function printedImage(slug: string) {
                 :title="p.title"
                 :price="$t('landing.categories.priceFrom', { price: fmtNum(p.base_price) })"
                 :blank-src="blankImage(p)"
-                :printed-src="printedImage(p.slug)"
+                :secondary-src="backImage(p.slug)"
               />
             </UiReveal>
           </div>
@@ -146,11 +150,14 @@ function printedImage(slug: string) {
     <!-- 6. «Создай свой дизайн» — главный дифференциатор B2C -->
     <LandingConstructor />
 
-    <!-- 7. Визуальные направления + редакционные коллекции -->
+    <!-- 7. Курируемая библиотека принтов -->
+    <LandingPrintLibrary />
+
+    <!-- 8. Визуальные направления + редакционные коллекции -->
     <LandingIdeas />
     <LandingEditions />
 
-    <!-- 8. «Как это работает» — Bone (§3.4) -->
+    <!-- 9. «Как это работает» — Bone (§3.4) -->
     <div class="w-screen ml-[calc(50%-50vw)] bg-ink-bone text-ink-text-dark">
       <div class="mx-auto max-w-(--container-max) px-4">
         <section class="py-12 lg:py-14">
@@ -159,10 +166,16 @@ function printedImage(slug: string) {
       </div>
     </div>
 
-    <!-- 9. Премиальное качество -->
+    <!-- 10. Премиальное качество -->
     <LandingQuality />
 
-    <!-- 10. Для команд и брендов -->
+    <!-- 11. Производство и упаковка -->
+    <LandingProcess />
+
+    <!-- 12. Полная предметная матрица основ -->
+    <LandingSocialProof />
+
+    <!-- 13. Для команд и брендов -->
     <LandingBusinessCta v-if="FEATURES.b2bShops" />
 
     <!-- Блок дизайнеров скрыт за фиче-флагом (см. shared/config/features.ts) -->

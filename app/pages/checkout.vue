@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Checkout (§9.1): логин требуется здесь, перед оплатой. Гость собирал корзину локально.
 definePageMeta({ middleware: 'auth' })
-const { t } = useI18n()
+const { t, locale } = useI18n()
 useHead({ title: () => `${t('cart.checkout.headTitle')} — INKMADE` })
 
 const cart = useCart()
@@ -15,6 +15,23 @@ const paymentMethodLabel = computed(() => runtimeConfig.public.paymentProvider =
 
 const form = reactive({ full_name: '', email: '', phone: '', city: 'Алматы', address: '' })
 const paying = ref(false)
+
+const blankBySlug: Record<string, string> = {
+  tshirt: '/media/products/blank/classic-black-v01.webp',
+  tshirt_oversize: '/media/products/blank/oversize-v01.webp',
+  polo: '/media/products/blank/polo-v01.webp',
+  sweatshirt: '/media/products/blank/sweatshirt-v01.webp',
+  hoodie: '/media/products/blank/hoodie-v01.webp',
+  cap: '/media/products/blank/cap-v01.webp',
+  tote: '/media/products/blank/tote-v01.webp',
+}
+function itemPreview(item: (typeof cart.items.value)[number]) {
+  if (item.spec && typeof item.spec === 'object' && !Array.isArray(item.spec)) {
+    const url = (item.spec as Record<string, unknown>).composition_url
+    if (typeof url === 'string' && url) return url
+  }
+  return blankBySlug[item.slug] ?? '/media/products/blank/classic-black-v01.webp'
+}
 
 // идемпотентность оформления: стабильный ключ на сессию checkout — ретрай после сбоя
 // сети вернёт уже созданный заказ, а не создаст второй. Генерим лениво на клиенте.
@@ -128,7 +145,24 @@ async function onPay() {
 
 <template>
   <section class="pb-10">
-    <UiPageHeader :label="$t('cart.checkout.label')" :title="$t('cart.checkout.title')" :description="$t('cart.checkout.description')" />
+    <div class="mb-8 grid overflow-hidden bg-ink-black text-ink-text lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div class="flex min-h-72 flex-col justify-between p-6 sm:p-8 lg:p-10">
+        <div>
+          <UiSectionLabel class="text-white/45">{{ $t('cart.checkout.label') }} / SECURE</UiSectionLabel>
+          <h1 class="ink-display mt-3 max-w-2xl text-h1">{{ $t('cart.checkout.title') }}</h1>
+          <p class="mt-4 max-w-xl text-ink-text-soft">{{ $t('cart.checkout.description') }}</p>
+        </div>
+        <div class="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-xs text-white/65">
+          <span class="flex items-center gap-2"><UIcon name="i-lucide-shield-check" class="size-4 text-ink-burgundy-hover" />{{ locale === 'kk' ? 'Қауіпсіз төлем' : 'Защищённая оплата' }}</span>
+          <span class="flex items-center gap-2"><UIcon name="i-lucide-package-check" class="size-4 text-ink-burgundy-hover" />{{ locale === 'kk' ? 'Сапаны қолмен тексеру' : 'Ручная проверка качества' }}</span>
+          <span class="flex items-center gap-2"><UIcon name="i-lucide-map-pin" class="size-4 text-ink-burgundy-hover" />{{ locale === 'kk' ? 'Қазақстан бойынша' : 'Доставка по Казахстану' }}</span>
+        </div>
+      </div>
+      <div class="relative hidden min-h-72 lg:block">
+        <NuxtImg src="/media/products/blank/hoodie-v01.webp" alt="Чёрное худи INKMADE" class="absolute inset-0 size-full bg-[#d9d5ce] object-contain p-6" sizes="420px" loading="eager" />
+        <div class="absolute inset-0 bg-gradient-to-r from-ink-black/40 to-transparent" />
+      </div>
+    </div>
 
     <ol class="mb-8 grid grid-cols-2 border border-ink-gray-200 bg-ink-white sm:grid-cols-4" :aria-label="$t('cart.checkout.progressLabel')">
       <li v-for="(step, index) in [
@@ -199,9 +233,15 @@ async function onPay() {
     <aside class="h-fit lg:sticky lg:top-24">
       <UiPanel :title="$t('cart.checkout.summary.title')" icon="i-lucide-shopping-bag">
         <div class="space-y-3">
-      <div v-for="i in cart.items.value" :key="i.id" class="flex justify-between text-caption">
-        <span>{{ $t('cart.checkout.summary.item', { title: i.title, size: i.size, qty: i.quantity }) }}</span>
-        <span>{{ formatPrice(i.unitPrice * i.quantity) }}</span>
+      <div v-for="i in cart.items.value" :key="i.id" class="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 border-b border-ink-gray-200 pb-3 text-caption last:border-0">
+        <div class="size-14 overflow-hidden bg-ink-gray-100">
+          <NuxtImg :src="itemPreview(i)" :alt="i.title" class="size-full object-contain p-1" width="112" height="112" />
+        </div>
+        <div class="min-w-0">
+          <p class="truncate font-semibold text-ink-black">{{ i.title }}</p>
+          <p class="mt-0.5 truncate text-ink-gray-500">{{ i.colorName }} · {{ i.size }} · ×{{ i.quantity }}</p>
+        </div>
+        <span class="font-semibold">{{ formatPrice(i.unitPrice * i.quantity) }}</span>
       </div>
       <!-- промокод -->
       <div class="border-t border-ink-gray-200 pt-3 space-y-2">
@@ -230,7 +270,7 @@ async function onPay() {
       <UButton color="primary" size="lg" block icon="i-lucide-credit-card" :loading="paying" :disabled="!formValid" @click="onPay">
         {{ $t('cart.checkout.summary.pay') }}
       </UButton>
-      <p class="text-caption text-ink-gray-400 flex items-center gap-1.5">
+      <p class="flex items-center gap-1.5 text-caption text-ink-gray-400">
         <UIcon name="i-lucide-shield-check" class="shrink-0" />
         {{ $t('cart.checkout.summary.secureNote') }}
       </p>

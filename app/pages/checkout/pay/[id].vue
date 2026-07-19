@@ -82,16 +82,30 @@ async function pay() {
 </script>
 
 <template>
-  <section class="max-w-md mx-auto py-10 text-center space-y-6">
-    <UiSectionLabel accent>{{ $t('cart.pay.label') }}</UiSectionLabel>
+  <section class="mx-auto grid max-w-6xl overflow-hidden border border-ink-gray-200 bg-ink-white shadow-sm lg:grid-cols-[.9fr_1.1fr]">
+    <div class="relative min-h-80 overflow-hidden bg-ink-black text-white lg:min-h-[680px]">
+      <NuxtImg src="/media/products/detail/cotton-collar-v01.webp" alt="" class="absolute inset-0 size-full object-cover opacity-75" sizes="(max-width: 1023px) 100vw, 520px" loading="eager" />
+      <div class="absolute inset-0 bg-linear-to-t from-ink-black via-ink-black/35 to-transparent" />
+      <div class="absolute inset-x-0 bottom-0 p-7 sm:p-10">
+        <p class="ink-label text-white/60">INKMADE / SECURE CHECKOUT</p>
+        <p class="ink-display mt-3 max-w-md text-4xl leading-none sm:text-5xl">{{ $t('cart.pay.note') }}</p>
+        <div class="mt-7 flex flex-wrap gap-2 text-xs text-white/70">
+          <span class="border border-white/20 px-3 py-2"><UIcon name="i-lucide-shield-check" class="mr-1 inline size-3.5" />{{ $t('cart.pay.methods') }}</span>
+          <span class="border border-white/20 px-3 py-2"><UIcon name="i-lucide-package-check" class="mr-1 inline size-3.5" />INKMADE CARE</span>
+        </div>
+      </div>
+    </div>
 
-    <!-- Платёжный экран — только для оплачиваемого заказа -->
-    <template v-if="state === 'payable'">
-      <h1 class="ink-display text-h2">{{ $t('cart.pay.title') }}</h1>
-      <div class="border border-ink-gray-200 rounded-lg shadow-sm bg-ink-white p-8">
+    <div class="flex min-h-[560px] flex-col justify-center p-6 text-center sm:p-10 lg:p-14">
+      <UiSectionLabel accent>{{ $t('cart.pay.label') }}</UiSectionLabel>
+
+      <!-- Платёжный экран — только для оплачиваемого заказа -->
+      <template v-if="state === 'payable'">
+        <h1 class="ink-display mt-3 text-h2">{{ $t('cart.pay.title') }}</h1>
+        <div class="my-7 border-y border-ink-gray-200 py-7">
         <p class="ink-label text-ink-gray-600">{{ $t('cart.pay.amountLabel') }}</p>
         <p class="text-h1 ink-display text-ink-burgundy mt-1">{{ order?.total }} {{ $t('units.currency') }}</p>
-      </div>
+        </div>
       <!-- DEV: демо-провайдер для сквозного теста потока (в проде /api/payment/mock-confirm отдаёт 404) -->
       <template v-if="isMock">
         <UButton color="primary" size="xl" block icon="i-lucide-check" :loading="paying" @click="pay">
@@ -134,36 +148,37 @@ async function pay() {
           {{ $t('cart.pay.methods') }}
         </p>
       </template>
-    </template>
+      </template>
 
     <!-- Заказ уже оплачен / в производстве -->
-    <template v-else-if="state === 'done'">
+      <template v-else-if="state === 'done'">
       <UIcon name="i-lucide-circle-check" class="size-12 mx-auto text-success" />
-      <h1 class="ink-display text-h2">{{ $t('cart.pay.doneTitle') }}</h1>
+      <h1 class="ink-display mt-4 text-h2">{{ $t('cart.pay.doneTitle') }}</h1>
       <p class="text-ink-gray-600">{{ $t('cart.pay.doneText') }}</p>
       <UButton :to="`/order/${orderId}`" color="primary" size="xl" block icon="i-lucide-package">
         {{ $t('cart.pay.viewOrder') }}
       </UButton>
-    </template>
+      </template>
 
     <!-- Заказ отменён / закрыт для оплаты -->
-    <template v-else-if="state === 'closed'">
+      <template v-else-if="state === 'closed'">
       <UIcon name="i-lucide-circle-x" class="size-12 mx-auto text-ink-gray-400" />
       <h1 class="ink-display text-h2">{{ $t('cart.pay.closedTitle') }}</h1>
       <p class="text-ink-gray-600">{{ $t('cart.pay.closedText') }}</p>
       <UButton to="/account/orders" color="neutral" size="xl" block icon="i-lucide-list">
         {{ $t('cart.pay.toOrders') }}
       </UButton>
-    </template>
+      </template>
 
     <!-- Заказ не найден -->
-    <template v-else>
+      <template v-else>
       <UIcon name="i-lucide-search-x" class="size-12 mx-auto text-ink-gray-400" />
       <h1 class="ink-display text-h2">{{ $t('cart.pay.notFoundTitle') }}</h1>
       <p class="text-ink-gray-600">{{ $t('cart.pay.notFoundText') }}</p>
       <UButton to="/account/orders" color="neutral" size="xl" block icon="i-lucide-list">
         {{ $t('cart.pay.toOrders') }}
       </UButton>
-    </template>
+      </template>
+    </div>
   </section>
 </template>

@@ -2,7 +2,7 @@
 // Вход (§9.1). Брендовый auth-экран (layout 'auth'). Логин требуется поздно —
 // на checkout/шаринге, не на входе в каталог.
 definePageMeta({ layout: 'auth' })
-const { t } = useI18n()
+const { t, locale } = useI18n()
 useHead({ title: () => `${t('auth.login.label')} — INKMADE` })
 
 const { signIn } = useAuth()
@@ -11,7 +11,15 @@ const toast = useToast()
 
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const loading = ref(false)
+const isBusinessFlow = computed(() => safeRedirectPath(route.query.redirect)?.startsWith('/shop') ?? false)
+const loginTitle = computed(() => isBusinessFlow.value
+  ? (locale.value === 'kk' ? 'Мерч-дүкенге кіру' : 'Вход в мерч-магазин')
+  : t('auth.login.title'))
+const loginSubtitle = computed(() => isBusinessFlow.value
+  ? (locale.value === 'kk' ? 'Витринаны іске қосу немесе басқаруды жалғастырыңыз.' : 'Продолжите запуск витрины или управление магазином.')
+  : t('auth.login.subtitle'))
 
 // «Зарегистрироваться» обязан унести ?redirect дальше — иначе цель входа (например
 // /shop-new) теряется на регистрации и человек упирается в тупик.
@@ -39,15 +47,21 @@ async function onSubmit() {
 <template>
   <div>
     <UiSectionLabel accent>{{ $t('auth.login.label') }}</UiSectionLabel>
-    <h1 class="ink-display text-3xl mt-2">{{ $t('auth.login.title') }}</h1>
-    <p class="text-ink-gray-600 mt-2 mb-8">{{ $t('auth.login.subtitle') }}</p>
+    <h1 class="ink-display text-3xl mt-2">{{ loginTitle }}</h1>
+    <p class="text-ink-gray-600 mt-2 mb-8">{{ loginSubtitle }}</p>
 
     <form class="space-y-4" @submit.prevent="onSubmit">
       <UFormField :label="$t('auth.login.emailLabel')">
         <UInput v-model="email" type="email" size="lg" autocomplete="email" icon="i-lucide-mail" required class="w-full" />
       </UFormField>
       <UFormField :label="$t('auth.login.passwordLabel')">
-        <UInput v-model="password" type="password" size="lg" autocomplete="current-password" icon="i-lucide-lock" required class="w-full" />
+        <UInput v-model="password" :type="showPassword ? 'text' : 'password'" size="lg" autocomplete="current-password" icon="i-lucide-lock" required class="w-full" :ui="{ trailing: 'pointer-events-auto' }">
+          <template #trailing>
+            <button type="button" class="inline-flex text-ink-gray-400 hover:text-ink-burgundy" :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'" @click="showPassword = !showPassword">
+              <UIcon :name="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'" class="size-4" />
+            </button>
+          </template>
+        </UInput>
       </UFormField>
       <div class="text-right -mt-1">
         <NuxtLink to="/forgot" class="text-caption text-ink-burgundy font-semibold hover:underline">{{ $t('auth.login.forgotLink') }}</NuxtLink>

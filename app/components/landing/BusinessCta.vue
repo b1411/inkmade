@@ -32,24 +32,18 @@ const props = computed(() => [
           </div>
         </div>
 
-        <div class="relative min-h-[390px] overflow-hidden rounded-[4px] bg-black lg:col-span-8">
-          <NuxtImg
-            src="/media/campaigns/b2b-campus-v01.webp"
-            :alt="locale === 'kk' ? 'Командаға арналған мерч' : 'Мерч для команды'"
-            format="webp"
-            sizes="(max-width: 1023px) 100vw, 920px"
-            class="absolute inset-0 size-full object-cover"
-          />
-          <div class="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-transparent" />
+        <div class="relative min-h-[390px] overflow-hidden rounded-[4px] bg-ink-black lg:col-span-8">
+          <NuxtImg src="/media/campaigns/merch-system-v02.webp" :alt="locale === 'kk' ? 'Командаға арналған қара мерч капсуласы' : 'Чёрная мерч-капсула для команды'" format="webp" sizes="(max-width: 1023px) 100vw, 920px" class="absolute inset-0 size-full object-cover" loading="lazy" />
+          <div class="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
           <div class="absolute left-4 top-4 border border-white/20 bg-black/65 px-3 py-2 font-mono text-[10px] uppercase tracking-[.12em] text-white backdrop-blur">
-            ALMATY CAMPUS / CASE 001
+            TEAM STORE / SYSTEM 001
           </div>
 
           <div class="absolute bottom-4 right-4 w-[min(310px,calc(100%-2rem))] border border-white/15 bg-black/82 p-4 text-white shadow-2xl backdrop-blur-md">
             <div class="flex items-center justify-between border-b border-white/12 pb-3">
               <div>
-                <p class="font-display text-sm font-black">ALMA / CREW STORE</p>
-                <p class="mt-0.5 font-mono text-[9px] text-white/45">inkmade.kz/s/alma-crew</p>
+                <p class="font-display text-sm font-black">YOUR TEAM / STORE</p>
+                <p class="mt-0.5 font-mono text-[9px] text-white/45">inkmade.kz/s/your-team</p>
               </div>
               <span class="size-7 rounded-full bg-ink-burgundy" />
             </div>

@@ -155,8 +155,9 @@ watch(items, (list) => {
 }, { immediate: true })
 
 // баннер hero — только безопасный http(s) URL владельца (анти CSS-инъекция, F6)
-const bannerUrl = computed(() => safeCssUrl(shop.value?.hero?.banner_url))
-const hasBanner = computed(() => !!bannerUrl.value)
+const bannerUrl = computed(() => safeCssUrl(shop.value?.hero?.banner_url) || '/media/hero/hero-home-desktop-v01.webp')
+const hasBanner = computed(() => true)
+const heroSubtitle = computed(() => shop.value?.hero?.subtitle || t('shop.metaDescription', { name: shop.value?.name ?? '' }))
 
 const unlocking = ref(false)
 async function unlock() {
@@ -326,11 +327,11 @@ const contacts = computed(() => shop.value?.contacts ?? {})
           {{ shop.hero?.title || shop.name }}
         </h1>
         <p
-          v-if="shop.hero?.subtitle"
+          v-if="heroSubtitle"
           class="text-lg mt-4"
           :class="[heroLay === 'center' ? 'max-w-2xl' : 'max-w-xl', hasBanner ? 'text-white/85' : 'sf-muted']"
         >
-          {{ shop.hero.subtitle }}
+          {{ heroSubtitle }}
         </p>
         <button
           v-if="heroCta"

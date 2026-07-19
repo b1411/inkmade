@@ -109,7 +109,7 @@ async function confirmDelete() {
     <div v-else class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <UiAppCard v-for="d in designs" :key="d.id" :hover="false" class="overflow-hidden">
         <div class="aspect-square bg-ink-gray-50 flex items-center justify-center">
-          <NuxtImg v-if="d.preview_url" :src="d.preview_url" alt="" class="w-full h-full object-cover" sizes="240px" loading="lazy" />
+          <NuxtImg v-if="d.preview_url" :src="d.preview_url" :alt="displayTitle(d)" class="size-full object-contain" sizes="240px" loading="lazy" />
           <UIcon v-else name="i-lucide-shapes" class="size-8 text-ink-gray-400" />
         </div>
         <div class="p-3 space-y-2">

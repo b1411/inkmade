@@ -130,6 +130,22 @@ update public.promo_codes set used_count = used_count + 1
 
 ---
 
+## Follow-up от тест-прогона (2026-07-19, через Supabase MCP на проде)
+
+**Подтверждено на живом проде:**
+- Создание магазина **РАБОТАЕТ**: `customer@inkmade.kz` завёл активный магазин `dmitriy` (18.07). `create_my_shop` проходит end-to-end.
+- Подтверждение email на проекте **ВКЛЮЧЕНО**.
+
+**Симптом «создал акк, но не переходит на /shop-admin» = стена подтверждения email, а НЕ баг флоу.** `useAuth.signUp` не создаёт сессию; при включённом подтверждении `register.vue` корректно показывает алерт «проверьте почту» без перехода на `?redirect`.
+
+**Нужно проработать (решение владельца):**
+1. **Email-подтверждение в self-serve воронке.** Либо выключить (Supabase Dashboard → Authentication → Providers → Email → `Confirm email = OFF`) ради гладкого входа регистрация → `/shop-new`, либо оставить и осознанно жить с трением. Сейчас включено → фактически блокирует нового владельца без клика по письму.
+2. **Пост-подтверждение теряет людей.** Реальный self-signup `puriste1305@gmail.com` подтвердил почту, но `last_sign_in_at = null` — прошёл подтверждение и всё равно не вошёл. Проверить confirmation-redirect (устанавливается ли сессия, куда ведёт после клика), Redirect URLs и шаблон письма.
+3. **Тестовые аккаунты с общим паролем в ПРОДЕ (security).** `admin@ / manager@ / designer@ / customer@ / company@ inkmade.kz` — пароль `Inkmade2026!`. Перед публичным запуском удалить или сменить пароли (особенно `manager@` = доступ к производству и `admin@`).
+4. **Тестовые данные в проде — почистить перед запуском:** магазин `dmitriy` (customer@), мок-аккаунт `company@inkmade.kz` (заведён 2026-07-19 через MCP для проверки create-flow: подтверждён, роль customer, без магазина — удалить после проверки), сид-заказы.
+
+---
+
 ## Каркас изменённых файлов (для ревью)
 **Новые:** `shared/utils/tenant.ts`, `tests/tenant.test.ts`, `server/utils/subdomain.ts`, `app/utils/shopUrl.ts`, `app/composables/useTenant.ts`, `app/middleware/tenant.global.ts`, этот файл.
 **Изменённые:** `shared/config/{features,shop-theme}.ts`, `nuxt.config.ts`, `app/app.vue`, `app/pages/customize/[id].vue`, `app/pages/s/[slug]/index.vue`, `app/pages/shop-admin/{index,branding,items}.vue`, `app/pages/account/designs.vue`, `app/composables/useGuestDesigns.ts`, `app/plugins/guest-import.client.ts`, `server/utils/schemas.ts`, `server/api/designs/import.post.ts`, `server/api/orders/create.post.ts`, `i18n/locales/{ru,kk}/{shopadmin,account}.json`.

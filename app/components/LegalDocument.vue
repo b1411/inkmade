@@ -18,16 +18,17 @@ const anchor = (i: number) => `sec-${i + 1}`
 </script>
 
 <template>
-  <article class="max-w-3xl mx-auto py-8 space-y-6">
-    <header class="space-y-3">
-      <NuxtLink to="/legal" class="text-caption text-ink-gray-500 inline-flex items-center gap-1 hover:text-ink-burgundy">
+  <article class="mx-auto max-w-5xl space-y-6 py-4 sm:py-8">
+    <header class="relative overflow-hidden bg-ink-black p-7 text-white sm:p-10">
+      <div class="absolute -right-20 -top-24 size-72 rounded-full border border-white/10" />
+      <NuxtLink to="/legal" class="relative inline-flex items-center gap-1 text-caption text-white/50 transition hover:text-white">
         <UIcon name="i-lucide-arrow-left" class="size-4" />{{ $t('legal.common.backToLegal') }}
       </NuxtLink>
-      <h1 class="ink-display text-h2">{{ doc.title }}</h1>
-      <p class="text-caption text-ink-gray-400 font-mono uppercase tracking-wider">
+      <h1 class="ink-display relative mt-8 max-w-4xl text-[clamp(2.8rem,6vw,5.5rem)] leading-[.88] tracking-[-.045em]">{{ doc.title }}</h1>
+      <p class="relative mt-5 font-mono text-caption uppercase tracking-wider text-white/40">
         {{ $t('legal.common.edition', { version: doc.version, date: LEGAL.effectiveDate, jurisdiction: LEGAL.jurisdiction }) }}
       </p>
-      <p v-if="doc.intro" class="text-ink-gray-700 leading-relaxed">{{ doc.intro }}</p>
+      <p v-if="doc.intro" class="relative mt-5 max-w-3xl leading-relaxed text-white/65">{{ doc.intro }}</p>
     </header>
 
     <UAlert
@@ -39,7 +40,7 @@ const anchor = (i: number) => `sec-${i + 1}`
     />
 
     <!-- Оглавление для длинных документов -->
-    <nav v-if="doc.sections.length > 3" class="rounded-(--radius-md) border border-ink-gray-200 p-4">
+    <nav v-if="doc.sections.length > 3" class="border border-ink-gray-200 bg-ink-white p-5">
       <p class="ink-label text-ink-gray-500 mb-2">{{ $t('legal.common.tocTitle') }}</p>
       <ol class="space-y-1 text-caption">
         <li v-for="(s, i) in doc.sections" :key="`toc-${i}`">

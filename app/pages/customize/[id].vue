@@ -7,11 +7,19 @@ definePageMeta({ layout: 'customizer' })
 // Кастомайзер (§7). Порядок шагов: изделие → материал → зона → принт/текст → цвет → цена → корзина.
 const route = useRoute()
 const alias = route.params.id as string
-const { getByAlias, listAll } = useCatalog()
+const { getByAlias, getBySlug, listAll } = useCatalog()
 
 const { t } = useI18n()
 
-const { data: product, error } = await useAsyncData(`customize-${alias}`, () => getByAlias(alias))
+const { data: product, error } = await useAsyncData(`customize-${alias}`, async () => {
+  try {
+    return await getByAlias(alias)
+  } catch {
+    // Старые рекламные ссылки и slug товара не должны приводить к 404, если у
+    // опубликованной основы заполнен slug, но отсутствует/изменён alias.
+    return await getBySlug(alias)
+  }
+})
 if (error.value || !product.value) {
   throw createError({ statusCode: 404, statusMessage: t('customize.page.notFound') })
 }
@@ -42,6 +50,7 @@ async function uploadComposition(blob: Blob): Promise<string> {
 
 // «доработать» (§3.1): ?from=<designId> загружает сохранённый дизайн как основу версии
 const fromId = computed(() => (route.query.from as string) || null)
+const libraryPrintId = computed(() => (route.query.print as string) || null)
 const parentId = ref<string | null>(null)
 const customizerReady = ref(false)
 // доработка позиции корзины (§9.1): ?cart=<itemId> — восстанавливаем spec и параметры,
@@ -67,6 +76,7 @@ onMounted(async () => {
   })
   useAnalytics().customizeStart(product.value.id, mode.value)
   let restoredFromSwitch = false
+  let insertedFromLibrary = false
   if (route.query.switch === '1') {
     const raw = sessionStorage.getItem('inkmade:product-switch-spec')
     sessionStorage.removeItem('inkmade:product-switch-spec')
@@ -107,7 +117,28 @@ onMounted(async () => {
     const sz = route.query.size as string
     if (sizeVariants.value.some(v => v.size === sz)) selectedSize.value = sz
   }
-  if (!editCartId.value && !fromId.value && !restoredFromSwitch) {
+  if (!editCartId.value && !fromId.value && !restoredFromSwitch && libraryPrintId.value) {
+    try {
+      const { data: print } = await supabase
+        .from('print_library')
+        .select('id,title,file_url')
+        .eq('id', libraryPrintId.value)
+        .eq('is_active', true)
+        .single()
+      if (print) {
+        const image = new window.Image()
+        image.crossOrigin = 'anonymous'
+        await new Promise<void>((resolve, reject) => {
+          image.onload = () => resolve()
+          image.onerror = () => reject(new Error('print_load_failed'))
+          image.src = print.file_url
+        })
+        insertedFromLibrary = !!design.addImage(print.file_url, image.naturalWidth || 1000, image.naturalHeight || 1000, 'library', print.id)
+        if (insertedFromLibrary) toast.add({ title: t('customize.library.added', { title: print.title }), color: 'success' })
+      }
+    } catch { /* ссылка на снятый принт не блокирует редактор */ }
+  }
+  if (!editCartId.value && !fromId.value && !restoredFromSwitch && !insertedFromLibrary) {
     const restored = await autosave.restore()
     if (restored) toast.add({ title: t('customize.autosave.restored'), color: 'info' })
   }

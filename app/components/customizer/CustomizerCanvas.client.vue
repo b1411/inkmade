@@ -153,6 +153,16 @@ const localProductPhotoUrl = computed(() => {
   const isBlack = ['#000', '#000000', '#111', '#111111', '#111214'].includes(hex)
   const isWhite = ['#fff', '#ffffff', '#f0ede7', '#f5f2eb'].includes(hex)
   const isBurgundy = ['#7e1f2d', '#801b2b', '#8f1d2c'].includes(hex)
+  const backBySlug: Record<string, string> = {
+    tshirt: '/media/products/back/classic-back-v01.webp',
+    tshirt_oversize: '/media/products/back/oversize-back-v01.webp',
+    polo: '/media/products/back/polo-back-v01.webp',
+    cap: '/media/products/back/cap-back-v01.webp',
+    sweatshirt: '/media/products/back/sweatshirt-back-v01.webp',
+    hoodie: '/media/products/back/hoodie-back-v01.webp',
+    tote: '/media/products/back/tote-back-v01.webp',
+  }
+  if (isBlack && isBackZone.value && backBySlug[slug]) return backBySlug[slug]
   if (slug === 'tshirt') {
     if (isBlack) return '/media/products/blank/classic-black-v01.webp'
     if (isWhite) return '/media/products/blank/classic-v01.webp'
@@ -164,6 +174,9 @@ const localProductPhotoUrl = computed(() => {
   }
   if (slug === 'cap' && isBlack) return '/media/products/blank/cap-v01.webp'
   if (slug === 'polo' && isBlack) return '/media/products/blank/polo-v01.webp'
+  if (slug === 'sweatshirt' && isBlack) return '/media/products/blank/sweatshirt-v01.webp'
+  if (slug === 'hoodie' && isBlack) return '/media/products/blank/hoodie-v01.webp'
+  if (slug === 'tote' && isBlack) return '/media/products/blank/tote-v01.webp'
   return null
 })
 const productPhotoUrl = computed(() => {
