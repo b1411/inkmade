@@ -30,3 +30,18 @@ Variants:
 2. Hoodie — rib cuff, hem and kangaroo-pocket edge, 340 GSM brushed cotton.
 3. Cap — cotton-twill panels, eyelet, rear strap and antique-brass adjuster.
 4. Tote — canvas weave, top hem, parallel handles and box-cross reinforcement stitching.
+
+## Almaty audience campaign v03
+
+Mode: built-in `imagegen`, six independent vertical 4:5 generations. The five supplied streetwear references were used only for mood, candid poses, wide-angle framing, direct-flash language and oversized proportions—not as edit targets.
+
+Shared prompt: contemporary INKMADE campaign photographed as a real local Almaty streetwear editorial. Adult Kazakh cast, varied authentic Central Asian features, natural local styling, realistic skin/fabric/hands, imperfect candid spacing, subtle film grain. Recognizable Almaty texture through leafy foothill-city light, Soviet-modernist concrete, арық edges, sloping residential streets, brick, railings and trolley wires. Original unbranded garments and nonverbal graphics only. Do not copy identities, compositions, garments, logos or text from references. No Western/European/East-Asian streetscape, stereotypes, office, workshop, manufacturing, studio backdrop, cosmic/gothic/floral art, readable text, trademarks, watermark, plastic skin or excessive retouching.
+
+Variants:
+
+1. Campus — three students in gray/bone heavyweight hoodies beside a leafy campus edge and арық, low 28 mm daylight frame.
+2. Startup — three-person creative crew in black oversized tees with an original yellow loop mark, white unbranded car, Almaty courtyard at blue hour, direct flash.
+3. Creators — two creators in green/cream jersey-inspired tops and wide denim on concrete microdistrict stairs, grainy daylight.
+4. Sport — three-person team in original red/black training tops at a weathered blue sports-hall door, wide-angle daylight plus flash.
+5. Events — four friends moving out of an Almaty underpass at dusk, black/off-white styling, cobalt and acid-yellow accents, direct flash.
+6. Community — four friends in bone/gray hoodies on a sloping residential street with railings, арық, trees and foothill haze.

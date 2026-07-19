@@ -37,7 +37,7 @@ onMounted(async () => {
 <template>
   <section class="mx-auto grid max-w-5xl overflow-hidden border border-ink-gray-200 bg-ink-white shadow-sm lg:grid-cols-[.95fr_1.05fr]">
     <div class="relative min-h-80 overflow-hidden bg-ink-black lg:min-h-[580px]">
-      <NuxtImg src="/media/prints/alatau-night-v01.webp" alt="" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 480px" loading="eager" />
+      <NuxtImg src="/media/campaigns/audience-campus-v03.webp" alt="" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 480px" loading="eager" />
       <div class="absolute inset-0 bg-linear-to-t from-ink-black via-transparent to-transparent" />
       <div class="absolute inset-x-0 bottom-0 p-7 text-white sm:p-9">
         <p class="ink-label text-white/55">INKMADE / CREATOR ACCESS</p>

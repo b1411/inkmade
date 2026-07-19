@@ -48,7 +48,7 @@ useSeoMeta({
       </div>
     </div>
     <div class="relative flex min-h-[480px] items-center justify-center overflow-hidden bg-[#d9d5ce] p-6 sm:p-10 lg:min-h-[720px]">
-      <NuxtImg src="/media/prints/nomad-grid-v01.webp" alt="" class="absolute inset-0 size-full object-cover opacity-25" sizes="(max-width: 1023px) 100vw, 560px" loading="eager" />
+      <NuxtImg src="/media/campaigns/audience-events-v03.webp" alt="" class="absolute inset-0 size-full object-cover opacity-25" sizes="(max-width: 1023px) 100vw, 560px" loading="eager" />
       <div class="absolute inset-0 bg-white/20 backdrop-blur-[2px]" />
       <div class="relative aspect-square w-full max-w-lg overflow-hidden border border-black/10 bg-white/90 p-5 shadow-2xl sm:p-8">
         <img v-if="data.preview" :src="data.preview" :alt="$t('customize.designPage.previewAlt', { title: productTitle })" class="size-full object-contain">

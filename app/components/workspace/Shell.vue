@@ -22,10 +22,10 @@ const props = withDefaults(defineProps<{
 const route = useRoute()
 const workspaceVisual = computed(() => ({
   ACCOUNT: '/media/products/blank/classic-black-v01.webp',
-  DESIGNER: '/media/prints/alatau-night-v01.webp',
+  DESIGNER: '/media/campaigns/audience-creators-v03.webp',
   B2B: '/media/products/blank/tote-v01.webp',
   STUDIO: '/media/products/detail/cotton-collar-v01.webp',
-  ADMIN: '/media/prints/nomad-grid-v01.webp',
+  ADMIN: '/media/campaigns/audience-startup-v03.webp',
 }[props.badge] ?? '/media/hero/hero-home-desktop-v01.webp'))
 
 function isActive(item: WorkspaceNavItem) {

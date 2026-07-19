@@ -9,7 +9,7 @@ const folders = [
 ]
 
 for (const folder of folders) {
-  const files = (await readdir(folder)).filter(file => extname(file).toLowerCase() === '.png' && file.includes('-v02'))
+  const files = (await readdir(folder)).filter(file => extname(file).toLowerCase() === '.png' && /-v0[23]\.png$/i.test(file))
   for (const file of files) {
     const source = join(folder, file)
     const base = source.slice(0, -4)

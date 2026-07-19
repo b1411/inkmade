@@ -205,7 +205,7 @@ const copy = computed(() => locale.value === 'kk'
         </UiAppButton>
       </div>
       <div class="relative min-h-[300px] lg:col-span-7">
-        <NuxtImg src="/media/prints/nomad-grid-v01.webp" alt="Фирменный принт Nomad Grid" class="absolute inset-0 size-full bg-[#111214] object-contain p-8" sizes="(max-width: 1023px) 100vw, 760px" loading="lazy" />
+        <NuxtImg src="/media/campaigns/audience-community-v03.webp" alt="Сообщество INKMADE в Алматы" class="absolute inset-0 size-full object-cover object-center" sizes="(max-width: 1023px) 100vw, 760px" loading="lazy" />
         <div class="absolute inset-0 bg-gradient-to-r from-ink-panel/50 to-transparent" />
       </div>
     </section>

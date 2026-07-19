@@ -51,7 +51,7 @@ export const MEDIA = {
 
   // ── Конструктор: видео-демо работы в браузере (главный дифференциатор) ──────
   // ratio 4/3 — секция рендерит горизонтально (десктоп-скринкаст), см. Constructor.vue.
-  'constructor.demo': { kind: 'image', src: '/media/prints/nomad-grid-v01.webp', ratio: '4/3', tone: 'dark', icon: 'i-lucide-wand-2', fit: 'cover' },
+  'constructor.demo': { kind: 'image', src: '/media/campaigns/audience-creators-v03.webp', ratio: '4/3', tone: 'dark', icon: 'i-lucide-wand-2', fit: 'cover' },
 
   // ── Категории: предметные фото изделий ─────────────────────────────────────
   'category.tshirt': { kind: 'image', src: '/media/products/blank/classic-black-v01.webp', ratio: '4/5', tone: 'light', icon: 'i-lucide-shirt', fit: 'cover' },
@@ -63,12 +63,12 @@ export const MEDIA = {
   // ── Методы печати: макро-фото результата (секция рендерит 4/3, см. Methods.vue) ──
   'method.dtg': { kind: 'image', src: '/media/products/detail/print-texture-v01.webp', ratio: '16/9', tone: 'dark', icon: 'i-lucide-printer', fit: 'cover' },
   'method.dtf': { kind: 'image', src: '/media/products/detail/print-texture-v01.webp', ratio: '1/1', tone: 'dark', icon: 'i-lucide-layers', fit: 'cover' },
-  'method.sublimation': { kind: 'image', src: '/media/prints/city-pulse-v01.webp', ratio: '4/3', tone: 'dark', icon: 'i-lucide-shirt', fit: 'cover' },
+  'method.sublimation': { kind: 'image', src: '/media/products/detail/print-texture-v01.webp', ratio: '4/3', tone: 'dark', icon: 'i-lucide-shirt', fit: 'cover' },
 
   // ── Блок дизайнеров: коллаж принтов ────────────────────────────────────────
-  'designers.print-1': { kind: 'image', src: '/media/prints/alatau-night-v01.webp', ratio: '4/5', tone: 'dark', icon: 'i-lucide-palette', fit: 'cover' },
-  'designers.print-2': { kind: 'image', src: '/media/prints/nomad-grid-v01.webp', ratio: '4/5', tone: 'dark', icon: 'i-lucide-palette', fit: 'cover' },
-  'designers.print-3': { kind: 'image', src: '/media/prints/orbit-43-v01.webp', ratio: '4/5', tone: 'dark', icon: 'i-lucide-palette', fit: 'cover' },
+  'designers.print-1': { kind: 'image', src: '/media/campaigns/audience-events-v03.webp', ratio: '4/5', tone: 'dark', icon: 'i-lucide-palette', fit: 'cover' },
+  'designers.print-2': { kind: 'image', src: '/media/campaigns/audience-campus-v03.webp', ratio: '4/5', tone: 'dark', icon: 'i-lucide-palette', fit: 'cover' },
+  'designers.print-3': { kind: 'image', src: '/media/campaigns/audience-sport-v03.webp', ratio: '4/5', tone: 'dark', icon: 'i-lucide-palette', fit: 'cover' },
 
   // ── Предметная матрица основ. Настоящие UGC добавляются только после съёмки. ──
   'ugc.1': { kind: 'image', src: '/media/products/blank/classic-v01.webp', ratio: '4/5', tone: 'light', icon: 'i-lucide-shirt', fit: 'contain' },

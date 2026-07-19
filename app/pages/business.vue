@@ -41,9 +41,9 @@ const audiences = computed(() => {
   const ru = ['Университетам и школам', 'Компаниям и стартапам', 'Креаторам и блогерам', 'Спортивным командам', 'Ивентам и фестивалям', 'Crew и сообществам']
   const kk = ['Университеттер мен мектептерге', 'Компаниялар мен стартаптарға', 'Креаторлар мен блогерлерге', 'Спорт командаларына', 'Ивенттер мен фестивальдерге', 'Crew және қауымдастықтарға']
   const titles = locale.value === 'kk' ? kk : ru
-  const images = ['nomad-grid', 'city-pulse', 'orbit-43', 'steppe-frequency', 'alatau-night', 'concrete-bloom']
+  const images = ['campus', 'startup', 'creators', 'sport', 'events', 'community']
   const icons = ['i-lucide-landmark', 'i-lucide-building-2', 'i-lucide-podcast', 'i-lucide-trophy', 'i-lucide-party-popper', 'i-lucide-users-round']
-  return titles.map((title, index) => ({ title, image: `/media/prints/${images[index]}-v01.webp`, icon: icons[index] }))
+  return titles.map((title, index) => ({ title, image: `/media/campaigns/audience-${images[index]}-v03.webp`, icon: icons[index] }))
 })
 
 const merch = computed(() => [
@@ -177,7 +177,7 @@ const copy = computed(() => locale.value === 'kk'
       <h2 class="ink-display mt-3 text-h1">{{ copy.audiencesTitle }}</h2>
       <div class="mt-7 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 lg:grid lg:grid-cols-6 lg:overflow-visible lg:pb-0">
         <article v-for="audience in audiences" :key="audience.title" class="group relative aspect-[.76] min-w-[68vw] snap-start overflow-hidden bg-ink-black sm:min-w-[36vw] lg:min-w-0">
-          <NuxtImg :src="audience.image" :alt="`Визуальное направление: ${audience.title}`" class="absolute inset-0 size-full bg-[#111214] object-contain p-3 transition-transform duration-700 group-hover:scale-[1.03]" sizes="(max-width: 1023px) 70vw, 240px" loading="lazy" />
+          <NuxtImg :src="audience.image" :alt="`Команда INKMADE: ${audience.title}`" class="absolute inset-0 size-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.03]" sizes="(max-width: 1023px) 70vw, 240px" loading="lazy" />
           <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
           <div class="absolute inset-x-0 bottom-0 p-4 text-white">
             <UIcon :name="audience.icon" class="size-6 text-white/75" />

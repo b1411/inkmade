@@ -49,7 +49,7 @@ async function clearCart() {
         </div>
       </div>
       <div class="relative min-h-[360px] bg-ink-black lg:min-h-[520px]">
-        <NuxtImg src="/media/prints/steppe-frequency-v01.webp" :alt="emptyVisualCopy.alt" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 720px" loading="eager" />
+        <NuxtImg src="/media/campaigns/audience-startup-v03.webp" :alt="emptyVisualCopy.alt" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 720px" loading="eager" />
         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/10" />
         <div class="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
           <p class="font-mono text-[10px] uppercase tracking-[.14em] text-white/50">INKMADE / ORIGINAL GRAPHICS</p>

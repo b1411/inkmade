@@ -55,7 +55,7 @@ useSeoMeta({
         </div>
       </div>
       <div class="relative min-h-72 overflow-hidden lg:min-h-[430px]">
-        <NuxtImg src="/media/prints/alatau-night-v01.webp" alt="" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 580px" loading="eager" />
+        <NuxtImg src="/media/campaigns/audience-creators-v03.webp" alt="" class="absolute inset-0 size-full object-cover" sizes="(max-width: 1023px) 100vw, 580px" loading="eager" />
         <div class="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent" />
         <span class="absolute bottom-5 left-5 ink-label text-white/70">INKMADE / CREATOR</span>
       </div>
