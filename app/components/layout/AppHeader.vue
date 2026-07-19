@@ -9,7 +9,7 @@ import { LEGAL } from '~~/shared/config/legal'
 import { FEATURES } from '~~/shared/config/features'
 
 const route = useRoute()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const cart = useCart()
 const cartCount = computed(() => cart.count.value)
 const { homePath: cabinetTo, isAuthenticated, signOut } = useAuth()
@@ -43,8 +43,6 @@ const navLinks = computed(() => [
   { label: t('nav.howItWorks'), to: '/#how' },
   ...(FEATURES.b2bShops ? [{ label: t('nav.business'), to: '/business' }] : []),
 ])
-const createLabel = computed(() => locale.value === 'kk' ? 'Принт жасау' : 'Создать принт')
-
 // Мобильное меню = список крупных ссылок, кнопке там негде выделиться, поэтому
 // «Для компаний» идёт обычным пунктом; на десктопе тот же вход — кнопка справа.
 // Отдельный массив (а не navLinks), чтобы в десктоп-nav ссылка не задвоилась.
@@ -68,6 +66,10 @@ const menuEl = ref<HTMLElement | null>(null)
 let menuTrigger: HTMLElement | null = null
 function closeMenu() {
   menuOpen.value = false
+}
+function onMobileSignOut() {
+  closeMenu()
+  void onSignOut()
 }
 // Блокировка скролла body + управление фокусом (a11y): при открытии переносим фокус
 // в меню, при закрытии возвращаем на кнопку-триггер (иначе фокус «терялся» за оверлеем).
@@ -155,7 +157,7 @@ onMounted(() => {
           :key="l.to"
           v-magnetic="0.3"
           :to="l.to"
-          class="nav-link ink-label relative py-2 after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-ink-burgundy after:transition-transform hover:after:scale-x-100"
+          class="nav-link relative py-2 font-sans text-[13px] font-semibold leading-none tracking-[0.01em] after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:scale-x-0 after:bg-ink-burgundy after:transition-transform hover:after:scale-x-100"
         >
           {{ l.label }}
         </NuxtLink>
@@ -170,7 +172,7 @@ onMounted(() => {
              рисовал бы тёмную обводку по тёмному фону. -->
         <div class="hidden lg:block">
           <UiAppButton to="/catalog" variant="primary" size="sm" trailing-icon="i-lucide-arrow-up-right">
-            {{ createLabel }}
+            {{ $t('header.create') }}
           </UiAppButton>
         </div>
         <UiLangSwitcher class="hidden sm:inline-flex" />
@@ -264,7 +266,7 @@ onMounted(() => {
               <button
                 v-if="isAuthenticated"
                 class="ink-display text-4xl py-2 text-left text-ink-cream/80"
-                @click="closeMenu(); onSignOut()"
+                @click="onMobileSignOut"
               >
                 {{ $t('header.signOut') }}
               </button>

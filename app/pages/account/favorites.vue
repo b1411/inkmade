@@ -5,8 +5,8 @@ const { listProducts, listPrints, remove } = useFavorites()
 const toast = useToast()
 const { t } = useI18n()
 
-const { data: products, refresh: refreshP, pending: pP } = await useAsyncData('fav-products', () => listProducts())
-const { data: prints, refresh: refreshPr, pending: pPr } = await useAsyncData('fav-prints', () => listPrints())
+const { data: products, refresh: refreshP, pending: pP, error: errorP } = await useAsyncData('fav-products', () => listProducts())
+const { data: prints, refresh: refreshPr, pending: pPr, error: errorPr } = await useAsyncData('fav-prints', () => listPrints())
 
 function primary(p: { products?: { product_images?: { url: string; is_primary: boolean }[] } | null }) {
   const imgs = p.products?.product_images ?? []
@@ -36,6 +36,9 @@ async function rm(id: string) {
       <div v-if="pP" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-3">
         <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="aspect-square" />
       </div>
+      <UiEmptyState v-else-if="errorP" compact icon="i-lucide-cloud-off" :title="$t('account.favorites.loadProductsError')">
+        <UButton size="sm" color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refreshP()">{{ $t('states.retry') }}</UButton>
+      </UiEmptyState>
       <UiEmptyState v-else-if="!products?.length" compact icon="i-lucide-shirt" :title="$t('account.favorites.emptyProducts')">
         <UiAppButton to="/catalog" variant="primary" size="sm">{{ $t('account.favorites.toCatalog') }}</UiAppButton>
       </UiEmptyState>
@@ -57,6 +60,9 @@ async function rm(id: string) {
       <div v-if="pPr" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-3">
         <UiSkeleton v-for="n in 5" :key="n" rounded="rounded-lg" class="aspect-square" />
       </div>
+      <UiEmptyState v-else-if="errorPr" compact icon="i-lucide-cloud-off" :title="$t('account.favorites.loadPrintsError')">
+        <UButton size="sm" color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refreshPr()">{{ $t('states.retry') }}</UButton>
+      </UiEmptyState>
       <UiEmptyState v-else-if="!prints?.length" compact icon="i-lucide-image" :title="$t('account.favorites.emptyPrints')">
         <UiAppButton to="/catalog" variant="ghost" size="sm">{{ $t('account.favorites.toCatalog') }}</UiAppButton>
       </UiEmptyState>

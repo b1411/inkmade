@@ -2,22 +2,22 @@
 const { locale } = useI18n()
 const copy = computed(() => locale.value === 'kk'
   ? {
-      label: '06 / MADE IN ALMATY',
-      title: 'Материалдан — дайын затқа.',
-      body: 'Тығыз негіз, анық принт және күнделікті киюге арналған пішім. Нәтижені материал мен дайын бұйым арқылы көрсетеміз.',
+      label: '07 / МАТЕРИАЛ ЖӘНЕ БАСЫЛЫМ',
+      title: 'Материал. Басылым. Тексеру.',
+      body: 'Әдісті мата мен дизайнға қарай таңдаймыз. Жөнелтер алдында принттің орналасуын, түсін және дайын заттың сапасын тексереміз.',
       print: 'Материал',
-      printText: 'Тығыз мақта, ұқыпты тігістер және пішінін сақтайтын негіз.',
+      printText: 'Тығыз мата, ұқыпты тігістер және күнделікті киюге арналған пішім.',
       pack: 'Дайын зат',
-      packText: 'Принт пен негіз біртұтас көрінеді — артық өндірістік декорациясыз.',
+      packText: 'Принт матаға, өлшемге және баспа аймағына сай орналасады.',
     }
   : {
-      label: '06 / MADE IN ALMATY',
-      title: 'От материала — к готовой вещи.',
-      body: 'Плотная основа, чёткий принт и посадка для повседневной носки. Показываем результат через материал и готовое изделие.',
+      label: '07 / МАТЕРИАЛ И ПЕЧАТЬ',
+      title: 'Материал. Печать. Проверка.',
+      body: 'Подбираем способ нанесения под ткань и дизайн. Перед отправкой проверяем расположение принта, цвет и качество готовой вещи.',
       print: 'Материал',
-      printText: 'Плотный хлопок, аккуратные швы и основа, которая держит форму.',
+      printText: 'Плотная ткань, аккуратные швы и посадка для повседневной носки.',
       pack: 'Готовая вещь',
-      packText: 'Принт и основа смотрятся единым целым — без постановочных производственных сцен.',
+      packText: 'Принт соответствует ткани, размеру и выбранной зоне нанесения.',
     })
 </script>
 
@@ -37,7 +37,7 @@ const copy = computed(() => locale.value === 'kk'
           <NuxtImg src="/media/products/detail/cotton-collar-v01.webp" :alt="copy.print" class="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-[1.025]" sizes="(max-width: 1023px) 100vw, 720px" loading="lazy" />
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/5 to-transparent" />
           <div class="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
-            <span class="font-mono text-[10px] uppercase tracking-[.14em] text-white/50">01 / MATERIAL</span>
+            <span class="font-mono text-[10px] uppercase tracking-[.14em] text-white/50">01 / {{ copy.print }}</span>
             <h3 class="ink-display mt-2 text-4xl sm:text-5xl">{{ copy.print }}</h3>
             <p class="mt-3 max-w-md text-sm text-white/70">{{ copy.printText }}</p>
           </div>
@@ -46,7 +46,7 @@ const copy = computed(() => locale.value === 'kk'
           <NuxtImg src="/media/products/blank/hoodie-v01.webp" :alt="copy.pack" class="absolute inset-0 size-full bg-[#d9d5ce] object-contain p-8 transition-transform duration-700 group-hover:scale-[1.025] sm:p-12" sizes="(max-width: 1023px) 100vw, 720px" loading="lazy" />
           <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/5 to-transparent" />
           <div class="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
-            <span class="font-mono text-[10px] uppercase tracking-[.14em] text-white/50">02 / RESULT</span>
+            <span class="font-mono text-[10px] uppercase tracking-[.14em] text-white/50">02 / {{ copy.pack }}</span>
             <h3 class="ink-display mt-2 text-4xl sm:text-5xl">{{ copy.pack }}</h3>
             <p class="mt-3 max-w-md text-sm text-white/70">{{ copy.packText }}</p>
           </div>

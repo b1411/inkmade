@@ -6,11 +6,12 @@ definePageMeta({ layout: 'account', middleware: 'auth' })
 const supabase = useSupabaseClient<Database>()
 const { t } = useI18n()
 
-const { data: orders, pending } = await useAsyncData('account-orders', async () => {
-  const { data } = await supabase
+const { data: orders, pending, error, refresh } = await useAsyncData('account-orders', async () => {
+  const { data, error } = await supabase
     .from('orders')
     .select('id, status, total, currency, created_at, order_items(id)')
     .order('created_at', { ascending: false })
+  if (error) throw error
   return data
 })
 
@@ -76,6 +77,15 @@ async function onReorder(orderId: string) {
     </div>
 
     <UiEmptyState
+      v-else-if="error"
+      icon="i-lucide-cloud-off"
+      :title="$t('account.orders.loadErrorTitle')"
+      :text="$t('account.orders.loadErrorText')"
+    >
+      <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refresh()">{{ $t('states.retry') }}</UButton>
+    </UiEmptyState>
+
+    <UiEmptyState
       v-else-if="!orders?.length"
       icon="i-lucide-package"
       :title="$t('account.orders.emptyTitle')"
@@ -88,7 +98,7 @@ async function onReorder(orderId: string) {
       <!-- поиск + фильтр статуса (Фаза C3b) -->
       <WorkspaceCommandBar v-model="q" :placeholder="$t('account.orders.searchPlaceholder')" :result-count="filtered.length" class="mb-4">
         <template #filters>
-          <USelect v-model="statusFilter" :items="statusItems" value-key="value" class="w-44" />
+          <USelect v-model="statusFilter" :items="statusItems" value-key="value" :aria-label="$t('account.orders.statusFilterLabel')" class="w-44" />
         </template>
       </WorkspaceCommandBar>
 

@@ -14,7 +14,7 @@ const props = computed(() => [
       <div class="grid gap-8 lg:grid-cols-12 lg:items-stretch">
         <div class="flex flex-col justify-between lg:col-span-4">
           <div>
-            <UiSectionLabel accent>06 / TEAMS & BRANDS</UiSectionLabel>
+            <UiSectionLabel accent>{{ locale === 'kk' ? '09 / КОМАНДАЛАРҒА' : '09 / ДЛЯ КОМАНД' }}</UiSectionLabel>
             <h2 id="biz-heading" class="ink-display text-h1 mt-3">{{ t('business.cta.title') }}</h2>
             <p class="mt-4 max-w-lg text-lead text-ink-gray-600">{{ t('business.cta.subtitle') }}</p>
             <ul class="mt-7 grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -28,7 +28,7 @@ const props = computed(() => [
             <UiAppButton to="/business" variant="primary" size="lg" trailing-icon="i-lucide-arrow-right">
               {{ t('business.cta.action') }}
             </UiAppButton>
-            <span class="font-mono text-[10px] uppercase tracking-[.12em] text-ink-gray-400">START / 3 DAYS</span>
+            <span class="font-mono text-[10px] uppercase tracking-[.12em] text-ink-gray-400">{{ locale === 'kk' ? 'ҚОЙМАСЫЗ · 1 ЗАТТАН' : 'БЕЗ СКЛАДА · ОТ 1 ВЕЩИ' }}</span>
           </div>
         </div>
 

@@ -156,17 +156,32 @@ export const useMyShop = () => {
 
   // финансы магазина (Фаза B4): баланс + история начислений (RLS owner/admin read)
   async function finance(shopId: string) {
-    const [bal, earn] = await Promise.all([
+    const [bal, earn, payout] = await Promise.all([
       supabase.from('shop_balances').select('*').eq('shop_id', shopId).maybeSingle(),
       supabase.from('shop_earnings')
         .select('id, amount, rate_pct, sale_base, status, created_at, order_id')
         .eq('shop_id', shopId)
         .order('created_at', { ascending: false })
         .limit(50),
+      supabase.from('shop_payouts')
+        .select('*')
+        .eq('shop_id', shopId)
+        .order('requested_at', { ascending: false }),
     ])
     if (bal.error) throw bal.error
     if (earn.error) throw earn.error
-    return { balance: bal.data, earnings: earn.data ?? [] }
+    if (payout.error) throw payout.error
+    return { balance: bal.data, earnings: earn.data ?? [], payouts: payout.data ?? [] }
+  }
+
+  async function requestPayout(shopId: string, method: string, details: Record<string, unknown>) {
+    const { data, error } = await supabase.rpc('request_shop_payout', {
+      p_shop_id: shopId,
+      p_method: method,
+      p_details: details as never,
+    })
+    if (error) throw error
+    return data
   }
 
   // заказы магазина (Tier1 B): продажи с атрибуцией order_items.shop_id (через definer RPC)
@@ -196,5 +211,5 @@ export const useMyShop = () => {
     return data ?? []
   }
 
-  return { getMine, createMine, checkSlug, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, orders, analytics, listPromos, savePromo, deletePromo }
+  return { getMine, createMine, checkSlug, update, uploadLogo, listItems, saveItem, deleteItem, myDesigns, finance, requestPayout, orders, analytics, listPromos, savePromo, deletePromo }
 }

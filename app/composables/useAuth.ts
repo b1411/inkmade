@@ -73,14 +73,18 @@ export const useAuth = () => {
     email: string,
     password: string,
     fullName?: string,
-    extra?: { phone?: string | null; marketingConsent?: boolean },
+    extra?: { phone?: string | null; marketingConsent?: boolean; redirectPath?: string | null },
   ) {
     // phone + marketing_consent кладём в user_metadata → триггер handle_new_user
     // переносит их в profiles (сбор лида).
+    const base = String(config.public.siteUrl || (import.meta.client ? window.location.origin : '')).replace(/\/$/, '')
+    const confirmedUrl = new URL('/auth/confirmed', base || 'http://localhost')
+    if (extra?.redirectPath) confirmedUrl.searchParams.set('redirect', extra.redirectPath)
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: confirmedUrl.toString(),
         data: {
           full_name: fullName ?? null,
           phone: extra?.phone ?? null,

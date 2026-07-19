@@ -20,10 +20,11 @@ const site = String(useRuntimeConfig().public.siteUrl || '').replace(/\/$/, '')
 const { listByCategory } = useCatalog()
 const { listActive } = useCategories()
 
-const { data: cat } = await useAsyncData(`cat-${category}`, async () => {
+const { data: cat, error: categoryError } = await useAsyncData(`cat-${category}`, async () => {
   const cats = await listActive()
   return cats.find(c => c.slug === category) ?? null
 })
+if (categoryError.value) throw createError({ statusCode: 503, statusMessage: t('errorPage.genericText'), cause: categoryError.value })
 if (!cat.value) throw createError({ statusCode: 404, statusMessage: t('catalog.category.notFound') })
 const label = cat.value.title
 useSeoMeta({
@@ -49,10 +50,15 @@ useHead({
   }],
 })
 
-const { data: products, pending } = await useAsyncData(
+const { data: products, pending, error: productsError, refresh: refreshProducts } = await useAsyncData(
   `catalog-${category}`,
   () => listByCategory(category),
 )
+const retrying = ref(false)
+async function retryProducts() {
+  retrying.value = true
+  try { await refreshProducts() } finally { retrying.value = false }
+}
 const count = computed(() => products.value?.length ?? 0)
 const categoryVisual = computed(() => category === 'accessories'
   ? '/media/categories/bag-v01.webp'
@@ -138,6 +144,12 @@ const filtered = computed(() => {
           <UiSkeleton class="h-3 w-1/3" />
         </div>
       </div>
+    </div>
+
+    <div v-else-if="productsError" class="border border-ink-error/40 bg-ink-error/10 p-6" role="alert">
+      <p class="font-semibold text-ink-text">{{ $t('errorPage.genericTitle') }}</p>
+      <p class="mt-1 text-sm text-ink-text-soft">{{ $t('errorPage.genericText') }}</p>
+      <UButton class="mt-4" color="neutral" variant="subtle" icon="i-lucide-refresh-cw" :loading="retrying" @click="retryProducts">{{ $t('states.retry') }}</UButton>
     </div>
 
     <!-- Пустой результат -->

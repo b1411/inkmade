@@ -22,6 +22,17 @@ const fallback: Array<Pick<Tables<'print_library'>, 'id' | 'title' | 'author' | 
 const prints = computed(() => (data.value?.length ? data.value : fallback).slice(0, 8))
 const isLive = (id: string) => /^[0-9a-f-]{32,}$/i.test(id)
 const to = (id: string) => isLive(id) ? `/customize/tshirt?print=${encodeURIComponent(id)}` : '/customize/tshirt'
+const copy = computed(() => locale.value === 'kk'
+  ? {
+      label: '03 / ДАЙЫН ПРИНТТЕР', title: 'Идея дайын. Енді негізді таңда.',
+      body: 'INKMADE Studio баспаға дайындаған авторлық графика. Принтті таңда — ол конструктордағы киімде бірден ашылады.',
+      cta: 'Негізді таңдау',
+    }
+  : {
+      label: '03 / ГОТОВЫЕ ПРИНТЫ', title: 'Идея уже готова. Выбери основу.',
+      body: 'Авторская графика INKMADE Studio, подготовленная к печати. Выбери принт — он сразу откроется на вещи в конструкторе.',
+      cta: 'Выбрать основу',
+    })
 </script>
 
 <template>
@@ -29,16 +40,16 @@ const to = (id: string) => isLive(id) ? `/customize/tshirt?print=${encodeURIComp
     <div class="mx-auto max-w-(--container-max) px-4 py-14 lg:py-20">
       <div class="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <UiSectionLabel class="text-white/45">03 / CURATED PRINTS</UiSectionLabel>
+          <UiSectionLabel class="text-white/45">{{ copy.label }}</UiSectionLabel>
           <h2 id="print-library-heading" class="ink-display mt-3 max-w-3xl text-h1">
-            {{ locale === 'kk' ? 'Дайын графика. Бір шерту.' : 'Готовая графика. Один клик.' }}
+            {{ copy.title }}
           </h2>
           <p class="mt-4 max-w-2xl text-ink-text-soft">
-            {{ locale === 'kk' ? 'INKMADE Studio баспаға дайындаған сегіз авторлық жұмыс. Негізді таңдаңыз — принт редакторда бірден ашылады.' : 'Восемь авторских работ INKMADE Studio, подготовленных для печати. Выберите работу — она сразу откроется на вещи в редакторе.' }}
+            {{ copy.body }}
           </p>
         </div>
         <UiAppButton to="/catalog" variant="secondary" on-dark trailing-icon="i-lucide-arrow-right">
-          {{ locale === 'kk' ? 'Барлық негіздер' : 'Все основы' }}
+          {{ copy.cta }}
         </UiAppButton>
       </div>
 

@@ -20,11 +20,11 @@
      Даёт «сжатую» редакционную типографику макета. Unbounded в фолбэк не ставим:
      он больше не грузится, и упоминание подхватило бы локально установленную
      копию у части пользователей — разъехалась бы вёрстка заголовков. */
-  --font-display: "Inter Tight", "Arial Narrow", Arial, sans-serif;
+  --font-display: "Inter Tight", Arial, sans-serif;
   /* Основной текст и весь UI. Полная кириллица + казахские знаки. */
-  --font-sans: "Inter", "Manrope", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
   /* Технические лейблы INK SYSTEM (Design ID, координаты, placement) — §36.2. */
-  --font-mono: "Space Mono", "JetBrains Mono", monospace;
+  --font-mono: "Space Mono", ui-monospace, monospace;
 
   /* ── Канонические токены (спека §3.1–3.2) ────────────────────── */
   /* Тёмная среда */

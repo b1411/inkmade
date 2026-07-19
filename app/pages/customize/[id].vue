@@ -14,13 +14,20 @@ const { t } = useI18n()
 const { data: product, error } = await useAsyncData(`customize-${alias}`, async () => {
   try {
     return await getByAlias(alias)
-  } catch {
+  } catch (cause) {
+    if (!isCatalogNotFoundError(cause)) throw cause
     // Старые рекламные ссылки и slug товара не должны приводить к 404, если у
     // опубликованной основы заполнен slug, но отсутствует/изменён alias.
     return await getBySlug(alias)
   }
 })
-if (error.value || !product.value) {
+if (error.value) {
+  if (isCatalogNotFoundError(error.value)) {
+    throw createError({ statusCode: 404, statusMessage: t('customize.page.notFound') })
+  }
+  throw createError({ statusCode: 503, statusMessage: t('errorPage.genericText'), cause: error.value })
+}
+if (!product.value) {
   throw createError({ statusCode: 404, statusMessage: t('customize.page.notFound') })
 }
 useHead({ title: t('customize.page.headTitle', { title: product.value.title }) })
@@ -516,7 +523,7 @@ async function onAddToCart() {
     </div>
 
     <!-- мобайл: липкий нижний бар цена + параметры + CTA -->
-    <div class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-ink-panel/95 text-white backdrop-blur border-t border-white/10 px-4 py-3 flex items-center gap-3">
+    <div class="customizer-mobile-cta lg:hidden fixed bottom-0 inset-x-0 z-40 bg-ink-panel/95 text-white backdrop-blur border-t border-white/10 px-4 py-3 flex items-center gap-3">
       <div class="min-w-0">
         <div class="text-caption text-ink-gray-500 leading-none">{{ $t('customize.price.total') }}</div>
         <div class="text-h4 font-bold text-ink-burgundy tabular-nums">{{ formatPrice(lineTotal) }}</div>
@@ -582,6 +589,10 @@ async function onAddToCart() {
 
 <style scoped>
 /* Пульс приглашающего пустого состояния холста — бордо-кольцо (гасится reduced-motion). */
+.customizer-mobile-cta {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
 .customizer-pulse {
   animation: customizer-pulse 2.4s var(--ease-out) infinite;
 }

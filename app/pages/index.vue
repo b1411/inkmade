@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
-// Главная следует редакционной структуре спецификации: hero → основания →
-// интерактивный тизер редактора → идеи → editions → процесс → качество → B2B.
+// Главная следует редакционной структуре: hero → основы → конструктор →
+// готовые принты → edition → понятный процесс → качество → B2B.
 // Визуальные секции используют локальный контент и не исчезают при недоступной БД.
 import { FEATURES } from '~~/shared/config/features'
 const { t, locale } = useI18n()
@@ -32,7 +32,7 @@ useHead({
           name: 'INKMADE',
           url: site,
           logo: `${site}/icon-512.png`,
-          description: 'Платформа кастомизации одежды с печатью по требованию. Казахстан.',
+          description: 'Одежда с твоим дизайном: печать от одной вещи в Алматы и доставка по Казахстану.',
           areaServed: 'KZ',
         },
         {
@@ -122,7 +122,7 @@ function backImage(slug: string) {
           <UiReveal class="lg:col-span-2">
             <div class="flex h-full flex-col items-start justify-between gap-6">
               <div>
-                <UiSectionLabel inverse>01 / BASE</UiSectionLabel>
+                <UiSectionLabel inverse>{{ locale === 'kk' ? '01 / НЕГІЗ' : '01 / ОСНОВА' }}</UiSectionLabel>
                 <h2 id="bases-heading" class="ink-display text-h2 mt-2">{{ $t('landing.categories.title') }}</h2>
                 <p class="mt-3 text-sm text-ink-text-soft">{{ $t('landing.categories.subtitle') }}</p>
               </div>
@@ -150,8 +150,10 @@ function backImage(slug: string) {
     <!-- 6. «Создай свой дизайн» — главный дифференциатор B2C -->
     <LandingConstructor />
 
-    <!-- 7. Алматинские команды + редакционные коллекции -->
-    <LandingIdeas />
+    <!-- 7. Готовые авторские принты — второй сценарий после своего дизайна -->
+    <LandingPrintLibrary />
+
+    <!-- 8. Редакционная коллекция бренда -->
     <LandingEditions />
 
     <!-- 9. «Как это работает» — Bone (§3.4) -->
@@ -163,7 +165,7 @@ function backImage(slug: string) {
       </div>
     </div>
 
-    <!-- 10. Премиальное качество -->
+    <!-- 10. Материалы и контроль качества -->
     <LandingQuality />
 
     <!-- 11. Производство и упаковка -->
@@ -182,4 +184,3 @@ function backImage(slug: string) {
     <LandingFinalCta />
   </div>
 </template>
-

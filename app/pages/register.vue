@@ -52,6 +52,7 @@ async function onSubmit() {
     await signUp(email.value, password.value, fullName.value, {
       phone: normalizeKzPhone(phone.value),
       marketingConsent: contactConsent.value,
+      redirectPath: redirect.value,
     })
     // фиксируем согласие, если email-подтверждение отключено (сессия уже есть).
     // Иначе согласие гарантированно фиксируется на сервере при оформлении заказа (§24).

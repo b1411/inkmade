@@ -1060,6 +1060,57 @@ export type Database = {
             referencedRelation: "shops"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "shop_earnings_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "shop_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_payouts: {
+        Row: {
+          amount: number
+          details: Json | null
+          id: string
+          method: string | null
+          paid_at: string | null
+          processed_by: string | null
+          requested_at: string
+          shop_id: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          details?: Json | null
+          id?: string
+          method?: string | null
+          paid_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          shop_id: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          details?: Json | null
+          id?: string
+          method?: string | null
+          paid_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          shop_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_payouts_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
         ]
       }
       shop_balances: {
@@ -1922,6 +1973,11 @@ export type Database = {
       shop_analytics: { Args: { p_days?: number; p_shop_id: string }; Returns: Json }
       shop_promo_validate: { Args: { p_code: string; p_shop_id: string; p_subtotal: number }; Returns: Json }
       mark_payout_paid: { Args: { p_payout_id: string }; Returns: undefined }
+      process_shop_payout: { Args: { p_payout_id: string; p_status: string }; Returns: undefined }
+      request_shop_payout: {
+        Args: { p_details?: Json; p_method?: string; p_shop_id: string }
+        Returns: string
+      }
       refund_ai_quota: {
         Args: { p_month: string; p_user_id: string }
         Returns: undefined

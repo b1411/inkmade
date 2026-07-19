@@ -13,7 +13,11 @@ const token = route.params.token as string
 const { data, error } = await useAsyncData(`shared-${token}`, () =>
   $fetch<SharedDesign>(`/api/designs/shared/${token}`),
 )
-if (error.value || !data.value) {
+if (error.value) {
+  if (isNotFoundError(error.value)) throw createError({ statusCode: 404, statusMessage: t('customize.designPage.notFound') })
+  throw createError({ statusCode: 503, statusMessage: t('errorPage.genericText'), cause: error.value })
+}
+if (!data.value) {
   throw createError({ statusCode: 404, statusMessage: t('customize.designPage.notFound') })
 }
 

@@ -70,9 +70,9 @@ const copy = computed(() => locale.value === 'kk'
       faqLabel: 'Сұрақтар және іске қосу'
     }
   : {
-      heroTitle: 'Мерч-магазин, который хотят носить.',
+      heroTitle: 'Ваш мерч. Ваша витрина. Без склада.',
       heroSecondary: 'Смотреть примеры',
-      proof: ['Премиальное качество', 'Печать от 1 вещи', 'Без перепродаж', 'Доставка по Казахстану'],
+      proof: ['Плотные основы', 'Печать от 1 вещи', 'Без склада и тиража', 'Доставка по Казахстану'],
       audiencesLabel: 'Кому подойдёт',
       audiencesTitle: 'Создавайте мерч, который объединяет.',
       economyLabel: 'Честная экономика',
@@ -134,7 +134,7 @@ const copy = computed(() => locale.value === 'kk'
             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             <div class="absolute inset-x-0 bottom-0 p-6 text-white">
               <p class="font-mono text-[10px] uppercase tracking-[.14em] text-white/55">COLLECTION / PREVIEW 001</p>
-              <p class="ink-display mt-2 max-w-sm text-4xl">Основа для цельной коллекции команды.</p>
+              <p class="ink-display mt-2 max-w-sm text-4xl">{{ locale === 'kk' ? 'Команданың тұтас коллекциясына арналған негіз.' : 'Основа для цельной коллекции команды.' }}</p>
             </div>
           </div>
           <div class="border border-black/10 bg-ink-raised p-3 text-white">
@@ -164,7 +164,7 @@ const copy = computed(() => locale.value === 'kk'
             <p class="mt-2 text-sm text-ink-text-dark-soft">{{ step.text }}</p>
           </article>
           <div class="bg-ink-burgundy p-6 text-white">
-            <p class="font-mono text-[10px] uppercase tracking-[.12em] text-white/70">START / 3 DAYS</p>
+            <p class="font-mono text-[10px] uppercase tracking-[.12em] text-white/70">{{ locale === 'kk' ? 'ӨЗ БЕТІҢШЕ ІСКЕ ҚОСУ' : 'САМОСТОЯТЕЛЬНЫЙ ЗАПУСК' }}</p>
             <p class="font-display mt-2 text-2xl font-black uppercase">{{ $t('business.start.title') }}</p>
             <UiAppButton to="#apply" variant="secondary" size="md" on-dark class="mt-5" trailing-icon="i-lucide-arrow-right">{{ $t('business.hero.cta') }}</UiAppButton>
           </div>

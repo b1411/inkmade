@@ -5,14 +5,14 @@ const d = useDesigner()
 const toast = useToast()
 const { t } = useI18n()
 
-const { data, refresh } = await useAsyncData('designer-finance', async () => {
+const { data, refresh, pending, error } = await useAsyncData('designer-finance', async () => {
   const [balance, earnings, payouts, profile, rates] = await Promise.all([
     d.balance(), d.earnings(100), d.payouts(), d.profile(), d.rateHistory(),
   ])
   return { balance, earnings, payouts, profile, rates }
 })
 
-const money = (n: number | null | undefined) => `${Math.round(Number(n) || 0).toLocaleString('ru')} ₸`
+const { money, date, number } = useFormat()
 const MIN_PAYOUT = 5000
 
 const amount = ref<number>(0)
@@ -43,7 +43,15 @@ const eStatus = computed<Record<string, string>>(() => ({
   <div>
     <UiPageHeader :label="$t('studio.designer.finance.label')" :title="$t('studio.designer.finance.title')" :description="$t('studio.designer.finance.description')" />
 
-    <div class="space-y-8">
+    <div v-if="pending" class="space-y-4">
+      <div class="grid sm:grid-cols-3 gap-4"><UiSkeleton v-for="n in 3" :key="n" rounded="rounded-lg" class="h-24" /></div>
+      <UiSkeleton rounded="rounded-lg" class="h-44" />
+      <UiSkeleton rounded="rounded-lg" class="h-72" />
+    </div>
+    <UiEmptyState v-else-if="error" icon="i-lucide-triangle-alert" :title="$t('studio.designer.finance.loadErrorTitle')" :text="$t('studio.designer.finance.loadErrorText')">
+      <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refresh()">{{ $t('states.retry') }}</UButton>
+    </UiEmptyState>
+    <div v-else class="space-y-8">
       <div class="grid sm:grid-cols-3 gap-4">
         <UiStatCard :label="$t('studio.designer.finance.accrued')" :value="money(data?.balance?.total_earned)" icon="i-lucide-trending-up" />
         <UiStatCard :label="$t('studio.designer.finance.paid')" :value="money(data?.balance?.total_paid)" icon="i-lucide-banknote" />
@@ -56,7 +64,7 @@ const eStatus = computed<Record<string, string>>(() => ({
           <UFormField :label="$t('studio.designer.finance.amount')" class="flex-1"><UInput v-model.number="amount" type="number" :min="MIN_PAYOUT" class="w-full" /></UFormField>
           <UButton color="primary" size="lg" :loading="requesting" @click="requestPayout">{{ $t('studio.designer.finance.request') }}</UButton>
         </div>
-        <p class="text-caption text-ink-gray-400 mt-3">{{ $t('studio.designer.finance.minHint', { min: MIN_PAYOUT.toLocaleString('ru'), rate: data?.profile?.royalty_pct ?? '—' }) }}</p>
+        <p class="text-caption text-ink-gray-400 mt-3">{{ $t('studio.designer.finance.minHint', { min: number(MIN_PAYOUT), rate: data?.profile?.royalty_pct ?? '—' }) }}</p>
       </UiPanel>
 
       <!-- история начислений -->
@@ -65,7 +73,7 @@ const eStatus = computed<Record<string, string>>(() => ({
         <div v-else class="divide-y divide-ink-gray-200">
           <div v-for="e in data!.earnings" :key="e.id" class="flex items-center justify-between gap-3 px-6 py-3 text-caption">
             <span class="truncate">{{ e.print_library?.title ?? $t('studio.designer.finance.printFallback') }}</span>
-            <span class="text-ink-gray-500 shrink-0">{{ e.rate_pct }}% · {{ new Date(e.created_at).toLocaleDateString('ru') }}</span>
+            <span class="text-ink-gray-500 shrink-0">{{ e.rate_pct }}% · {{ date(e.created_at) }}</span>
             <span class="shrink-0">{{ eStatus[e.status] }}</span>
             <span class="font-semibold text-ink-success shrink-0">+{{ money(e.amount) }}</span>
           </div>
@@ -77,7 +85,7 @@ const eStatus = computed<Record<string, string>>(() => ({
         <div v-if="!data?.payouts?.length" class="px-6 py-4 text-ink-gray-600 text-caption">{{ $t('studio.designer.finance.noPayouts') }}</div>
         <div v-else class="divide-y divide-ink-gray-200">
           <div v-for="p in data!.payouts" :key="p.id" class="flex items-center justify-between gap-3 px-6 py-3 text-caption">
-            <span>{{ new Date(p.requested_at).toLocaleDateString('ru') }}</span>
+            <span>{{ date(p.requested_at) }}</span>
             <span class="font-semibold">{{ money(p.amount) }}</span>
             <UBadge :color="payoutColor(p.status)" variant="subtle" size="xs">{{ $t(`domain.payoutStatus.${p.status}`) }}</UBadge>
           </div>

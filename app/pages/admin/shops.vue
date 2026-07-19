@@ -7,11 +7,11 @@ import { FEATURES } from '~~/shared/config/features'
 // на витрину; без флага — просто помечает статус (поведение B1).
 definePageMeta({ layout: 'admin', middleware: 'admin-role' })
 const { t } = useI18n()
-const { dateShort } = useFormat()
+const { dateShort, money } = useFormat()
 useHead({ title: t('admin.shops.headTitle') })
 
 const { listApplications, resolve } = useBusiness()
-const { createShop, listShops, setShopStatus, setShopShare, reissueClaim } = useShops()
+const { createShop, listShops, setShopStatus, setShopShare, reissueClaim, payoutRequests, processPayout } = useShops()
 const toast = useToast()
 const { confirm } = useConfirm()
 
@@ -20,8 +20,11 @@ const { data: apps, pending, refresh } = await useAsyncData('admin-shop-apps', (
 const { data: shops, pending: shopsPending, refresh: refreshShops } = await useAsyncData(
   'admin-shops-list', async () => (FEATURES.b2bStorefront ? await listShops() : []),
 )
+const { data: shopPayouts, pending: payoutsPending, error: payoutsError, refresh: refreshPayouts } = await useAsyncData(
+  'admin-shop-payouts', async () => (FEATURES.b2bStorefront ? await payoutRequests() : []),
+)
 
-const view = ref<'apps' | 'shops'>('apps')
+const view = ref<'apps' | 'shops' | 'payouts'>('apps')
 const tab = ref<'pending' | 'all'>('pending')
 const notes = reactive<Record<string, string>>({})
 const slugs = reactive<Record<string, string>>({})
@@ -124,6 +127,31 @@ watchEffect(() => {
 })
 
 const shopsCount = computed(() => (shops.value ?? []).length)
+const requestedPayouts = computed(() => (shopPayouts.value ?? []).filter(item => item.status === 'requested'))
+const payoutBusy = ref<string | null>(null)
+const payoutDetails = (details: unknown) => {
+  if (!details || typeof details !== 'object' || Array.isArray(details)) return { bank: '—', account: '—' }
+  const value = details as Record<string, unknown>
+  return { bank: String(value.bank || '—'), account: String(value.account || '—') }
+}
+
+async function onProcessPayout(id: string, status: 'paid' | 'rejected') {
+  const ok = await confirm({
+    title: t(status === 'paid' ? 'admin.shops.payoutPaidConfirm' : 'admin.shops.payoutRejectConfirm'),
+    tone: status === 'rejected' ? 'danger' : 'default',
+  })
+  if (!ok) return
+  payoutBusy.value = id
+  try {
+    await processPayout(id, status)
+    await refreshPayouts()
+    toast.add({ title: t(status === 'paid' ? 'admin.shops.payoutPaid' : 'admin.shops.payoutRejected'), color: status === 'paid' ? 'success' : 'warning' })
+  } catch (error) {
+    toast.add({ title: t('admin.shops.payoutProcessError'), description: getFetchMessage(error), color: 'error' })
+  } finally {
+    payoutBusy.value = null
+  }
+}
 
 async function toggleShopStatus(s: ShopRow) {
   shopBusy.value = s.id
@@ -188,6 +216,17 @@ async function copyShopClaim(id: string) {
       >
         {{ $t('admin.shops.viewApps') }}
         <UBadge v-if="pendingCount" color="neutral" variant="solid" size="sm" class="ml-1">{{ pendingCount }}</UBadge>
+      </UButton>
+      <UButton
+        v-if="FEATURES.b2bStorefront"
+        :color="view === 'payouts' ? 'primary' : 'neutral'"
+        :variant="view === 'payouts' ? 'solid' : 'subtle'"
+        size="sm"
+        icon="i-lucide-hand-coins"
+        @click="view = 'payouts'"
+      >
+        {{ $t('admin.shops.viewPayouts') }}
+        <UBadge v-if="requestedPayouts.length" color="neutral" variant="solid" size="sm" class="ml-1">{{ requestedPayouts.length }}</UBadge>
       </UButton>
       <UButton
         v-if="FEATURES.b2bStorefront"
@@ -312,7 +351,7 @@ async function copyShopClaim(id: string) {
     </template>
 
     <!-- ── управление созданными магазинами (Tier1 C) ── -->
-    <template v-else>
+    <template v-else-if="view === 'shops'">
       <div v-if="shopsPending" class="py-10 text-center text-ink-gray-600">{{ $t('states.loading') }}</div>
 
       <UiEmptyState
@@ -367,6 +406,40 @@ async function copyShopClaim(id: string) {
             <div class="flex items-center gap-2">
               <code class="text-xs font-mono break-all flex-1">{{ shopClaim[s.id] }}</code>
               <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-copy" @click="copyShopClaim(s.id)">{{ $t('admin.shops.claimCopy') }}</UButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- ── заявки владельцев магазинов на выплату ── -->
+    <template v-else>
+      <div v-if="payoutsPending" class="space-y-3">
+        <UiSkeleton v-for="n in 3" :key="n" rounded="rounded-lg" class="h-20" />
+      </div>
+      <UiEmptyState v-else-if="payoutsError" icon="i-lucide-triangle-alert" :title="$t('admin.shops.payoutLoadError')">
+          <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refreshPayouts()">{{ $t('states.retry') }}</UButton>
+      </UiEmptyState>
+      <UiEmptyState v-else-if="!shopPayouts?.length" icon="i-lucide-hand-coins" :title="$t('admin.shops.payoutEmptyTitle')" :text="$t('admin.shops.payoutEmptyText')" />
+      <div v-else class="space-y-3">
+        <div v-for="item in shopPayouts" :key="item.id" class="border border-ink-gray-200 p-5">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="font-semibold">{{ item.shops?.name ?? $t('admin.shops.unknownShop') }}</h3>
+                <UBadge :color="item.status === 'paid' ? 'success' : item.status === 'rejected' ? 'error' : 'warning'" variant="subtle" size="xs">{{ $t(`admin.shops.payoutStatus.${item.status}`) }}</UBadge>
+              </div>
+              <p class="mt-1 text-caption text-ink-gray-500">/s/{{ item.shops?.slug }} · {{ dateShort(item.requested_at) }}</p>
+              <p class="mt-2 text-caption text-ink-gray-600">
+                {{ payoutDetails(item.details).bank }} · <span class="font-mono">{{ payoutDetails(item.details).account }}</span>
+              </p>
+            </div>
+            <div class="flex shrink-0 flex-wrap items-center gap-2">
+              <span class="mr-2 text-lg font-bold text-ink-burgundy">{{ money(item.amount) }}</span>
+              <template v-if="item.status === 'requested'">
+                <UButton size="sm" color="primary" icon="i-lucide-check" :loading="payoutBusy === item.id" @click="onProcessPayout(item.id, 'paid')">{{ $t('admin.shops.markPayoutPaid') }}</UButton>
+                <UButton size="sm" color="error" variant="subtle" icon="i-lucide-x" :loading="payoutBusy === item.id" @click="onProcessPayout(item.id, 'rejected')">{{ $t('admin.shops.rejectPayout') }}</UButton>
+              </template>
             </div>
           </div>
         </div>

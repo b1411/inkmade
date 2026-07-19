@@ -10,7 +10,13 @@ const { getBySlug, listByCategory } = useCatalog()
 
 const { data: product, error } = await useAsyncData(`product-${slug}`, () => getBySlug(slug))
 
-if (error.value || !product.value) {
+if (error.value) {
+  if (isCatalogNotFoundError(error.value)) {
+    throw createError({ statusCode: 404, statusMessage: t('product.notFound') })
+  }
+  throw createError({ statusCode: 503, statusMessage: t('errorPage.genericText'), cause: error.value })
+}
+if (!product.value) {
   throw createError({ statusCode: 404, statusMessage: t('product.notFound') })
 }
 
@@ -343,8 +349,8 @@ const productCopy = computed(() => locale.value === 'kk'
   ? {
       available: 'Қоймада бар',
       benefits: [
-        ['i-lucide-badge-check', 'Премиум негіз', 'Тығыз мата және сапалы тігіс'],
-        ['i-lucide-sparkles', 'Төзімді принт', 'Түсін және айқындығын сақтайды'],
+        ['i-lucide-badge-check', 'Тығыз негіз', 'Мата және ұқыпты тігіс'],
+        ['i-lucide-sparkles', 'Дизайнға сай басу', 'Әдісті мата мен макетке қарай таңдаймыз'],
         ['i-lucide-map-pin', 'Алматыда жасалған', 'Өндіріс пен баспа бір жерде'],
         ['i-lucide-truck', 'Қазақстан бойынша', 'Трек-нөмірі бар жеткізу']
       ],
@@ -365,8 +371,8 @@ const productCopy = computed(() => locale.value === 'kk'
   : {
       available: 'В наличии',
       benefits: [
-        ['i-lucide-badge-check', 'Премиальная основа', 'Плотная ткань и аккуратный пошив'],
-        ['i-lucide-sparkles', 'Стойкий принт', 'Сохраняет цвет и детализацию'],
+        ['i-lucide-badge-check', 'Плотная основа', 'Ткань и аккуратный пошив'],
+        ['i-lucide-sparkles', 'Печать под дизайн', 'Метод подбираем под ткань и макет'],
         ['i-lucide-map-pin', 'Сделано в Алматы', 'Производство и печать в одном месте'],
         ['i-lucide-truck', 'По Казахстану', 'Доставка с трек-номером']
       ],
@@ -772,4 +778,3 @@ const productCopy = computed(() => locale.value === 'kk'
   opacity: 0;
 }
 </style>
-

@@ -38,7 +38,8 @@ export const useAddresses = () => {
 
   async function setDefault(id: string) {
     if (!user.value) return
-    await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.value.id)
+    const { error: resetError } = await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.value.id)
+    if (resetError) throw resetError
     const { error } = await supabase.from('addresses').update({ is_default: true }).eq('id', id)
     if (error) throw error
   }

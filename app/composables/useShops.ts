@@ -129,6 +129,22 @@ export const useShops = () => {
     return data as unknown as { claim_token: string; claim_email: string }
   }
 
+  async function payoutRequests(status?: string) {
+    let query = supabase
+      .from('shop_payouts')
+      .select('*, shops(name, slug)')
+      .order('requested_at', { ascending: false })
+    if (status) query = query.eq('status', status)
+    const { data, error } = await query
+    if (error) throw error
+    return data ?? []
+  }
+
+  async function processPayout(id: string, status: 'paid' | 'rejected') {
+    const { error } = await supabase.rpc('process_shop_payout', { p_payout_id: id, p_status: status })
+    if (error) throw error
+  }
+
   // «в корзину»: собрать позицию из shop_item (product/variant/spec владельца через RPC).
   // variantId — выбранный покупателем размер/цвет (сервер валидирует как сиблинг).
   async function buyPayload(itemId: string, code?: string, variantId?: string): Promise<ShopBuyPayload | null> {
@@ -146,5 +162,5 @@ export const useShops = () => {
     void supabase.rpc('shop_track', { p_shop_id: shopId, p_type: type, p_item_id: itemId ?? undefined }).then(() => {})
   }
 
-  return { storefront, createShop, claimShop, listShops, setShopStatus, setShopShare, reissueClaim, buyPayload, track }
+  return { storefront, createShop, claimShop, listShops, setShopStatus, setShopShare, reissueClaim, payoutRequests, processPayout, buyPayload, track }
 }

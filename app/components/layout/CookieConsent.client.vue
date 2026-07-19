@@ -2,6 +2,7 @@
 // Баннер согласия на cookie/трекинг (opt-in). .client-компонент: только браузер,
 // без SSR-гидрации. Пиксели грузятся лишь после «Принять» (см. analytics.client.ts).
 const { decided, load, accept, reject } = useConsent()
+const route = useRoute()
 // setup выполняется на клиенте (.client.vue) — читаем сохранённый выбор до первой
 // отрисовки, чтобы вернувшемуся пользователю баннер не мигал.
 load()
@@ -13,6 +14,7 @@ const visible = computed(() => !decided.value)
     <div
       v-if="visible"
       class="fixed inset-x-3 bottom-3 z-50 ml-auto ink-grain bg-ink-black text-ink-cream/85 border border-white/10 shadow-2xl sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-[min(430px,calc(100vw-40px))]"
+      :class="{ 'cookie-consent--customizer': route.path.startsWith('/customize/') }"
       role="dialog"
       aria-live="polite"
       :aria-label="$t('cookie.title')"
@@ -47,5 +49,11 @@ const visible = computed(() => !decided.value)
 .cookie-slide-leave-to {
   transform: translateY(100%);
   opacity: 0;
+}
+
+@media (max-width: 639px) {
+  .cookie-consent--customizer {
+    bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
 }
 </style>

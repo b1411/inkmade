@@ -54,7 +54,8 @@ export const useFavorites = () => {
   }
 
   async function remove(id: string) {
-    await supabase.from('favorites').delete().eq('id', id)
+    const { error } = await supabase.from('favorites').delete().eq('id', id)
+    if (error) throw error
   }
 
   return { listProducts, listPrints, isProductFav, toggleProduct, togglePrint, remove }

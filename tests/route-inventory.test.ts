@@ -34,6 +34,6 @@ describe('route inventory', () => {
   })
 
   it('tracks the current active production surface explicitly', () => {
-    expect(routes.length - designerRoutes.length).toBe(63)
+    expect(routes.length - designerRoutes.length).toBe(64)
   })
 })

@@ -5,7 +5,7 @@ const { t } = useI18n()
 const fin = useFinance()
 const toast = useToast()
 
-const { data, refresh, pending } = await useAsyncData('admin-designers', async () => {
+const { data, refresh, pending, error } = await useAsyncData('admin-designers', async () => {
   const [designers, queue, payouts, invites] = await Promise.all([
     fin.designers(), fin.moderationQueue(), fin.payouts('requested'), fin.invitations(),
   ])
@@ -89,6 +89,9 @@ async function payout(id: string) {
     <div v-if="pending" class="space-y-2">
       <UiSkeleton v-for="n in 4" :key="n" rounded="rounded-lg" class="h-20" />
     </div>
+    <UiEmptyState v-else-if="error" icon="i-lucide-triangle-alert" :title="$t('admin.designers.loadErrorTitle')" :text="$t('admin.designers.loadErrorText')">
+      <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refresh()">{{ $t('states.retry') }}</UButton>
+    </UiEmptyState>
     <template v-else>
       <!-- очередь модерации -->
       <UiPanel v-if="data?.queue?.length" :title="$t('admin.designers.queueTitle', { count: data.queue.length })">
@@ -98,8 +101,8 @@ async function payout(id: string) {
             <div class="p-2 space-y-1">
               <p class="text-caption font-semibold truncate">{{ p.title }}</p>
               <div class="flex gap-1">
-                <UButton size="xs" color="success" variant="subtle" icon="i-lucide-check" :loading="busy === p.id" @click="moderate(p.id, 'approved')" />
-                <UButton size="xs" color="error" variant="ghost" icon="i-lucide-x" :loading="busy === p.id" @click="moderate(p.id, 'rejected')" />
+                <UButton size="xs" color="success" variant="subtle" icon="i-lucide-check" :aria-label="$t('admin.designers.printApproved')" :loading="busy === p.id" @click="moderate(p.id, 'approved')" />
+                <UButton size="xs" color="error" variant="ghost" icon="i-lucide-x" :aria-label="$t('admin.designers.printRejected')" :loading="busy === p.id" @click="moderate(p.id, 'rejected')" />
               </div>
             </div>
           </div>
@@ -133,7 +136,7 @@ async function payout(id: string) {
                   <td class="pl-3"><UBadge :color="inviteBadge(inv.status)" variant="subtle" size="xs">{{ inviteLabel[inv.status] }}</UBadge></td>
                   <td class="text-right whitespace-nowrap">
                     <UButton v-if="inv.status === 'invited'" size="xs" color="neutral" variant="ghost" icon="i-lucide-link" @click="copyLink(inv.token)">{{ $t('admin.designers.inviteLink') }}</UButton>
-                    <UButton v-if="inv.status === 'invited'" size="xs" color="error" variant="ghost" icon="i-lucide-x" @click="revoke(inv.id)" />
+                    <UButton v-if="inv.status === 'invited'" size="xs" color="error" variant="ghost" icon="i-lucide-x" :aria-label="$t('actions.delete')" @click="revoke(inv.id)" />
                   </td>
                 </tr>
               </tbody>

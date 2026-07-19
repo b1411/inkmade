@@ -36,9 +36,14 @@ const { data: attention } = await useAsyncData('admin-attention', async () => {
     supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'customer').gte('created_at', from30),
   ])
   // Заявки на B2B-магазины — только при включённой фиче (иначе таблицы может не быть)
-  const shopApps = FEATURES.b2bShops
-    ? await supabase.from('shop_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending')
-    : { count: 0 }
+  const [shopApps, shopPayouts] = await Promise.all([
+    FEATURES.b2bShops
+      ? supabase.from('shop_applications').select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      : Promise.resolve({ count: 0 }),
+    FEATURES.b2bStorefront
+      ? supabase.from('shop_payouts').select('id', { count: 'exact', head: true }).eq('status', 'requested')
+      : Promise.resolve({ count: 0 }),
+  ])
   return {
     profit: (fin.data as { profit?: number } | null)?.profit ?? 0,
     moderation: mod.count ?? 0,
@@ -47,6 +52,7 @@ const { data: attention } = await useAsyncData('admin-attention', async () => {
     lowStock: lowStock.count ?? 0,
     newCustomers: newCust.count ?? 0,
     shopApps: shopApps.count ?? 0,
+    shopPayouts: shopPayouts.count ?? 0,
   }
 })
 
@@ -109,6 +115,9 @@ const { number: fmt, date } = useFormat()
           </NuxtLink>
           <NuxtLink v-if="FEATURES.b2bShops && attention.shopApps" to="/admin/shops" class="inline-flex items-center gap-1 bg-ink-burgundy/10 text-ink-burgundy rounded-full px-3 py-1 text-caption font-semibold">
             <UIcon name="i-lucide-store" /> {{ $t('admin.dashboard.attention.shopApps', { n: attention.shopApps }) }}
+          </NuxtLink>
+          <NuxtLink v-if="FEATURES.b2bStorefront && attention.shopPayouts" to="/admin/shops" class="inline-flex items-center gap-1 bg-ink-burgundy/10 text-ink-burgundy rounded-full px-3 py-1 text-caption font-semibold">
+            <UIcon name="i-lucide-hand-coins" /> {{ $t('admin.dashboard.attention.shopPayouts', { n: attention.shopPayouts }) }}
           </NuxtLink>
         </div>
 

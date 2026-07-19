@@ -15,6 +15,11 @@ const paymentMethodLabel = computed(() => runtimeConfig.public.paymentProvider =
 
 const form = reactive({ full_name: '', email: '', phone: '', city: 'Алматы', address: '' })
 const paying = ref(false)
+const submitted = ref(false)
+
+const { get: getSetting } = useSettings()
+const { data: configuredDeliveryEta } = await useAsyncData('checkout-delivery-eta', () => getSetting<string>('delivery.eta'))
+const deliveryEta = computed(() => configuredDeliveryEta.value || t('cart.checkout.delivery.defaultEta'))
 
 const blankBySlug: Record<string, string> = {
   tshirt: '/media/products/blank/classic-black-v01.webp',
@@ -44,6 +49,27 @@ function ensureIdemKey(): string | undefined {
 }
 
 const { list: listAddresses } = useAddresses()
+type SavedAddress = Awaited<ReturnType<typeof listAddresses>>[number]
+const savedAddresses = ref<SavedAddress[]>([])
+const selectedAddressId = ref('manual')
+const addressItems = computed(() => [
+  ...savedAddresses.value.map(address => ({
+    label: `${address.full_name} · ${address.city}, ${address.address}`,
+    value: address.id,
+  })),
+  { label: t('cart.checkout.savedAddress.manual'), value: 'manual' },
+])
+
+function applySavedAddress(id: string) {
+  selectedAddressId.value = id
+  const address = savedAddresses.value.find(item => item.id === id)
+  if (!address) return
+  form.full_name = address.full_name ?? form.full_name
+  form.phone = address.phone ?? form.phone
+  form.city = address.city ?? form.city
+  form.address = address.address ?? form.address
+}
+
 onMounted(async () => {
   cart.load()
   if (!cart.items.value.length) return navigateTo('/cart')
@@ -51,14 +77,9 @@ onMounted(async () => {
   if (user.value?.email) form.email = user.value.email
   // подставляем дефолтный адрес доставки (CRM §3.1)
   try {
-    const addrs = await listAddresses()
-    const def = addrs?.find(a => a.is_default) ?? addrs?.[0]
-    if (def) {
-      form.full_name = def.full_name ?? form.full_name
-      form.phone = def.phone ?? form.phone
-      form.city = def.city ?? form.city
-      form.address = def.address ?? form.address
-    }
+    savedAddresses.value = await listAddresses()
+    const def = savedAddresses.value.find(a => a.is_default) ?? savedAddresses.value[0]
+    if (def) applySavedAddress(def.id)
   } catch { /* адреса не критичны для оформления */ }
 })
 
@@ -107,11 +128,21 @@ const formValid = computed(() =>
   !!form.full_name.trim() && emailValid.value && phoneDigits.value.length >= 10
   && !!form.city.trim() && !!form.address.trim(),
 )
+const fieldErrors = computed(() => ({
+  fullName: form.full_name.trim() ? '' : t('cart.checkout.validation.required'),
+  email: emailValid.value ? '' : t('cart.checkout.validation.email'),
+  phone: phoneDigits.value.length >= 10 ? '' : t('cart.checkout.validation.phone'),
+  city: form.city.trim() ? '' : t('cart.checkout.validation.required'),
+  address: form.address.trim() ? '' : t('cart.checkout.validation.required'),
+}))
 
 async function onPay() {
   if (paying.value) return
+  submitted.value = true
   if (!formValid.value) {
     toast.add({ title: t('cart.checkout.validation.title'), description: t('cart.checkout.validation.description'), color: 'warning' })
+    await nextTick()
+    document.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
     return
   }
   paying.value = true
@@ -123,17 +154,11 @@ async function onPay() {
     // Чистим корзину СРАЗУ: иначе «Назад» со страницы оплаты → повторный onPay →
     // второй заказ (анти-дубль). Оплата остаётся доступной из /account/orders.
     cart.clear()
-    const res = await $fetch<{ payUrl: string; free?: boolean }>('/api/payment/create', {
-      method: 'POST',
-      body: { orderId },
-    })
-    if (res.free) useAnalytics().purchase(0, orderId)
-    // ePay возвращает АБСОЛЮТНЫЙ invoice_url банка — navigateTo без external его
-    // отклоняет, и ни один реальный платёж не доходит до шлюза. Free/mock отдают
-    // относительный путь и должны остаться обычной клиентской навигацией.
-    await navigateTo(res.payUrl, { external: /^https?:\/\//i.test(res.payUrl) })
+    // Платёж запускается на внутренней странице сохранённого заказа. Если банк
+    // временно недоступен, пользователь не теряет заказ и может повторить попытку.
+    await navigateTo(`/checkout/pay/${orderId}?start=1`)
   } catch (e) {
-    useAnalytics().track('payment_failure', { stage: 'checkout_create' })
+    useAnalytics().track('payment_failure', { stage: 'order_create' })
     // дружелюбный текст сервера (напр. «Недостаточно товара — обновите корзину»)
     // лежит в e.data.statusMessage, а не в техническом e.message
     toast.add({ title: t('cart.checkout.error.title'), description: getFetchMessage(e), color: 'error' })
@@ -179,22 +204,22 @@ async function onPay() {
       </li>
     </ol>
 
-    <div class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:gap-12">
+    <form class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px] xl:gap-12" novalidate @submit.prevent="onPay">
     <div class="space-y-5">
       <div class="border-b border-ink-gray-200 pb-3">
         <UiSectionLabel accent>01 / {{ $t('cart.checkout.steps.contacts') }}</UiSectionLabel>
         <h2 class="ink-display mt-2 text-2xl">{{ $t('cart.checkout.contactTitle') }}</h2>
       </div>
-      <UFormField :label="$t('cart.checkout.fields.fullName')" required>
+      <UFormField :label="$t('cart.checkout.fields.fullName')" required :error="submitted ? fieldErrors.fullName : undefined">
         <UInput v-model="form.full_name" autocomplete="name" class="w-full" />
       </UFormField>
-      <UFormField :label="$t('cart.checkout.fields.email')" required :help="$t('cart.checkout.fields.emailHelp')">
+      <UFormField :label="$t('cart.checkout.fields.email')" required :help="$t('cart.checkout.fields.emailHelp')" :error="submitted ? fieldErrors.email : undefined">
         <UInput
           v-model="form.email" type="email" autocomplete="email" :placeholder="$t('cart.checkout.fields.emailPlaceholder')"
           :color="form.email && !emailValid ? 'error' : undefined" class="w-full"
         />
       </UFormField>
-      <UFormField :label="$t('cart.checkout.fields.phone')" required>
+      <UFormField :label="$t('cart.checkout.fields.phone')" required :error="submitted ? fieldErrors.phone : undefined">
         <UInput
           v-model="form.phone" type="tel" autocomplete="tel" :placeholder="$t('cart.checkout.fields.phonePlaceholder')"
           :color="form.phone && phoneDigits.length < 10 ? 'error' : undefined" class="w-full"
@@ -204,13 +229,26 @@ async function onPay() {
         <UiSectionLabel accent>02 / {{ $t('cart.checkout.steps.delivery') }}</UiSectionLabel>
         <h2 class="ink-display mt-2 text-2xl">{{ $t('cart.checkout.deliveryTitle') }}</h2>
       </div>
+      <UFormField v-if="savedAddresses.length" :label="$t('cart.checkout.savedAddress.label')">
+        <USelect
+          :model-value="selectedAddressId" :items="addressItems" value-key="value"
+          class="w-full" @update:model-value="applySavedAddress"
+        />
+      </UFormField>
       <div class="grid grid-cols-2 gap-4">
-        <UFormField :label="$t('cart.checkout.fields.city')" required>
-          <UInput v-model="form.city" class="w-full" />
+        <UFormField :label="$t('cart.checkout.fields.city')" required :error="submitted ? fieldErrors.city : undefined">
+          <UInput v-model="form.city" autocomplete="address-level2" class="w-full" />
         </UFormField>
-        <UFormField :label="$t('cart.checkout.fields.address')" required>
-          <UInput v-model="form.address" class="w-full" />
+        <UFormField :label="$t('cart.checkout.fields.address')" required :error="submitted ? fieldErrors.address : undefined">
+          <UInput v-model="form.address" autocomplete="street-address" class="w-full" />
         </UFormField>
+      </div>
+      <div class="flex items-start gap-3 border border-ink-gray-200 bg-ink-gray-50 p-4 text-caption text-ink-gray-600">
+        <UIcon name="i-lucide-truck" class="mt-0.5 size-4 shrink-0 text-ink-burgundy" />
+        <div>
+          <p class="font-semibold text-ink-black">{{ $t('cart.checkout.delivery.method') }}</p>
+          <p>{{ deliveryEta }} · {{ $t('cart.checkout.delivery.cost') }}</p>
+        </div>
       </div>
 
       <!-- подарочный заказ (§3.1) -->
@@ -249,10 +287,11 @@ async function onPay() {
           <UInput v-model="promo.code" :placeholder="$t('cart.checkout.summary.promoPlaceholder')" size="sm" class="flex-1" :disabled="!!promo.applied" />
           <UButton
             v-if="!promo.applied" size="sm" color="neutral" variant="subtle"
-            :loading="promo.checking" @click="applyPromo"
+            type="button" :loading="promo.checking" @click="applyPromo"
           >{{ $t('cart.checkout.summary.applyPromo') }}</UButton>
           <UButton
             v-else size="sm" color="neutral" variant="ghost" icon="i-lucide-x"
+            type="button"
             :aria-label="$t('cart.checkout.summary.clearPromo')"
             @click="promo.code = ''; promo.discount = 0; promo.applied = ''"
           />
@@ -267,7 +306,7 @@ async function onPay() {
       <div class="flex justify-between border-t border-ink-gray-200 pt-3 font-semibold">
         <span>{{ $t('cart.checkout.summary.total') }}</span><span class="text-ink-burgundy">{{ formatPrice(finalTotal) }}</span>
       </div>
-      <UButton color="primary" size="lg" block icon="i-lucide-credit-card" :loading="paying" :disabled="!formValid" @click="onPay">
+      <UButton type="submit" color="primary" size="lg" block icon="i-lucide-credit-card" :loading="paying" :disabled="paying || !cart.items.value.length">
         {{ $t('cart.checkout.summary.pay') }}
       </UButton>
       <p class="flex items-center gap-1.5 text-caption text-ink-gray-400">
@@ -295,6 +334,6 @@ async function onPay() {
         </div>
       </UiPanel>
     </aside>
-    </div>
+    </form>
   </section>
 </template>

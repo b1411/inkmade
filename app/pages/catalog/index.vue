@@ -11,10 +11,23 @@ useSeoMeta({
   ogDescription: t('catalog.index.subtitle')
 })
 
-const [{ data: categories }, { data: products }] = await Promise.all([
+const [
+  { data: categories, error: categoriesError, refresh: refreshCategories },
+  { data: products, error: productsError, refresh: refreshProducts },
+] = await Promise.all([
   useAsyncData('catalog-categories', () => listActive()),
   useAsyncData('catalog-all-products', () => listAll())
 ])
+const catalogLoadError = computed(() => categoriesError.value || productsError.value)
+const retrying = ref(false)
+async function retryCatalog() {
+  retrying.value = true
+  try {
+    await Promise.all([refreshCategories(), refreshProducts()])
+  } finally {
+    retrying.value = false
+  }
+}
 
 type CatalogProduct = NonNullable<Awaited<ReturnType<typeof listAll>>>[number]
 // Фолбэки — ТОЛЬКО для локальной разработки без засеянной БД. В проде мёртвые карточки
@@ -93,6 +106,8 @@ const copy = computed(() => locale.value === 'kk'
       fits: { all: 'Кез келген пішім', regular: 'Regular', relaxed: 'Relaxed', oversize: 'Oversize' },
       sort: { editorial: 'INKMADE таңдауы', priceAsc: 'Бағасы бойынша ↑', priceDesc: 'Бағасы бойынша ↓' },
       maxPrice: 'Бағасы дейін',
+      fitLabel: 'Пішім бойынша сүзгі',
+      sortLabel: 'Сұрыптау тәртібі',
       reset: 'Тазарту',
       editorial: 'Бір заттан басып шығарамыз',
       editorialBody: 'Артық өндіріссіз. Тек сен жасаған зат.',
@@ -109,6 +124,8 @@ const copy = computed(() => locale.value === 'kk'
       fits: { all: 'Любая посадка', regular: 'Regular', relaxed: 'Relaxed', oversize: 'Oversize' },
       sort: { editorial: 'Выбор INKMADE', priceAsc: 'Сначала дешевле', priceDesc: 'Сначала дороже' },
       maxPrice: 'Цена до',
+      fitLabel: 'Фильтр по посадке',
+      sortLabel: 'Порядок сортировки',
       reset: 'Сбросить',
       editorial: 'Печатаем от одной вещи',
       editorialBody: 'Без перепроизводства. Только вещь, которую создал ты.',
@@ -171,10 +188,10 @@ const copy = computed(() => locale.value === 'kk'
             @click="selectedGroup = group"
           >{{ copy.groups[group] }}</button>
 
-          <select v-model="selectedFit" class="min-h-10 border border-white/15 bg-ink-panel px-3 text-xs text-ink-text outline-none focus:border-ink-burgundy">
+          <select v-model="selectedFit" :aria-label="copy.fitLabel" class="min-h-10 border border-white/15 bg-ink-panel px-3 text-xs text-ink-text outline-none focus:border-ink-burgundy">
             <option v-for="fit in (['all', 'regular', 'relaxed', 'oversize'] as const)" :key="fit" :value="fit">{{ copy.fits[fit] }}</option>
           </select>
-          <select v-model="sortBy" class="min-h-10 border border-white/15 bg-ink-panel px-3 text-xs text-ink-text outline-none focus:border-ink-burgundy">
+          <select v-model="sortBy" :aria-label="copy.sortLabel" class="min-h-10 border border-white/15 bg-ink-panel px-3 text-xs text-ink-text outline-none focus:border-ink-burgundy">
             <option value="editorial">{{ copy.sort.editorial }}</option>
             <option value="price-asc">{{ copy.sort.priceAsc }}</option>
             <option value="price-desc">{{ copy.sort.priceDesc }}</option>
@@ -187,7 +204,14 @@ const copy = computed(() => locale.value === 'kk'
         </div>
       </div>
 
-      <div v-if="filteredProducts.length" class="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+      <div v-if="catalogLoadError" class="border border-ink-error/40 bg-ink-error/10 p-6" role="alert">
+        <p class="font-semibold text-ink-text">{{ $t('errorPage.genericTitle') }}</p>
+        <p class="mt-1 text-sm text-ink-text-soft">{{ $t('errorPage.genericText') }}</p>
+        <UButton class="mt-4" color="neutral" variant="subtle" icon="i-lucide-refresh-cw" :loading="retrying" @click="retryCatalog">
+          {{ $t('states.retry') }}
+        </UButton>
+      </div>
+      <div v-else-if="filteredProducts.length" class="grid grid-cols-2 gap-3 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
         <UiReveal v-for="(product, index) in filteredProducts" :key="product.id" :delay="Math.min(index * 55, 330)">
           <CatalogProductCard :product="product" :badge="product.is_featured ? 'INK PICK' : undefined" />
         </UiReveal>

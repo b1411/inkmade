@@ -39,6 +39,17 @@ const garmentImages: Record<string, string> = {
 const productImage = computed(() => garmentImages[color.value] ?? fallbackProductImage.value)
 const printColor = computed(() => color.value === '#f0ede7' ? '#111214' : '#f3f0eb')
 const price = computed(() => Number(featured.value?.base_price ?? 6990) + 2500)
+const copy = computed(() => locale.value === 'kk'
+  ? {
+      section: '02 / КОНСТРУКТОР', upload: 'Сурет жүктеу', uploadAria: 'Принт суретін жүктеу',
+      productAlt: 'Конструктордағы киім негізі', front: 'Алды', back: 'Арты', text: 'Мәтін',
+      garment: 'Киім түсі', scale: 'Өлшем', total: 'Жиыны', continue: 'Толық конструкторға өту',
+    }
+  : {
+      section: '02 / КОНСТРУКТОР', upload: 'Загрузить изображение', uploadAria: 'Загрузить изображение принта',
+      productAlt: 'Основа одежды в конструкторе', front: 'Спереди', back: 'Сзади', text: 'Текст',
+      garment: 'Цвет вещи', scale: 'Размер принта', total: 'Итого', continue: 'Продолжить в конструкторе',
+    })
 
 function pickFile() {
   fileInput.value?.click()
@@ -61,7 +72,7 @@ onBeforeUnmount(() => {
   <section class="ink-grain w-screen ml-[calc(50%-50vw)] overflow-hidden bg-ink-raised text-ink-text" aria-labelledby="constructor-heading">
     <div class="mx-auto grid max-w-(--container-max) gap-8 px-4 py-12 lg:grid-cols-12 lg:items-center lg:py-16">
       <div class="lg:col-span-3">
-        <UiSectionLabel class="text-white/50">02 / SIMPLE MODE</UiSectionLabel>
+        <UiSectionLabel class="text-white/50">{{ copy.section }}</UiSectionLabel>
         <h2 id="constructor-heading" :key="locale" class="ink-display text-h2 mt-3">{{ t('landing.constructor.title') }}</h2>
         <p class="mt-4 text-ink-text-soft">{{ t('landing.constructor.subtitle') }}</p>
         <div class="mt-7 hidden lg:block">
@@ -81,14 +92,14 @@ onBeforeUnmount(() => {
           <div class="relative min-h-[390px] overflow-hidden bg-[#d9d5ce] sm:min-h-[460px]">
             <div class="absolute left-4 top-4 z-20 flex border border-black/15 bg-white/85 p-1 backdrop-blur">
               <button v-for="value in sides" :key="value" type="button" class="min-h-9 px-3 text-xs font-semibold uppercase" :class="side === value ? 'bg-ink-black text-white' : 'text-black/55'" @click="side = value">
-                {{ value === 'front' ? 'Front' : 'Back' }}
+                {{ value === 'front' ? copy.front : copy.back }}
               </button>
             </div>
 
             <NuxtImg
               v-if="productImage"
               :src="productImage"
-              alt="Основа изделия в конструкторе"
+              :alt="copy.productAlt"
               format="webp"
               sizes="(max-width: 767px) 100vw, 700px"
               class="absolute inset-0 size-full object-contain p-8 sm:p-12"
@@ -106,26 +117,26 @@ onBeforeUnmount(() => {
 
             <button type="button" class="absolute bottom-4 left-4 z-20 inline-flex min-h-11 items-center gap-2 bg-ink-black px-4 text-sm font-semibold text-white shadow-lg" @click="pickFile">
               <UIcon name="i-lucide-upload" class="size-4" />
-              {{ locale === 'kk' ? 'Сурет жүктеу' : 'Загрузить изображение' }}
+              {{ copy.upload }}
             </button>
             <input
               ref="fileInput"
               type="file"
               accept="image/png,image/jpeg,image/webp,image/svg+xml"
               class="sr-only"
-              :aria-label="locale === 'kk' ? 'Принт суретін жүктеу' : 'Загрузить изображение принта'"
+              :aria-label="copy.uploadAria"
               @change="onFile"
             >
           </div>
 
           <div class="flex flex-col border-t border-white/10 bg-ink-surface md:border-l md:border-t-0">
             <div class="border-b border-white/10 p-4">
-              <label for="preview-text" class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">01 / Text</label>
+              <label for="preview-text" class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">01 / {{ copy.text }}</label>
               <input id="preview-text" v-model="text" type="text" maxlength="24" class="mt-2 min-h-11 w-full border border-white/15 bg-ink-panel px-3 text-sm text-white outline-none focus:border-ink-burgundy-hover" placeholder="ALMATY / 43°">
             </div>
 
             <div class="border-b border-white/10 p-4">
-              <p class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">02 / Garment</p>
+              <p class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">02 / {{ copy.garment }}</p>
               <div class="mt-3 flex gap-2">
                 <button v-for="swatch in colors" :key="swatch" type="button" class="size-9 rounded-full border-2 transition" :class="color === swatch ? 'border-white scale-110' : 'border-white/20'" :style="{ backgroundColor: swatch }" :aria-label="`Цвет ${swatch}`" @click="color = swatch" />
               </div>
@@ -133,17 +144,17 @@ onBeforeUnmount(() => {
 
             <div class="border-b border-white/10 p-4">
               <div class="flex items-center justify-between gap-3">
-                <label for="preview-scale" class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">03 / Scale</label>
+                <label for="preview-scale" class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">03 / {{ copy.scale }}</label>
                 <span class="font-mono text-[10px] text-white/45">{{ scale }}%</span>
               </div>
               <input id="preview-scale" v-model="scale" type="range" min="34" max="76" class="mt-3 w-full accent-[var(--color-ink-burgundy)]">
             </div>
 
             <div class="mt-auto p-4">
-              <p class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">Итого</p>
+              <p class="font-mono text-[10px] uppercase tracking-[0.12em] text-white/45">{{ copy.total }}</p>
               <p class="mt-1 font-display text-3xl font-black">{{ fmtNum(price) }} ₸</p>
               <UiAppButton :to="createTo" variant="primary" size="lg" block class="mt-4" trailing-icon="i-lucide-arrow-right">
-                {{ locale === 'kk' ? 'Толық редактор' : 'Продолжить в редакторе' }}
+                {{ copy.continue }}
               </UiAppButton>
             </div>
           </div>

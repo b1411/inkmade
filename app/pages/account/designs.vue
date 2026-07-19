@@ -9,12 +9,13 @@ const supabase = useSupabaseClient<Database>()
 const { t } = useI18n()
 const { date } = useFormat()
 
-const { data: designs, pending, refresh } = await useAsyncData('account-designs', async () => {
-  const { data } = await supabase
+const { data: designs, pending, refresh, error } = await useAsyncData('account-designs', async () => {
+  const { data, error } = await supabase
     .from('designs')
     .select('id, title, preview_url, created_at, products(title, slug, alias)')
     .eq('is_saved', true)
     .order('created_at', { ascending: false })
+  if (error) throw error
   return data
 })
 
@@ -96,6 +97,15 @@ async function confirmDelete() {
     <div v-if="pending" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <UiSkeleton v-for="n in 8" :key="n" rounded="rounded-lg" class="aspect-square" />
     </div>
+
+    <UiEmptyState
+      v-else-if="error"
+      icon="i-lucide-cloud-off"
+      :title="$t('account.designs.loadErrorTitle')"
+      :text="$t('account.designs.loadErrorText')"
+    >
+      <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refresh()">{{ $t('states.retry') }}</UButton>
+    </UiEmptyState>
 
     <UiEmptyState
       v-else-if="!designs?.length"

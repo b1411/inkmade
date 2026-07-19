@@ -20,6 +20,8 @@ const props = withDefaults(defineProps<{
 })
 
 const route = useRoute()
+const mobileMenuOpen = ref(false)
+watch(() => route.path, () => { mobileMenuOpen.value = false })
 const workspaceVisual = computed(() => ({
   ACCOUNT: '/media/products/blank/classic-black-v01.webp',
   DESIGNER: '/media/campaigns/audience-creators-v03.webp',
@@ -87,6 +89,11 @@ function isActive(item: WorkspaceNavItem) {
             </div>
           </div>
           <div class="flex shrink-0 items-center gap-2">
+            <UButton
+              class="lg:hidden" color="neutral" variant="ghost" icon="i-lucide-menu"
+              :aria-label="$t('header.mobileNav')" :aria-expanded="mobileMenuOpen"
+              @click="mobileMenuOpen = true"
+            />
             <slot name="header-actions" />
           </div>
         </div>
@@ -117,6 +124,25 @@ function isActive(item: WorkspaceNavItem) {
       <main id="main-content" tabindex="-1" class="min-w-0 px-4 py-6 focus:outline-none sm:px-6 lg:px-8 lg:py-8" :class="contentClass">
         <slot />
       </main>
+
+      <USlideover v-model:open="mobileMenuOpen" side="left" :title="title">
+        <template #body>
+          <nav class="space-y-1" :aria-label="title">
+            <NuxtLink
+              v-for="item in nav" :key="item.to" :to="item.to"
+              class="flex min-h-12 items-center gap-3 border-l-2 px-4 py-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-burgundy"
+              :class="isActive(item) ? 'border-ink-burgundy bg-ink-burgundy/10 font-semibold text-ink-burgundy' : 'border-transparent text-ink-gray-600 hover:bg-ink-gray-50 hover:text-ink-black'"
+              :aria-current="isActive(item) ? 'page' : undefined"
+            >
+              <UIcon :name="item.icon" class="size-5 shrink-0" />
+              <span>{{ item.label }}</span>
+            </NuxtLink>
+          </nav>
+          <div class="mt-6 border-t border-ink-gray-200 pt-4">
+            <slot name="rail-footer" />
+          </div>
+        </template>
+      </USlideover>
     </section>
   </div>
 </template>

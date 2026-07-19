@@ -5,7 +5,7 @@ const { list, create, update, remove, setDefault } = useAddresses()
 const toast = useToast()
 const { t } = useI18n()
 
-const { data: addresses, refresh, pending } = await useAsyncData('account-addresses', () => list())
+const { data: addresses, refresh, pending, error } = await useAsyncData('account-addresses', () => list())
 
 const form = reactive({ full_name: '', phone: '', city: 'Алматы', address: '' })
 const editingId = ref<string | null>(null)
@@ -22,7 +22,7 @@ function startEdit(a: { id: string; full_name: string | null; phone: string | nu
 }
 
 async function onSubmit() {
-  if (!form.full_name || !form.phone || !form.address) {
+  if (!form.full_name.trim() || !form.phone.trim() || !form.city.trim() || !form.address.trim()) {
     toast.add({ title: t('account.addresses.validationTitle'), color: 'warning' }); return
   }
   adding.value = true
@@ -79,6 +79,16 @@ async function onDefault(id: string) {
     </div>
 
     <UiEmptyState
+      v-else-if="error"
+      icon="i-lucide-cloud-off"
+      :title="$t('account.addresses.loadErrorTitle')"
+      :text="$t('account.addresses.loadErrorText')"
+      class="mb-8"
+    >
+      <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refresh()">{{ $t('states.retry') }}</UButton>
+    </UiEmptyState>
+
+    <UiEmptyState
       v-else-if="!addresses?.length"
       icon="i-lucide-map-pin"
       :title="$t('account.addresses.emptyTitle')"
@@ -104,20 +114,28 @@ async function onDefault(id: string) {
     </div>
 
     <UiPanel :title="editingId ? $t('account.addresses.editAddress') : $t('account.addresses.newAddress')" :icon="editingId ? 'i-lucide-pencil' : 'i-lucide-plus'">
-      <div class="space-y-4">
+      <form class="space-y-4" @submit.prevent="onSubmit">
         <div class="grid sm:grid-cols-2 gap-3">
-          <UInput v-model="form.full_name" :placeholder="$t('account.addresses.fullNamePlaceholder')" />
-          <UInput v-model="form.phone" type="tel" :placeholder="$t('account.addresses.phonePlaceholder')" />
-          <UInput v-model="form.city" :placeholder="$t('account.addresses.cityPlaceholder')" />
-          <UInput v-model="form.address" :placeholder="$t('account.addresses.addressPlaceholder')" />
+          <UFormField :label="$t('account.addresses.fullNameLabel')" required>
+            <UInput v-model="form.full_name" :placeholder="$t('account.addresses.fullNamePlaceholder')" autocomplete="name" required class="w-full" />
+          </UFormField>
+          <UFormField :label="$t('account.addresses.phoneLabel')" required>
+            <UInput v-model="form.phone" type="tel" :placeholder="$t('account.addresses.phonePlaceholder')" autocomplete="tel" required class="w-full" />
+          </UFormField>
+          <UFormField :label="$t('account.addresses.cityLabel')" required>
+            <UInput v-model="form.city" :placeholder="$t('account.addresses.cityPlaceholder')" autocomplete="address-level2" required class="w-full" />
+          </UFormField>
+          <UFormField :label="$t('account.addresses.addressLabel')" required>
+            <UInput v-model="form.address" :placeholder="$t('account.addresses.addressPlaceholder')" autocomplete="street-address" required class="w-full" />
+          </UFormField>
         </div>
         <div class="flex gap-2">
-          <UButton color="primary" :icon="editingId ? 'i-lucide-check' : 'i-lucide-plus'" :loading="adding" @click="onSubmit">
+          <UButton type="submit" color="primary" :icon="editingId ? 'i-lucide-check' : 'i-lucide-plus'" :loading="adding">
             {{ editingId ? $t('account.addresses.save') : $t('account.addresses.addAddress') }}
           </UButton>
-          <UButton v-if="editingId" color="neutral" variant="ghost" @click="resetForm">{{ $t('account.addresses.cancel') }}</UButton>
+          <UButton v-if="editingId" type="button" color="neutral" variant="ghost" @click="resetForm">{{ $t('account.addresses.cancel') }}</UButton>
         </div>
-      </div>
+      </form>
     </UiPanel>
   </div>
 </template>

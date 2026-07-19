@@ -33,16 +33,31 @@ async function saveProfile() {
 // уведомления (Фаза C4): маркетинговое согласие; транзакционные письма всегда включены.
 // marketing_consent нет в кэше useAuth (fetchProfile его не тянет) — грузим отдельно.
 const marketing = ref(false)
+const marketingPending = ref(true)
+const marketingError = ref(false)
 const savingNotif = ref(false)
 const avatarUrl = ref<string | null>(null)
 const avatarInput = ref<HTMLInputElement | null>(null)
 const uploadingAvatar = ref(false)
-onMounted(async () => {
-  if (!user.value) return
-  const { data } = await supabase.from('profiles').select('marketing_consent, avatar_url').eq('id', user.value.id).single()
-  marketing.value = !!data?.marketing_consent
-  avatarUrl.value = data?.avatar_url ?? null
-})
+async function loadNotifications() {
+  if (!user.value) {
+    marketingPending.value = false
+    return
+  }
+  marketingPending.value = true
+  marketingError.value = false
+  try {
+    const { data, error } = await supabase.from('profiles').select('marketing_consent, avatar_url').eq('id', user.value.id).single()
+    if (error) throw error
+    marketing.value = !!data.marketing_consent
+    avatarUrl.value = data.avatar_url ?? null
+  } catch {
+    marketingError.value = true
+  } finally {
+    marketingPending.value = false
+  }
+}
+onMounted(loadNotifications)
 
 // загрузка аватара (Фаза C4): публичный бакет design-uploads, путь avatars/<uid>/…
 // MIME по факту-allowlist бакета design-uploads (миграция 0040): png/jpeg/webp/gif/avif.
@@ -70,7 +85,7 @@ async function onAvatarPick(e: Event) {
   }
 }
 async function saveNotifications() {
-  if (!user.value) return
+  if (!user.value || marketingPending.value || marketingError.value) return
   savingNotif.value = true
   try {
     const { error } = await supabase.from('profiles').update({ marketing_consent: marketing.value }).eq('id', user.value.id)
@@ -121,7 +136,7 @@ async function changePassword() {
 
     <div class="space-y-6">
       <UiPanel :title="$t('account.overview.personalData')" icon="i-lucide-user">
-        <div class="space-y-4">
+        <form class="space-y-4" @submit.prevent="saveProfile">
           <div class="flex items-center gap-4 border-b border-ink-gray-200 pb-4">
             <UiAvatar :name="form.full_name" :email="user?.email" :src="avatarUrl" size="lg" />
             <div class="min-w-0 flex-1">
@@ -129,7 +144,7 @@ async function changePassword() {
               <p v-if="form.full_name" class="text-caption text-ink-gray-600 truncate">{{ user?.email }}</p>
             </div>
             <input ref="avatarInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" class="hidden" @change="onAvatarPick">
-            <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="uploadingAvatar" @click="avatarInput?.click()">{{ $t('account.overview.avatar.upload') }}</UButton>
+            <UButton type="button" size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="uploadingAvatar" @click="avatarInput?.click()">{{ $t('account.overview.avatar.upload') }}</UButton>
           </div>
           <UFormField :label="$t('account.overview.email')">
             <UInput :model-value="user?.email" disabled class="w-full" />
@@ -140,26 +155,30 @@ async function changePassword() {
           <UFormField :label="$t('account.overview.phone')">
             <UInput v-model="form.phone" type="tel" :placeholder="$t('account.overview.phonePlaceholder')" class="w-full" />
           </UFormField>
-          <UButton color="primary" size="lg" :loading="saving" @click="saveProfile">{{ $t('account.overview.save') }}</UButton>
-        </div>
+          <UButton type="submit" color="primary" size="lg" :loading="saving">{{ $t('account.overview.save') }}</UButton>
+        </form>
       </UiPanel>
 
       <UiPanel :title="$t('account.overview.passwordTitle')" icon="i-lucide-lock" :subtitle="$t('account.overview.passwordSubtitle')">
-        <div class="flex flex-wrap items-end gap-3">
+        <form class="flex flex-wrap items-end gap-3" @submit.prevent="changePassword">
           <UFormField :label="$t('account.overview.newPassword')" class="flex-1 min-w-56">
             <UInput v-model="pwd.value" type="password" autocomplete="new-password" class="w-full" />
           </UFormField>
-          <UButton color="neutral" variant="subtle" size="lg" :loading="changingPwd" @click="changePassword">{{ $t('account.overview.changePassword') }}</UButton>
-        </div>
+          <UButton type="submit" color="neutral" variant="subtle" size="lg" :loading="changingPwd">{{ $t('account.overview.changePassword') }}</UButton>
+        </form>
       </UiPanel>
 
       <!-- уведомления (Фаза C4) -->
       <UiPanel :title="$t('account.overview.notif.title')" icon="i-lucide-bell" :subtitle="$t('account.overview.notif.subtitle')">
-        <div class="space-y-3">
+        <UiSkeleton v-if="marketingPending" rounded="rounded-lg" class="h-24" />
+        <UiEmptyState v-else-if="marketingError" compact icon="i-lucide-cloud-off" :title="$t('account.overview.notif.loadError')">
+          <UButton size="sm" color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="loadNotifications">{{ $t('states.retry') }}</UButton>
+        </UiEmptyState>
+        <form v-else class="space-y-3" @submit.prevent="saveNotifications">
           <UCheckbox v-model="marketing" :label="$t('account.overview.notif.marketing')" />
           <p class="text-caption text-ink-gray-500">{{ $t('account.overview.notif.transactional') }}</p>
-          <UButton color="neutral" variant="subtle" :loading="savingNotif" @click="saveNotifications">{{ $t('account.overview.save') }}</UButton>
-        </div>
+          <UButton type="submit" color="neutral" variant="subtle" :loading="savingNotif">{{ $t('account.overview.save') }}</UButton>
+        </form>
       </UiPanel>
 
       <!-- удаление аккаунта (Фаза C4) -->

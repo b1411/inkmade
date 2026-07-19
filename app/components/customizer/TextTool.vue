@@ -12,7 +12,7 @@ const fontItems = PRINT_FONTS.map(f => f.name)
 
 const form = reactive({
   text: '',
-  fontFamily: 'Manrope',
+  fontFamily: 'Inter',
   fill: '#111111',
 })
 

@@ -151,7 +151,7 @@
     },
     "upload": {
       "button": "Загрузить принт",
-      "hint": "PNG, JPG, WEBP, GIF, AVIF, HEIC или PDF · до {maxMb} МБ. Принимаем любое разрешение — для идеальной печати желательно от {dpiTarget} DPI.",
+      "hint": "PNG, JPG, WEBP, GIF, AVIF, HEIC или PDF · до {maxMb} МБ. Принимаем любое разрешение; для чёткой печати рекомендуем от {dpiTarget} DPI.",
       "rejected": "Файл отклонён",
       "errors": {
         "empty": "Файл пустой",

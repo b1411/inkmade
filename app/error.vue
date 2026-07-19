@@ -5,6 +5,7 @@ import type { NuxtError } from '#app'
 const props = defineProps<{ error: NuxtError }>()
 
 const { t } = useI18n()
+const route = useRoute()
 const is404 = computed(() => props.error?.statusCode === 404)
 const title = computed(() => (is404.value ? t('errorPage.notFoundTitle') : t('errorPage.genericTitle')))
 const text = computed(() =>
@@ -19,6 +20,9 @@ function goHome() {
 function goCatalog() {
   clearError({ redirect: '/catalog' })
 }
+function retry() {
+  clearError({ redirect: route.fullPath })
+}
 </script>
 
 <template>
@@ -31,7 +35,8 @@ function goCatalog() {
       <h1 class="ink-display mt-6 text-h2">{{ title }}</h1>
       <p class="mt-4 max-w-md text-lead text-ink-cream/75">{{ text }}</p>
       <div class="mt-8 flex flex-wrap gap-3">
-        <UiAppButton variant="primary" size="lg" on-dark @click="goHome">{{ $t('errorPage.toHome') }}</UiAppButton>
+        <UiAppButton v-if="!is404" variant="primary" size="lg" on-dark icon="i-lucide-refresh-cw" @click="retry">{{ $t('states.retry') }}</UiAppButton>
+        <UiAppButton :variant="is404 ? 'primary' : 'secondary'" size="lg" on-dark @click="goHome">{{ $t('errorPage.toHome') }}</UiAppButton>
         <UiAppButton variant="secondary" size="lg" on-dark @click="goCatalog">{{ $t('errorPage.toCatalog') }}</UiAppButton>
       </div>
     </div>

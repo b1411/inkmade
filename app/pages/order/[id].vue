@@ -10,14 +10,19 @@ const id = route.params.id as string
 const supabase = useSupabaseClient<Database>()
 
 const { data: order, error, refresh } = await useAsyncData(`order-${id}`, async () => {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('orders')
     .select('*, order_items(quantity, unit_price, designs(preview_url), variants(color_name, size, products(title)))')
     .eq('id', id)
     .single()
+  if (error) throw error
   return data
 })
-if (error.value || !order.value) throw createError({ statusCode: 404, statusMessage: t('cart.order.notFound') })
+if (error.value) {
+  if (isNotFoundError(error.value)) throw createError({ statusCode: 404, statusMessage: t('cart.order.notFound') })
+  throw createError({ statusCode: 503, statusMessage: t('errorPage.genericText'), cause: error.value })
+}
+if (!order.value) throw createError({ statusCode: 404, statusMessage: t('cart.order.notFound') })
 useHead({ title: () => `${t('cart.order.headTitle')} — INKMADE` })
 
 // Realtime: оператор меняет этап → клиент видит мгновенно (CRM синхронизация)
