@@ -22,14 +22,17 @@ const productId = ref<string | null>(props.initialId ?? null)
 const product = ref<ProductWithRelations | null>(null)
 // в режиме редактирования стартуем в loading, чтобы не мигнуть формой «создать» до reload
 const loading = ref(!!props.initialId)
+const loadError = ref(false)
 const isEdit = computed(() => !!props.initialId)
 
 async function reload() {
   if (!productId.value) return
   loading.value = true
+  loadError.value = false
   try {
     product.value = (await getProduct(productId.value)) as ProductWithRelations
   } catch (e) {
+    loadError.value = true
     toast.add({ title: t('admin.wizard.loadError'), description: getFetchMessage(e), color: 'error' })
   } finally {
     loading.value = false
@@ -51,12 +54,14 @@ const canStep = (n: number) => n === 1 || !!productId.value
 <template>
   <div class="space-y-8">
     <!-- степпер -->
-    <nav class="flex flex-wrap gap-2">
+    <nav class="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap" :aria-label="$t('admin.wizard.stepsLabel')">
       <button
         v-for="s in STEPS"
         :key="s.n"
+        type="button"
         :disabled="!canStep(s.n)"
-        class="flex items-center gap-2 px-3 py-2 rounded-md text-caption transition-colors disabled:opacity-40"
+        class="flex shrink-0 items-center gap-2 px-3 py-2 rounded-md text-caption transition-colors disabled:opacity-40"
+        :aria-current="step === s.n ? 'step' : undefined"
         :class="step === s.n
           ? 'bg-ink-burgundy text-ink-cream'
           : 'bg-ink-gray-200 hover:bg-ink-cream-dark'"
@@ -66,7 +71,19 @@ const canStep = (n: number) => n === 1 || !!productId.value
       </button>
     </nav>
 
-    <div v-if="loading" class="py-10 text-center text-ink-gray-600">{{ $t('states.loading') }}</div>
+    <div v-if="loading" class="space-y-4 py-4">
+      <UiSkeleton rounded="rounded-lg" class="h-12" />
+      <UiSkeleton rounded="rounded-lg" class="h-64" />
+    </div>
+
+    <UiEmptyState
+      v-else-if="loadError"
+      icon="i-lucide-cloud-off"
+      :title="$t('admin.wizard.loadError')"
+      :text="$t('admin.wizard.loadErrorText')"
+    >
+      <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="reload">{{ $t('states.retry') }}</UButton>
+    </UiEmptyState>
 
     <!-- редактирование: товар не загрузился → НЕ показываем форму «создать» (иначе выглядит как новый товар) -->
     <UiEmptyState

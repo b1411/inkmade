@@ -8,7 +8,7 @@ const toast = useToast()
 const { t } = useI18n()
 const { dateTime } = useFormat()
 
-const { data: stock, refresh, pending } = await useAsyncData('studio-stock', () => listStock())
+const { data: stock, refresh, pending, error } = await useAsyncData('studio-stock', () => listStock())
 
 type StockRow = NonNullable<typeof stock.value>[number]
 
@@ -85,6 +85,24 @@ async function openHistory(variantId: string, label: string) {
   <div>
     <UiPageHeader :label="$t('studio.stock.label')" :title="$t('studio.stock.title')" :description="$t('studio.stock.description')" />
 
+    <div v-if="pending" class="space-y-3">
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <UiSkeleton v-for="n in 3" :key="n" rounded="rounded-lg" class="h-24" />
+      </div>
+      <UiSkeleton v-for="n in 6" :key="n" rounded="rounded-md" class="h-10" />
+    </div>
+
+    <UiEmptyState
+      v-else-if="error"
+      icon="i-lucide-cloud-off"
+      :title="$t('studio.stock.loadErrorTitle')"
+      :text="$t('studio.stock.loadErrorText')"
+    >
+      <UButton color="neutral" variant="subtle" icon="i-lucide-refresh-cw" @click="() => refresh()">{{ $t('states.retry') }}</UButton>
+    </UiEmptyState>
+
+    <template v-else>
+
     <!-- сводные метрики -->
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
       <UiStatCard :label="$t('studio.stock.stats.total')" :value="stock?.length ?? 0" icon="i-lucide-boxes" />
@@ -94,14 +112,11 @@ async function openHistory(variantId: string, label: string) {
 
     <!-- поиск + фильтр низкого остатка -->
     <div class="flex flex-wrap items-center gap-3 mb-4">
-      <UInput v-model="q" icon="i-lucide-search" :placeholder="$t('studio.stock.filters.search')" class="w-full sm:w-72" />
+      <UInput v-model="q" icon="i-lucide-search" :placeholder="$t('studio.stock.filters.search')" :aria-label="$t('studio.stock.filters.searchLabel')" class="w-full sm:w-72" />
       <UCheckbox v-model="onlyLow" :label="$t('studio.stock.filters.onlyLow')" />
     </div>
 
-    <div v-if="pending" class="space-y-2">
-      <UiSkeleton v-for="n in 6" :key="n" rounded="rounded-md" class="h-10" />
-    </div>
-    <UiPanel v-else :padded="false">
+    <UiPanel :padded="false">
       <div class="overflow-x-auto p-2">
         <table class="w-full text-caption">
           <thead class="text-ink-gray-500 ink-label">
@@ -133,17 +148,18 @@ async function openHistory(variantId: string, label: string) {
         </table>
       </div>
     </UiPanel>
+    </template>
 
     <!-- списание брака: выбор количества -->
     <UModal v-model:open="defect.open" :title="$t('studio.stock.defectTitle')">
       <template #body>
-        <div class="space-y-4">
+        <form class="space-y-4" @submit.prevent="confirmDefect">
           <p class="text-caption text-ink-gray-600">{{ defect.label }}</p>
           <UFormField :label="$t('studio.stock.defectQty')" :hint="$t('studio.stock.defectMax', { n: defect.max })">
             <UInput v-model.number="defect.qty" type="number" :min="1" :max="defect.max" class="w-full" />
           </UFormField>
-          <UButton color="error" block :loading="defect.busy" :disabled="defect.max < 1" @click="confirmDefect">{{ $t('studio.stock.defectConfirm') }}</UButton>
-        </div>
+          <UButton type="submit" color="error" block :loading="defect.busy" :disabled="defect.max < 1">{{ $t('studio.stock.defectConfirm') }}</UButton>
+        </form>
       </template>
     </UModal>
 
@@ -152,15 +168,17 @@ async function openHistory(variantId: string, label: string) {
       <template #body>
         <div v-if="history.loading" class="py-6 text-center text-ink-gray-600">{{ $t('states.loading') }}</div>
         <div v-else-if="!history.rows.length" class="py-6 text-center text-ink-gray-600 text-caption">{{ $t('studio.stock.historyEmpty') }}</div>
-        <table v-else class="w-full text-caption">
-          <tbody>
-            <tr v-for="m in history.rows" :key="m.id" class="border-b border-ink-gray-200/60">
-              <td class="py-2 text-ink-gray-500">{{ dateTime(m.created_at) }}</td>
-              <td>{{ REASON_LABELS[m.reason] ?? m.reason }}</td>
-              <td class="text-right font-semibold" :class="m.delta > 0 ? 'text-ink-success' : 'text-ink-error'">{{ m.delta > 0 ? '+' : '' }}{{ m.delta }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full min-w-md text-caption">
+            <tbody>
+              <tr v-for="m in history.rows" :key="m.id" class="border-b border-ink-gray-200/60">
+                <td class="py-2 text-ink-gray-500">{{ dateTime(m.created_at) }}</td>
+                <td>{{ REASON_LABELS[m.reason] ?? m.reason }}</td>
+                <td class="text-right font-semibold" :class="m.delta > 0 ? 'text-ink-success' : 'text-ink-error'">{{ m.delta > 0 ? '+' : '' }}{{ m.delta }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </template>
     </UModal>
   </div>

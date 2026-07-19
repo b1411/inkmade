@@ -83,14 +83,14 @@ async function onDelete(id: string) {
             <span v-if="m.surcharge"> · +{{ m.surcharge }} {{ $t('units.currency') }}</span>
           </p>
         </div>
-        <UButton color="error" variant="ghost" icon="i-lucide-trash-2" @click="onDelete(m.id)" />
+        <UButton color="error" variant="ghost" icon="i-lucide-trash-2" :aria-label="$t('actions.delete')" @click="onDelete(m.id)" />
       </div>
     </div>
     <p v-else class="text-ink-gray-600">{{ $t('admin.wizard.materials.empty') }}</p>
 
-    <div class="border-t border-ink-gray-200 pt-5 space-y-4">
+    <form class="border-t border-ink-gray-200 pt-5 space-y-4" @submit.prevent="onAdd">
       <UiSectionLabel accent>{{ $t('admin.wizard.materials.addTitle') }}</UiSectionLabel>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <UFormField :label="$t('admin.wizard.materials.fieldName')">
           <UInput v-model="form.name" class="w-full" :placeholder="$t('admin.wizard.materials.namePlaceholder')" />
         </UFormField>
@@ -107,7 +107,7 @@ async function onDelete(id: string) {
       <p class="text-caption text-ink-gray-600">
         {{ $t('admin.wizard.materials.modeHint', { mode: derivedMode }) }}
       </p>
-      <UButton color="primary" :loading="saving" @click="onAdd">{{ $t('admin.wizard.materials.addButton') }}</UButton>
-    </div>
+      <UButton type="submit" color="primary" :loading="saving">{{ $t('admin.wizard.materials.addButton') }}</UButton>
+    </form>
   </div>
 </template>

@@ -215,7 +215,7 @@ async function bulkDelete() {
             <span class="font-semibold text-caption">{{ grp.title }}</span>
             <span class="ink-label text-ink-gray-400">{{ $t('admin.wizard.images.photosCount', { count: grp.images.length }) }}</span>
           </div>
-          <div class="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
             <div
               v-for="img in grp.images"
               :key="img.id"
@@ -285,7 +285,7 @@ async function bulkDelete() {
         >{{ $t('admin.wizard.images.addLifestyle') }}</UButton>
       </div>
 
-      <div v-if="lifestyle.length" class="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-4">
+      <div v-if="lifestyle.length" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         <div
           v-for="img in lifestyle"
           :key="img.id"

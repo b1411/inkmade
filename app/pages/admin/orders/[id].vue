@@ -103,7 +103,7 @@ const shortId = (s: string) => s.slice(0, 8)
         </UiPanel>
 
         <!-- сводка прибыли по заказу -->
-        <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="grid grid-cols-1 gap-2 text-center sm:grid-cols-3">
           <div class="border border-ink-gray-200 rounded-lg p-3">
             <p class="ink-label text-ink-gray-400">{{ $t('admin.order.marginCard.revenue') }}</p>
             <p class="font-bold mt-1">{{ fmt(margin.revenue) }} ₸</p>
@@ -153,7 +153,7 @@ const shortId = (s: string) => s.slice(0, 8)
             <input ref="evInput" type="file" accept="image/*" class="hidden" @change="onEvidencePick">
             <UButton size="xs" color="neutral" variant="subtle" icon="i-lucide-camera" :loading="evUploading" @click="evInput?.click()">{{ $t('admin.order.evidence.add') }}</UButton>
           </template>
-          <div v-if="evidence.length" class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          <div v-if="evidence.length" class="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <a v-for="e in evidence" :key="e.id" :href="e.url ?? '#'" target="_blank">
               <img v-if="e.url" :src="e.url" :alt="kindLabel(e.kind)" class="aspect-square w-full object-cover rounded-md border border-ink-gray-200">
               <span class="text-[10px] text-ink-gray-500 block truncate">{{ kindLabel(e.kind) }}</span>

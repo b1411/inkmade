@@ -2013,6 +2013,7 @@ export type Database = {
           id: string
           item_count: number
           status: string
+          status_changed_at: string
           tracking_no: string
         }[]
       }

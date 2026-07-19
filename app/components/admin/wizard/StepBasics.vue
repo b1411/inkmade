@@ -105,7 +105,7 @@ async function onSubmit() {
       <p class="text-caption text-ink-gray-600">
         {{ $t('admin.wizard.basics.quickStartText') }}
       </p>
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <UFormField :label="$t('admin.wizard.basics.fieldType')">
           <USelect v-model="templateKey" :items="templateItems" value-key="value" class="w-full" />
         </UFormField>
@@ -127,7 +127,7 @@ async function onSubmit() {
         <UInput v-model="form.title" class="w-full" :placeholder="$t('admin.wizard.basics.titlePlaceholder')" />
       </UFormField>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <UFormField :label="$t('admin.wizard.basics.fieldAlias')" required>
           <UInput v-model="form.alias" class="w-full" :placeholder="$t('admin.wizard.basics.aliasPlaceholder')" />
         </UFormField>
@@ -136,7 +136,7 @@ async function onSubmit() {
         </UFormField>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <UFormField :label="$t('admin.wizard.basics.fieldCategory')" required>
           <USelect v-model="form.category" :items="categoryItems" value-key="value" class="w-full" />
         </UFormField>
@@ -145,7 +145,7 @@ async function onSubmit() {
         </UFormField>
       </div>
 
-      <div class="grid grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <UFormField :label="$t('admin.wizard.basics.fieldMaxSize')">
           <UInput v-model="form.max_size_label" class="w-full" :placeholder="$t('admin.wizard.basics.maxSizePlaceholder')" />
         </UFormField>

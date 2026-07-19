@@ -173,8 +173,8 @@ async function onMockup(zoneId: string, e: Event) {
           :key="z.id"
           class="border border-ink-gray-200 rounded-md px-4 py-3"
         >
-          <div class="flex items-center justify-between">
-            <div>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="min-w-0">
               <p class="font-semibold">{{ z.title }} <span class="ink-label text-ink-gray-400">{{ z.print_mode }}</span></p>
               <p class="text-caption text-ink-gray-600">
                 {{ $t('admin.wizard.zones.sizeDpi', { w: z.max_width_mm, h: z.max_height_mm, dpi: z.min_dpi }) }}
@@ -182,19 +182,19 @@ async function onMockup(zoneId: string, e: Event) {
               </p>
               <p v-if="z.placement_hint" class="text-caption text-ink-gray-400 mt-1">{{ z.placement_hint }}</p>
             </div>
-            <div class="flex items-center gap-2">
-              <UButton color="neutral" variant="ghost" icon="i-lucide-frame" :title="$t('admin.wizard.zones.visualEditor')" @click="openVisual(z)" />
-              <UButton color="neutral" variant="ghost" icon="i-lucide-pencil" @click="editingId === z.id ? (editingId = null) : startEdit(z)" />
+            <div class="flex flex-wrap items-center gap-2">
+              <UButton color="neutral" variant="ghost" icon="i-lucide-frame" :title="$t('admin.wizard.zones.visualEditor')" :aria-label="$t('admin.wizard.zones.visualEditor')" @click="openVisual(z)" />
+              <UButton color="neutral" variant="ghost" icon="i-lucide-pencil" :aria-label="$t('actions.edit')" @click="editingId === z.id ? (editingId = null) : startEdit(z)" />
               <label class="cursor-pointer inline-flex items-center gap-1 px-2 py-1 rounded-md text-caption bg-ink-gray-200 hover:bg-ink-cream-dark transition-colors">
                 <UIcon :name="uploadingFor === z.id ? 'i-lucide-loader' : 'i-lucide-image-plus'" class="size-4" :class="uploadingFor === z.id && 'animate-spin'" />
                 {{ $t('admin.wizard.zones.mockup') }}
                 <input type="file" accept="image/*" class="hidden" @change="(e) => onMockup(z.id, e)">
               </label>
-              <UButton color="error" variant="ghost" icon="i-lucide-trash-2" @click="onDelete(z.id)" />
+              <UButton color="error" variant="ghost" icon="i-lucide-trash-2" :aria-label="$t('actions.delete')" @click="onDelete(z.id)" />
             </div>
           </div>
 
-          <div v-if="editingId === z.id" class="mt-3 pt-3 border-t border-ink-gray-200 grid grid-cols-2 gap-3">
+          <div v-if="editingId === z.id" class="mt-3 grid grid-cols-1 gap-3 border-t border-ink-gray-200 pt-3 sm:grid-cols-2">
             <UFormField :label="$t('admin.wizard.zones.fieldZoneWidth')">
               <UInput v-model.number="editForm.max_width_mm" type="number" min="1" class="w-full" />
             </UFormField>
@@ -204,10 +204,10 @@ async function onMockup(zoneId: string, e: Event) {
             <UFormField :label="$t('admin.wizard.zones.fieldMinDpi')">
               <UInput v-model.number="editForm.min_dpi" type="number" min="72" class="w-full" />
             </UFormField>
-            <UFormField :label="$t('admin.wizard.zones.fieldPlacementHint')" class="col-span-2">
+            <UFormField :label="$t('admin.wizard.zones.fieldPlacementHint')" class="sm:col-span-2">
               <UInput v-model="editForm.placement_hint" class="w-full" />
             </UFormField>
-            <div class="col-span-2 flex gap-2">
+            <div class="flex gap-2 sm:col-span-2">
               <UButton color="primary" icon="i-lucide-check" @click="saveEdit(z.id)">{{ $t('actions.save') }}</UButton>
               <UButton color="neutral" variant="ghost" @click="editingId = null">{{ $t('actions.cancel') }}</UButton>
             </div>
