@@ -202,6 +202,14 @@ export default defineNuxtConfig({
   // Supabase REST/Realtime (wss), Google Fonts, Konva (canvas), пиксели Meta/TikTok/GA.
   // Nuxt-гидрация требует 'unsafe-inline' в script-src (inline payload).
   nitro: {
+    // Лимит выполнения serverless-функции. Дефолт Vercel (10–15 с) не покрывает
+    // создание заказа на много позиций и обращения к ePay. Задаётся здесь, а не в
+    // vercel.json: на фреймворк-сборках Nitro glob `functions` не матчит вывод.
+    vercel: {
+      functions: {
+        maxDuration: 60,
+      },
+    },
     routeRules: {
       '/**': {
         headers: {

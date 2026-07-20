@@ -20,25 +20,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # версия pnpm задана явно: в package.json нет поля packageManager,
+      # а lockfileVersion 9.0 читается pnpm 9.x
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      # npm ci ставит ровно по package-lock + запускает postinstall (nuxt prepare → .nuxt типы)
-      - run: npm ci
+      # --frozen-lockfile ставит ровно по pnpm-lock + запускает postinstall (nuxt prepare → .nuxt типы)
+      - run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: npm run typecheck
+        run: pnpm typecheck
 
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
 
       - name: Unit tests
-        run: npm test
+        run: pnpm test
 
       - name: Build
-        run: npm run build
+        run: pnpm build
         env:
           # фикс OOM (exit 134) на gzip больших чанков — см. память build-oom-heap
           NODE_OPTIONS: --max-old-space-size=6144
@@ -63,15 +69,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # версия pnpm задана явно: в package.json нет поля packageManager,
+      # а lockfileVersion 9.0 читается pnpm 9.x
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: RLS security tests
-        run: npm run test:rls
+        run: pnpm test:rls
 
   # E2E (Playwright) — запускается только если в репозитории включён vars.RUN_E2E='true'
   # и заданы секреты Supabase. Иначе пропускается (без красного CI).
@@ -91,23 +103,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # версия pnpm задана явно: в package.json нет поля packageManager,
+      # а lockfileVersion 9.0 читается pnpm 9.x
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
+          node-version-file: .nvmrc
+          cache: pnpm
 
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Build
-        run: npm run build
+        run: pnpm build
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
       - name: E2E tests
-        run: npm run test:e2e
+        run: pnpm test:e2e
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

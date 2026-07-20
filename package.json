@@ -3,6 +3,9 @@
   "private": true,
   "type": "module",
   "description": "INKMADE — B2C платформа кастомизации одежды с печатью по требованию",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "nuxt dev",
     "build": "node --max-old-space-size=6144 node_modules/nuxt/bin/nuxt.mjs build",
