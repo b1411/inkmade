@@ -190,12 +190,16 @@ async function onPay() {
     </div>
 
     <ol class="mb-8 grid grid-cols-2 border border-ink-gray-200 bg-ink-white sm:grid-cols-4" :aria-label="$t('cart.checkout.progressLabel')">
-      <li v-for="(step, index) in [
-        { icon: 'i-lucide-user-round', key: 'contacts' },
-        { icon: 'i-lucide-truck', key: 'delivery' },
-        { icon: 'i-lucide-credit-card', key: 'payment' },
-        { icon: 'i-lucide-shield-check', key: 'review' },
-      ]" :key="step.key" class="flex min-h-16 items-center gap-3 border-ink-gray-200 px-3 sm:border-r sm:last:border-r-0">
+      <li
+        v-for="(step, index) in [
+          { icon: 'i-lucide-user-round', key: 'contacts' },
+          { icon: 'i-lucide-truck', key: 'delivery' },
+          { icon: 'i-lucide-credit-card', key: 'payment' },
+          { icon: 'i-lucide-shield-check', key: 'review' },
+        ]"
+        :key="step.key"
+        class="flex min-h-16 items-center gap-3 border-ink-gray-200 px-3 sm:border-r sm:last:border-r-0"
+      >
         <span class="grid size-7 shrink-0 place-items-center border border-ink-burgundy font-mono text-[10px] text-ink-burgundy">0{{ index + 1 }}</span>
         <div class="min-w-0">
           <UIcon :name="step.icon" class="size-4 text-ink-gray-400" />

@@ -138,11 +138,15 @@ async function clearCart() {
           {{ $t('cart.cart.checkout') }}
         </UiAppButton>
         <div class="mt-4 grid grid-cols-3 divide-x divide-ink-gray-200 text-center">
-          <div v-for="item in [
-            { icon: 'i-lucide-shield-check', key: 'secure' },
-            { icon: 'i-lucide-refresh-cw', key: 'editable' },
-            { icon: 'i-lucide-truck', key: 'tracking' },
-          ]" :key="item.key" class="px-2">
+          <div
+            v-for="item in [
+              { icon: 'i-lucide-shield-check', key: 'secure' },
+              { icon: 'i-lucide-refresh-cw', key: 'editable' },
+              { icon: 'i-lucide-truck', key: 'tracking' },
+            ]"
+            :key="item.key"
+            class="px-2"
+          >
             <UIcon :name="item.icon" class="mx-auto size-4 text-ink-burgundy" />
             <p class="mt-1 text-[10px] leading-tight text-ink-gray-500">{{ $t(`cart.cart.trust.${item.key}`) }}</p>
           </div>
