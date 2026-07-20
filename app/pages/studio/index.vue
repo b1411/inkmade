@@ -195,8 +195,8 @@ onUnmounted(() => unsub?.())
           <p v-if="!byStatus(col).length" class="text-caption text-ink-gray-400 px-1">{{ $t('studio.production.empty') }}</p>
         </div>
         </div>
+        </div>
       </template>
-      </div>
     </template>
   </div>
 </template>
